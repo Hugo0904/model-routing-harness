@@ -1,0 +1,70 @@
+"""Codex Hook candidate. Successful serialization is not host adoption."""
+import copy
+import sys
+from .core import Classification, ScriptedClassifier, UnavailableClassifier
+from .service import process
+from .types import Proposal, safe_id
+
+
+def serialize(decision, original, call_id):
+    if decision.action == "preserve":
+        return {}
+    if decision.action == "return_to_main":
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                "permissionDecisionReason": f"MRH Top Main requested for existing subtask {call_id}; main continuation remains unverified."}}
+    rewritten = copy.deepcopy(original)
+    rewritten.update(decision.patch)
+    return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": rewritten}}
+
+
+def handle_event(event, store=None, candidate=False, simulation=None):
+    if not candidate:
+        return {}
+    if not isinstance(event, dict) or event.get("tool_name") != "spawn_agent":
+        return {}
+    if event.get("hook_event_name") not in ("PreToolUse", "PostToolUse"):
+        return {}
+    original = event.get("tool_input")
+    if not isinstance(original, dict):
+        print("mrh: invalid_hook_input", file=sys.stderr)
+        return {}
+    synthetic = simulation is not None
+    try:
+        proposal = Proposal("codex", "simulation" if synthetic else "unknown", event.get("session_id"),
+                            event.get("turn_id"), event.get("tool_use_id"), original, synthetic)
+        identity = proposal.identity
+    except (ValueError, TypeError):
+        print("mrh: invalid_hook_identity", file=sys.stderr)
+        return {}
+    if event["hook_event_name"] == "PostToolUse":
+        if store is None:
+            return {}
+        response = event.get("tool_response")
+        agent_id = response.get("agent_id") if isinstance(response, dict) else None
+        if not safe_id(agent_id):
+            print("mrh: child_receipt_unavailable", file=sys.stderr)
+            return {}
+        receipt = {"event_id": identity + ":child:" + agent_id, "proposal_id": identity,
+                   "platform": proposal.platform, "surface": proposal.surface,
+                   "session_id": proposal.session_id, "turn_id": proposal.turn_id,
+                   "tool_call_id": proposal.tool_call_id, "agent_id": agent_id,
+                   "evidence_kind": "synthetic" if synthetic else "reported", "source_ref": "codex-hook-candidate"}
+        try:
+            store.record_observation(receipt)
+        except Exception:
+            print("mrh: child_receipt_rejected", file=sys.stderr)
+        return {}
+    from .simulation import demo_capabilities, demo_policy
+    # No unknown wire protocol or environment credential lookup exists here.
+    caps = demo_capabilities() if synthetic else {"configuration_known": True,
+            "roles": {"default": {"known": True, "rewrite_allowed": False}}, "models": {}}
+    policy = demo_policy() if synthetic else {"top_mode": "Main"}
+    classifier = UnavailableClassifier()
+    if synthetic:
+        if not isinstance(simulation, dict):
+            return {}
+        policy = simulation.get("policy", policy)
+        caps = simulation.get("capabilities", caps)
+        classifier = ScriptedClassifier([Classification(simulation.get("tier"), simulation.get("confidence", 0.9))])
+    decision = process(proposal, policy, caps, store, classifier)
+    return serialize(decision, original, proposal.tool_call_id)

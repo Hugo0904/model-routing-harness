@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "synthetic",
+  "policy": {
+    "top_mode": "Main",
+    "fixed": {
+      "model": "gpt-6-astra",
+      "effort": "high"
+    },
+    "tiers": {
+      "Light": {
+        "model": "gpt-6-luna",
+        "effort": "max"
+      },
+      "Small": {
+        "model": "gpt-6-luna",
+        "effort": "max"
+      },
+      "Mid": {
+        "model": "gpt-6-luna",
+        "effort": "max"
+      }
+    },
+    "rates": {}
+  },
+  "capabilities": {
+    "configuration_known": true,
+    "main_model": "gpt-6-luna",
+    "main_effort": "max",
+    "roles": {
+      "default": {
+        "known": true,
+        "rewrite_allowed": true
+      },
+      "fixed": {
+        "known": true,
+        "rewrite_allowed": false,
+        "fixed_model": "gpt-6-astra"
+      }
+    },
+    "models": {
+      "gpt-6-luna": {
+        "available": true,
+        "efforts": [
+          "max"
+        ]
+      },
+      "gpt-6.1-sol": {
+        "available": true,
+        "efforts": [
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      "gpt-6-astra": {
+        "available": true,
+        "efforts": [
+          "high",
+          "xhigh",
+          "max"
+        ]
+      }
+    }
+  },
+  "note": "Our protocol, not Jev API; no live prices or catalog evidence"
+}

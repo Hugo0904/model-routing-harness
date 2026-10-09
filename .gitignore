@@ -11,3 +11,9 @@ state/
 *.sqlite*
 *.db
 *.log
+*.key
+*.lock
+*.sqlite3-*
+build/
+dist/
+*.egg-info/

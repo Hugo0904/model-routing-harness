@@ -1,0 +1,49 @@
+MRH  /  SYNTHETIC event
+statistics
+Updated: 2026-10-09T21:23:28
+.795768+00:00
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACTIVITY
+  Proposals: 5
+  Jev request attempts: 0
+  Synthetic attempts: 5
+  Classified tasks: 5
+  Low-confidence tasks: 1
+
+TIER COMPOSITION
+  ██████████████████
+  5 classified tasks ·
+  Light 1   Small 1   Mid
+  1   Top 2
+
+POLICY OUTCOMES
+  cost_unknown: 2
+  low_confidence: 1
+  top_fixed_requested: 1
+  top_main_requested: 1
+
+REQUESTED MODELS
+  gpt-6-astra: 1
+
+CHILD EXECUTION
+  Confirmed children: 0
+  Simulated children: 0
+  Reported children: 0
+  Children with unknown
+  actual model: 0
+
+ACTUAL MODELS
+  None recorded
+
+COST / USAGE
+  Cost: Unavailable
+  Tokens: Unavailable
+  Quota: Unavailable
+
+CAPABILITIES
+  claude: unsupported
+  codex:
+  candidate_unverified
+  gemini: unsupported
+  jev: unavailable
