@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "curated_supported_tool_readbacks",
+  "recorded_at": "2026-10-09T20:50:37.201352+00:00",
+  "authority": {
+    "thread_id": "01a12262-186b-7670-9af0-59566703db4a",
+    "turn_id": "01a12263-5420-7cc0-a440-83566f3c110a",
+    "item_id": "01a12263-6236-7952-95aa-34770afcf341",
+    "verified_with": "read_thread",
+    "instruction": "分工讓B開始工作 B使用 gpt6.1 sol xhigh"
+  },
+  "executor_settings": {
+    "thread_id": "01a12265-1821-76b3-be93-acf74e1485c9",
+    "turn_id": "01a12265-19e4-7492-a9c2-676ac9a96e11",
+    "model": "gpt-6.1-sol",
+    "thinking": "xhigh",
+    "cwd": "/Users/shawn/Code",
+    "recorded_at": "2026-10-09T20:40:16.293Z",
+    "source": "latest_recorded_turn"
+  },
+  "access": {
+    "connector": "Codex with ChatGPT · Code",
+    "readable": "Canopy/AGENTS.md:1-3",
+    "denied": {
+      "model-routing-harness/REQUIREMENTS.md": "ACCESS_DENIED_SENSITIVE_FILE",
+      "adaptive-agent-workbench/README.md": "ACCESS_DENIED_SENSITIVE_FILE",
+      "Canopy-Task-Monitor/AGENTS.md": "ACCESS_DENIED_SENSITIVE_FILE"
+    },
+    "mutations": []
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "installed-host-contract-probe",
+  "recorded_at": "2026-10-09T20:45:23.606975+00:00",
+  "platforms": [
+    {
+      "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+      "version": "",
+      "schema_generation_exit": 1,
+      "schemas": {},
+      "invalid_effort_exit": 1,
+      "invalid_effort_error": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/bin/codex.js:4\nimport { spawn } from \"node:child_process\";\n^^^^^^\n\nSyntaxError: Cannot use import statement outside a module\n    at Module._compile (internal/modules/cjs/loader.js:892:18)\n    at Object.Module._extensions..js (internal/modules/cjs/loader.js:973:10)\n    at Module.load (internal/modules/cjs/loader.js:812:32)\n    at Function.Module._load (internal/modules/cjs/loader.js:724:14)\n    at Function.Module.runMain (internal/modules/cjs/loader.js:1025:10)\n    at internal/main/run_main_module.js:17:11",
+      "rpc": {
+        "probe_error": "Empty"
+      },
+      "elapsed_seconds": 9.325,
+      "limitations": [
+        "No turn or agent was started",
+        "No real model/provider execution",
+        "Hook discovered only; not trusted or executed",
+        "No Top Main handback proof"
+      ]
+    },
+    {
+      "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+      "version": "codex-cli 0.162.0-alpha.17.2",
+      "schema_generation_exit": 0,
+      "schemas": {
+        "HookCompletedNotification": {
+          "fields": [
+            "run",
+            "threadId",
+            "turnId"
+          ],
+          "events": [
+            "preToolUse",
+            "permissionRequest",
+            "postToolUse",
+            "preCompact",
+            "postCompact",
+            "sessionStart",
+            "sessionEnd",
+            "userPromptSubmit",
+            "subagentStart",
+            "subagentStop",
+            "stop",
+            "interrupt"
+          ]
+        },
+        "ThreadStartParams": {
+          "fields": [
+            "allowProviderModelFallback",
+            "approvalPolicy",
+            "approvalsReviewer",
+            "baseInstructions",
+            "config",
+            "cwd",
+            "daybreakEnabled",
+            "developerInstructions",
+            "dynamicTools",
+            "environments",
+            "ephemeral",
+            "experimentalRawEvents",
+            "historyMode",
+            "mockExperimentalField",
+            "model",
+            "modelProvider",
+            "multiAgentMode",
+            "permissions",
+            "personality",
+            "projectId",
+            "runtimeWorkspaceRoots",
+            "sandbox",
+            "selectedCapabilityRoots",
+            "serviceName",
+            "serviceTier",
+            "sessionStartSource",
+            "threadSource"
+          ]
+        },
+        "TurnStartParams": {
+          "fields": [
+            "additionalContext",
+            "approvalPolicy",
+            "approvalsReviewer",
+            "clientUserMessageId",
+            "collaborationMode",
+            "cwd",
+            "cyberAccessProgram",
+            "disabledPluginIds",
+            "effort",
+            "environments",
+            "input",
+            "model",
+            "multiAgentMode",
+            "outputSchema",
+            "parentTurnId",
+            "permissions",
+            "personality",
+            "responsesapiClientMetadata",
+            "rootTurnId",
+            "runtimeWorkspaceRoots",
+            "sandboxPolicy",
+            "serviceTier",
+            "serviceTierForTurn",
+            "summary",
+            "threadId",
+            "toolOutput",
+            "turnTrigger"
+          ],
+          "effort_enum": null
+        },
+        "ThreadReadResponse": {
+          "fields": [
+            "thread"
+          ],
+          "model_fields": {
+            "model": {
+              "description": "Current configured model when loaded, otherwise the latest persisted model. Null when unavailable. This is not per-turn execution telemetry.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reasoningEffort": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ReasoningEffort"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Current configured reasoning effort when loaded, otherwise the latest persisted effort. Null when unset or unavailable. This is not per-turn execution telemetry."
+            }
+          },
+          "effort_enum": null
+        }
+      },
+      "invalid_effort_exit": 1,
+      "invalid_effort_error": "Error: `--strict-config` is not supported for `codex app-server generate-json-schema`",
+      "rpc": {
+        "configured_model": "mrh-cli-override",
+        "configured_effort": "high",
+        "config_error": null,
+        "hooks_error": null,
+        "hooks_result": {
+          "data": [
+            {
+              "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e1-ve6z7nd4/workspace",
+              "hooks": [
+                {
+                  "key": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e1-ve6z7nd4/home/hooks.json:pre_tool_use:0:0",
+                  "eventName": "preToolUse",
+                  "handlerType": "command",
+                  "command": "false",
+                  "async": false,
+                  "matcher": "^spawn_agent$",
+                  "timeoutSec": 1,
+                  "statusMessage": null,
+                  "additionalContextLimit": null,
+                  "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e1-ve6z7nd4/home/hooks.json",
+                  "source": "user",
+                  "pluginId": null,
+                  "displayOrder": 0,
+                  "enabled": true,
+                  "isManaged": false,
+                  "currentHash": "sha256:fce3627ef25fe3bb9b211fac1f52b2c841fb25c2427b1830a638447ffc670b10",
+                  "trustStatus": "untrusted"
+                }
+              ],
+              "warnings": [],
+              "errors": []
+            }
+          ]
+        }
+      },
+      "elapsed_seconds": 0.207,
+      "limitations": [
+        "No turn or agent was started",
+        "No real model/provider execution",
+        "Hook discovered only; not trusted or executed",
+        "No Top Main handback proof"
+      ]
+    }
+  ],
+  "elapsed_seconds": 9.564
+}
