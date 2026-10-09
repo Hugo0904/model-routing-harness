@@ -119,7 +119,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         "MRH  /  local capability check",
         {
             "Live classification": [
-                "Jev provider: unavailable; live requests are not sent",
+                "TypeSafe Jev adapter: default-disabled; real provider unverified",
                 "Credentials and network: not probed",
             ],
             "Codex": [

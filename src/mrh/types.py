@@ -12,6 +12,11 @@ REASONS = {"classifier_unavailable", "unrelated_event", "explicit_model", "fixed
            "top_main_requested", "unsupported_effort", "unsupported_model", "unsupported_role",
            "cost_unknown", "top_fixed_requested", "cheaper_child_requested", "store_error",
            "proposal_pending", "proposal_conflict"}
+REASONS.update({"typesafe_disabled", "typesafe_export_denied", "typesafe_missing_credentials", "typesafe_unverified_transport",
+                "typesafe_invalid_task", "typesafe_malformed_response", "typesafe_model_mismatch",
+                "typesafe_http_401", "typesafe_http_422", "typesafe_http_429", "typesafe_http_529",
+                "typesafe_http_5xx", "typesafe_http_error", "typesafe_network_error",
+                "typesafe_timeout", "typesafe_oversized_response", "typesafe_redirect_rejected"})
 
 
 def safe_id(value, limit=128):

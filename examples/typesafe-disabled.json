@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "task_export_permitted": false,
+  "model": "jev-1.13.0"
+}

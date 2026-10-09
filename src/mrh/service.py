@@ -22,11 +22,11 @@ def process(proposal, policy, capabilities, store=None, classifier=None, optiona
             return Decision(reason="proposal_" + state, synthetic=proposal.synthetic)
     persistence_failed = []
 
-    def attempt(attempt_id, kind, outcome):
+    def attempt(attempt_id, kind, outcome, **metadata):
         if store is None:
             return
         try:
-            store.attempt(proposal.identity, attempt_id, kind, outcome)
+            store.attempt(proposal.identity, attempt_id, kind, outcome, **metadata)
         except Exception:
             persistence_failed.append(True)
             raise RuntimeError("store_error") from None

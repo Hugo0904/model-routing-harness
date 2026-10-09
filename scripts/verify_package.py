@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline installed-entry smoke in an owned temporary venv; no provider calls."""
 import datetime
+import argparse
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,9 @@ import time
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--evidence-prefix", choices=("e2", "e3"), default="e3")
+    args = parser.parse_args()
     start = time.monotonic()
     root = Path(__file__).resolve().parents[1]
     with tempfile.TemporaryDirectory(prefix="mrh-package-") as scratch:
@@ -41,18 +45,59 @@ def main():
         assert all("\x1b" not in x for x in results)
         assert max(map(len, results[4].splitlines())) <= 28
         synthetic = json.loads(results[0])
+        provider_fixture = '''
+import json, sys
+from mrh.typesafe import TypesafeClassifier, HttpResponse
+from mrh.typesafe_protocol import PINNED_MODEL
+from mrh.types import Proposal
+from mrh.service import process
+from mrh.store import Store
+from mrh.simulation import demo_policy, demo_capabilities
+class Fake:
+    synthetic = True
+    def request(self, body, headers, deadline, enter):
+        enter()
+        assert body["model"] == PINNED_MODEL
+        return HttpResponse(200, json.dumps({"model": PINNED_MODEL,
+          "usage": {"input_tokens":100,"output_tokens":2},
+          "answers":{"tier":{"type":"choice","choice":"top","confidence":0.6,
+          "probabilities":{"light":0.1,"small":0.1,"mid":0.1,"top":0.7}}}}).encode())
+store = Store(sys.argv[1])
+p = Proposal("codex","simulation","package","fixture","provider",{"message":"offline example"},True)
+client = TypesafeClassifier(enabled=True, task_export_permitted=True,
+                           credential_resolver=lambda:"fake-offline-key",transport=Fake())
+assert process(p,demo_policy(),demo_capabilities(),store,client).action == "return_to_main"
+assert store.stats()["jev_attempts"] == 0
+print(json.dumps(store.stats(True)))
+'''
+        provider = subprocess.run([str(python), "-c", provider_fixture, str(db)], text=True, capture_output=True,
+                                  env=env, cwd=scratch, timeout=10, check=True)
+        provider_stats = json.loads(provider.stdout)
+        assert provider_stats["jev"]["source"] == "explicit_synthetic_offline_transport"
+        assert provider_stats["jev"]["input_tokens"] == 100
+        installed_stats = subprocess.run([str(executable), "stats", "--db", str(db), "--synthetic", "--json"],
+                                        text=True, capture_output=True, env=env, cwd=scratch, timeout=10, check=True)
+        assert json.loads(installed_stats.stdout) == provider_stats
+        if args.evidence_prefix == "e3":
+            for i, width in [(3, 80), (4, 28)]:
+                rendered = subprocess.run([str(executable), "stats", "--db", str(db), "--synthetic", "--plain", "--width", str(width)],
+                                         text=True, capture_output=True, env=env, cwd=scratch, timeout=10, check=True)
+                results[i] = rendered.stdout
+            assert max(map(len, results[4].splitlines())) <= 28
         (root / "examples").mkdir(exist_ok=True)
         (root / "examples/synthetic-stats.json").write_text(json.dumps(synthetic, indent=2) + "\n")
+        (root / "examples/synthetic-provider-stats.json").write_text(json.dumps(provider_stats, indent=2) + "\n")
         for width, output in [(80, results[3]), (28, results[4])]:
-            (root / f"docs/evidence/e2-terminal-{width}.txt").write_text(output)
+            (root / f"docs/evidence/{args.evidence_prefix}-terminal-{width}.txt").write_text(output)
         result = {"schema_version": 1, "evidence_kind": "isolated_offline_installed_package",
                   "recorded_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   "python": sys.version.split()[0], "pip_install_exit": install.returncode,
                   "entrypoints": ["installed mrh", "installed python -m mrh"],
                   "synthetic_stats_consistent": True, "live_proposals": 0, "ansi_in_json": False,
                   "narrow_width": 28, "global_installation": False, "provider_requests": 0,
+                  "installed_typesafe_fake_transport": True, "provider_telemetry_json_consistent": True,
                   "elapsed_seconds": round(time.monotonic() - start, 3)}
-    (root / "docs/evidence/e2-package.json").write_text(json.dumps(result, indent=2) + "\n")
+    (root / f"docs/evidence/{args.evidence_prefix}-package.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result))
     return 0
 

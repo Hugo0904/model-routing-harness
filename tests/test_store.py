@@ -121,12 +121,14 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(self.store.stats(True), s)
         self.assertEqual(self.store.stats()["confirmed_children"], 0)
 
-    def test_top_main_never_child_receipt(self):
+    def test_top_main_never_fabricates_child_but_records_correlated_anomaly(self):
         p = self.proposal()
         self.decide(p)
-        with self.assertRaisesRegex(ValueError, "unexpected_child_for_main"):
-            self.store.record_observation(self.receipt(p))
         self.assertEqual(self.store.stats(True)["simulated_children"], 0)
+        self.store.record_observation(self.receipt(p))
+        self.assertEqual(self.store.stats(True)["simulated_children"], 1)
+        self.assertEqual(self.store.stats(True)["handback_anomalies"], 1)
+        self.assertEqual(self.store.stats(True)["confirmed_children"], 0)
 
     def test_pending_receipt_and_raw_optional_metadata_are_rejected(self):
         p = self.proposal("pending-receipt")

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "evidence_kind": "isolated_offline_installed_package",
+  "recorded_at": "2026-10-09T21:55:24.109861+00:00",
+  "python": "3.11.3",
+  "pip_install_exit": 0,
+  "entrypoints": [
+    "installed mrh",
+    "installed python -m mrh"
+  ],
+  "synthetic_stats_consistent": true,
+  "live_proposals": 0,
+  "ansi_in_json": false,
+  "narrow_width": 28,
+  "global_installation": false,
+  "provider_requests": 0,
+  "installed_typesafe_fake_transport": true,
+  "provider_telemetry_json_consistent": true,
+  "elapsed_seconds": 3.415
+}

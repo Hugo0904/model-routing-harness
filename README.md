@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E2 本機候選**。真實 Jev API 尚未取得；沒有網路請求、正式 Hook 啟用或已驗證的主代理交回。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E3 本機候選**。已實作預設關閉的 TypeSafe `jev-1.13.0` 接頭，以離線 transport 驗證；真 API、正式 Hook 與主代理交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
 ## 使用
 
@@ -25,7 +25,9 @@ mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 
 ## Hook 與安裝界線
 
-`mrh hook` 讀 stdin JSON、只輸出 Hook JSON，預設 `{}` 原樣放行。`--candidate --db ...` 可記錄委派，但 production classifier 不可用，沒有有效分級就不改寫原呼叫。隔離合成需另加 `--simulate-tier Top --simulate-confidence 0.9`、`--candidate` 與明確 `--db`；不是正式 Jev 請求。
+`mrh hook` 讀 stdin JSON、只輸出 Hook JSON，預設 `{}` 原樣放行。`--candidate --db ...` 可記錄委派，CLI 仍不啟用 TypeSafe，沒有有效分級就不改寫原呼叫。隔離合成需另加 `--simulate-tier Top --simulate-confidence 0.9`、`--candidate` 與明確 `--db`；不是正式 Jev 請求。
+
+TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限、runtime credential resolver 與未來接線範例見 [資料契約](docs/contracts.md)。[預設關閉設定](examples/typesafe-disabled.json) 不含 key，載入不讀憑證。E3 未提供 CLI 啟用開關。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
 
 ```sh
 mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh
@@ -38,23 +40,25 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 ## 支援狀態
 
-| 項目 | E2 結果 |
+| 項目 | E3 結果 |
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作，隔離本機驗證 |
 | Codex Hook JSON、Main deny／Fixed rewrite | 候選序列化已測；真實宿主／主代理續作／型號未驗證 |
 | 安裝預覽 | 可用；共享 home 安裝／停用拒寫，未支援 |
-| 真 Jev、後續真 Goal 委派 | 不可用／未驗證 |
+| TypeSafe Jev 接頭 | 已實作、預設關閉；serializer/parser/deadline 以 fake transport 驗證，真 API 未驗證 |
+| 後續真 Goal 委派 | 未驗證 |
 | Claude Code、Gemini CLI | 未支援，只有盤點與接頭差異文件 |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
-| tokens／cost／quota／實測節省 | 不可取得；不從次數或模型名推算 |
+| Jev tokens／估算 | 可保存有效 usage；E3 只有 synthetic；未知保持 null，匹配版本才估算 |
+| child tokens／cost／quota／實測節省 | 不可取得；不從次數或模型名推算 |
 
-API、政策、收據與統計出口見 [資料契約](docs/contracts.md)、[合成設定](examples/synthetic-policy.json)、[合成統計](examples/synthetic-stats.json)。這是本專案內部格式，不是 Jev 的已知 API。
+政策、收據與 v2 統計見 [資料契約](docs/contracts.md)、[合成設定](examples/synthetic-policy.json)、[合成統計](examples/synthetic-stats.json)、[含 Jev 離線 transport 的合成統計](examples/synthetic-provider-stats.json)。這些統計是 MRH 格式，TypeSafe wire 格式另依官方 API。
 
 ## 驗證
 
 ```sh
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-python3 scripts/verify_package.py
+python3 scripts/verify_package.py --evidence-prefix e3
 ```
 
-前者驗證 E2 核心→Hook 候選→SQLite→CLI/JSON 與 fixture 安裝鏈。後者在暫存 venv 離線安裝，驗證 entrypoints、JSON 一致與 80／28 欄終端輸出後清除 runtime。結果見 [E2 證據](docs/evidence/e2-verification.json)，[80 欄](docs/evidence/e2-terminal-80.txt)／[28 欄](docs/evidence/e2-terminal-28.txt) 可供人工檢視。E1 來源仍在 [能力盤點](docs/capabilities.md)。
+前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。

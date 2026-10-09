@@ -17,7 +17,7 @@ def serialize(decision, original, call_id):
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": rewritten}}
 
 
-def handle_event(event, store=None, candidate=False, simulation=None):
+def handle_event(event, store=None, candidate=False, simulation=None, *, classifier=None, policy=None, capabilities=None, optional_context=None):
     if not candidate:
         return {}
     if not isinstance(event, dict) or event.get("tool_name") != "spawn_agent":
@@ -28,7 +28,7 @@ def handle_event(event, store=None, candidate=False, simulation=None):
     if not isinstance(original, dict):
         print("mrh: invalid_hook_input", file=sys.stderr)
         return {}
-    synthetic = simulation is not None
+    synthetic = simulation is not None or getattr(classifier, "synthetic", False) is True
     try:
         proposal = Proposal("codex", "simulation" if synthetic else "unknown", event.get("session_id"),
                             event.get("turn_id"), event.get("tool_use_id"), original, synthetic)
@@ -56,15 +56,15 @@ def handle_event(event, store=None, candidate=False, simulation=None):
         return {}
     from .simulation import demo_capabilities, demo_policy
     # No unknown wire protocol or environment credential lookup exists here.
-    caps = demo_capabilities() if synthetic else {"configuration_known": True,
+    caps = capabilities if capabilities is not None else demo_capabilities() if synthetic else {"configuration_known": True,
             "roles": {"default": {"known": True, "rewrite_allowed": False}}, "models": {}}
-    policy = demo_policy() if synthetic else {"top_mode": "Main"}
-    classifier = UnavailableClassifier()
-    if synthetic:
+    policy = policy if policy is not None else demo_policy() if synthetic else {"top_mode": "Main"}
+    classifier = classifier or UnavailableClassifier()
+    if simulation is not None:
         if not isinstance(simulation, dict):
             return {}
         policy = simulation.get("policy", policy)
         caps = simulation.get("capabilities", caps)
         classifier = ScriptedClassifier([Classification(simulation.get("tier"), simulation.get("confidence", 0.9))])
-    decision = process(proposal, policy, caps, store, classifier)
+    decision = process(proposal, policy, caps, store, classifier, optional_context)
     return serialize(decision, original, proposal.tool_call_id)

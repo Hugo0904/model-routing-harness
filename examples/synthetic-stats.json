@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "updated_at": "2026-10-09T21:23:28.795768+00:00",
+  "schema_version": 2,
+  "updated_at": "2026-10-09T21:55:23.676251+00:00",
   "partition": "synthetic",
   "proposals": 5,
   "jev_attempts": 0,
@@ -61,5 +61,23 @@
     ],
     "receipts": []
   },
-  "event_ids_truncated": false
+  "event_ids_truncated": false,
+  "jev": {
+    "source": "unavailable",
+    "attempt_states": {},
+    "requested_models": {},
+    "response_models": {},
+    "input_tokens": null,
+    "output_tokens": null,
+    "known_input_tokens": 0,
+    "known_output_tokens": 0,
+    "usage_unavailable_attempts": 0,
+    "estimated_cost": null
+  },
+  "handback_anomalies": 0,
+  "handback_anomaly_evidence": {
+    "confirmed": 0,
+    "reported": 0,
+    "synthetic": 0
+  }
 }

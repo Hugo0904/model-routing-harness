@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
-from .types import Decision, TIERS, safe_id
+from .types import Decision, REASONS, TIERS, safe_id
 
 
 def now():
@@ -68,6 +68,16 @@ class Store:
                 columns = {r["name"] for r in db.execute("PRAGMA table_info(proposals)")}
                 if "updated_at" not in columns:
                     db.execute("ALTER TABLE proposals ADD COLUMN updated_at TEXT")
+                attempt_columns = {r["name"] for r in db.execute("PRAGMA table_info(attempts)")}
+                for name, kind in [("phase", "TEXT NOT NULL DEFAULT 'legacy'"), ("requested_model", "TEXT"),
+                                   ("response_model", "TEXT"), ("input_tokens", "INTEGER"), ("output_tokens", "INTEGER"),
+                                   ("error_reason", "TEXT"), ("late_outcome", "TEXT"), ("updated_at", "TEXT")]:
+                    if name not in attempt_columns:
+                        db.execute(f"ALTER TABLE attempts ADD COLUMN {name} {kind}")
+                receipt_columns = {r["name"] for r in db.execute("PRAGMA table_info(receipts)")}
+                if "anomaly" not in receipt_columns:
+                    db.execute("ALTER TABLE receipts ADD COLUMN anomaly INTEGER NOT NULL DEFAULT 0")
+                db.execute("PRAGMA user_version=2")
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
             os.close(lock)
@@ -105,20 +115,62 @@ class Store:
                         proposal.session_id, proposal.turn_id, proposal.tool_call_id, "pending", None, timestamp, timestamp))
             return "new", None
 
-    def attempt(self, proposal_id, attempt_id, kind, outcome):
-        if kind not in ("synthetic", "jev") or outcome not in ("started", "returned", "error", "unknown") or not safe_id(attempt_id):
+    def attempt(self, proposal_id, attempt_id, kind, outcome, **metadata):
+        if kind not in ("synthetic", "jev") or outcome not in ("requested", "started", "returned", "error", "unknown", "late_returned", "late_error") or not safe_id(attempt_id):
             raise ValueError("invalid_attempt")
+        allowed = {"requested_model", "response_model", "input_tokens", "output_tokens", "error_reason"}
+        if set(metadata) - allowed:
+            raise ValueError("invalid_attempt_metadata")
+        for field in ("requested_model", "response_model"):
+            if metadata.get(field) is not None and not safe_id(metadata[field]):
+                raise ValueError("invalid_attempt_metadata")
+        for field in ("input_tokens", "output_tokens"):
+            value = metadata.get(field)
+            if value is not None and (type(value) is not int or not 0 <= value <= 2**63-1):
+                raise ValueError("invalid_attempt_metadata")
+        if metadata.get("error_reason") is not None and (not isinstance(metadata["error_reason"], str) or metadata["error_reason"] not in REASONS):
+            raise ValueError("invalid_attempt_metadata")
         identity = proposal_id + ":attempt:" + attempt_id
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             parent = db.execute("SELECT synthetic FROM proposals WHERE id=?", (proposal_id,)).fetchone()
             if not parent or bool(parent["synthetic"]) != (kind == "synthetic"):
                 raise ValueError("evidence_partition_mismatch")
-            old = db.execute("SELECT kind,outcome FROM attempts WHERE id=?", (identity,)).fetchone()
-            if old and (old["kind"], old["outcome"]) != (kind, outcome):
+            old = db.execute("SELECT * FROM attempts WHERE id=?", (identity,)).fetchone()
+            if old and old["kind"] != kind:
                 raise ValueError("conflicting_attempt")
             if not old:
-                db.execute("INSERT INTO attempts VALUES (?,?,?,?,?)", (identity, proposal_id, kind, outcome, now()))
+                if outcome != "requested":
+                    raise ValueError("attempt_not_requested")
+                timestamp = now()
+                db.execute("INSERT INTO attempts(id,proposal_id,kind,outcome,occurred_at,phase,requested_model,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                           (identity, proposal_id, kind, outcome, timestamp, outcome, metadata.get("requested_model"), timestamp))
+                return
+            phase = old["phase"]
+            late = outcome.startswith("late_")
+            if late:
+                if phase != "unknown":
+                    raise ValueError("invalid_late_transition")
+                destination = "late_outcome"
+                terminal = outcome[5:]
+                if old["late_outcome"] is not None and old["late_outcome"] != terminal:
+                    raise ValueError("conflicting_attempt")
+            else:
+                destination, terminal = "phase", outcome
+                valid = phase == outcome or (phase == "requested" and outcome == "started") or (phase == "started" and outcome in ("returned", "error", "unknown"))
+                if not valid:
+                    raise ValueError("conflicting_attempt")
+            for field, value in metadata.items():
+                if old[field] is not None and old[field] != value:
+                    raise ValueError("conflicting_attempt_metadata")
+            updates = {destination: terminal, **metadata}
+            if not late:
+                updates["outcome"] = outcome
+            if all(old[k] == v for k, v in updates.items()):
+                return
+            updates["updated_at"] = now()
+            assignment = ",".join(k + "=?" for k in updates)
+            db.execute(f"UPDATE attempts SET {assignment} WHERE id=?", (*updates.values(), identity))
 
     def complete(self, proposal_id, decision):
         if not isinstance(decision, Decision):
@@ -174,8 +226,7 @@ class Store:
                 raise ValueError("uncorrelated_receipt")
             if bool(parent["synthetic"]) != (kind == "synthetic"):
                 raise ValueError("evidence_partition_mismatch")
-            if parent["decision"] and json.loads(parent["decision"])["action"] == "return_to_main":
-                raise ValueError("unexpected_child_for_main")
+            anomaly = int(bool(parent["decision"] and json.loads(parent["decision"])["action"] == "return_to_main"))
             old = db.execute("SELECT body FROM receipts WHERE id=?", (receipt["event_id"],)).fetchone()
             if old and old["body"] != body:
                 raise ValueError("conflicting_receipt")
@@ -185,9 +236,9 @@ class Store:
             if duplicate and not old:
                 raise ValueError("duplicate_agent_receipt")
             if not old:
-                db.execute("INSERT INTO receipts VALUES (?,?,?,?,?,?,?,?,?)",
+                db.execute("INSERT INTO receipts VALUES (?,?,?,?,?,?,?,?,?,?)",
                            (receipt["event_id"], receipt["proposal_id"], receipt["agent_id"], kind,
-                            receipt["source_ref"], actual, int(verified), body, now()))
+                            receipt["source_ref"], actual, int(verified), body, now(), anomaly))
 
     def stats(self, synthetic=False):
         with self.connect() as db:
@@ -195,11 +246,12 @@ class Store:
             rows = db.execute("SELECT * FROM proposals WHERE synthetic=?", (int(synthetic),)).fetchall()
             attempts = db.execute("SELECT a.* FROM attempts a JOIN proposals p ON p.id=a.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
             receipts = db.execute("SELECT r.* FROM receipts r JOIN proposals p ON p.id=r.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
-        timestamps = [r["updated_at"] or r["occurred_at"] for r in rows] + [r["occurred_at"] for r in attempts+receipts]
-        out = {"schema_version": 1, "updated_at": max(timestamps, default=None),
+        timestamps = [r["updated_at"] or r["occurred_at"] for r in rows+attempts] + [r["occurred_at"] for r in receipts]
+        started = [r for r in attempts if r["phase"] != "requested"]
+        out = {"schema_version": 2, "updated_at": max(timestamps, default=None),
                "partition": "synthetic" if synthetic else "live", "proposals": len(rows),
-               "jev_attempts": sum(r["kind"] == "jev" for r in attempts),
-               "synthetic_attempts": sum(r["kind"] == "synthetic" for r in attempts),
+               "jev_attempts": sum(r["kind"] == "jev" for r in started),
+               "synthetic_attempts": sum(r["kind"] == "synthetic" for r in started),
                "classified_tasks": 0, "low_confidence_tasks": 0, "pending_proposals": 0,
                "tiers": dict.fromkeys(TIERS, 0), "outcomes": {}, "requested_models": {},
                "confirmed_children": 0, "simulated_children": 0, "reported_children": 0,
@@ -216,6 +268,37 @@ class Store:
                             "attempts": sorted(r["id"] for r in attempts)[:100],
                             "receipts": sorted(r["id"] for r in receipts)[:100]}
         out["event_ids_truncated"] = any(len(r) > 100 for r in (rows, attempts, receipts))
+        provider = [r for r in started if r["requested_model"] is not None]
+        telemetry = {"source": ("explicit_synthetic_offline_transport" if synthetic else "actual_provider_transport") if provider else "unavailable",
+                     "attempt_states": {}, "requested_models": {}, "response_models": {},
+                     "input_tokens": None, "output_tokens": None, "known_input_tokens": 0,
+                     "known_output_tokens": 0, "usage_unavailable_attempts": 0, "estimated_cost": None}
+        for r in provider:
+            phase = r["phase"]
+            telemetry["attempt_states"][phase] = telemetry["attempt_states"].get(phase, 0) + 1
+            if r["late_outcome"]:
+                label = "late_" + r["late_outcome"]
+                telemetry["attempt_states"][label] = telemetry["attempt_states"].get(label, 0) + 1
+            for source, target in (("requested_model", "requested_models"), ("response_model", "response_models")):
+                if r[source] is not None:
+                    telemetry[target][r[source]] = telemetry[target].get(r[source], 0) + 1
+            if r["input_tokens"] is None or r["output_tokens"] is None:
+                telemetry["usage_unavailable_attempts"] += 1
+            else:
+                telemetry["known_input_tokens"] += r["input_tokens"]
+                telemetry["known_output_tokens"] += r["output_tokens"]
+        if provider and not telemetry["usage_unavailable_attempts"]:
+            telemetry["input_tokens"] = telemetry["known_input_tokens"]
+            telemetry["output_tokens"] = telemetry["known_output_tokens"]
+            if all(r["response_model"] == "jev-1.13.0" for r in provider):
+                telemetry["estimated_cost"] = {"amount": telemetry["input_tokens"] * 0.042 / 1_000_000,
+                        "currency": "USD", "kind": "estimate", "model": "jev-1.13.0", "unit": "per-million-input-tokens",
+                        "price_source": "https://docs.typesafe.ai/models", "price_date": "2026-10-10"}
+        out["jev"] = telemetry
+        out["handback_anomalies"] = sum(r["anomaly"] for r in receipts)
+        out["handback_anomaly_evidence"] = {"confirmed": sum(r["anomaly"] for r in receipts if r["verified"]),
+                                           "reported": sum(r["anomaly"] for r in receipts if r["evidence_kind"] == "reported"),
+                                           "synthetic": sum(r["anomaly"] for r in receipts if r["evidence_kind"] == "synthetic")}
         for row in rows:
             if row["state"] == "pending":
                 out["pending_proposals"] += 1

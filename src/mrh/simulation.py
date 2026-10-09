@@ -6,6 +6,7 @@ from .types import Proposal
 
 def demo_capabilities():
     return {"configuration_known": True, "main_model": "gpt-6-luna", "main_effort": "max",
+            "original_model": "gpt-6-luna", "original_effort": "max", "original_resolution_known": True,
             "roles": {"default": {"known": True, "rewrite_allowed": True},
                       "fixed": {"known": True, "rewrite_allowed": False, "fixed_model": "gpt-6-astra"}},
             "models": {"gpt-6-luna": {"available": True, "efforts": ["max"]},

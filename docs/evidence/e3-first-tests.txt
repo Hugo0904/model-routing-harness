@@ -1,0 +1,115 @@
+test_color_respects_tty_plain_and_no_color (test_cli.CliTests.test_color_respects_tty_plain_and_no_color) ... ok
+test_config_apply_refusal_returns_nonzero (test_cli.CliTests.test_config_apply_refusal_returns_nonzero) ... ok
+test_config_apply_requires_explicit_flag (test_cli.CliTests.test_config_apply_requires_explicit_flag) ... ok
+test_config_preview_uses_explicit_home_and_never_applies_by_default (test_cli.CliTests.test_config_preview_uses_explicit_home_and_never_applies_by_default) ... ok
+test_config_refused_preview_returns_nonzero_and_skips_apply (test_cli.CliTests.test_config_refused_preview_returns_nonzero_and_skips_apply) ... ok
+test_doctor_does_not_import_store_or_touch_external_services (test_cli.CliTests.test_doctor_does_not_import_store_or_touch_external_services) ... FAIL
+test_help_does_not_import_store (test_cli.CliTests.test_help_does_not_import_store) ... ok
+test_hook_adapter_errors_return_empty_json_and_safe_error_code (test_cli.CliTests.test_hook_adapter_errors_return_empty_json_and_safe_error_code) ... ok
+test_hook_simulation_passes_synthetic_tier_and_default_confidence (test_cli.CliTests.test_hook_simulation_passes_synthetic_tier_and_default_confidence) ... ok
+test_hook_simulation_requires_candidate_and_explicit_database (test_cli.CliTests.test_hook_simulation_requires_candidate_and_explicit_database) ... ok
+test_hook_stdout_is_protocol_only_and_default_is_passthrough (test_cli.CliTests.test_hook_stdout_is_protocol_only_and_default_is_passthrough) ... ok
+test_stats_json_is_the_store_object_without_presentation_fields (test_cli.CliTests.test_stats_json_is_the_store_object_without_presentation_fields) ... ok
+test_synthetic_stats_are_requested_only_when_explicit (test_cli.CliTests.test_synthetic_stats_are_requested_only_when_explicit) ... ok
+test_narrow_output_sanitizes_untrusted_labels_and_wraps (test_cli.TerminalTests.test_narrow_output_sanitizes_untrusted_labels_and_wraps) ... ok
+test_terminal_controls_are_removed (test_cli.TerminalTests.test_terminal_controls_are_removed) ... ok
+test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible (test_cli.TerminalTests.test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible) ... FAIL
+test_candidate_translates_only_explicit_simulation (test_core.CoreTests.test_candidate_translates_only_explicit_simulation) ... ok
+test_confidence_threshold_and_malformed_values (test_core.CoreTests.test_confidence_threshold_and_malformed_values) ... ok
+test_context_contract_never_boosts_confidence (test_core.CoreTests.test_context_contract_never_boosts_confidence) ... ok
+test_cost_vector_requires_all_components_and_source (test_core.CoreTests.test_cost_vector_requires_all_components_and_source) ... ok
+test_explicit_fixed_role_and_unrelated_skip (test_core.CoreTests.test_explicit_fixed_role_and_unrelated_skip) ... ok
+test_failure_unavailable_timeout_fail_open (test_core.CoreTests.test_failure_unavailable_timeout_fail_open) ... ok
+test_fixed_parent_unchanged_and_guards (test_core.CoreTests.test_fixed_parent_unchanged_and_guards) ... ok
+test_cli_exports_same_v2_provider_stats_without_network (test_e3_facts.FactsTests.test_cli_exports_same_v2_provider_stats_without_network) ... ok
+test_lifecycle_concurrent_replays_count_once_conflicts_rejected (test_e3_facts.FactsTests.test_lifecycle_concurrent_replays_count_once_conflicts_rejected) ... ok
+test_main_unexpected_trusted_child_is_anomaly_not_handback_success (test_e3_facts.FactsTests.test_main_unexpected_trusted_child_is_anomaly_not_handback_success) ... ok
+test_resolved_baseline_cost_negative_positive_unknown_and_fixed (test_e3_facts.FactsTests.test_resolved_baseline_cost_negative_positive_unknown_and_fixed) ... ok
+test_v1_migration_preserves_prior_events_and_does_not_invent_usage (test_e3_facts.FactsTests.test_v1_migration_preserves_prior_events_and_does_not_invent_usage) ... ok
+test_apply_is_idempotent_and_preserves_other_entries_and_config_bytes (test_installer.InstallerTests.test_apply_is_idempotent_and_preserves_other_entries_and_config_bytes) ... ok
+test_config_change_after_preview_is_refused (test_installer.InstallerTests.test_config_change_after_preview_is_refused) ... ok
+test_cooperating_writers_serialize_and_stale_plan_cannot_overwrite (test_installer.InstallerTests.test_cooperating_writers_serialize_and_stale_plan_cannot_overwrite) ... ok
+test_disable_removes_only_owned_entries_and_keeps_later_edits (test_installer.InstallerTests.test_disable_removes_only_owned_entries_and_keeps_later_edits) ... ok
+test_fixture_cannot_apply_after_its_scope_closes (test_installer.InstallerTests.test_fixture_cannot_apply_after_its_scope_closes) ... ok
+test_fixture_does_not_claim_an_unmarked_matching_hook (test_installer.InstallerTests.test_fixture_does_not_claim_an_unmarked_matching_hook) ... ok
+test_fixture_rejects_a_plan_for_any_other_home (test_installer.InstallerTests.test_fixture_rejects_a_plan_for_any_other_home) ... ok
+test_invalid_json_and_duplicate_keys_are_refused (test_installer.InstallerTests.test_invalid_json_and_duplicate_keys_are_refused) ... ok
+test_invalid_toml_is_refused (test_installer.InstallerTests.test_invalid_toml_is_refused) ... ok
+test_malformed_owned_marker_is_ambiguous_and_left_untouched (test_installer.InstallerTests.test_malformed_owned_marker_is_ambiguous_and_left_untouched) ... ok
+test_noncooperating_edit_after_hash_check_remains_a_known_race (test_installer.InstallerTests.test_noncooperating_edit_after_hash_check_remains_a_known_race) ... ok
+test_preview_is_read_only_and_explains_public_mutation_boundary (test_installer.InstallerTests.test_preview_is_read_only_and_explains_public_mutation_boundary) ... ok
+test_public_apply_and_disable_refuse_without_reaching_replacement (test_installer.InstallerTests.test_public_apply_and_disable_refuse_without_reaching_replacement) ... ok
+test_source_hash_change_after_preview_is_refused (test_installer.InstallerTests.test_source_hash_change_after_preview_is_refused) ... ok
+test_symlink_targets_are_refused (test_installer.InstallerTests.test_symlink_targets_are_refused) ... ok
+test_toml_hooks_are_refused_without_any_fixture_write (test_installer.InstallerTests.test_toml_hooks_are_refused_without_any_fixture_write) ... ok
+test_cli_hook_default_and_explicit_simulation_end_to_end (test_integration.IntegrationTests.test_cli_hook_default_and_explicit_simulation_end_to_end) ... ok
+test_cli_json_and_text_share_stats_without_reclassification (test_integration.IntegrationTests.test_cli_json_and_text_share_stats_without_reclassification) ... FAIL
+test_store_attempt_and_complete_failures_leave_unknown_pending (test_integration.IntegrationTests.test_store_attempt_and_complete_failures_leave_unknown_pending) ... mrh: store_error stage=attempt
+mrh: store_error stage=complete
+ok
+test_cached_patch_cannot_contain_raw_text_and_missing_key_is_not_recreated (test_store.StoreTests.test_cached_patch_cannot_contain_raw_text_and_missing_key_is_not_recreated) ... ok
+test_canary_absent_from_facts_diagnostics_and_public_json (test_store.StoreTests.test_canary_absent_from_facts_diagnostics_and_public_json) ... ok
+test_live_unavailable_and_reported_receipt_unknown_model (test_store.StoreTests.test_live_unavailable_and_reported_receipt_unknown_model) ... ok
+test_pending_receipt_and_raw_optional_metadata_are_rejected (test_store.StoreTests.test_pending_receipt_and_raw_optional_metadata_are_rejected) ... ok
+test_receipts_correlate_and_do_not_promote_claimed_models (test_store.StoreTests.test_receipts_correlate_and_do_not_promote_claimed_models) ... ok
+test_replay_cached_and_conflict_pending_do_not_reclassify (test_store.StoreTests.test_replay_cached_and_conflict_pending_do_not_reclassify) ... ok
+test_retries_counts_later_delegations_and_query_is_pure (test_store.StoreTests.test_retries_counts_later_delegations_and_query_is_pure) ... ok
+test_separate_process_claims_same_and_different_ids (test_store.StoreTests.test_separate_process_claims_same_and_different_ids) ... ok
+test_store_failure_preserves_and_sanitizes_diagnostic (test_store.StoreTests.test_store_failure_preserves_and_sanitizes_diagnostic) ... ok
+test_top_main_never_fabricates_child_but_records_correlated_anomaly (test_store.StoreTests.test_top_main_never_fabricates_child_but_records_correlated_anomaly) ... ok
+test_jev_telemetry_is_separate_from_child_actual_models (test_terminal_provider.ProviderTelemetryRenderTests.test_jev_telemetry_is_separate_from_child_actual_models) ... ok
+test_narrow_composition_and_sections_fit_width_28 (test_terminal_provider.ProviderTelemetryRenderTests.test_narrow_composition_and_sections_fit_width_28) ... ok
+test_old_e2_statistics_show_new_fields_as_unavailable (test_terminal_provider.ProviderTelemetryRenderTests.test_old_e2_statistics_show_new_fields_as_unavailable) ... ok
+test_plain_composition_bar_is_segmented_and_shows_counts_and_shares (test_terminal_provider.ProviderTelemetryRenderTests.test_plain_composition_bar_is_segmented_and_shows_counts_and_shares) ... ok
+test_cancellation_in_gap_before_transport_entry_does_not_start_attempt (test_typesafe.TypesafeTests.test_cancellation_in_gap_before_transport_entry_does_not_start_attempt) ... ok
+test_candidate_uses_injected_transport_and_preserves_main_and_input (test_typesafe.TypesafeTests.test_candidate_uses_injected_transport_and_preserves_main_and_input) ... ok
+test_default_disable_export_key_and_early_host_gates_have_zero_attempts (test_typesafe.TypesafeTests.test_default_disable_export_key_and_early_host_gates_have_zero_attempts) ... ok
+test_exact_one_attempt_for_typed_http_and_network_failures_no_raw_diagnostics (test_typesafe.TypesafeTests.test_exact_one_attempt_for_typed_http_and_network_failures_no_raw_diagnostics) ... ok
+test_fixed_https_transport_certificate_deadline_size_and_cleanup (test_typesafe.TypesafeTests.test_fixed_https_transport_certificate_deadline_size_and_cleanup) ... ok
+test_inflight_timeout_late_response_keeps_unknown_and_frozen_decision (test_typesafe.TypesafeTests.test_inflight_timeout_late_response_keeps_unknown_and_frozen_decision) ... ok
+test_late_callback_cannot_admit_request_after_routing_timeout (test_typesafe.TypesafeTests.test_late_callback_cannot_admit_request_after_routing_timeout) ... ok
+test_mismatch_malformed_and_unknown_usage_preserve_safe_model_only (test_typesafe.TypesafeTests.test_mismatch_malformed_and_unknown_usage_preserve_safe_model_only) ... ok
+test_provider_model_echo_cannot_export_credential_task_or_summary (test_typesafe.TypesafeTests.test_provider_model_echo_cannot_export_credential_task_or_summary) ... ok
+test_unknown_or_claimed_live_injected_transport_is_rejected (test_typesafe.TypesafeTests.test_unknown_or_claimed_live_injected_transport_is_rejected) ... ok
+test_wire_confidence_context_and_safe_telemetry_chain (test_typesafe.TypesafeTests.test_wire_confidence_context_and_safe_telemetry_chain) ... ok
+test_choice_maps_all_four_tiers_and_keeps_provider_confidence (test_typesafe_protocol.TypeSafeProtocolTests.test_choice_maps_all_four_tiers_and_keeps_provider_confidence) ... ok
+test_confidence_boundary_values_are_preserved (test_typesafe_protocol.TypeSafeProtocolTests.test_confidence_boundary_values_are_preserved) ... ok
+test_invalid_choice_or_probability_distribution_is_malformed (test_typesafe_protocol.TypeSafeProtocolTests.test_invalid_choice_or_probability_distribution_is_malformed) ... ok
+test_invalid_confidence_is_malformed (test_typesafe_protocol.TypeSafeProtocolTests.test_invalid_confidence_is_malformed) ... ok
+test_invalid_optional_context_degrades_to_task_only (test_typesafe_protocol.TypeSafeProtocolTests.test_invalid_optional_context_degrades_to_task_only) ... ok
+test_invalid_or_unsafe_model_is_malformed_without_echoing_response (test_typesafe_protocol.TypeSafeProtocolTests.test_invalid_or_unsafe_model_is_malformed_without_echoing_response) ... ok
+test_invalid_task_raises_safe_typed_failure (test_typesafe_protocol.TypeSafeProtocolTests.test_invalid_task_raises_safe_typed_failure) ... ok
+test_missing_required_response_fields_are_malformed (test_typesafe_protocol.TypeSafeProtocolTests.test_missing_required_response_fields_are_malformed) ... ok
+test_safe_model_mismatch_is_typed_and_keeps_only_safe_telemetry (test_typesafe_protocol.TypeSafeProtocolTests.test_safe_model_mismatch_is_typed_and_keeps_only_safe_telemetry) ... ok
+test_serialize_request_uses_only_task_and_optional_summary (test_typesafe_protocol.TypeSafeProtocolTests.test_serialize_request_uses_only_task_and_optional_summary) ... ok
+test_telemetry_contains_only_pinned_actual_models_and_valid_usage (test_typesafe_protocol.TypeSafeProtocolTests.test_telemetry_contains_only_pinned_actual_models_and_valid_usage) ... ok
+test_usage_is_unavailable_when_absent_or_invalid (test_typesafe_protocol.TypeSafeProtocolTests.test_usage_is_unavailable_when_absent_or_invalid) ... ok
+
+======================================================================
+FAIL: test_doctor_does_not_import_store_or_touch_external_services (test_cli.CliTests.test_doctor_does_not_import_store_or_touch_external_services)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/shawn/Code/model-routing-harness/tests/test_cli.py", line 116, in test_doctor_does_not_import_store_or_touch_external_services
+    self.assertIn("Jev provider: unavailable", output.getvalue())
+AssertionError: 'Jev provider: unavailable' not found in 'MRH  /  local capability check\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nLIVE CLASSIFICATION\n  TypeSafe Jev adapter: default-disabled; real provider unverified\n  Credentials and network: not probed\n\nCODEX\n  Candidate hook adapter: available for isolated use\n  Desktop and CLI adoption: unverified\n  Global hook activation: not checked\n\nOTHER CLIS\n  Claude Code: unsupported\n  Gemini CLI: unsupported\n\nDATA\n  Statistics are read from the local event store when requested\n  Cost, token, quota, and actual model remain unavailable without evidence\n'
+
+======================================================================
+FAIL: test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible (test_cli.TerminalTests.test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/shawn/Code/model-routing-harness/tests/test_cli.py", line 79, in test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible
+    self.assertIn("10 classified tasks", rendered)
+AssertionError: '10 classified tasks' not found in 'MRH  /  LIVE event statistics\nUpdated: Unavailable\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nACTIVITY\n  Proposals: 0\n  Jev request attempts: 0\n  Synthetic attempts: 0\n  Classified tasks: 10\n  Low-confidence tasks: 0\n\nTIER COMPOSITION\n  ·············|░░░░░░░░|▒▒▒▒|███\n  10 tier assignments · Light 5 (50.0%)\n  Small 3 (30.0%)   Mid 1 (10.0%)   Top 1\n  (10.0%)\n\nPOLICY OUTCOMES\n  None recorded\n\nREQUESTED MODELS\n  None recorded\n\nCHILD EXECUTION\n  Confirmed children: 0\n  Simulated children: Unavailable\n  Reported children: Unavailable\n  Children with unknown actual model: 0\n\nACTUAL MODELS\n  None recorded\n\nJEV TELEMETRY\n  Source: Unavailable\n  Attempt states: Unavailable\n  Requested Jev model versions: Unavailable\n  Returned Jev model versions: Unavailable\n  Input token total: Unavailable\n  Output token total: Unavailable\n  Known input tokens: Unavailable\n  Known output tokens: Unavailable\n  Attempts with unavailable usage: Unavailable\n  Estimated Jev cost: Unavailable\n\nHANDBACK ANOMALIES\n  Recorded anomaly count: Unavailable\n  Evidence: Unavailable\n\nCOST / USAGE\n  Cost: Unavailable\n  Tokens: Unavailable\n  Quota: Unavailable\n\nCAPABILITIES\n  claude: unsupported\n  codex: candidate_unverified\n  gemini: unsupported\n  jev: unavailable\n'
+
+======================================================================
+FAIL: test_cli_json_and_text_share_stats_without_reclassification (test_integration.IntegrationTests.test_cli_json_and_text_share_stats_without_reclassification)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/shawn/Code/model-routing-harness/tests/test_integration.py", line 37, in test_cli_json_and_text_share_stats_without_reclassification
+    self.assertIn("Top 2", plain.getvalue())
+AssertionError: 'Top 2' not found in 'MRH  /  SYNTHETIC event statistics\nUpdated: 2026-10-09T21:54:55.759874+00:00\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nACTIVITY\n  Proposals: 5\n  Jev request attempts: 0\n  Synthetic attempts: 5\n  Classified tasks: 5\n  Low-confidence tasks: 1\n\nTIER COMPOSITION\n  ······|░░░░░░|▒▒▒▒▒▒|██████████\n  5 tier assignments · Light 1 (20.0%)   Small 1 (20.0%)   Mid 1 (20.0%)   Top\n  2 (40.0%)\n\nPOLICY OUTCOMES\n  cost_unknown: 2\n  low_confidence: 1\n  top_fixed_requested: 1\n  top_main_requested: 1\n\nREQUESTED MODELS\n  gpt-6-astra: 1\n\nCHILD EXECUTION\n  Confirmed children: 0\n  Simulated children: 0\n  Reported children: 0\n  Children with unknown actual model: 0\n\nACTUAL MODELS\n  None recorded\n\nJEV TELEMETRY\n  Source: unavailable\n  Attempt states: None recorded\n  Requested Jev model versions: None recorded\n  Returned Jev model versions: None recorded\n  Input token total: Unavailable\n  Output token total: Unavailable\n  Known input tokens: 0\n  Known output tokens: 0\n  Attempts with unavailable usage: 0\n  Estimated Jev cost: Unavailable\n\nHANDBACK ANOMALIES\n  Recorded anomaly count: 0\n  Evidence: {"confirmed":0,"reported":0,"synthetic":0}\n\nCOST / USAGE\n  Cost: Unavailable\n  Tokens: Unavailable\n  Quota: Unavailable\n\nCAPABILITIES\n  claude: unsupported\n  codex: candidate_unverified\n  gemini: unsupported\n  jev: unavailable\n'
+
+----------------------------------------------------------------------
+Ran 84 tests in 0.604s
+
+FAILED (failures=3)

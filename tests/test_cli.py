@@ -113,7 +113,7 @@ class CliTests(unittest.TestCase):
         with forbid_store_imports(), contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
             result = cli.main(["doctor", "--plain"])
         self.assertEqual(result, 0)
-        self.assertIn("Jev provider: unavailable", output.getvalue())
+        self.assertIn("TypeSafe Jev adapter: default-disabled; real provider unverified", output.getvalue())
         self.assertIn("not probed", output.getvalue())
         self.assertIn("Global hook activation: not checked", output.getvalue())
 

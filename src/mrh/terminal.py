@@ -18,6 +18,7 @@ _ANSI = re.compile(
     re.DOTALL,
 )
 _TIER_ORDER = ("Light", "Small", "Mid", "Top")
+_TIER_GLYPH = {"Light": "·", "Small": "░", "Mid": "▒", "Top": "█"}
 _TIER_ANSI = {
     "Light": "\x1b[38;5;110m",
     "Small": "\x1b[38;5;75m",
@@ -119,13 +120,65 @@ def _bar_segments(counts: list[int], width: int) -> list[int]:
     total = sum(counts)
     if total <= 0 or width <= 0:
         return [0] * len(counts)
-    exact = [count * width / total for count in counts]
-    sizes = [math.floor(part) for part in exact]
+    active = [index for index, count in enumerate(counts) if count > 0]
+    width = max(width, len(active))
+    exact = [count * (width - len(active)) / total for count in counts]
+    sizes = [math.floor(part) + (1 if counts[index] > 0 else 0) for index, part in enumerate(exact)]
     remainder = width - sum(sizes)
-    order = sorted(range(len(counts)), key=lambda index: (exact[index] - sizes[index], -index), reverse=True)
+    order = sorted(range(len(counts)), key=lambda index: (exact[index] - math.floor(exact[index]), -index), reverse=True)
     for index in order[:remainder]:
         sizes[index] += 1
     return sizes
+
+
+def _mapping_field(label: str, value: Any, width: int) -> list[str]:
+    prefix = f"  {label}:"
+    if not isinstance(value, Mapping):
+        return _wrap(f"{prefix} Unavailable", width)
+    if not value:
+        return _wrap(f"{prefix} None recorded", width)
+    lines = _wrap(prefix, width)
+    for key in sorted(value, key=lambda item: sanitize_text(item).casefold()):
+        lines.extend(_wrap(f"{sanitize_text(key)}: {_value(value[key])}", width, "    "))
+    return lines
+
+
+def _jev_telemetry_lines(jev: Any, width: int) -> list[str]:
+    telemetry = jev if isinstance(jev, Mapping) else {}
+    lines: list[str] = []
+    lines.extend(_wrap(f"  Source: {_value(telemetry.get('source'))}", width))
+    lines.extend(_mapping_field("Attempt states", telemetry.get("attempt_states"), width))
+    lines.extend(_mapping_field("Requested Jev model versions", telemetry.get("requested_models"), width))
+    lines.extend(_mapping_field("Returned Jev model versions", telemetry.get("response_models"), width))
+    for key, label in (
+        ("input_tokens", "Input token total"),
+        ("output_tokens", "Output token total"),
+        ("known_input_tokens", "Known input tokens"),
+        ("known_output_tokens", "Known output tokens"),
+        ("usage_unavailable_attempts", "Attempts with unavailable usage"),
+    ):
+        lines.extend(_wrap(f"  {label}: {_value(telemetry.get(key))}", width))
+
+    cost = telemetry.get("estimated_cost")
+    if not isinstance(cost, Mapping):
+        lines.extend(_wrap("  Estimated Jev cost: Unavailable", width))
+    else:
+        amount = _value(cost.get("amount"))
+        currency = _value(cost.get("currency"))
+        unit = _value(cost.get("unit"))
+        lines.extend(_wrap(f"  Estimated Jev cost: {amount} {currency} ({unit})", width))
+        lines.extend(_wrap("  Cost type: Estimate", width))
+        lines.extend(_wrap(f"  Estimate model: {_value(cost.get('model'))}", width))
+        lines.extend(_wrap(f"  Price source: {_value(cost.get('price_source'))}", width))
+        lines.extend(_wrap(f"  Price date: {_value(cost.get('price_date'))}", width))
+    return lines
+
+
+def _share(count: int, total: int) -> str:
+    percentage = count * 100 / total
+    if count > 0 and percentage < 0.05:
+        return "<0.1%"
+    return f"{percentage:.1f}%"
 
 
 def render_stats(
@@ -170,6 +223,9 @@ def render_stats(
             ],
         ),
         ("ACTUAL MODELS", []),
+        ("JEV TELEMETRY", []),
+        ("HANDBACK ANOMALIES", [f"Recorded anomaly count: {_value(stats.get('handback_anomalies'))}",
+                               f"Evidence: {_value(stats.get('handback_anomaly_evidence'))}"]),
         (
             "COST / USAGE",
             [
@@ -195,13 +251,14 @@ def render_stats(
                 bar_width = max(8, min(28, columns - 10))
                 sizes = _bar_segments(counts, bar_width)
                 bar_parts = [
-                    _color("█" * size, _TIER_ANSI[tier], color)
+                    _color(_TIER_GLYPH[tier] * size, _TIER_ANSI[tier], color)
                     for tier, size in zip(_TIER_ORDER, sizes)
                     if size
                 ]
-                lines.append("  " + "".join(bar_parts))
-                labels = "   ".join(f"{tier} {count}" for tier, count in zip(_TIER_ORDER, counts))
-                lines.extend(_wrap(f"{total} classified tasks · {labels}", columns, "  "))
+                lines.append("  " + "|".join(bar_parts))
+                lines.extend(_wrap(f"{total} classified tasks", columns, "  "))
+                for tier, count in zip(_TIER_ORDER, counts):
+                    lines.extend(_wrap(f"{tier} {count} ({_share(count, total)})", columns, "  "))
             continue
         if heading == "POLICY OUTCOMES":
             lines.extend(_mapping_lines(stats.get("outcomes"), columns))
@@ -211,6 +268,9 @@ def render_stats(
             continue
         if heading == "ACTUAL MODELS":
             lines.extend(_mapping_lines(stats.get("actual_models"), columns))
+            continue
+        if heading == "JEV TELEMETRY":
+            lines.extend(_jev_telemetry_lines(stats.get("jev"), columns))
             continue
         if heading == "CAPABILITIES":
             lines.extend(_mapping_lines(stats.get("capabilities"), columns))

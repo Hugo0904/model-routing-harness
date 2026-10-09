@@ -2,11 +2,20 @@
 import math
 import queue
 import threading
-from .types import Classification, ContextSummary, Decision, TIERS, safe_id
+from .types import Classification, ContextSummary, Decision, REASONS, TIERS, safe_id
+from .attempts import GuardedAttempts
 
 
 class ClassifierUnavailable(Exception):
     pass
+
+
+class ClassifierFailure(Exception):
+    """Safe typed provider failure; telemetry may contain only validated scalars."""
+    def __init__(self, reason, telemetry=None):
+        self.reason = reason
+        self.telemetry = telemetry or {}
+        super().__init__(reason)
 
 
 class UnavailableClassifier:
@@ -74,7 +83,7 @@ def cheaper(source, target):
     return all(b[k] <= a[k] for k in a) and any(b[k] < a[k] for k in a)
 
 
-def route(proposal, policy, host_capabilities, classifier=None, optional_context=None, record_attempt=lambda *_: None):
+def route(proposal, policy, host_capabilities, classifier=None, optional_context=None, record_attempt=lambda *_, **__: None):
     synthetic = proposal.synthetic
     classification = None
     context_status = "absent"
@@ -123,14 +132,20 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
             context_status = "timeout"
         except Exception:
             context_status = "error"
+    attempts = GuardedAttempts(timeout, record_attempt)
     try:
-        result = bounded_call(lambda: classifier.classify(proposal.task, context, record_attempt), timeout)
+        result = bounded_call(lambda: classifier.classify(proposal.task, context, attempts), timeout)
+        attempts.check()
     except ClassifierUnavailable:
         return preserve("classifier_unavailable")
+    except ClassifierFailure as exc:
+        return preserve(exc.reason if isinstance(exc.reason, str) and exc.reason in REASONS else "classifier_error")
     except TimeoutError:
         return preserve("classifier_timeout")
     except Exception:
         return preserve("classifier_error")
+    finally:
+        attempts.cancel()
     if isinstance(result, dict):
         try:
             result = Classification(**result)
@@ -164,7 +179,12 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
         rates = policy.get("rates", {})
         if not isinstance(rates, dict):
             return preserve("invalid_policy")
-        source_model = host_capabilities.get("main_model")
+        source_model = host_capabilities.get("original_model")
+        source_effort = host_capabilities.get("original_effort")
+        if (not safe_id(source_model) or host_capabilities.get("original_resolution_known") is not True
+                or "original_effort" not in host_capabilities
+                or (source_effort is not None and not safe_id(source_effort))):
+            return preserve("cost_unknown")
         if not cheaper(rates.get(source_model), rates.get(model)):
             return preserve("cost_unknown")
     patch = {"model": model}
