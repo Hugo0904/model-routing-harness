@@ -1,0 +1,13 @@
+{
+  "command": "PYTHONPATH=src:tests python3 -m unittest test_codex_host_receipt test_host_cleanup test_integration test_store.StoreTests.test_receipts_correlate_and_do_not_promote_claimed_models test_store.StoreTests.test_top_main_never_fabricates_child_but_records_correlated_anomaly -v",
+  "tests": 11,
+  "passed": true,
+  "wall_seconds": 0.367,
+  "scope": "native Post JSON shape, reproduced cleanup failure, Hook/Store direct consumers",
+  "E3_unaffected_results_reused": true,
+  "runner_diagnostic": {
+    "cause": "unchanged multiprocessing test cannot spawn from <stdin> main",
+    "prior_wall_seconds": 15.276,
+    "selected_affected_scope_does_not_include_unchanged_concurrency": "E3 valid concurrency evidence reused"
+  }
+}

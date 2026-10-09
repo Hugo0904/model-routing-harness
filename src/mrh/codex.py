@@ -1,5 +1,6 @@
 """Codex Hook candidate. Successful serialization is not host adoption."""
 import copy
+import json
 import sys
 from .core import Classification, ScriptedClassifier, UnavailableClassifier
 from .service import process
@@ -40,6 +41,14 @@ def handle_event(event, store=None, candidate=False, simulation=None, *, classif
         if store is None:
             return {}
         response = event.get("tool_response")
+        # Installed Codex 0.159.3 / 0.162 emits spawn_agent output as a JSON
+        # string. The earlier injected candidate also accepts a dict. Keep only
+        # the bounded agent identifier; neither form verifies actual model.
+        if isinstance(response, str):
+            try:
+                response = json.loads(response) if len(response.encode()) <= 65536 else None
+            except (ValueError, UnicodeError):
+                response = None
         agent_id = response.get("agent_id") if isinstance(response, dict) else None
         if not safe_id(agent_id):
             print("mrh: child_receipt_unavailable", file=sys.stderr)

@@ -1,0 +1,18 @@
+test_installed_json_string_output_and_rewritten_input_record_one_synthetic_child (test_codex_host_receipt.InstalledShapeReceiptTests.test_installed_json_string_output_and_rewritten_input_record_one_synthetic_child) ... ok
+test_malformed_oversized_or_non_id_output_is_safe_unavailable (test_codex_host_receipt.InstalledShapeReceiptTests.test_malformed_oversized_or_non_id_output_is_safe_unavailable) ... ok
+test_unexpected_json_string_child_after_main_is_retained_as_anomaly (test_codex_host_receipt.InstalledShapeReceiptTests.test_unexpected_json_string_child_after_main_is_retained_as_anomaly) ... ok
+test_changed_group_is_never_signalled (test_host_cleanup.CleanupTests.test_changed_group_is_never_signalled) ... ok
+test_ignored_term_is_followed_by_group_kill_and_reap (test_host_cleanup.CleanupTests.test_ignored_term_is_followed_by_group_kill_and_reap) ... ok
+test_signal_permission_failure_retains_owned_home_and_reports_failure (test_host_cleanup.CleanupTests.test_signal_permission_failure_retains_owned_home_and_reports_failure) ... ok
+test_cli_hook_default_and_explicit_simulation_end_to_end (test_integration.IntegrationTests.test_cli_hook_default_and_explicit_simulation_end_to_end) ... ok
+test_cli_json_and_text_share_stats_without_reclassification (test_integration.IntegrationTests.test_cli_json_and_text_share_stats_without_reclassification) ... ok
+test_store_attempt_and_complete_failures_leave_unknown_pending (test_integration.IntegrationTests.test_store_attempt_and_complete_failures_leave_unknown_pending) ... mrh: store_error stage=attempt
+mrh: store_error stage=complete
+ok
+test_receipts_correlate_and_do_not_promote_claimed_models (test_store.StoreTests.test_receipts_correlate_and_do_not_promote_claimed_models) ... ok
+test_top_main_never_fabricates_child_but_records_correlated_anomaly (test_store.StoreTests.test_top_main_never_fabricates_child_but_records_correlated_anomaly) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.174s
+
+OK
