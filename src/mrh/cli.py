@@ -39,7 +39,9 @@ def _add_display_options(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_stats_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--db", type=Path, default=None, help="event database path")
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument("--db", type=Path, default=None, help="event database path")
+    source.add_argument("--settings", type=Path, help="owned settings and associated event store")
     parser.add_argument("--synthetic", action="store_true", help="read the isolated synthetic partition")
     parser.add_argument("--json", action="store_true", help="print the unmodified statistics object")
     parser.add_argument("--details", action="store_true", help="show full statistics and telemetry")
@@ -72,10 +74,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     settings = commands.add_parser("settings", help="manage an explicit MRH-owned settings file")
     actions = settings.add_subparsers(dest="settings_action", required=True)
-    for action in ("init", "show", "configure", "enable", "disable"):
+    for action in ("init", "show", "configure", "enable", "disable", "edit", "view"):
         item = actions.add_parser(action)
         item.add_argument("--path", required=True, type=Path, help="canonical absolute settings.json path")
-        if action not in ("init", "show"):
+        if action in ("edit", "view"):
+            _add_display_options(item)
+        elif action not in ("init", "show"):
             item.add_argument("--expected-revision", type=int)
         if action == "configure":
             item.add_argument("--provider", choices=("typesafe",))
@@ -134,12 +138,24 @@ def _write_json(value: Any, stream: Any = None) -> None:
 
 
 def _cmd_stats(args: argparse.Namespace) -> int:
-    stats = _store(args.db).stats(synthetic=args.synthetic)
+    configuration = None
+    database = args.db
+    if args.settings is not None:
+        from . import settings
+        from .settings_schema import SettingsError
+        try:
+            configuration = settings.read(args.settings)
+        except SettingsError as exc:
+            sys.stderr.write("mrh: " + exc.reason + "\n")
+            return 2
+        database = args.settings.parent / "events.sqlite3"
+    stats = _store(database).stats(synthetic=args.synthetic)
     if args.json:
         _write_json(stats)
     else:
         width = args.width or terminal_width()
-        sys.stdout.write(render_stats(stats, width=width, color=_wants_color(args), details=args.details))
+        sys.stdout.write(render_stats(stats, width=width, color=_wants_color(args), details=args.details,
+                                     configuration=configuration))
     return 0
 
 
@@ -232,11 +248,18 @@ def _cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_settings(args):
+def _cmd_settings(args, stdin):
     from . import settings
     from .settings_schema import SettingsError
     try:
         action = args.settings_action
+        if action == "edit":
+            from .settings_editor import edit
+            return edit(args.path, stdin=stdin, stdout=sys.stdout, width=args.width or terminal_width(), color=_wants_color(args))
+        if action == "view":
+            from .terminal import render_configuration
+            sys.stdout.write(render_configuration(settings.read(args.path), width=args.width or terminal_width(), color=_wants_color(args)))
+            return 0
         if action == "init":
             value = settings.init(args.path)
         elif action == "show":
@@ -361,7 +384,7 @@ def main(
         if args.command == "config":
             return _cmd_config(args)
         if args.command == "settings":
-            return _cmd_settings(args)
+            return _cmd_settings(args, stdin)
         if args.command == "plugin":
             from . import plugin
             from .owned import OwnedError

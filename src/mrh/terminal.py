@@ -336,20 +336,76 @@ def _fit(value: Any, size: int) -> str:
     return text + " " * max(0, size - cell_width(text))
 
 
+def policy_rows(policy: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Current targets; Top follows mode/fixed, never the legacy tiers.Top."""
+    def target(mapping):
+        return (f"{mapping['model']} / {mapping.get('effort', 'inherit')}" if mapping
+                else "Unset / preserve original")
+    rows = [(tier, target(policy.get("tiers", {}).get(tier))) for tier in _TIER_ORDER[:3]]
+    rows.append(("Top", "Fixed / " + target(policy.get("fixed")) if policy.get("top_mode", "Main") == "Fixed"
+                 else "Main / current main agent"))
+    return rows
+
+
+def _configuration_lines(configuration: Mapping[str, Any], width: int) -> list[str]:
+    lines = _wrap("Jev chooses the tier. You choose the model and effort.", width)
+    lines += [""]
+    for tier, target in policy_rows(configuration["policy"]):
+        lines += _wrap(f"{tier}: {target}", width)
+    lines += [""] + _wrap(
+        f"Routing requested: {'On' if configuration['enabled'] else 'Off'} / "
+        f"Task export: {'Allowed' if configuration['task_export_permitted'] else 'Blocked'}", width)
+    lines += _wrap("inherit uses the host's effort. Unset keeps the original delegation.", width)
+    return lines
+
+
+def _policy_frame(title: str, contents: list[str], *, width: int | None, color: bool) -> str:
+    columns = min(140, _width(width))
+    inner = columns - 4
+    lines = ["", "MRH  /  MODEL POLICY", "", title, ""] + contents + [""]
+    fitted = ["  " + _fit(line, inner) + "  " for line in lines]
+    if color:
+        return "\n".join(_BG + (_LAVENDER if index in (1, 3) else _FG) + line + _RESET
+                         for index, line in enumerate(fitted)) + "\n"
+    return "\n".join(fitted) + "\n"
+
+
+def render_configuration(configuration: Mapping[str, Any], *, width: int | None = None, color: bool = False) -> str:
+    inner = min(140, _width(width)) - 4
+    contents = [f"Revision {configuration['revision']}", ""] + _configuration_lines(configuration, inner)
+    contents += [""] + _wrap("Configured requests do not confirm model availability or execution.", inner)
+    return _policy_frame("CURRENT CONFIGURATION", contents, width=width, color=color)
+
+
+def render_policy_review(changes: list[str], *, width: int | None = None, color: bool = False) -> str:
+    inner = min(140, _width(width)) - 4
+    contents = ["BEFORE -> AFTER", ""]
+    for change in changes or ["No policy changes."]:
+        contents += _wrap(change, inner)
+    contents += [""] + _wrap("Routing and task-sharing permissions stay as they are.", inner)
+    return _policy_frame("REVIEW POLICY CHANGES", contents, width=width, color=color)
+
+
 def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
                  color: bool = False, details: bool = False,
-                 demo_policy: Mapping[str, Any] | None = None) -> str:
+                 demo_policy: Mapping[str, Any] | None = None,
+                 configuration: Mapping[str, Any] | None = None) -> str:
     """Compact, width-aware dashboard over unchanged statistics.
 
-    Policy is an explicitly labeled demo fixture, never discovered or asserted
-    as live configuration. Live policy remains unavailable in this stats seam.
+    Current settings and historical events are separate observations. Demo
+    examples cannot be combined with an operator's actual configuration.
     """
+    if configuration is not None and demo_policy is not None:
+        raise ValueError("conflicting_policy_sources")
     if details:
-        return render_details(stats, width=width, color=color)
+        return (render_configuration(configuration, width=width, color=color) if configuration is not None else "") + render_details(stats, width=width, color=color)
     columns = min(140, _width(width))
     inner = columns - 4
     synthetic = stats.get("partition") == "synthetic"
     policy = demo_policy if synthetic else None
+    history_label = ("SYNTHETIC DEMO  ·  isolated examples / no live calls" if policy is not None else
+                     "SYNTHETIC HISTORY  ·  isolated recorded events" if synthetic else
+                     "LOCAL EVENTS  ·  all recorded history")
 
     def ink(text: str, tone: str = _FG, bold: bool = False) -> str:
         return (tone + ("\x1b[1m" if bold else "") + text +
@@ -369,8 +425,7 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
 
     lines = [row(), row(ink(_fit("MRH  /  DELEGATION ROUTER", inner), _LAVENDER, True)),
              row(), row(ink(_fit("Route each task. Keep the big picture.", inner), bold=True)),
-             row(ink(_fit("SYNTHETIC DEMO  ·  isolated examples / no live calls" if synthetic else
-                               "LOCAL EVENTS  ·  all recorded history", inner), _DIM)),
+             row(ink(_fit(history_label, inner), _DIM)),
              row(ink(_fit("Updated: " + _value(stats.get("updated_at")), inner), _DIM)), row()]
     lines.append(row(ink(_fit("01  HOW A DELEGATION IS ROUTED", inner), _LAVENDER)))
     lines.append(row())
@@ -385,11 +440,14 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
         for index, (name, desc) in enumerate(stages, 1):
             lines.append(row(ink(_fit(f"{index}. {name}  /  {desc}", inner), _DIM)))
     lines.append(row())
-    lines.append(row(ink(_fit("TIER POLICY  /  demo examples" if policy else
+    lines.append(row(ink(_fit("CURRENT CONFIGURATION" if configuration is not None else
+                                    "TIER POLICY  /  demo examples" if policy else
                                     "TIER POLICY  /  configuration not loaded", inner), _DIM)))
     counts = [_count((stats.get("tiers") or {}).get(tier)) for tier in _TIER_ORDER]
     total = sum(counts)
-    if inner >= 70:
+    if configuration is not None:
+        lines.extend(row(ink(line)) for line in _configuration_lines(configuration, inner))
+    elif inner >= 70:
         model_size = inner - 39
         lines.append(row(ink("  " + _fit("TIER", 10) + _fit("MODEL / EFFORT", model_size) +
                             _fit("TASKS", 9) + _fit("SHARE", 9) + "SOURCE", _DIM)))
@@ -415,6 +473,7 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
             lines.append(row(ink(_fit("  " + model, inner), _DIM)))
     lines.append(row())
     lines.extend(row(ink(item, _DIM)) for item in _wrap(
+        "Current targets are separate from historical counts and confirmed execution." if configuration is not None else
         "Policy selects a request; confirmed execution is recorded separately.", inner))
     lines.append(row())
 

@@ -1,0 +1,74 @@
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                                                                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 0                                                                                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and effort.                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light: Unset / preserve original                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small: Unset / preserve original                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid: Unset / preserve original                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Top: Main / current main agent                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked                                                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the original delegation.                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model availability or execution.                                                   [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  Enter keeps a value. unset removes a tier mapping. cancel exits without saving.
+  Light model [Enter keep / unset remove]
+  > light-choice
+  Light effort [Enter keep / inherit]
+  > inherit
+  Small model [Enter keep / unset remove]
+  > small-choice
+  Small effort [Enter keep / inherit]
+  > low
+  Mid model [Enter keep / unset remove]
+  > mid-choice
+  Mid effort [Enter keep / inherit]
+  > high
+  Top mode [Enter keep / Main / Fixed]
+  > Fixed
+  Top Fixed model [Enter keep / unset remove]
+  > fixed-choice
+  Top Fixed effort [Enter keep / inherit]
+  > inherit
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  REVIEW POLICY CHANGES                                                                                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  BEFORE -> AFTER                                                                                                       [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light: Unset / preserve original -> light-choice / inherit                                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small: Unset / preserve original -> small-choice / low                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid: Unset / preserve original -> mid-choice / high                                                                   [0m
+[48;2;35;38;45m[38;2;239;240;246m  Top: Main / current main agent -> Fixed / fixed-choice / inherit                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing and task-sharing permissions stay as they are.                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  Save changes? [save / cancel]
+  > save
+Saved.
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                                                                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 1                                                                                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and effort.                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light: light-choice / inherit                                                                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small: small-choice / low                                                                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid: mid-choice / high                                                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m  Top: Fixed / fixed-choice / inherit                                                                                   [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked                                                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the original delegation.                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model availability or execution.                                                   [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m

@@ -1,0 +1,118 @@
+{
+  "kind": "actual Python CLI in POSIX PTY; native macOS Terminal window not observed",
+  "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+  "current_policy": {
+    "schema_version": 1,
+    "owner": "org.model-routing-harness.settings.v1",
+    "revision": 1,
+    "enabled": false,
+    "task_export_permitted": false,
+    "allowed_workspaces": [],
+    "provider": "typesafe",
+    "classifier_model": "jev-1.13.0",
+    "policy": {
+      "top_mode": "Fixed",
+      "timeout_seconds": 1.0,
+      "tiers": {
+        "Light": {
+          "model": "light-choice"
+        },
+        "Mid": {
+          "effort": "high",
+          "model": "mid-choice"
+        },
+        "Small": {
+          "effort": "low",
+          "model": "small-choice"
+        }
+      },
+      "fixed": {
+        "model": "fixed-choice"
+      },
+      "rates": {}
+    }
+  },
+  "associated_history": {
+    "schema_version": 2,
+    "updated_at": "2026-10-10T19:26:15.364550+00:00",
+    "partition": "synthetic",
+    "proposals": 1,
+    "jev_attempts": 0,
+    "synthetic_attempts": 0,
+    "classified_tasks": 0,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 0
+    },
+    "outcomes": {
+      "explicit_model": 1
+    },
+    "requested_models": {},
+    "confirmed_children": 0,
+    "simulated_children": 0,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [
+      {
+        "platform": "codex",
+        "surface": "simulation",
+        "proposals": 1
+      }
+    ],
+    "event_ids": {
+      "proposals": [
+        "de8143d44946fd7ebb77cbde430b54b413323abad2d573bc9141f99a3ae47fd0"
+      ],
+      "attempts": [],
+      "receipts": []
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "unavailable",
+      "attempt_states": {},
+      "requested_models": {},
+      "response_models": {},
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "usage_unavailable_attempts": 0,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "save_readback": true,
+  "cancel_eof_ctrl_c_no_write": true,
+  "repeated_stats_unchanged": true,
+  "demo_isolated": true,
+  "real_provider_calls": 0,
+  "settings_sha256": "4067d5029fdbe72608f35e9bff8c43ca5bead988f2bc0b63207155741f27be02",
+  "pty_widths": [
+    120,
+    56
+  ],
+  "owned_temporary_root": "/private/tmp/mrh-e9-yojxajrq",
+  "installed_host_changed": false,
+  "review": "A0 parent; A visible acceptance pending",
+  "cleanup_removed": true,
+  "elapsed_seconds": 0.723
+}
