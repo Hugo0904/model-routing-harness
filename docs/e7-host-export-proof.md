@@ -1,6 +1,6 @@
 # E7 isolated host export
 
-E7 adds a reviewable source experiment to the E6 candidate. It does not enable production routing. Exact base, patch, license and reproduction are in [integrations/codex-host-export](../integrations/codex-host-export/README.md). [Verification](evidence/e7-verification.json), [producer/consumer capture](evidence/e7-producer-consumer.json) and [independent review](evidence/e7-review.json) distinguish executed evidence from remaining gaps. A owns acceptance of this package; original R1 remains incomplete.
+E7 adds a reviewable source experiment to the E6 candidate. It does not enable production routing. Exact base, patch, license and reproduction are in [integrations/codex-host-export](../integrations/codex-host-export/README.md). [Verification](evidence/e7-verification.json), [producer/consumer capture](evidence/e7-producer-consumer.json) and [independent review](evidence/e7-review.json) distinguish executed evidence from remaining gaps. A accepted this source experiment under D13; original R1 remains incomplete. E8 separately addresses the live isolated Hook delivery gap and does not invalidate unaffected E7 evidence.
 
 ## Chosen seam and transport
 
