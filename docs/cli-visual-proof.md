@@ -31,3 +31,5 @@ The computer-use tool refused access to `com.apple.Terminal` and `com.openai.cod
 - Direct launcher execution and PTY capture succeeded. Parent review only. No full core/provider suite, packaging rebuild, external API, formal Hook activation or Monitor change was needed for this presentation scope.
 
 B continues E8 Hook integration independently. The latest human pause threshold is remaining account quota **below 7%**, at a natural saved checkpoint. The current visual work does not alter routing rules, account settings or reset/reserve usage.
+
+E9 added actual configuration reads and policy editing. A accepted the behavior but reopened the configured-table appearance after a 120-column PTY inspection; see task decision D15. Earlier demo screenshots do not stand in for that new path.
