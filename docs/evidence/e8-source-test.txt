@@ -1,0 +1,15 @@
+
+running 1 test
+test tools::registry::live_export_tests::e8_live_registry_hook_subprocess_control ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2673 filtered out; finished in 4.86s
+
+
+RUST_MIN_STACK=8388608 NEXTEST_PROFILE=local cargo nextest run --no-fail-fast "$@"
+────────────
+ Nextest run ID 435010ac-7bab-478d-956a-e0d32c8bafad with nextest profile: local
+    Starting 1 test across 1 binary (2673 tests skipped)
+       START [         ] (1/1) codex-core tools::registry::live_export_tests::e8_live_registry_hook_subprocess_control
+        PASS [   4.879s] (1/1) codex-core tools::registry::live_export_tests::e8_live_registry_hook_subprocess_control
+────────────
+     Summary [   4.896s] 1 test run: 1 passed, 2673 skipped

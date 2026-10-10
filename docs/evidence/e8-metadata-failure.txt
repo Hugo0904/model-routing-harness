@@ -1,0 +1,12 @@
+
+RUST_MIN_STACK=8388608 NEXTEST_PROFILE=local cargo nextest run --no-fail-fast "$@"
+2026-10-11 02:53:14.441 xcodebuild[61966:52366252]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-10-11 02:53:15.028 xcodebuild[61966:52366251] [MT] DVTDeveloperPaths: Failed to get length of DARWIN_USER_CACHE_DIR from confstr(3), error = Error Domain=NSPOSIXErrorDomain Code=5 "Input/output error". Using NSCachesDirectory instead.
+error: error reading metadata from argument --binaries-metadata
+
+Caused by:
+  error deserializing metadata file `/Users/shawn/Code/model-routing-harness/runtime/e8-host/binaries.json`
+
+Caused by:
+  missing field `rust-binaries` at line 1 column 415553
+error: recipe `test` failed on line 88 with exit code 96

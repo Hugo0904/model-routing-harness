@@ -1,0 +1,25 @@
+{
+  "owned_root": "/Users/shawn/Code/model-routing-harness/runtime/e8-host",
+  "owner": "MRH-001-E8",
+  "removed": true,
+  "elapsed_seconds": 10.181,
+  "allocated_kib_before": 17760356,
+  "all_26_source_hashes_verified_before_removal": true,
+  "no_other_source_changes": true,
+  "executed_binary_hash_verified_before_removal": true,
+  "disposable_removed": [
+    "source clone",
+    "owned toolchain/dependency/build caches",
+    "test lib binary",
+    "native owned home/config/trust/state/settings/leases/bootstrap",
+    "scratch logs and runner metadata"
+  ],
+  "preserved": [
+    "accepted E7 source/license",
+    "E8 source patch/manifest",
+    "actual execution/lease/readback/review/lint/cost/repro evidence"
+  ],
+  "screenshots": "none created by B; A visual evidence retained",
+  "other_work_preserved": "A CLI commit700cd269; no CLI tests or presentation files modified by B",
+  "git_runtime_artifacts": false
+}

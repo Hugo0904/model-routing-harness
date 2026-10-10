@@ -1,0 +1,246 @@
+diff --git a/codex-rs/core/src/tools/registry.rs b/codex-rs/core/src/tools/registry.rs
+--- a/codex-rs/core/src/tools/registry.rs
++++ b/codex-rs/core/src/tools/registry.rs
+@@ -869,3 +869,7 @@
+ #[cfg(test)]
+ #[path = "registry_tests.rs"]
+ mod tests;
++
++#[cfg(test)]
++#[path = "registry_live_export_tests.rs"]
++mod live_export_tests;
+diff --git a/codex-rs/core/src/tools/registry_tests.rs b/codex-rs/core/src/tools/registry_tests.rs
+--- a/codex-rs/core/src/tools/registry_tests.rs
++++ b/codex-rs/core/src/tools/registry_tests.rs
+@@ -822,7 +822,7 @@
+     Ok(())
+ }
+ 
+-fn test_invocation(
++pub(super) fn test_invocation(
+     session: Arc<crate::session::session::Session>,
+     turn: Arc<crate::session::turn_context::TurnContext>,
+     call_id: &str,
+diff --git a/codex-rs/core/src/tools/registry_live_export_tests.rs b/codex-rs/core/src/tools/registry_live_export_tests.rs
+new file mode 100644
+--- /dev/null
++++ b/codex-rs/core/src/tools/registry_live_export_tests.rs
+@@ -0,0 +1,218 @@
++//! Actual registry/Hook subprocess integration; child boundary is a counter.
++use super::*;
++use crate::tools::handlers::multi_agents::SpawnAgentHandler;
++use pretty_assertions::assert_eq;
++use serde_json::json;
++use std::path::PathBuf;
++use std::sync::atomic::AtomicUsize;
++use std::sync::atomic::Ordering;
++use std::time::SystemTime;
++use std::time::UNIX_EPOCH;
++
++struct ControlledSpawn {
++    calls: Arc<AtomicUsize>,
++    root: PathBuf,
++    registration: Value,
++}
++
++impl ToolExecutor<ToolInvocation> for ControlledSpawn {
++    fn tool_name(&self) -> ToolName {
++        ToolName::plain("spawn_agent")
++    }
++    fn spec(&self) -> ToolSpec {
++        SpawnAgentHandler::default().spec()
++    }
++    fn handle<'a>(&'a self, _invocation: ToolInvocation) -> codex_tools::ToolExecutorFuture<'a>
++    where
++        ToolInvocation: 'a,
++    {
++        Box::pin(async move {
++            self.calls.fetch_add(1, Ordering::SeqCst);
++            Ok(Box::new(FunctionToolOutput::from_text(
++                "controlled child boundary only".to_string(),
++                Some(true),
++            )) as Box<dyn ToolOutput>)
++        })
++    }
++}
++
++impl CoreToolRuntime for ControlledSpawn {
++    fn prepare_pending_delegation<'a>(
++        &'a self,
++        invocation: &'a mut ToolInvocation,
++    ) -> BoxFuture<'a, Option<Value>> {
++        Box::pin(async move {
++            // Facts come from the real enabled host handler, not this fixture.
++            let packet = SpawnAgentHandler::default()
++                .prepare_pending_delegation(invocation)
++                .await;
++            let ToolPayload::Function { arguments } = &invocation.payload else {
++                return packet;
++            };
++            let input: Value = serde_json::from_str(arguments).expect("routing arguments");
++            let routing: serde_json::Map<String, Value> =
++                ["agent_type", "model", "reasoning_effort", "fork_context"]
++                    .into_iter()
++                    .map(|key| {
++                        (
++                            key.to_string(),
++                            input.get(key).cloned().unwrap_or(Value::Null),
++                        )
++                    })
++                    .collect();
++            let now = SystemTime::now()
++                .duration_since(UNIX_EPOCH)
++                .expect("clock")
++                .as_secs_f64();
++            let scope_call = if invocation.call_id == "e8-foreign" {
++                "foreign"
++            } else {
++                &invocation.call_id
++            };
++            let lease = json!({
++                "registration_id":self.registration["registration_id"],"admitted":false,
++                "scope":{"platform":"codex","session_id":invocation.session.session_id().to_string(),
++                    "turn_id":invocation.turn.sub_id,"tool_call_id":scope_call},
++                "routing":routing,"export_nonce":packet.as_ref().map(|p| p["validity"]["nonce"].clone()),
++                "phase":if invocation.call_id == "e8-expired" {"closed"} else {"active"},"expires_at":now+30.0,
++            });
++            let Some(packet_nonce) = packet
++                .as_ref()
++                .and_then(|value| value["validity"]["nonce"].as_str())
++            else {
++                return packet;
++            };
++            std::fs::create_dir_all(self.root.join("leases")).expect("owned leases");
++            std::fs::write(
++                self.root
++                    .join("leases")
++                    .join(format!("{packet_nonce}.json")),
++                serde_json::to_vec(&lease).expect("lease encoding"),
++            )
++            .expect("owned lease");
++            packet
++        })
++    }
++}
++
++#[tokio::test]
++#[ignore = "requires reviewed owned E8 producer/Hook driver and launch lock"]
++async fn e8_live_registry_hook_subprocess_control() -> anyhow::Result<()> {
++    let context = PathBuf::from(std::env::var("MRH_E8_CONTEXT")?);
++    let root = context.parent().expect("owned root").to_path_buf();
++    let registration: Value = serde_json::from_slice(&std::fs::read(&context)?)?;
++    assert_eq!(
++        std::env::current_exe()?.canonicalize()?,
++        PathBuf::from(registration["producer"]["path"].as_str().unwrap()).canonicalize()?
++    );
++    let (session, mut turn) = crate::session::tests::make_session_and_context().await;
++    turn.sub_id = "e8-native-turn".to_string();
++    let role_path = root.join("protected.toml");
++    std::fs::write(&role_path, "model_reasoning_effort = \"high\"\n")?;
++    Arc::make_mut(&mut turn.config).agent_roles.insert(
++        "e8-protected".to_string(),
++        crate::config::AgentRoleConfig {
++            description: None,
++            config_file: Some(role_path),
++            nickname_candidates: None,
++        },
++    );
++    let quote = |text: &str| format!("'{}'", text.replace('\'', "'\\''"));
++    let command = format!(
++        "{} {} {}",
++        quote(registration["python"].as_str().unwrap()),
++        quote(registration["bootstrap"]["path"].as_str().unwrap()),
++        quote(context.to_str().unwrap())
++    );
++    let config_path =
++        codex_utils_absolute_path::AbsolutePathBuf::try_from(root.join("config.toml"))?;
++    let mut raw = json!({"hooks":{"PreToolUse":[{"matcher":"^spawn_agent$","hooks":[{"type":"command","command":command.clone(),"timeout":10}]}]}});
++    let make_stack = |raw: Value| -> anyhow::Result<_> {
++        Ok(turn
++            .config
++            .config_layer_stack
++            .with_user_config(&config_path, serde_json::from_value(raw)?)?)
++    };
++    let discovered = codex_hooks::list_hooks(codex_hooks::HooksConfig {
++        feature_enabled: true,
++        config_layer_stack: Some(make_stack(raw.clone())?),
++        ..Default::default()
++    });
++    assert_eq!(discovered.hooks.len(), 1);
++    assert_eq!(
++        discovered.hooks[0].trust_status,
++        codex_protocol::protocol::HookTrustStatus::Untrusted
++    );
++    raw["hooks"]["state"] = json!({discovered.hooks[0].key.clone():{"trusted_hash":discovered.hooks[0].current_hash.clone()}});
++    let stack = make_stack(raw.clone())?;
++    std::fs::write(
++        config_path.as_path(),
++        toml::to_string(&serde_json::from_value::<codex_config::TomlValue>(raw)?)?,
++    )?;
++    let config = codex_hooks::HooksConfig {
++        feature_enabled: true,
++        config_layer_stack: Some(stack),
++        ..Default::default()
++    };
++    let trusted = codex_hooks::list_hooks(config.clone());
++    assert_eq!(
++        trusted.hooks[0].trust_status,
++        codex_protocol::protocol::HookTrustStatus::Trusted
++    );
++    session
++        .services
++        .hooks
++        .store(Arc::new(session.hooks().reconfigured(config)));
++    let calls = Arc::new(AtomicUsize::new(0));
++    let registry = ToolRegistry::from_tools([Arc::new(ControlledSpawn {
++        calls: Arc::clone(&calls),
++        root: root.clone(),
++        registration,
++    }) as Arc<dyn CoreToolRuntime>]);
++    let session = Arc::new(session);
++    let turn = Arc::new(turn);
++    let mut results = Vec::new();
++    for (call, role, blocked) in [
++        ("e8-main", None, true),
++        ("e8-main", None, true),
++        ("e8-next", None, true),
++        ("e8-protected", Some("e8-protected"), false),
++        ("e8-missing", Some("e8-missing-role"), false),
++        ("e8-foreign", None, false),
++        ("e8-expired", None, false),
++        ("e8-midclose", None, false),
++        ("e8-midclose", None, false),
++    ] {
++        let before = calls.load(Ordering::SeqCst);
++        let mut invocation = super::tests::test_invocation(
++            Arc::clone(&session),
++            Arc::clone(&turn),
++            call,
++            ToolName::plain("spawn_agent"),
++        );
++        let mut input = json!({"message":"owned live integration task","pending_delegation":{"known":true,"role_protection":"unprotected"}});
++        if let Some(role) = role {
++            input["agent_type"] = json!(role);
++        }
++        invocation.payload = ToolPayload::Function {
++            arguments: input.to_string(),
++        };
++        let result = registry.dispatch_any_with_state(invocation, None).await;
++        assert_eq!(result.is_err(), blocked, "{call}");
++        assert_eq!(
++            calls.load(Ordering::SeqCst) - before,
++            usize::from(!blocked),
++            "{call}"
++        );
++        results.push(json!({"call":call,"native_registry_blocked":blocked,"controlled_handler_entered":!blocked}));
++    }
++    std::fs::write(
++        root.join("native-results.json"),
++        serde_json::to_vec(&json!({"cases":results,
++        "controlled_handler_calls":calls.load(Ordering::SeqCst),"actual_child_creation":false,
++        "registered_command":command,"registration_key":trusted.hooks[0].key,
++        "registration_current_hash":trusted.hooks[0].current_hash,
++        "native_registered_hook_trust":"Trusted; specific current_hash; bypass false"}))?,
++    )?;
++    Ok(())
++}

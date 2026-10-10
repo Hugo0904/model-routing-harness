@@ -1,0 +1,888 @@
+cargo clippy --fix --tests --allow-dirty {args}
+    Checking cfg-if v1.0.4
+    Checking libc v0.2.186
+    Checking memchr v2.8.1
+    Checking serde_core v1.0.228
+    Checking zeroize v1.8.2
+    Checking itoa v1.0.17
+    Checking portable-atomic v1.13.1
+    Checking scopeguard v1.2.0
+    Checking lock_api v0.4.14
+    Checking getrandom v0.2.17
+    Checking critical-section v1.2.0
+    Checking log v0.4.34
+    Checking subtle v2.6.1
+    Checking once_cell v1.21.4
+    Checking rand_core v0.6.4
+    Checking typenum v1.20.0
+    Checking pin-project-lite v0.2.16
+    Checking thiserror v2.0.18
+    Checking errno v0.3.14
+    Checking bitflags v2.13.1
+    Checking bytes v1.12.1
+    Checking const-oid v0.9.6
+    Checking serde v1.0.228
+    Checking futures-core v0.3.34
+   Compiling shlex v1.3.0
+    Checking stable_deref_trait v1.2.1
+    Checking generic-array v0.14.7
+    Checking regex-syntax v0.8.8
+    Checking smallvec v1.15.1
+   Compiling cc v1.2.55
+    Checking parking_lot_core v0.9.12
+    Checking parking_lot v0.12.5
+    Checking crypto-common v0.1.7
+    Checking block-buffer v0.10.4
+    Checking aho-corasick v1.1.4
+    Checking digest v0.10.7
+    Checking equivalent v1.0.2
+    Checking socket2 v0.6.3
+    Checking signal-hook-registry v1.4.8
+    Checking mio v1.2.0
+    Checking regex-automata v0.4.13
+    Checking futures-sink v0.3.34
+    Checking allocator-api2 v0.2.21
+    Checking tokio v1.52.3
+    Checking cpufeatures v0.2.17
+    Checking foldhash v0.2.0
+    Checking tracing-core v0.1.36
+    Checking slab v0.4.12
+    Checking futures-channel v0.3.34
+    Checking futures-task v0.3.34
+    Checking futures-io v0.3.34
+    Checking tracing v0.1.44
+    Checking futures-util v0.3.34
+    Checking num-traits v0.2.19
+    Checking fastrand v2.3.0
+    Checking getrandom v0.3.4
+    Checking zmij v1.0.19
+    Checking http v1.4.0
+    Checking serde_json v1.0.149
+    Checking percent-encoding v2.3.2
+    Checking http-body v1.0.1
+    Checking zerofrom v0.1.6
+    Checking hashbrown v0.17.1
+    Checking yoke v0.8.2
+    Checking fnv v1.0.7
+    Checking core-foundation-sys v0.8.7
+    Checking zerovec v0.11.6
+    Checking powerfmt v0.2.0
+   Compiling num-conv v0.2.0
+    Checking indexmap v2.14.0
+   Compiling time-core v0.1.8
+    Checking deranged v0.5.5
+   Compiling time-macros v0.2.27
+    Checking tinystr v0.8.3
+    Checking http-body-util v0.1.3
+    Checking num_threads v0.1.7
+    Checking base64 v0.22.1
+    Checking tokio-util v0.7.18
+    Checking either v1.15.0
+    Checking zerocopy v0.8.37
+    Checking writeable v0.6.2
+    Checking time v0.3.47
+   Compiling cmake v0.1.57
+    Checking ipnet v2.11.0
+   Compiling dunce v1.0.5
+    Checking form_urlencoded v1.2.2
+   Compiling aws-lc-sys v0.45.0
+   Compiling ring v0.17.14
+    Checking bstr v1.12.1
+    Checking sha2 v0.10.9
+    Checking litemap v0.8.1
+    Checking potential_utf v0.1.4
+    Checking icu_locale_core v2.2.0
+    Checking zerotrie v0.2.4
+    Checking sync_wrapper v1.0.2
+    Checking untrusted v0.9.0
+    Checking utf8_iter v1.0.4
+    Checking icu_provider v2.2.0
+    Checking icu_collections v2.2.0
+    Checking ppv-lite86 v0.2.21
+    Checking pin-utils v0.1.0
+    Checking httpdate v1.0.3
+    Checking rustls-pki-types v1.14.0
+    Checking untrusted v0.7.1
+    Checking sha1_smol v1.0.1
+    Checking byteorder v1.5.0
+    Checking tinyvec_macros v0.1.1
+    Checking uuid v1.20.0
+    Checking tinyvec v1.10.0
+    Checking icu_properties_data v2.2.0
+    Checking icu_normalizer_data v2.2.0
+    Checking rand_core v0.10.1
+    Checking ryu v1.0.22
+    Checking icu_properties v2.2.0
+    Checking icu_normalizer v2.2.0
+    Checking httparse v1.10.1
+    Checking security-framework-sys v2.15.0
+    Checking getrandom v0.4.2
+    Checking idna_adapter v1.2.1
+    Checking crc32fast v1.5.0
+    Checking num-integer v0.1.46
+    Checking atomic-waker v1.1.2
+    Checking try-lock v0.2.5
+    Checking idna v1.1.0
+    Checking want v0.3.1
+    Checking core-foundation v0.9.4
+    Checking futures-executor v0.3.34
+    Checking rustix v1.1.4
+    Checking crossbeam-utils v0.8.21
+    Checking h2 v0.4.16
+    Checking sha1 v0.10.6
+    Checking tower-service v0.3.3
+    Checking url v2.5.8
+    Checking core-foundation v0.10.1
+    Checking rand_core v0.9.5
+    Checking regex v1.12.3
+    Checking mime v0.3.17
+    Checking rand_chacha v0.9.0
+    Checking security-framework v3.5.1
+    Checking system-configuration-sys v0.6.0
+    Checking system-configuration v0.7.0
+    Checking rand v0.9.3
+    Checking gix-trace v0.1.18
+    Checking hyper v1.8.1
+    Checking gix-validate v0.11.0
+    Checking lazy_static v1.5.0
+    Checking gix-path v0.11.2
+    Checking rustls-native-certs v0.8.3
+    Checking tower-layer v0.3.3
+    Checking tempfile v3.27.0
+    Checking futures v0.3.34
+    Checking hashbrown v0.16.1
+    Checking psl-types v2.0.11
+    Checking tower v0.5.3
+    Checking hyper-util v0.1.20
+    Checking webpki-roots v1.0.5
+    Checking hex v0.4.3
+    Checking crossbeam-epoch v0.9.20
+   Compiling winnow v1.0.4
+    Checking itertools v0.14.0
+   Compiling toml_parser v1.1.3+spec-1.1.0
+    Checking anstyle v1.0.13
+   Compiling strsim v0.11.1
+   Compiling toml_edit v0.23.10+spec-1.0.0
+    Checking nibble_vec v0.1.0
+   Compiling unicase v2.9.0
+    Checking utf8parse v0.2.2
+   Compiling proc-macro-crate v3.4.0
+   Compiling mime_guess v2.0.5
+    Checking bytemuck v1.25.0
+    Checking ahash v0.8.12
+    Checking iri-string v0.7.10
+    Checking const_format v0.2.35
+   Compiling rama-macros v0.3.0-alpha.4
+    Checking anstyle-parse v0.2.7
+    Checking wildcard v0.3.0
+    Checking spin v0.9.8
+    Checking smol_str v0.3.5
+    Checking anstyle-query v1.1.5
+    Checking dyn-clone v1.0.20
+    Checking colorchoice v1.0.4
+    Checking is_terminal_polyfill v1.70.2
+    Checking rama-utils v0.3.0-alpha.4
+    Checking anstream v0.6.21
+    Checking flume v0.12.0
+    Checking num-bigint v0.4.6
+    Checking tokio-graceful v0.2.2
+    Checking asynk-strim v0.1.5
+    Checking rama-error v0.3.0-alpha.4
+    Checking regex-lite v0.1.8
+    Checking data-encoding v2.10.0
+    Checking rama-core v0.3.0-alpha.4
+    Checking security-framework v2.11.1
+    Checking tokio-stream v0.1.18
+    Checking nom v8.0.0
+    Checking endian-type v0.2.0
+    Checking option-ext v0.2.0
+    Checking minimal-lexical v0.2.1
+    Checking nom v7.1.3
+    Checking dirs-sys v0.5.0
+    Checking radix_trie v0.3.0
+    Checking native-tls v0.2.14
+    Checking schemars v0.8.22
+    Checking psl v2.1.184
+    Checking rama-http-types v0.3.0-alpha.4
+    Checking iana-time-zone v0.1.65
+    Checking opentelemetry v0.31.0
+    Checking md5 v0.8.0
+    Checking crc-catalog v2.4.0
+    Checking simd-adler32 v0.3.8
+    Checking crc v3.4.0
+    Checking chrono v0.4.43
+    Checking rama-net v0.3.0-alpha.4
+    Checking tokio-native-tls v0.3.1
+    Checking cookie v0.18.1
+    Checking ts-rs v11.1.0
+    Checking dirs v6.0.0
+    Checking tower-http v0.6.8
+    Checking crossbeam-deque v0.8.6
+    Checking publicsuffix v2.3.0
+    Checking sharded-slab v0.1.7
+   Compiling zstd-sys v2.0.16+zstd.1.5.7
+    Checking matchers v0.2.0
+    Checking tracing-log v0.2.0
+    Checking encoding_rs v0.8.35
+    Checking thread_local v1.1.9
+    Checking nu-ansi-term v0.50.3
+    Checking tracing-subscriber v0.3.22
+    Checking codex-utils-absolute-path v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/absolute-path)
+    Checking cookie_store v0.22.1
+    Checking hyper-tls v0.6.0
+    Checking anyhow v1.0.103
+    Checking serde_urlencoded v0.7.1
+    Checking adler2 v2.0.1
+    Checking miniz_oxide v0.8.9
+    Checking rayon-core v1.13.0
+    Checking env_filter v1.0.0
+    Checking crossbeam-channel v0.5.15
+    Checking chacha20 v0.10.2
+    Checking zlib-rs v0.5.5
+    Checking ref-cast v1.0.25
+    Checking rand v0.10.1
+    Checking env_logger v0.11.9
+    Checking constant_time_eq v0.3.1
+    Checking bumpalo v3.19.1
+    Checking flate2 v1.1.8
+    Checking rusticata-macros v4.1.0
+    Checking hash32 v0.2.1
+   Compiling blake3 v1.8.2
+    Checking arrayvec v0.7.6
+    Checking unicode-segmentation v1.12.0
+    Checking bit-vec v0.8.0
+    Checking atomic v0.5.3
+    Checking link-section v0.17.2
+    Checking tagptr v0.2.0
+    Checking ctor v1.0.6
+    Checking moka v0.12.13
+    Checking lock_free_hashtable v0.1.4
+    Checking bit-set v0.8.0
+    Checking asn1-rs v0.7.1
+    Checking heapless v0.7.17
+    Checking hickory-proto v0.25.2
+    Checking typeid v1.0.3
+    Checking quickcheck v1.1.0
+    Checking cobs v0.3.0
+    Checking unicode-width v0.1.14
+    Checking same-file v1.0.6
+    Checking arrayref v0.3.9
+    Checking urlencoding v2.1.3
+    Checking hashbrown v0.14.5
+    Checking resolv-conf v0.7.6
+    Checking clap_lex v1.0.0
+    Checking hickory-resolver v0.25.2
+    Checking clap_builder v4.5.58
+    Checking dashmap v6.1.0
+   Compiling convert_case v0.6.0
+   Compiling logos-codegen v0.15.1
+    Checking walkdir v2.5.0
+    Checking strong_hash v0.1.0
+    Checking allocative v0.3.6
+    Checking postcard v1.1.3
+    Checking sorted_vector_map v0.2.1
+    Checking erased-serde v0.4.10
+    Checking nix v0.28.0
+    Checking fancy-regex v0.16.2
+    Checking static_interner v0.1.2
+    Checking dupe v0.9.1
+   Compiling Inflector v0.11.4
+    Checking tracing-opentelemetry v0.32.1
+   Compiling schemafy_core v0.5.2
+    Checking fxhash v0.2.1
+    Checking pem v3.0.6
+    Checking triomphe v0.1.15
+    Checking csv-core v0.1.13
+    Checking sequence_trie v0.3.6
+    Checking inventory v0.3.24
+    Checking static_assertions v1.1.0
+    Checking take_mut v0.2.2
+    Checking bitflags v1.3.2
+    Checking pagable v0.4.1
+    Checking fluent-uri v0.1.4
+    Checking csv v1.4.0
+    Checking clap v4.5.58
+   Compiling schemafy_lib v0.5.2
+   Compiling logos-derive v0.15.1
+    Checking rama-http-headers v0.3.0-alpha.4
+   Compiling derive_more-impl v1.0.0
+   Compiling zstd-safe v7.2.4
+    Checking rama-dns v0.3.0-alpha.4
+    Checking zstd v0.13.3
+    Checking oid-registry v0.8.1
+    Checking der-parser v10.0.0
+   Compiling darling_core v0.21.3
+    Checking serde_html_form v0.3.2
+    Checking matchit v0.9.1
+    Checking http-range-header v0.4.2
+    Checking endian-type v0.1.2
+    Checking rama-http v0.3.0-alpha.4
+    Checking radix_trie v0.2.1
+   Compiling darling_macro v0.21.3
+    Checking derive_more v1.0.0
+    Checking rama-tcp v0.3.0-alpha.4
+   Compiling schemafy v0.5.2
+    Checking logos v0.15.1
+    Checking starlark_map v0.14.2
+    Checking lsp-types v0.97.0
+    Checking annotate-snippets v0.9.2
+    Checking codex-utils-home-dir v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/home-dir)
+    Checking fdeflate v0.3.7
+    Checking tokio-test v0.4.5
+    Checking gix-url v0.35.2
+    Checking fd-lock v4.0.4
+    Checking globset v0.4.18
+    Checking yasna v0.6.0
+    Checking pxfm v0.1.27
+    Checking byteorder-lite v0.1.0
+    Checking home v0.5.12
+    Checking indenter v0.3.4
+    Checking weezl v0.1.12
+    Checking color_quant v1.1.0
+    Checking quick-error v2.0.1
+    Checking zune-core v0.5.1
+    Checking image-webp v0.2.4
+    Checking zune-jpeg v0.5.12
+    Checking gif v0.14.1
+    Checking moxcms v0.7.11
+    Checking display_container v0.9.0
+    Checking rustyline v14.0.0
+    Checking rama-http-core v0.3.0-alpha.4
+    Checking starlark_syntax v0.14.2
+    Checking png v0.18.0
+   Compiling starlark_derive v0.14.2
+    Checking debugserver-types v0.5.0
+   Compiling darling v0.21.3
+    Checking memoffset v0.9.1
+    Checking icu_locale_data v2.2.0
+    Checking textwrap v0.11.0
+    Checking rama-udp v0.3.0-alpha.4
+    Checking rama-unix v0.3.0-alpha.4
+    Checking lru v0.18.2
+    Checking erased-serde v0.3.31
+    Checking maplit v1.0.2
+    Checking strsim v0.10.0
+    Checking cmp_any v0.8.1
+    Checking rama-http-backend v0.3.0-alpha.4
+    Checking codex-utils-cache v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/cache)
+    Checking starlark v0.14.2
+    Checking rama-socks5 v0.3.0-alpha.4
+    Checking icu_locale v2.2.0
+   Compiling serde_with_macros v3.17.0
+    Checking image v0.25.9
+    Checking icu_decimal_data v2.2.0
+    Checking codex-utils-path-uri v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/path-uri)
+    Checking rand_regex v0.18.1
+    Checking unicode-normalization v0.1.25
+    Checking fixed_decimal v0.7.2
+    Checking multimap v0.10.1
+    Checking serde_ignored v0.1.14
+    Checking icu_decimal v2.2.0
+    Checking codex-utils-image v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/image)
+    Checking strum v0.27.2
+    Checking serde_with v3.17.0
+    Checking chardetng v0.1.17
+    Checking codex-extension-items v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/items)
+    Checking codex-utils-redacted-string v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/redacted-string)
+    Checking codex-utils-string v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/string)
+    Checking codex-async-utils v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/async-utils)
+    Checking quick-xml v0.41.0
+    Checking sys-locale v0.3.2
+    Checking wildmatch v2.6.1
+    Checking gix-utils v0.3.1
+    Checking prodash v31.0.0
+    Checking zlib-rs v0.6.3
+    Checking hash32 v0.3.1
+    Checking heapless v0.8.0
+    Checking gix-error v0.2.1
+    Checking gix-features v0.46.2
+    Checking faster-hex v0.10.0
+    Checking sha1-checked v0.10.0
+    Checking winnow v0.7.14
+    Checking gix-hash v0.23.0
+    Checking jiff v0.2.23
+    Checking codex-execpolicy v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/execpolicy)
+   Compiling prost-derive v0.14.3
+    Checking gix-hashtable v0.13.0
+    Checking thiserror v1.0.69
+    Checking memmap2 v0.9.10
+    Checking gix-date v0.15.1
+    Checking concurrent-queue v2.5.0
+    Checking gix-actor v0.40.0
+    Checking parking v2.2.1
+    Checking gix-object v0.58.0
+    Checking event-listener v5.4.1
+    Checking pin-project v1.1.10
+    Checking gix-fs v0.19.2
+    Checking inout v0.1.4
+    Checking shell-words v1.1.1
+    Checking cipher v0.4.4
+    Checking gix-chunk v0.7.0
+    Checking nonempty v0.12.0
+    Checking gix-tempfile v21.0.2
+    Checking hyper-timeout v0.5.2
+    Checking headers-core v0.3.0
+    Checking objc2-encode v4.1.0
+    Checking headers v0.4.1
+    Checking gix-lock v21.0.2
+    Checking objc2 v0.6.3
+    Checking prost v0.14.3
+    Checking eventsource-stream v0.2.3
+    Checking utf-8 v0.7.6
+    Checking gix-commitgraph v0.35.0
+    Checking filedescriptor v0.8.3
+    Checking gix-quote v0.7.0
+    Checking universal-hash v0.5.1
+    Checking gix-sec v0.13.2
+    Checking serial2 v0.2.33
+    Checking opaque-debug v0.3.1
+    Checking downcast-rs v1.2.1
+    Checking block2 v0.6.2
+    Checking objc2-core-foundation v0.3.2
+    Checking portable-pty v0.9.0
+    Checking gix-revwalk v0.29.0
+    Checking gix-ref v0.61.0
+    Checking arc-swap v1.9.0
+    Checking rand_chacha v0.3.1
+    Checking rand v0.8.6
+    Checking objc2-foundation v0.3.2
+    Checking nix v0.30.1
+    Checking codex-utils-pty v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/pty)
+    Checking gix-command v0.8.0
+    Checking event-listener-strategy v0.5.4
+    Checking gix-glob v0.24.0
+    Checking gix-packetline v0.21.2
+    Checking clru v0.6.3
+    Checking hmac v0.12.1
+    Checking codex-utils-process v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/process)
+    Checking gix-pack v0.68.0
+    Checking gix-transport v0.55.1
+    Checking async-channel v2.5.0
+    Checking gix-revision v0.43.0
+    Checking gix-shallow v0.10.0
+    Checking opentelemetry_sdk v0.31.0
+    Checking gix-config-value v0.17.1
+    Checking gethostname v1.1.0
+    Checking aead v0.5.2
+    Checking const-hex v1.17.0
+    Checking unicode-bom v2.0.3
+    Checking gix-config v0.54.0
+    Checking gix-protocol v0.59.0
+    Checking gix-refspec v0.39.0
+    Checking gix-odb v0.78.0
+    Checking gix-discover v0.49.0
+    Checking gix-traverse v0.55.0
+    Checking gix-diff v0.61.0
+    Checking serde_path_to_error v0.1.20
+    Checking similar v2.7.0
+    Checking gix v0.81.0
+    Checking curve25519-dalek v4.1.3
+    Checking opentelemetry-appender-tracing v0.31.1
+    Checking opentelemetry-semantic-conventions v0.31.0
+    Checking codex-utils-stream-parser v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/stream-parser)
+   Compiling aws-lc-rs v1.18.1
+   Compiling unic-langid-impl v0.9.6
+   Compiling rustls v0.23.45
+   Compiling unic-langid v0.9.6
+    Checking rustls-webpki v0.103.15
+    Checking x509-parser v0.18.1
+    Checking x25519-dalek v2.0.1
+    Checking tree-sitter-language v0.1.7
+    Checking codex-utils-path v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/path-utils)
+    Checking http v0.2.12
+    Checking rcgen v0.14.9
+    Checking semver v1.0.27
+    Checking toml_datetime v0.7.5+spec-1.1.0
+    Checking toml_writer v1.0.6+spec-1.1.0
+    Checking base64ct v1.8.3
+    Checking os_info v3.14.0
+    Checking vsimd v0.8.0
+    Checking outref v0.5.2
+    Checking pem-rfc7468 v0.7.0
+    Checking http-body v0.4.6
+    Checking base64-simd v0.8.0
+   Compiling tree-sitter v0.25.10
+    Checking bytes-utils v0.1.4
+   Compiling tree-sitter-bash v0.25.1
+   Compiling tree-sitter-powershell v0.26.4
+    Checking serde_spanned v1.0.4
+    Checking env_home v0.1.0
+    Checking tokio-rustls v0.26.4
+    Checking codex-utils-rustls-provider v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/rustls-provider)
+    Checking tungstenite v0.27.0 (https://github.com/openai-oss-forks/tungstenite-rs?rev=4fffad30fe373adbdcffab9545e9e9bf4f2fc19f#4fffad30)
+    Checking hyper-rustls v0.27.7
+    Checking rama-tls-rustls v0.3.0-alpha.4
+    Checking reqwest v0.12.28
+    Checking tonic v0.14.3
+    Checking codex-network-proxy v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/network-proxy)
+    Checking codex-http-client v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/http-client)
+    Checking tonic-prost v0.14.3
+    Checking tokio-tungstenite v0.28.0 (https://github.com/openai-oss-forks/tokio-tungstenite?rev=0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186#0e5b2d73)
+    Checking opentelemetry-proto v0.31.0
+    Checking codex-client v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-client)
+    Checking codex-websocket-client v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/websocket-client)
+    Checking opentelemetry-http v0.31.0
+    Checking toml v0.9.11+spec-1.1.0
+    Checking which v8.0.0
+    Checking opentelemetry-otlp v0.31.0
+    Checking aws-smithy-types v1.4.7
+    Checking der v0.7.10
+    Checking simple_asn1 v0.6.4
+    Checking windows-targets v0.52.6
+    Checking streaming-iterator v0.1.9
+    Checking windows-result v0.2.0
+    Checking codex-protocol v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/protocol)
+    Checking jsonwebtoken v9.3.1
+    Checking spki v0.7.3
+   Compiling rust-embed-utils v8.11.0
+    Checking toml_edit v0.24.0+spec-1.1.0
+    Checking dns-lookup v3.0.1
+   Compiling rustc-hash v2.1.1
+   Compiling type-map v0.5.1
+   Compiling mxc_telemetry v0.8.0 (https://github.com/microsoft/mxc?rev=6cd3d58f05d3447e67109cfb75e042803b843ca4#6cd3d58f)
+   Compiling rust-embed-impl v8.11.0
+    Checking pkcs8 v0.10.2
+    Checking windows-strings v0.1.0
+    Checking poly1305 v0.8.0
+   Compiling toml v0.5.11
+   Compiling basic-toml v0.1.10
+    Checking aws-smithy-async v1.2.14
+   Compiling self_cell v1.2.2
+   Compiling find-crate v0.6.3
+   Compiling i18n-config v0.4.8
+   Compiling self_cell v0.10.3
+    Checking windows-core v0.58.0
+    Checking aws-smithy-runtime-api v1.12.0
+   Compiling intl-memoizer v0.5.3
+   Compiling fluent-syntax v0.11.1
+    Checking codex-install-context v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/install-context)
+   Compiling fluent-langneg v0.13.1
+   Compiling intl_pluralrules v7.0.2
+    Checking salsa20 v0.10.2
+    Checking dirs-sys-next v0.1.2
+   Compiling codex-windows-sandbox v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/windows-sandbox-rs)
+   Compiling rustc-hash v1.1.0
+   Compiling fluent-bundle v0.15.3
+    Checking dirs-next v2.0.0
+   Compiling i18n-embed-impl v0.8.4
+    Checking windows v0.58.0
+    Checking unicode-general-category v1.1.0
+    Checking polyval v0.6.2
+    Checking aes v0.8.4
+    Checking tracing-appender v0.2.4
+    Checking mxc_config_contract v0.8.0 (https://github.com/microsoft/mxc?rev=6cd3d58f05d3447e67109cfb75e042803b843ca4#6cd3d58f)
+    Checking keccak v0.1.6
+    Checking cidr v0.3.2
+    Checking glob v0.3.3
+    Checking sha3 v0.10.9
+    Checking ghash v0.5.1
+   Compiling fluent v0.16.1
+   Compiling rust-embed v8.11.0
+    Checking wxc_common v0.8.0 (https://github.com/microsoft/mxc?rev=6cd3d58f05d3447e67109cfb75e042803b843ca4#6cd3d58f)
+    Checking pbkdf2 v0.12.2
+    Checking ctr v0.9.2
+    Checking chacha20 v0.9.1
+    Checking signature v2.2.0
+    Checking hybrid-array v0.2.3
+    Checking notify-types v2.1.0
+    Checking kem v0.3.0-pre.0
+    Checking fsevent-sys v4.1.0
+    Checking unsafe-libyaml v0.2.11
+   Compiling codex-skills v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/skills)
+   Compiling codex-build-info v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/build-info)
+    Checking serde_yaml v0.9.34+deprecated
+    Checking ml-kem v0.2.3
+    Checking include_dir v0.7.4
+    Checking notify v8.2.0
+   Compiling i18n-embed v0.15.4
+    Checking thiserror-no-std v2.0.2
+    Checking chacha20poly1305 v0.10.1
+    Checking aes-gcm v0.10.3
+    Checking hkdf v0.12.4
+    Checking cookie-factory v0.3.3
+    Checking axum-core v0.5.6
+    Checking codex-uds v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/uds)
+    Checking secrecy v0.10.3
+    Checking matchit v0.8.4
+    Checking base64 v0.21.7
+    Checking io_tee v0.1.1
+    Checking age-core v0.11.0
+    Checking axum v0.8.8
+   Compiling i18n-embed-fl v0.9.4
+   Compiling libsqlite3-sys v0.37.0
+    Checking clatter v2.2.0
+    Checking codex-file-watcher v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/file-watcher)
+    Checking scrypt v0.11.0
+    Checking codex-websocket-auth v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/websocket-auth)
+    Checking codex-core-plugin-common v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/core-plugin-common)
+    Checking keyring v3.6.3
+    Checking bech32 v0.9.1
+    Checking age v0.11.2
+    Checking codex-keyring-store v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/keyring-store)
+   Compiling hashlink v0.11.0
+    Checking codex-file-system v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/file-system)
+    Checking codex-api v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-api)
+    Checking codex-features v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/features)
+    Checking codex-git-utils v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/git-utils)
+    Checking codex-model-provider-info v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/model-provider-info)
+    Checking codex-shell-command v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/shell-command)
+    Checking codex-config v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/config)
+    Checking codex-exec-server-protocol v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/exec-server-protocol)
+    Checking codex-otel v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/otel)
+    Checking codex-history v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/history)
+   Compiling futures-intrusive v0.5.0
+   Compiling crossbeam-queue v0.3.12
+    Checking aws-smithy-http v0.62.6
+    Checking aws-credential-types v1.2.11
+   Compiling sqlx-core v0.9.0
+    Checking codex-mxc-sandbox v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/mxc-sandbox)
+    Checking codex-sandboxing v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/sandboxing)
+    Checking codex-secrets v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/secrets)
+    Checking aws-smithy-http-client v1.1.12
+    Checking aws-smithy-observability v0.1.5
+    Checking atoi v2.0.0
+   Compiling dotenvy v0.15.7
+    Checking sqlx-sqlite v0.9.0
+    Checking aws-smithy-runtime v1.9.5
+   Compiling sqlx-macros-core v0.9.0
+    Checking codex-exec-server v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/exec-server)
+    Checking aws-types v1.3.11
+    Checking aws-sigv4 v1.3.7
+    Checking ed25519 v2.2.3
+    Checking crypto_secretbox v0.1.1
+    Checking objc2-app-kit v0.3.2
+   Compiling darling_core v0.24.0
+    Checking blake2 v0.10.6
+    Checking ff v0.13.1
+    Checking base16ct v0.2.0
+   Compiling foldhash v0.1.5
+    Checking chunked_transfer v1.5.0
+    Checking ascii v1.1.0
+   Compiling hashbrown v0.15.5
+    Checking tiny_http v0.12.0
+    Checking sec1 v0.7.3
+    Checking crypto_box v0.9.1
+    Checking group v0.13.0
+    Checking aws-runtime v1.5.17
+    Checking webbrowser v1.2.4
+    Checking ed25519-dalek v2.2.0
+    Checking sqlx v0.9.0
+   Compiling sqlx-macros v0.9.0
+   Compiling darling_macro v0.24.0
+    Checking aws-smithy-json v0.61.9
+    Checking nucleo-matcher v0.3.1 (https://github.com/helix-editor/nucleo.git?rev=4253de9faabb4e5c6d81d946a5e35a90f87347ee#4253de9f)
+    Checking rayon v1.11.0
+    Checking crypto-bigint v0.5.5
+    Checking codex-utils-template v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/template)
+   Compiling petgraph v0.8.3
+    Checking elliptic-curve v0.13.8
+    Checking nucleo v0.5.0 (https://github.com/helix-editor/nucleo.git?rev=4253de9faabb4e5c6d81d946a5e35a90f87347ee#4253de9f)
+   Compiling prost-types v0.14.3
+    Checking codex-state v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/state)
+   Compiling darling v0.24.0
+    Checking codex-agent-identity v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/agent-identity)
+    Checking codex-workload-identity v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/workload-identity)
+    Checking ignore v0.4.25
+    Checking codex-terminal-detection v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/terminal-detection)
+   Compiling prost-build v0.14.3
+    Checking codex-file-search v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/file-search)
+    Checking codex-login v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/login)
+    Checking schemars v1.2.1
+   Compiling rmcp-macros v3.2.0
+    Checking oauth2 v5.0.0
+    Checking rfc6979 v0.4.0
+    Checking process-wrap v9.0.1
+    Checking reqwest v0.13.4
+    Checking debugid v0.8.0
+    Checking sse-stream v0.2.5
+    Checking base64 v0.23.0
+    Checking xmlparser v0.13.6
+    Checking sentry-types v0.46.1
+    Checking rmcp v3.2.0
+    Checking aws-smithy-xml v0.60.13
+    Checking ecdsa v0.16.9
+    Checking codex-rollout v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/rollout)
+   Compiling tonic-prost-build v0.14.3
+    Checking codex-utils-plugins v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/plugins)
+    Checking primeorder v0.13.6
+    Checking codex-utils-output-truncation v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/output-truncation)
+    Checking codex-context-fragments v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/context-fragments)
+    Checking aws-smithy-query v0.60.9
+    Checking codex-guardian-context v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/guardian-context)
+   Compiling codex-code-mode-protocol v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/code-mode-protocol)
+    Checking aws-sdk-sts v1.95.0
+    Checking p256 v0.13.2
+    Checking sentry-core v0.46.1
+    Checking codex-plugin v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/plugin)
+    Checking aws-sdk-signin v1.2.0
+    Checking aws-sdk-sso v1.91.0
+    Checking aws-sdk-ssooidc v1.93.0
+    Checking codex-collaboration-mode-templates v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/collaboration-mode-templates)
+    Checking codex-prompts v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/prompts)
+    Checking sentry v0.46.1
+    Checking num-complex v0.4.6
+    Checking aws-config v1.8.12
+    Checking symphonia-core v0.6.0
+    Checking codex-models-manager v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/models-manager)
+    Checking codex-aws-auth v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/aws-auth)
+    Checking codex-feedback v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/feedback)
+    Checking codex-response-debug-context v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/response-debug-context)
+    Checking codex-code-mode v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/code-mode)
+    Checking codex-connectors v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/connectors)
+    Checking codex-model-provider v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/model-provider)
+    Checking symphonia-metadata v0.6.0
+    Checking codex-diagnostics v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/diagnostics)
+    Checking jsonptr v0.7.1
+   Compiling codex-experimental-api-macros v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-experimental-api-macros)
+   Compiling codex-app-server-protocol-noop-macros v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/app-server-protocol-noop-macros)
+    Checking symphonia-common v0.6.0
+   Compiling darling_core v0.20.11
+   Compiling bzip2-sys v0.1.13+1.0.8
+   Compiling lzma-sys v0.1.20
+    Checking codex-rmcp-client v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/rmcp-client)
+    Checking codex-tools v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/tools)
+    Checking codex-app-server-protocol v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/app-server-protocol)
+   Compiling darling_macro v0.20.11
+   Compiling darling v0.20.11
+   Compiling stop-words v0.9.0
+    Checking extended v0.1.0
+    Checking symphonia-format-riff v0.6.0
+    Checking codex-mcp v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-mcp)
+    Checking bzip2 v0.5.2
+   Compiling cached_proc_macro v0.25.0
+    Checking symphonia-format-ogg v0.6.0
+    Checking symphonia-format-mkv v0.6.0
+    Checking symphonia-format-isomp4 v0.6.0
+    Checking symphonia-bundle-mp3 v0.6.0
+    Checking codex-apply-patch v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/apply-patch)
+    Checking codex-extension-api v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/extension-api)
+    Checking codex-shell-escalation v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/shell-escalation)
+    Checking zopfli v0.8.3
+    Checking lzma-rs v0.3.0
+    Checking filetime v0.2.27
+    Checking deflate64 v0.1.10
+    Checking web-time v1.1.0
+    Checking cached_proc_macro_types v0.1.1
+    Checking tar v0.4.45
+    Checking cached v0.56.0
+    Checking symphonia v0.6.0
+    Checking pulldown-cmark v0.10.3
+    Checking codex-hooks v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/hooks)
+    Checking caseless v0.2.2
+    Checking rust-stemmers v1.2.0
+    Checking deunicode v1.6.2
+    Checking bm25 v2.3.2
+    Checking codex-agent-message-board-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/agent-message-board)
+    Checking xz2 v0.1.7
+    Checking zip v2.4.2
+    Checking codex-utils-audio v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/audio)
+    Checking codex-rollout-trace v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/rollout-trace)
+    Checking codex-agent-graph-store v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/agent-graph-store)
+    Checking codex-agent-roles v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/agent-roles)
+    Checking codex-memories-read v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/memories/read)
+    Checking codex-utils-git-discovery v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/git-discovery)
+    Checking codex-attachment-store v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/attachment-store)
+    Checking predicates-core v1.0.9
+   Compiling codex-linux-sandbox v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/linux-sandbox)
+    Checking whoami v1.6.1
+    Checking float-cmp v0.10.0
+    Checking num_cpus v1.17.0
+    Checking termtree v0.5.1
+    Checking deadpool-runtime v0.1.4
+    Checking normalize-line-endings v0.3.0
+    Checking difflib v0.4.0
+    Checking deadpool v0.12.3
+    Checking predicates v3.1.3
+    Checking predicates-tree v1.0.12
+    Checking assert-json-diff v2.0.2
+    Checking wait-timeout v0.2.1
+    Checking assert_cmd v2.1.2
+    Checking wiremock v0.6.5
+    Checking codex-arg0 v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/arg0)
+    Checking dtor v0.1.1
+   Compiling test-case-core v3.3.1
+    Checking sdd v3.0.10
+    Checking runfiles v0.1.0 (https://github.com/dzbarsky/rules_rust?rev=b56cbaa8465e74127f1ea216f813cd377295ad81#b56cbaa8)
+    Checking ctor v0.6.3
+    Checking codex-utils-cargo-bin v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/cargo-bin)
+    Checking scc v2.4.0
+    Checking codex-home v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-home)
+   Compiling test-case-macros v3.3.1
+    Checking console v0.15.11
+    Checking yansi v1.0.1
+    Checking diff v0.1.13
+    Checking insta v1.46.3
+    Checking serial_test v3.3.1
+    Checking pretty_assertions v1.4.1
+    Checking test-log v0.2.19
+    Checking tracing-test v0.2.5
+    Checking test-case v3.3.1
+    Checking codex-test-binary-support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/test-binary-support)
+    Checking codex-exec-server-test-support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/exec-server/tests/support)
+    Checking assert_matches v1.5.0
+    Checking codex-analytics v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/analytics)
+    Checking codex-thread-store v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/thread-store)
+    Checking codex-guardian-reviewer v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/guardian-reviewer)
+    Checking codex-skills-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/skills)
+    Checking codex-core-plugins v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/core-plugins)
+    Checking codex-core v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/core)
+warning: field `frozen` is never read
+  --> core/src/agent/child_config.rs:50:16
+   |
+47 | pub(crate) struct PreparedSpawnConfig {
+   |                   ------------------- field in this struct
+...
+50 |     pub(crate) frozen: Arc<FrozenSpawnConfig>,
+   |                ^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: used `expect()` on an `Option` value
+   --> core/src/agent/child_config.rs:226:5
+    |
+226 | /     Arc::get_mut(&mut frozen)
+227 | |         .expect("unpublished invocation plan")
+    | |______________________________________________^
+    |
+    = note: if this value is `None`, it will panic
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#expect_used
+    = note: requested on the command line with `-D clippy::expect-used`
+
+warning: `codex-core` (lib) generated 2 warnings
+    Checking codex-guardian-v2 v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/guardian-v2)
+    Checking codex-web-search-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/web-search)
+    Checking codex-image-generation-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/image-generation)
+    Checking core_test_support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/core/tests/common)
+warning: use of `println!`
+    --> core/src/tools/handlers/multi_agents_tests.rs:4840:5
+     |
+4840 |     println!("MRH_PENDING_EXPORT_JSON={packet}");
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#print_stdout
+note: the lint level is defined here
+    --> core/src/lib.rs:6:9
+     |
+   6 | #![deny(clippy::print_stdout, clippy::print_stderr)]
+     |         ^^^^^^^^^^^^^^^^^^^^
+
+warning: use of `println!`
+    --> core/src/tools/handlers/multi_agents_tests.rs:4895:5
+     |
+4895 |     println!("MRH_PENDING_EXPORT_JSON={packet}");
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#print_stdout
+
+warning: use of `println!`
+    --> core/src/tools/handlers/multi_agents_tests.rs:4990:5
+     |
+4990 |     println!("MRH_PENDING_EXPORT_JSON={packet}");
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#print_stdout
+
+warning: `codex-core` (lib test) generated 5 warnings (2 duplicates)
+       Fixed core/tests/suite/openai_file_mcp.rs (1 fix)
+       Fixed core/tests/suite/scenarios.rs (1 fix)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5m 28s

@@ -1,0 +1,166 @@
+{
+  "kind": "E8 affected registry -> actual native Hook subprocess boundary; synthetic provider only",
+  "preparation": [
+    {
+      "kind": "owned toolchain",
+      "rustup_sha256": "ec1b9233e7f72990ecd8e62063fa7f6c3dfc2bec8e97f88bff165f9100ac696a",
+      "exit_code": 0,
+      "elapsed_seconds": 35.612
+    },
+    {
+      "kind": "just",
+      "sha256": "0070dcf46e51756f7b0dd8d2a105c4345231b4201f438f56076a2436b3881107",
+      "elapsed_seconds": 1.736,
+      "exit_code": 0
+    },
+    {
+      "kind": "cargo-nextest",
+      "sha256": "aac4a0d9109efcfb4d83ec729c6e3204d5c15bf16ff554b5ee4476f6c5f60b37",
+      "elapsed_seconds": 2.325,
+      "exit_code": 0
+    }
+  ],
+  "clone": {
+    "exit_code": 0,
+    "elapsed_seconds": 8.414,
+    "stderr": "Cloning into '/Users/shawn/Code/model-routing-harness/runtime/e8-host/source'...\nNote: switching to '01fc69f4026735edfdf6789820549727a4867b11'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+  },
+  "first_build": {
+    "argv": [
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/cargo/bin/cargo",
+      "nextest",
+      "list",
+      "-p",
+      "codex-core",
+      "--lib",
+      "--message-format",
+      "json"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 481.503,
+    "kind": "build/list actual E8 lib-test producer only; no behavioral cases yet",
+    "log": "build.log",
+    "error_excerpt": "Code/model-routing-harness/runtime/e8-host/source/codex-rs/utils/cargo-bin)\n   Compiling test-case-macros v3.3.1\n   Compiling ctor v0.6.3\n   Compiling codex-home v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/codex-home)\n   Compiling test-log-macros v0.2.19\n   Compiling tracing-test-macro v0.2.5\n   Compiling serial_test_derive v3.3.1\n   Compiling console v0.15.11\n   Compiling diff v0.1.13\n   Compiling yansi v1.0.1\n   Compiling insta v1.46.3\n   Compiling serial_test v3.3.1\n   Compiling pretty_assertions v1.4.1\n   Compiling tracing-test v0.2.5\n   Compiling test-log v0.2.19\n   Compiling test-case v3.3.1\n   Compiling codex-test-binary-support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/test-binary-support)\n   Compiling codex-exec-server-test-support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/exec-server/tests/support)\n   Compiling assert_matches v1.5.0\nwarning: field `frozen` is never read\n  --> core/src/agent/child_config.rs:50:16\n   |\n47 | pub(crate) struct PreparedSpawnConfig {\n   |                   ------------------- field in this struct\n...\n50 |     pub(crate) frozen: Arc<FrozenSpawnConfig>,\n   |                ^^^^^^\n   |\n   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default\n\n   Compiling codex-guardian-v2 v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/guardian-v2)\n   Compiling codex-web-search-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/web-search)\n   Compiling codex-image-generation-extension v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/ext/image-generation)\n   Compiling core_test_support v0.159.3 (/Users/shawn/Code/model-routing-harness/runtime/e8-host/source/codex-rs/core/tests/common)\nwarning: `codex-core` (lib) generated 1 warning\nerror[E0308]: mismatched types\n   --> core/src/tools/registry_live_export_tests.rs:32:17\n    |\n 31 |             Ok(Box::new(FunctionToolOutput::from_text(\n    |                         ----------------------------- arguments to this function are incorrect\n 32 |                 \"controlled child boundary only\",\n    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `&str`\n    |\nnote: associated function defined here\n   --> core/src/tools/context.rs:266:12\n    |\n266 |     pub fn from_text(text: String, success: Option<bool>) -> Self {\n    |            ^^^^^^^^^ ------------\nhelp: try using a conversion method\n    |\n 32 |                 \"controlled child boundary only\".to_string(),\n    |                                                 ++++++++++++\n\nFor more information about this error, try `rustc --explain E0308`.\nerror: could not compile `codex-core` (lib test) due to 1 previous error\nerror: command `/Users/shawn/Code/model-routing-harness/runtime/e8-host/rustup/toolchains/1.95.0-aarch64-apple-darwin/bin/cargo '--color=auto' test --no-run --message-format json-render-diagnostics --package codex-core --lib` exited with code 101\n"
+  },
+  "corrected_build": {
+    "argv": [
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/cargo/bin/cargo",
+      "nextest",
+      "list",
+      "-p",
+      "codex-core",
+      "--lib",
+      "--message-format",
+      "json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 101.676,
+    "kind": "cached offline build/list actual E8 lib-test producer; no behavioral execution",
+    "log": "build-retry.log",
+    "cause_fixed": "E0308 fixture output String conversion"
+  },
+  "metadata_fix": {
+    "argv": [
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/cargo/bin/cargo",
+      "nextest",
+      "list",
+      "-p",
+      "codex-core",
+      "--lib",
+      "--message-format",
+      "json",
+      "--list-type",
+      "binaries-only"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.806,
+    "kind": "cached list format correction; no behavioral execution",
+    "log": "metadata-fix.log",
+    "previous_error": "nextest exit96 missing rust-binaries; full list metadata cannot be used for --binaries-metadata"
+  },
+  "native_test_run": {
+    "argv": [
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/tools/just",
+      "test",
+      "--binaries-metadata",
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/run-binaries.json",
+      "--run-ignored",
+      "only",
+      "-E",
+      "test(=tools::registry::live_export_tests::e8_live_registry_hook_subprocess_control)",
+      "--no-capture",
+      "--retries",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 6.428,
+    "log": "live-test.log"
+  },
+  "native_evidence": "e8-live-hook.json",
+  "guard_fixtures": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m unittest test_isolated_live_hook -v",
+    "tests": 5,
+    "elapsed_seconds": 0.012,
+    "exit_code": 0,
+    "kind": "handmade parser/lease guards, not native emission or concurrency proof"
+  },
+  "formatter": {
+    "exit_code": 0,
+    "scope": "three E8 Rust paths; pinned Rust1.95 rustfmt before successful build; stable warning imports_granularity=Item nightly-only"
+  },
+  "lint": {
+    "argv": [
+      "/Users/shawn/Code/model-routing-harness/runtime/e8-host/tools/just",
+      "fix",
+      "-p",
+      "codex-core",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 329.873,
+    "kind": "crate-scoped upstream just fix; recipe clippy --fix --tests; no behavioral execution",
+    "log": "lint.log",
+    "saved_log": "e8-lint.txt",
+    "warnings": "existing E7 frozen field/expect and three source emission println; no new E8 warnings",
+    "unrelated_auto_fixes": "two unused suite imports restored to exact base; saved e8-unrelated-lint-delta.txt; excluded from E8 patch"
+  },
+  "unaffected_reused": [
+    "E5 third-party deny coexistence; merge path unchanged",
+    "E7 actual resolver/role/frozen projection/schema and strict parser",
+    "E6 core/store/factory semantics"
+  ],
+  "not_run": [
+    "full workspace",
+    "both-version matrix",
+    "new native lifecycle/Goal",
+    "true provider/model/account",
+    "installed host activation"
+  ],
+  "quota_rule": {
+    "source": "native A human message 2026-10-11; verified direct text",
+    "pause_below_percent": 7,
+    "latest_remaining_percent": 10,
+    "secondary": "unavailable",
+    "reset_or_reserve_used": false
+  },
+  "original_baseline": "R1 unchanged; full objective not complete; A owns acceptance",
+  "monitor": "no trusted original identity/profile context; no Monitor write or invented snapshot/Goal",
+  "post_lint_source": {
+    "changed_files": [],
+    "tests_rerun_after_fix": false
+  },
+  "formatter_check": {
+    "exit_code": 0,
+    "scope": "three affected E8 Rust files; check only; no source mutation"
+  },
+  "postrun_lifetime_readback": "8 unique actual host UUID epochs, all closed, launch lock released; saved in e8-live-hook.json",
+  "cleanup": {
+    "evidence": "e8-cleanup.json",
+    "removed": true,
+    "elapsed_seconds": 10.181,
+    "allocated_kib_before": 17760356
+  },
+  "status": "E8-B-001 delivered for A acceptance; source/native boundary passed; production unsupported",
+  "source_after_lint": "same 26 relevant source bytes as executed; two unrelated suite import fixes restored; no behavioral rerun",
+  "cost_scope": "measured command segments only; parent/reviewer effort, initial metadata-error duration and whole-package active/wall totals unknown"
+}

@@ -1,2 +1,3 @@
 # Unified diff context uses a single space on blank lines; preserve patch bytes.
 integrations/codex-host-export/*.patch -whitespace
+integrations/codex-live-hook/*.patch -whitespace

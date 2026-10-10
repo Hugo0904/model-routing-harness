@@ -1,0 +1,46 @@
+{
+  "base_revision": "01fc69f4026735edfdf6789820549727a4867b11",
+  "upstream": "https://github.com/openai/codex.git",
+  "tag": "rust-v0.159.3",
+  "license": "Apache-2.0; original LICENSE/NOTICE preserved in ../codex-host-export",
+  "patches": [
+    {
+      "path": "integrations/codex-host-export/pending-delegation.patch",
+      "sha256": "04a60ea84be6d88af0c17a26f6c28c4ed6c19cecbc0035f08320e18c48563054"
+    },
+    {
+      "path": "integrations/codex-live-hook/live-registry-test.patch",
+      "sha256": "8329cbc68e2f55f650fb42b00fed9fa1a5950571253e071c99c065a9b94ea1be"
+    }
+  ],
+  "source_files": {
+    "codex-rs/core/src/agent/child_config.rs": "7802c76d99de8c4167a95aef96a545641ee417fbffc8f54408bc457a854acc67",
+    "codex-rs/core/src/agent/role.rs": "ecc854e94cb8f4d753f6f0f875e98860f63e059e9921f28130e60b400ccd8cb1",
+    "codex-rs/core/src/agent/role_tests.rs": "68deadf30b5b56e0bd1fea95279f1788fa87220f97fb756672c9340928cb3d5f",
+    "codex-rs/core/src/hook_runtime.rs": "a25109c862eb06bc6cea7b514ae94e0dcb18e3ff777df3fc66d299f7458154d4",
+    "codex-rs/core/src/session/tests.rs": "7d2f1455e333c6765a4ae9776dad196471ed8d7ce62610796709c84585009772",
+    "codex-rs/core/src/session/tests/guardian_tests.rs": "80fd3dd1000e30ada7fdcc6eb91fe3809a7a66b3d60315068f3f030a542c8314",
+    "codex-rs/core/src/tools/context.rs": "0fcd336bc9ce01d3278dc3fda3a13f424e3f1c3a4ddaf1e4f55c96d019e6a11e",
+    "codex-rs/core/src/tools/handlers/apply_patch_tests.rs": "bfa0d3c99a84933c38171c58c01f73cf9e44ad85ba34109aa49deaebd3484cad",
+    "codex-rs/core/src/tools/handlers/extension_tools.rs": "a777cda818726ca299c738f1e9fea0592bc172fe97647b306426fe4c9cf295f7",
+    "codex-rs/core/src/tools/handlers/mcp.rs": "ee587f9bdb4bdd20279eabc77e772d493eb5b9f35823e373436f50364843f230",
+    "codex-rs/core/src/tools/handlers/multi_agents.rs": "24cd7b0f4755ba6a0448250b023df07c0307eec93fbd150d4a4bd81eb35ad721",
+    "codex-rs/core/src/tools/handlers/multi_agents/spawn.rs": "4869444e3914a2f0c8bf023d2fa112b96142fecc172b9edd849710d64325b58a",
+    "codex-rs/core/src/tools/handlers/multi_agents_tests.rs": "c0a8fea0d7dddf433494308d90217ad767348d58a1fab90b4f31b5d2fc0c97a6",
+    "codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs": "96bef39c6fd17a6e6b3c20e3af69adc6cbfc00e592e1bc5537ac85df9e593e2c",
+    "codex-rs/core/src/tools/handlers/request_user_input_tests.rs": "0ece2eddb37e2d5096a13ccc258aacbac2012ee3376370a28b4405ef587aa827",
+    "codex-rs/core/src/tools/handlers/unified_exec_tests.rs": "2e031a27971d928833125688ef189dfd638690bddabc1085cf40acdd8ae44b6a",
+    "codex-rs/core/src/tools/handlers/view_image.rs": "a758e0a4aed3dfe52709f8ed6d1f2c8750571d834293eb3d860d3648299a6781",
+    "codex-rs/core/src/tools/registry.rs": "8d0de8988be52c0dd89a49642afa1762f31a9843339ba4690c8d921c2875a6f5",
+    "codex-rs/core/src/tools/registry_live_export_tests.rs": "a320c8abde3fc33e988fb3a7bf5006aab58a2fb5cfd589ad19d5d91dfc38de36",
+    "codex-rs/core/src/tools/registry_tests.rs": "442f15d8e6c624e7beda361c3c15b2ddd9cded614727ec8c813f20e1b508d62c",
+    "codex-rs/core/src/tools/router.rs": "fbafb837bd927fdab00cd2ca7975af0fa6cba971b5dc70453562dd3e073d6924",
+    "codex-rs/core/src/tools/tool_dispatch_trace_tests.rs": "fc0147b83460fbc247a08600ed643b8273450461b5a4bf195f92f9defcd8febd",
+    "codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json": "1fb9371b3fee93158155940e7527490d96daa627c68e43ef59cd9b0b542ea96d",
+    "codex-rs/hooks/src/engine/mod_tests.rs": "65b57f645d4b7cc288761af9151575f6e6d98bf5880aabe4634fdf6ae2025116",
+    "codex-rs/hooks/src/events/pre_tool_use.rs": "ab602ff4cb17806c719bc3a9fb5c94081b5da87e8a4ccd90910dedb763a6579e",
+    "codex-rs/hooks/src/schema.rs": "0e3886d67a5c6df5b60a91f6f558fcccdf486d0f646d66525fe42d8de5209b88"
+  },
+  "patch_apply_check": "actual minimal exact-base files -> accepted E7 patch -> E8 patch -> all modified file bytes equal executed checkout",
+  "cargo_lock_build_metadata_sha256": "d7918248638c0477183a6437f07435c19fecc6ec85b6ea57a97e50301e9e39a9"
+}

@@ -1,0 +1,519 @@
+{
+  "kind": "actual source ToolRegistry -> native trusted Hook engine -> subprocess MRH -> same dispatch",
+  "base_revision": "01fc69f4026735edfdf6789820549727a4867b11",
+  "registration": {
+    "registration_id": "6e206cdd-27d3-4e3c-b342-448dbb282ddc",
+    "producer": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/e8-host/target/debug/deps/codex_core-ff3bd721565a6e58",
+      "sha256": "b1045d7fa325afe3eabd65796695ca3fca4552524182358d9126fa81ff76b90a"
+    },
+    "bootstrap": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/e8-host/bootstrap.py",
+      "sha256": "462528101b94dc9e6ffc1e909f02ab74920ca744b56d9eaef89e6bad4f7beadd"
+    },
+    "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+    "package_root": "/Users/shawn/Code/model-routing-harness/src",
+    "source_lineage": {
+      "base_revision": "01fc69f4026735edfdf6789820549727a4867b11",
+      "upstream": "https://github.com/openai/codex.git",
+      "tag": "rust-v0.159.3",
+      "license": "Apache-2.0; original LICENSE/NOTICE preserved in ../codex-host-export",
+      "patches": [
+        {
+          "path": "integrations/codex-host-export/pending-delegation.patch",
+          "sha256": "04a60ea84be6d88af0c17a26f6c28c4ed6c19cecbc0035f08320e18c48563054"
+        },
+        {
+          "path": "integrations/codex-live-hook/live-registry-test.patch",
+          "sha256": "8329cbc68e2f55f650fb42b00fed9fa1a5950571253e071c99c065a9b94ea1be"
+        }
+      ],
+      "source_files": {
+        "codex-rs/core/src/agent/child_config.rs": "7802c76d99de8c4167a95aef96a545641ee417fbffc8f54408bc457a854acc67",
+        "codex-rs/core/src/agent/role.rs": "ecc854e94cb8f4d753f6f0f875e98860f63e059e9921f28130e60b400ccd8cb1",
+        "codex-rs/core/src/agent/role_tests.rs": "68deadf30b5b56e0bd1fea95279f1788fa87220f97fb756672c9340928cb3d5f",
+        "codex-rs/core/src/hook_runtime.rs": "a25109c862eb06bc6cea7b514ae94e0dcb18e3ff777df3fc66d299f7458154d4",
+        "codex-rs/core/src/session/tests.rs": "7d2f1455e333c6765a4ae9776dad196471ed8d7ce62610796709c84585009772",
+        "codex-rs/core/src/session/tests/guardian_tests.rs": "80fd3dd1000e30ada7fdcc6eb91fe3809a7a66b3d60315068f3f030a542c8314",
+        "codex-rs/core/src/tools/context.rs": "0fcd336bc9ce01d3278dc3fda3a13f424e3f1c3a4ddaf1e4f55c96d019e6a11e",
+        "codex-rs/core/src/tools/handlers/apply_patch_tests.rs": "bfa0d3c99a84933c38171c58c01f73cf9e44ad85ba34109aa49deaebd3484cad",
+        "codex-rs/core/src/tools/handlers/extension_tools.rs": "a777cda818726ca299c738f1e9fea0592bc172fe97647b306426fe4c9cf295f7",
+        "codex-rs/core/src/tools/handlers/mcp.rs": "ee587f9bdb4bdd20279eabc77e772d493eb5b9f35823e373436f50364843f230",
+        "codex-rs/core/src/tools/handlers/multi_agents.rs": "24cd7b0f4755ba6a0448250b023df07c0307eec93fbd150d4a4bd81eb35ad721",
+        "codex-rs/core/src/tools/handlers/multi_agents/spawn.rs": "4869444e3914a2f0c8bf023d2fa112b96142fecc172b9edd849710d64325b58a",
+        "codex-rs/core/src/tools/handlers/multi_agents_tests.rs": "c0a8fea0d7dddf433494308d90217ad767348d58a1fab90b4f31b5d2fc0c97a6",
+        "codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs": "96bef39c6fd17a6e6b3c20e3af69adc6cbfc00e592e1bc5537ac85df9e593e2c",
+        "codex-rs/core/src/tools/handlers/request_user_input_tests.rs": "0ece2eddb37e2d5096a13ccc258aacbac2012ee3376370a28b4405ef587aa827",
+        "codex-rs/core/src/tools/handlers/unified_exec_tests.rs": "2e031a27971d928833125688ef189dfd638690bddabc1085cf40acdd8ae44b6a",
+        "codex-rs/core/src/tools/handlers/view_image.rs": "a758e0a4aed3dfe52709f8ed6d1f2c8750571d834293eb3d860d3648299a6781",
+        "codex-rs/core/src/tools/registry.rs": "8d0de8988be52c0dd89a49642afa1762f31a9843339ba4690c8d921c2875a6f5",
+        "codex-rs/core/src/tools/registry_live_export_tests.rs": "a320c8abde3fc33e988fb3a7bf5006aab58a2fb5cfd589ad19d5d91dfc38de36",
+        "codex-rs/core/src/tools/registry_tests.rs": "442f15d8e6c624e7beda361c3c15b2ddd9cded614727ec8c813f20e1b508d62c",
+        "codex-rs/core/src/tools/router.rs": "fbafb837bd927fdab00cd2ca7975af0fa6cba971b5dc70453562dd3e073d6924",
+        "codex-rs/core/src/tools/tool_dispatch_trace_tests.rs": "fc0147b83460fbc247a08600ed643b8273450461b5a4bf195f92f9defcd8febd",
+        "codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json": "1fb9371b3fee93158155940e7527490d96daa627c68e43ef59cd9b0b542ea96d",
+        "codex-rs/hooks/src/engine/mod_tests.rs": "65b57f645d4b7cc288761af9151575f6e6d98bf5880aabe4634fdf6ae2025116",
+        "codex-rs/hooks/src/events/pre_tool_use.rs": "ab602ff4cb17806c719bc3a9fb5c94081b5da87e8a4ccd90910dedb763a6579e",
+        "codex-rs/hooks/src/schema.rs": "0e3886d67a5c6df5b60a91f6f558fcccdf486d0f646d66525fe42d8de5209b88"
+      },
+      "patch_apply_check": "actual minimal exact-base files -> accepted E7 patch -> E8 patch -> all modified file bytes equal executed checkout",
+      "cargo_lock_build_metadata_sha256": "d7918248638c0477183a6437f07435c19fecc6ec85b6ea57a97e50301e9e39a9"
+    }
+  },
+  "source_lineage": {
+    "base_revision": "01fc69f4026735edfdf6789820549727a4867b11",
+    "upstream": "https://github.com/openai/codex.git",
+    "tag": "rust-v0.159.3",
+    "license": "Apache-2.0; original LICENSE/NOTICE preserved in ../codex-host-export",
+    "patches": [
+      {
+        "path": "integrations/codex-host-export/pending-delegation.patch",
+        "sha256": "04a60ea84be6d88af0c17a26f6c28c4ed6c19cecbc0035f08320e18c48563054"
+      },
+      {
+        "path": "integrations/codex-live-hook/live-registry-test.patch",
+        "sha256": "8329cbc68e2f55f650fb42b00fed9fa1a5950571253e071c99c065a9b94ea1be"
+      }
+    ],
+    "source_files": {
+      "codex-rs/core/src/agent/child_config.rs": "7802c76d99de8c4167a95aef96a545641ee417fbffc8f54408bc457a854acc67",
+      "codex-rs/core/src/agent/role.rs": "ecc854e94cb8f4d753f6f0f875e98860f63e059e9921f28130e60b400ccd8cb1",
+      "codex-rs/core/src/agent/role_tests.rs": "68deadf30b5b56e0bd1fea95279f1788fa87220f97fb756672c9340928cb3d5f",
+      "codex-rs/core/src/hook_runtime.rs": "a25109c862eb06bc6cea7b514ae94e0dcb18e3ff777df3fc66d299f7458154d4",
+      "codex-rs/core/src/session/tests.rs": "7d2f1455e333c6765a4ae9776dad196471ed8d7ce62610796709c84585009772",
+      "codex-rs/core/src/session/tests/guardian_tests.rs": "80fd3dd1000e30ada7fdcc6eb91fe3809a7a66b3d60315068f3f030a542c8314",
+      "codex-rs/core/src/tools/context.rs": "0fcd336bc9ce01d3278dc3fda3a13f424e3f1c3a4ddaf1e4f55c96d019e6a11e",
+      "codex-rs/core/src/tools/handlers/apply_patch_tests.rs": "bfa0d3c99a84933c38171c58c01f73cf9e44ad85ba34109aa49deaebd3484cad",
+      "codex-rs/core/src/tools/handlers/extension_tools.rs": "a777cda818726ca299c738f1e9fea0592bc172fe97647b306426fe4c9cf295f7",
+      "codex-rs/core/src/tools/handlers/mcp.rs": "ee587f9bdb4bdd20279eabc77e772d493eb5b9f35823e373436f50364843f230",
+      "codex-rs/core/src/tools/handlers/multi_agents.rs": "24cd7b0f4755ba6a0448250b023df07c0307eec93fbd150d4a4bd81eb35ad721",
+      "codex-rs/core/src/tools/handlers/multi_agents/spawn.rs": "4869444e3914a2f0c8bf023d2fa112b96142fecc172b9edd849710d64325b58a",
+      "codex-rs/core/src/tools/handlers/multi_agents_tests.rs": "c0a8fea0d7dddf433494308d90217ad767348d58a1fab90b4f31b5d2fc0c97a6",
+      "codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs": "96bef39c6fd17a6e6b3c20e3af69adc6cbfc00e592e1bc5537ac85df9e593e2c",
+      "codex-rs/core/src/tools/handlers/request_user_input_tests.rs": "0ece2eddb37e2d5096a13ccc258aacbac2012ee3376370a28b4405ef587aa827",
+      "codex-rs/core/src/tools/handlers/unified_exec_tests.rs": "2e031a27971d928833125688ef189dfd638690bddabc1085cf40acdd8ae44b6a",
+      "codex-rs/core/src/tools/handlers/view_image.rs": "a758e0a4aed3dfe52709f8ed6d1f2c8750571d834293eb3d860d3648299a6781",
+      "codex-rs/core/src/tools/registry.rs": "8d0de8988be52c0dd89a49642afa1762f31a9843339ba4690c8d921c2875a6f5",
+      "codex-rs/core/src/tools/registry_live_export_tests.rs": "a320c8abde3fc33e988fb3a7bf5006aab58a2fb5cfd589ad19d5d91dfc38de36",
+      "codex-rs/core/src/tools/registry_tests.rs": "442f15d8e6c624e7beda361c3c15b2ddd9cded614727ec8c813f20e1b508d62c",
+      "codex-rs/core/src/tools/router.rs": "fbafb837bd927fdab00cd2ca7975af0fa6cba971b5dc70453562dd3e073d6924",
+      "codex-rs/core/src/tools/tool_dispatch_trace_tests.rs": "fc0147b83460fbc247a08600ed643b8273450461b5a4bf195f92f9defcd8febd",
+      "codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json": "1fb9371b3fee93158155940e7527490d96daa627c68e43ef59cd9b0b542ea96d",
+      "codex-rs/hooks/src/engine/mod_tests.rs": "65b57f645d4b7cc288761af9151575f6e6d98bf5880aabe4634fdf6ae2025116",
+      "codex-rs/hooks/src/events/pre_tool_use.rs": "ab602ff4cb17806c719bc3a9fb5c94081b5da87e8a4ccd90910dedb763a6579e",
+      "codex-rs/hooks/src/schema.rs": "0e3886d67a5c6df5b60a91f6f558fcccdf486d0f646d66525fe42d8de5209b88"
+    },
+    "patch_apply_check": "actual minimal exact-base files -> accepted E7 patch -> E8 patch -> all modified file bytes equal executed checkout",
+    "cargo_lock_build_metadata_sha256": "d7918248638c0477183a6437f07435c19fecc6ec85b6ea57a97e50301e9e39a9"
+  },
+  "test_argv": [
+    "/Users/shawn/Code/model-routing-harness/runtime/e8-host/tools/just",
+    "test",
+    "--binaries-metadata",
+    "/Users/shawn/Code/model-routing-harness/runtime/e8-host/run-binaries.json",
+    "--run-ignored",
+    "only",
+    "-E",
+    "test(=tools::registry::live_export_tests::e8_live_registry_hook_subprocess_control)",
+    "--no-capture",
+    "--retries",
+    "0"
+  ],
+  "producer_sha256": "b1045d7fa325afe3eabd65796695ca3fca4552524182358d9126fa81ff76b90a",
+  "native": {
+    "actual_child_creation": false,
+    "cases": [
+      {
+        "call": "e8-main",
+        "controlled_handler_entered": false,
+        "native_registry_blocked": true
+      },
+      {
+        "call": "e8-main",
+        "controlled_handler_entered": false,
+        "native_registry_blocked": true
+      },
+      {
+        "call": "e8-next",
+        "controlled_handler_entered": false,
+        "native_registry_blocked": true
+      },
+      {
+        "call": "e8-protected",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      },
+      {
+        "call": "e8-missing",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      },
+      {
+        "call": "e8-foreign",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      },
+      {
+        "call": "e8-expired",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      },
+      {
+        "call": "e8-midclose",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      },
+      {
+        "call": "e8-midclose",
+        "controlled_handler_entered": true,
+        "native_registry_blocked": false
+      }
+    ],
+    "controlled_handler_calls": 6,
+    "native_registered_hook_trust": "Trusted; specific current_hash; bypass false",
+    "registered_command": "'/Library/Frameworks/Python.framework/Versions/3.11/bin/python3' '/Users/shawn/Code/model-routing-harness/runtime/e8-host/bootstrap.py' '/Users/shawn/Code/model-routing-harness/runtime/e8-host/context.json'",
+    "registration_current_hash": "sha256:420adea268355e56f349ac46c4643a29014fd0e4c02a9d552857613f541a7b1e",
+    "registration_key": "/Users/shawn/Code/model-routing-harness/runtime/e8-host/config.toml:pre_tool_use:0:0"
+  },
+  "hook_observations": [
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-main"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 1,
+      "dummy_keys": 1,
+      "deny_emitted": true,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-main"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": true,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-next"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 1,
+      "dummy_keys": 1,
+      "deny_emitted": true,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-protected"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "configured-role",
+        "value": "effort"
+      },
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-missing"
+      },
+      "host_export_present": false,
+      "role_protection": null,
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-foreign"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-expired"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-midclose"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 1,
+      "dummy_keys": 1,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    },
+    {
+      "scope": {
+        "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+        "turn_id": "e8-native-turn",
+        "tool_use_id": "e8-midclose"
+      },
+      "host_export_present": true,
+      "role_protection": {
+        "known": true,
+        "source": "builtin-role",
+        "value": "unprotected"
+      },
+      "transport_calls": 0,
+      "dummy_keys": 0,
+      "deny_emitted": false,
+      "source": "actual registered Hook stdin; provider synthetic"
+    }
+  ],
+  "synthetic_stats": {
+    "schema_version": 2,
+    "updated_at": "2026-10-10T18:54:36.061198+00:00",
+    "partition": "synthetic",
+    "proposals": 7,
+    "jev_attempts": 0,
+    "synthetic_attempts": 3,
+    "classified_tasks": 2,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 2
+    },
+    "outcomes": {
+      "top_main_requested": 2,
+      "fixed_role_effort": 1,
+      "missing_role_protection": 3,
+      "typesafe_network_error": 1
+    },
+    "requested_models": {},
+    "confirmed_children": 0,
+    "simulated_children": 0,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [
+      {
+        "platform": "codex",
+        "surface": "simulation",
+        "proposals": 7
+      }
+    ],
+    "event_ids": {
+      "proposals": [
+        "016e5d3417c13898bf9b069ddad858cfd2c22959e67d7d59fb75a08aa25e68d2",
+        "0c38a0e25caa00518afbd10017cf78a917deb0b0ee0d83938b99ffce06258fff",
+        "3ea9d7c124582de540dca52b3847b9a63a9465ed11b71ba9cc19fb7d7c09c577",
+        "47493962e22f1af1745b297cd417114c7a0f412504b112e5bedf54715a9b9da3",
+        "4b8b44a26404fc47150e7b76b8a353a6844ac8ff98c4661c15264a47ed1dfd32",
+        "bd6762f6b6a64515aef181ec99265c216e86dd1de0694d74521e1679fe9d3082",
+        "d5f281dd9bc7b8cb28b83c31749fee05026e97f6c047671d6cb2aa32284d83fc"
+      ],
+      "attempts": [
+        "016e5d3417c13898bf9b069ddad858cfd2c22959e67d7d59fb75a08aa25e68d2:attempt:0",
+        "bd6762f6b6a64515aef181ec99265c216e86dd1de0694d74521e1679fe9d3082:attempt:0",
+        "d5f281dd9bc7b8cb28b83c31749fee05026e97f6c047671d6cb2aa32284d83fc:attempt:0"
+      ],
+      "receipts": []
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "explicit_synthetic_offline_transport",
+      "attempt_states": {
+        "returned": 2,
+        "error": 1
+      },
+      "requested_models": {
+        "jev-1.13.0": 3
+      },
+      "response_models": {
+        "jev-1.13.0": 2
+      },
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "usage_unavailable_attempts": 3,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "real_provider_requests": 0,
+  "provider_partition": "synthetic in-process HTTP with dummy credential",
+  "preserve_child_boundary": "controlled handler counter; no actual child graph/provider",
+  "installed_host_changed": false,
+  "production_resolver_changed": false,
+  "elapsed_seconds": 6.811,
+  "postrun_lifetime_readback": {
+    "kind": "actual owned files read back after producer return; not another test run",
+    "unique_host_epochs": 8,
+    "all_closed": true,
+    "launch_lock_released": true,
+    "leases": [
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-protected",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "203ccda7-2d2e-473a-8fbb-138919494b07",
+        "phase": "closed",
+        "admitted": true
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-main",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "35653b45-5d1d-4177-ab96-07cdfcf07e4f",
+        "phase": "closed",
+        "admitted": true
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "foreign",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "3a3dcb84-3e34-410a-9420-a6f0889aa693",
+        "phase": "closed",
+        "admitted": false
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-expired",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "6ad4dd29-1988-4c82-9f05-dcce49e5cad8",
+        "phase": "closed",
+        "admitted": false
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-midclose",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "8ed45eec-fd93-41f8-a8f0-20df897e9b7b",
+        "phase": "closed",
+        "admitted": true
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-main",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "a903b41b-7dc1-4a36-9c42-6dbdefd251c3",
+        "phase": "closed",
+        "admitted": true
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-next",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "bf49fc07-08e0-4bb3-ac91-ef5071790bf5",
+        "phase": "closed",
+        "admitted": true
+      },
+      {
+        "scope": {
+          "platform": "codex",
+          "session_id": "01a1272a-b165-7781-9e68-869cf61f2eec",
+          "tool_call_id": "e8-midclose",
+          "turn_id": "e8-native-turn"
+        },
+        "export_nonce": "e855c1f4-83b2-4b15-ad3e-1cfd3863001d",
+        "phase": "closed",
+        "admitted": true
+      }
+    ]
+  }
+}
