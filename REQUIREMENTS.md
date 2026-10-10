@@ -268,6 +268,10 @@ C2C 尚未能讀取新專案時，只回報存取缺口，不擅自放寬權限�
 | S3 CLI 與事實統計 | 共用 CLI／JSON、冪等分區；admitted preserve 留 proposal／精確 reason，Post 關聯收據；E6 新封裝入口回放 | reported／synthetic 不能升成 confirmed actual model；child tokens／cost／quota 不可取得 |
 | S4 安裝與宿主行為 | 自有 bundle／設定；E4/E5 兩版隔離 native deny 零 child／Fixed scripted model、E4G 同 Goal 跨回合、E5 trust／remove／共存；E6 新 archive 離線 smoke | E6 新 bytes 未重跑 native lifecycle；Desktop UI、真模型、主代理自主接回與自主 Goal 續跑未驗證；正式全域 Hook 未啟用 |
 | S5 選配接入 | Canopy 摘要及 Monitor 統計契約／合成例；缺席與失效可回退 | 第一階段不含 live Canopy／Monitor 接入；既有三專案未修改 |
-| S6 審查及交付 | 原 GPT 同一窗口、A 分階段審查、獨立本機 Git、文件／證據／清理 | E6 已由 A 限定接受；原 GPT D4 摘要審查已送出、回覆待收；全 R1 驗收尚未完成；沒有 push |
+| S6 審查及交付 | 原 GPT 同一窗口、A 分階段審查、獨立本機 Git、文件／證據／清理 | E6 已由 A 限定接受；原 GPT D4 已限定接受摘要；使用者另授權宿主出口設計與隔離實作；全 R1 驗收尚未完成；沒有 push |
 
 版本、測試、archive identity、exact-version matrix 和支持限制見 [E6 證據](docs/e6-action-facts-proof.md)；歷史接受與目前工作指示見 [任務記錄](docs/MRH-001.md)。新舊封裝／native／provider／production 證據各自保留，不互相替代。
+
+## 2026-10-11 授權增補（保留原始 R1）
+
+使用者允許新增 Codex 宿主的唯讀有效設定出口，先整合原 GPT 意見，再由既有 B 設計與隔離實作。不得替換已安裝的 Codex、啟用正式 Hook 或使用真實憑證；範圍內不用每階段再問。剩餘額度低於 **10%** 時，依原約定在自然檢查點保存後暫停，取代原 15% 門檻。E7 的具體邊界及驗收見任務記錄 D12；這項授權不表示出口已存在、已驗證或正式路由已可用。
