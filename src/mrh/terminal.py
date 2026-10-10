@@ -336,22 +336,60 @@ def _fit(value: Any, size: int) -> str:
     return text + " " * max(0, size - cell_width(text))
 
 
-def policy_rows(policy: Mapping[str, Any]) -> list[tuple[str, str]]:
-    """Current targets; Top follows mode/fixed, never the legacy tiers.Top."""
-    def target(mapping):
-        return (f"{mapping['model']} / {mapping.get('effort', 'inherit')}" if mapping
-                else "Unset / preserve original")
-    rows = [(tier, target(policy.get("tiers", {}).get(tier))) for tier in _TIER_ORDER[:3]]
-    rows.append(("Top", "Fixed / " + target(policy.get("fixed")) if policy.get("top_mode", "Main") == "Fixed"
-                 else "Main / current main agent"))
+def _policy_cells(policy: Mapping[str, Any]) -> list[tuple[str, str, str, str]]:
+    rows = []
+    for tier in _TIER_ORDER[:3]:
+        mapping = policy.get("tiers", {}).get(tier)
+        rows.append((tier, mapping["model"], mapping.get("effort", "inherit"), "Model") if mapping else
+                    (tier, "Unset", "—", "Preserve"))
+    if policy.get("top_mode", "Main") == "Fixed":
+        mapping = policy.get("fixed", {})
+        rows.append(("Top", mapping.get("model", "Unset"), mapping.get("effort", "inherit"), "Fixed"))
+    else:
+        rows.append(("Top", "Current main agent", "—", "Main"))
     return rows
 
 
-def _configuration_lines(configuration: Mapping[str, Any], width: int) -> list[str]:
+def policy_rows(policy: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Summary over the same policy cells used by the current table."""
+    return [(tier, "Unset / preserve original" if mode == "Preserve" else
+             "Main / current main agent" if mode == "Main" else
+             ("Fixed / " if mode == "Fixed" else "") + f"{model} / {effort}")
+            for tier, model, effort, mode in _policy_cells(policy)]
+
+
+def _cell_chunks(value: Any, width: int) -> list[str]:
+    chunks, current = [], ""
+    for char in sanitize_text(value):
+        if cell_width(current + char) > width:
+            chunks.append(current); current = ""
+        current += char
+    return chunks + [current]
+
+
+def _configuration_lines(configuration: Mapping[str, Any], width: int, color: bool = False) -> list[str]:
     lines = _wrap("Jev chooses the tier. You choose the model and effort.", width)
     lines += [""]
-    for tier, target in policy_rows(configuration["policy"]):
-        lines += _wrap(f"{tier}: {target}", width)
+    rows = _policy_cells(configuration["policy"])
+    def tone(text, code):
+        return code + text + "\x1b[22m" + _FG if color else text
+    if width >= 72:
+        sizes = (10, width - 36, 14, 10)
+        lines.append(tone("  " + "".join(_fit(label, size) for label, size in
+                     zip(("TIER", "REQUESTED MODEL", "EFFORT", "MODE"), sizes)), _DIM))
+        lines.append(tone("─" * width, _EDGE))
+        for cells in rows:
+            columns = [_cell_chunks(value, size - 2) for value, size in zip(cells, sizes)]
+            for index in range(max(map(len, columns))):
+                line = ("▏ " if cells[0] == "Top" else "  ") + "".join(
+                    _fit(column[index] if index < len(column) else "", size)
+                    for column, size in zip(columns, sizes))
+                lines.append(tone(line, _LAVENDER + _BOLD) if cells[0] == "Top" else line)
+    else:
+        for tier, model, effort, mode in rows:
+            contents = _wrap(f"{tier} / {mode}", width)
+            contents += _wrap(f"Model: {model}", width, "  ") + _wrap(f"Effort: {effort}", width, "  ")
+            lines += [tone(line, _LAVENDER + _BOLD) if tier == "Top" else line for line in contents] + [""]
     lines += [""] + _wrap(
         f"Routing requested: {'On' if configuration['enabled'] else 'Off'} / "
         f"Task export: {'Allowed' if configuration['task_export_permitted'] else 'Blocked'}", width)
@@ -362,8 +400,8 @@ def _configuration_lines(configuration: Mapping[str, Any], width: int) -> list[s
 def _policy_frame(title: str, contents: list[str], *, width: int | None, color: bool) -> str:
     columns = min(140, _width(width))
     inner = columns - 4
-    lines = ["", "MRH  /  MODEL POLICY", "", title, ""] + contents + [""]
-    fitted = ["  " + _fit(line, inner) + "  " for line in lines]
+    lines = ["", _fit("MRH  /  MODEL POLICY", inner), "", _fit(title, inner), ""] + contents + [""]
+    fitted = ["  " + line + " " * max(0, inner - cell_width(line)) + "  " for line in lines]
     if color:
         return "\n".join(_BG + (_LAVENDER if index in (1, 3) else _FG) + line + _RESET
                          for index, line in enumerate(fitted)) + "\n"
@@ -372,7 +410,7 @@ def _policy_frame(title: str, contents: list[str], *, width: int | None, color: 
 
 def render_configuration(configuration: Mapping[str, Any], *, width: int | None = None, color: bool = False) -> str:
     inner = min(140, _width(width)) - 4
-    contents = [f"Revision {configuration['revision']}", ""] + _configuration_lines(configuration, inner)
+    contents = _wrap(f"Revision {configuration['revision']}", inner) + [""] + _configuration_lines(configuration, inner, color)
     contents += [""] + _wrap("Configured requests do not confirm model availability or execution.", inner)
     return _policy_frame("CURRENT CONFIGURATION", contents, width=width, color=color)
 
@@ -446,7 +484,7 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
     counts = [_count((stats.get("tiers") or {}).get(tier)) for tier in _TIER_ORDER]
     total = sum(counts)
     if configuration is not None:
-        lines.extend(row(ink(line)) for line in _configuration_lines(configuration, inner))
+        lines.extend(row(ink(line)) for line in _configuration_lines(configuration, inner, color))
     elif inner >= 70:
         model_size = inner - 39
         lines.append(row(ink("  " + _fit("TIER", 10) + _fit("MODEL / EFFORT", model_size) +

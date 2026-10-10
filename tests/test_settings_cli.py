@@ -55,7 +55,7 @@ class SettingsCliTests(unittest.TestCase):
         self.assertEqual(history,store.stats(True));self.assertEqual(history['proposals'],1)
         self.assertEqual(json.loads(self.run_cli(['settings','show','--path',str(self.path)])[1])['settings'],after)
         dash=self.run_cli(['status','--settings',str(self.path),'--synthetic','--plain','--width','120'])[1]
-        for text in ('CURRENT CONFIGURATION','light-choice / inherit','Fixed / fixed-choice / inherit','historical counts','Confirmed children 0'):
+        for text in ('CURRENT CONFIGURATION','REQUESTED MODEL','light-choice','fixed-choice','inherit','Fixed','historical counts','Confirmed children 0'):
             self.assertIn(text,dash)
         self.assertNotIn('IGNORED-LEGACY-TOP',dash)
 
@@ -95,8 +95,8 @@ class SettingsCliTests(unittest.TestCase):
         code,out,err=self.edit('\n\n\n\nsave\n')
         self.assertEqual((code,err),(0,''));self.assertIn('Unchanged',out);self.assertEqual(self.path.read_bytes(),initial)
         view=self.run_cli(['settings','view','--path',str(self.path),'--plain'])[1]
-        self.assertIn('Main / current main agent',view);self.assertNotIn('old-top',view)
-        self.assertIn('Unset / preserve original',view)
+        self.assertIn('Current main agent',view);self.assertIn('Main',view);self.assertNotIn('old-top',view)
+        self.assertIn('Unset',view);self.assertIn('Preserve',view)
 
     def test_invalid_input_recovers_and_fixed_requires_model(self):
         code,out,err=self.edit('bad name\nlight-choice\nbad effort\ninherit\n\n\nwrong\nFixed\nunset\nfixed-choice\nhigh\nsave\n')

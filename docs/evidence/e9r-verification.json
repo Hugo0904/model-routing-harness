@@ -1,0 +1,70 @@
+{
+  "package": "E9R-B-001",
+  "scope": "A D15 exact configured presentation defect and new installed entry; Local behavior/A0 parent",
+  "effective_executor": {
+    "model": "gpt-6.1-sol",
+    "thinking": "xhigh",
+    "active_turn": "01a12758-6bb6-7e90-b847-b69aaf951d50",
+    "source": "own supported recorded-turn helper matched native active turn"
+  },
+  "focused_tests": {
+    "command": "PYTHONPATH=src:tests python3.11 -m unittest test_config_table test_settings_cli.SettingsCliTests.test_save_readback_preserves_other_fields_and_json_dashboard_shape test_settings_cli.SettingsCliTests.test_unset_inherit_main_and_no_change_save test_settings_cli.SettingsCliTests.test_narrow_color_no_color_and_history_separation -v",
+    "tests": 6,
+    "exit_code": 0,
+    "elapsed_seconds": 0.076
+  },
+  "first_test_result": {
+    "tests": 6,
+    "failures": 2,
+    "elapsed_seconds": 0.073,
+    "cause": "fixture assertions: MODE substring matched REQUESTED MODEL; old short model had one a in naive preservation count",
+    "correction": "last header MODE position; sum repeated a chunks instead of subtracting whole-output counts",
+    "product_code_changed_for_retry": false
+  },
+  "actual_installed_entry": "e9r-package.json",
+  "installed_elapsed_seconds": 3.715,
+  "visual_evidence": [
+    "e9r-status-120.ansi",
+    "e9r-status-56.ansi",
+    "e9r-view-120.ansi",
+    "e9r-editor-120.ansi",
+    "e9r-main-view-120.ansi"
+  ],
+  "review": "A0 parent source/actual PTY transcript review; final A rendered inspection pending; no native macOS window observed",
+  "impeccable": {
+    "preserve": "accepted graphite/lavender CLI world",
+    "context": "scoped CLI fix; no PRODUCT/DESIGN init or new site needed",
+    "initial_tool_failure": "shell Node ERR_REQUIRE_ESM; used bundled runtime for corrected context/detector",
+    "detector_before_after": [],
+    "detector_limit": "web mechanical detector [] does not verify Python terminal geometry; actual PTY and cell width/column checks do"
+  },
+  "unchanged_reused": [
+    "E9 settings save/cancel/EOF/Ctrl-C/revision/unowned/schema/provider gates/JSON acceptance",
+    "E8 isolated native source/Hook evidence",
+    "core/host/provider behavior"
+  ],
+  "not_run": [
+    "full suite",
+    "host builds",
+    "real Jev/models/account",
+    "native macOS app screenshots",
+    "Goal/Monitor",
+    "release/push"
+  ],
+  "cleanup": {
+    "owned_venv_state_removed": true,
+    "root": "/private/tmp/mrh-e9r-installed-818bvce7",
+    "wheel_and_keys": "removed with root; identities/evidence retained",
+    "images_created": 0
+  },
+  "runtime_unchanged_from_accepted_e9": {
+    "src/mrh/cli.py": "91d4ce6190db1ed0d81ae4716caf519dc0dec34beaab2e11e01ca0f205c157cc",
+    "src/mrh/settings_editor.py": "002a665c6e01a8794917ca1aeccbe02d26b4bad45aa86c55a628e525669fc734"
+  },
+  "quota": {
+    "remaining_at_checkpoint": 8,
+    "pause_below": 7,
+    "reset_or_reserve": false
+  },
+  "remaining": "A final visual acceptance and original R1 production/model/parent/platform gaps; no rubric editor pending under D15"
+}

@@ -1,0 +1,42 @@
+
+  MRH  /  DELEGATION ROUTER
+
+  Route each task. Keep the big picture.
+  LOCAL EVENTS  ·  all recorded history
+  Updated: Unavailable
+
+  01  HOW A DELEGATION IS ROUTED
+
+  ╭─ Orchestrator ─────────╮   ╭─ Jev ──────────────────╮   ╭─ Tier ─────────────────╮   ╭─ Model ────────────────╮
+  │ Writes the task brief  │ → │ Classifies complexity  │ → │ Light Small Mid Top    │ → │ Selected by policy     │
+  ╰────────────────────────╯   ╰────────────────────────╯   ╰────────────────────────╯   ╰────────────────────────╯
+
+  CURRENT CONFIGURATION
+  Jev chooses the tier. You choose the model and effort.
+
+    TIER      REQUESTED MODEL                                                                 EFFORT        MODE
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+    Light     light-choice                                                                    inherit       Model
+    Small     small-choice                                                                    low           Model
+    Mid       mid-choice                                                                      high          Model
+  ▏ Top       fixed-choice                                                                    inherit       Fixed
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the original delegation.
+
+  Current targets are separate from historical counts and confirmed execution.
+
+  ╭─ TIER COMPOSITION ───────────────────────────────────╮   ╭─ USAGE / QUOTA ──────────────────────────────────────╮
+  │ 0 classified tasks                                   │   │ Quota: Unavailable                                   │
+  │                                                      │   │ Reset: Unavailable                                   │
+  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │   │                                                      │
+  │                                                      │   │ Cost: Unavailable                                    │
+  │ Light 0 (—)                                          │   │ Tokens: Unavailable                                  │
+  │ Small 0 (—)                                          │   │                                                      │
+  │ Mid 0 (—)                                            │   │ No quota source is connected.                        │
+  │ Top 0 (—)                                            │   │ Unavailable does not mean zero.                      │
+  ╰──────────────────────────────────────────────────────╯   ╰──────────────────────────────────────────────────────╯
+
+  Proposals 0   ·   Confirmed children 0   ·   Low confidence 0
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  --details  full telemetry     --json  raw data     --plain  no color

@@ -1,0 +1,69 @@
+
+  MRH  /  DELEGATION ROUTER
+
+  Route each task. Keep the big picture.
+  LOCAL EVENTS  ·  all recorded history
+  Updated: Unavailable
+
+  01  HOW A DELEGATION IS ROUTED
+
+  1. Orchestrator  /  Writes the task brief
+  2. Jev  /  Classifies complexity
+  3. Tier  /  Light Small Mid Top
+  4. Model  /  Selected by policy
+
+  CURRENT CONFIGURATION
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: light-choice
+    Effort: inherit
+
+  Small / Model
+    Model: small-choice
+    Effort: low
+
+  Mid / Model
+    Model: mid-choice
+    Effort: high
+
+  Top / Fixed
+    Model: fixed-choice
+    Effort: inherit
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Current targets are separate from historical counts
+  and confirmed execution.
+
+  ╭─ TIER COMPOSITION ───────────────────────────────╮
+  │ 0 classified tasks                               │
+  │                                                  │
+  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
+  │                                                  │
+  │ Light 0 (—)                                      │
+  │ Small 0 (—)                                      │
+  │ Mid 0 (—)                                        │
+  │ Top 0 (—)                                        │
+  ╰──────────────────────────────────────────────────╯
+
+  ╭─ USAGE / QUOTA ──────────────────────────────────╮
+  │ Quota: Unavailable                               │
+  │ Reset: Unavailable                               │
+  │                                                  │
+  │ Cost: Unavailable                                │
+  │ Tokens: Unavailable                              │
+  │                                                  │
+  │ No quota source is connected.                    │
+  │ Unavailable does not mean zero.                  │
+  ╰──────────────────────────────────────────────────╯
+
+  Proposals 0   ·   Confirmed children 0   ·   Low
+  confidence 0
+  ────────────────────────────────────────────────────
+  --details  full telemetry     --json  raw data
+  --plain  no color
