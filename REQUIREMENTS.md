@@ -257,18 +257,18 @@ C2C 尚未能讀取新專案時，只回報存取缺口，不擅自放寬權限�
 
 ---
 
-## 目前交付狀態（E6；原始 R1 需求保留）
+## 目前交付狀態（E9R；原始 R1 需求保留）
 
-上述原始需求未刪改。0.3.0 E6 是本機候選，A 已接受本輪限定交付；完整 R1 尚未完成，正式路由仍缺必要的 host 契約。
+上述原始需求未刪改。0.3.0 E9R 是本機候選，A 已接受 CLI／設定／離線安裝，以及 E8 限定隔離 source Hook 整合；完整 R1 尚未完成，正式路由仍缺宿主採用及真實執行證據。
 
 | 原始成果 | 已實作／已有證據 | 未支援或未驗證的邊界 |
 |---|---|---|
 | S1 環境與能力盤點 | E1 盤點、Jev 官方契約；E6 兩個安裝版本的 schema／exact-tag Hook 欄位缺口 | 不能從 model catalog／disk config／thread-level metadata 推出同次委派的角色、原基準及帳號相容性 |
 | S2 分級核心與 Top 政策 | 顯式模型保留、0.5、fail-open、各分支 typed facts；最小合成 Main／Fixed 可分類，一般路由需原基準／保守 sourced cost | 正式 Main／Fixed／一般路由缺關鍵 same-call facts 而未支援；真 Jev API／帳號模型／實測節省未驗證 |
-| S3 CLI 與事實統計 | 共用 CLI／JSON、冪等分區；admitted preserve 留 proposal／精確 reason，Post 關聯收據；E6 新封裝入口回放 | reported／synthetic 不能升成 confirmed actual model；child tokens／cost／quota 不可取得 |
-| S4 安裝與宿主行為 | 自有 bundle／設定；E4/E5 兩版隔離 native deny 零 child／Fixed scripted model、E4G 同 Goal 跨回合、E5 trust／remove／共存；E6 新 archive 離線 smoke | E6 新 bytes 未重跑 native lifecycle；Desktop UI、真模型、主代理自主接回與自主 Goal 續跑未驗證；正式全域 Hook 未啟用 |
+| S3 CLI 與事實統計 | E9R 四級真配置表、edit/view、保存／取消／版本衝突、同檔與關聯 DB 讀回；原 JSON／冪等分區；已驗目前安裝版入口及寬窄 PTY/xterm 畫面 | 原生 Mac Terminal 外觀未觀測；reported／synthetic 不等於 confirmed；child tokens／cost／quota 不可取得 |
+| S4 安裝與宿主行為 | 自有 bundle／設定；E4/E5 兩版隔離 native deny 零 child／Fixed scripted model、E4G 同 Goal 跨回合、E5 trust／remove／共存；E9R 當前 wheel 安裝版 CLI；E7/E8 source resolver 與原生 Hook 隔離整合 | E9R 未重跑 native lifecycle；Desktop UI、真模型、主代理自主接回與自主 Goal 續跑未驗證；正式全域 Hook 未啟用 |
 | S5 選配接入 | Canopy 摘要及 Monitor 統計契約／合成例；缺席與失效可回退 | 第一階段不含 live Canopy／Monitor 接入；既有三專案未修改 |
-| S6 審查及交付 | 原 GPT 同一窗口、A 分階段審查、獨立本機 Git、文件／證據／清理 | E6 已由 A 限定接受；原 GPT D4 已限定接受摘要；使用者另授權宿主出口設計與隔離實作；全 R1 驗收尚未完成；沒有 push |
+| S6 審查及交付 | 原 GPT 設定與視覺對焦；A 已接受 E8/E9R 限定候選，操作指南／證據／清理／本機 Git 齊備 | 原 GPT 最後一輪候選摘要審查待回覆；全 R1 未驗收，沒有 push |
 
 版本、測試、archive identity、exact-version matrix 和支持限制見 [E6 證據](docs/e6-action-facts-proof.md)；歷史接受與目前工作指示見 [任務記錄](docs/MRH-001.md)。新舊封裝／native／provider／production 證據各自保留，不互相替代。
 
@@ -285,3 +285,7 @@ E7 在 pinned `rust-v0.159.3` 的實際 resolver 上實作可選的唯讀出口�
 使用者接受目前石墨灰／紫色 CLI 畫面方向，要求沿用它繼續完成，並強調 Light／Small／Mid／Top 必須有使用者可設定的入口。Jev 分級與模型／effort 對應設定須清楚區分；現有原始約定的信心門檻與安全規則仍適用。A 已向同一原 GPT 補問原始設定約定；使用者明確澄清「如果尚未交代，就去問 GPT」。沒有授權改造第二個 Web 產品或啟用正式 Hook。
 
 最新剩餘額度門檻為 **低於 7%**，依既有自然檢查點保存暫停，取代上述歷史 10%／15% 門檻。E8 source／原生 Hook 子程序的隔離整合已由 A 限定接受；原生 Mac 終端畫面、正式宿主採用、真 Jev／模型與自主接回仍未驗證。CLI 外觀方向接受不等於這些邊界通過。
+
+## E9R 限定接受
+
+A 已檢查真設定的 120／56 欄 PTY/xterm.js 畫面並接受表格修正。當前 source bytes 與 E9R 離線 wheel／installed 入口證據一致；不重跑無影響的核心或宿主測試。E8 的 9 次實際 source/native Hook dispatch 為隔離 lib-test 邊界，不能替代安裝版採用、真 child／provider 或自主 Main 接回。參閱 [設定指南](docs/quickstart.md) 與 [E9R 證據](docs/e9r-configured-table-proof.md)。

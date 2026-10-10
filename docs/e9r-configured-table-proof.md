@@ -33,3 +33,7 @@ PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/verify_configured_package.py --outp
 ```
 
 The installed walkthrough validates a fresh owned temporary file; it does not touch real settings or activate routing. No full suite, host build, native lifecycle/Goal, true API/account, Monitor, global settings, image generation or remote push was used. Shared README/requirements/acceptance records remain A-owned. Executor metadata matched this active B turn as Sol 6.1/xhigh. Latest quota checkpoint is 8 percent remaining; below-7 natural save/pause and no reset/reserve remain. Original R1 and production/autonomous/model/platform gaps remain open.
+
+## A rendered acceptance
+
+A reloaded the actual local terminal preview and inspected current-code `status --settings` reading fresh isolated owned settings at 120 and 56 columns. [Wide screenshot](evidence/e9r-config-wide.jpg) and [narrow screenshot](evidence/e9r-config-narrow.jpg) confirm the aligned table, Top emphasis and stacked fields. The example targets are labeled isolated preview data; no provider or actual user settings were changed. A verified all current source hashes against the installed package evidence and the removed fixture root. E9R is accepted within these boundaries; native macOS Terminal and full R1 remain unverified.
