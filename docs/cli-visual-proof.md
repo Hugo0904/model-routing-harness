@@ -22,7 +22,7 @@ The table in demo displays the actual fixture policy, clearly labeled demo. Top 
 
 Capture used a real POSIX pseudo-terminal (`pty.openpty`, `TIOCSWINSZ`) executing the repository's `demo --color --width 120` and `--width 56`. Its unmodified byte output was rendered by the npm `@xterm/xterm` 5.5.0 terminal emulator (package shasum `275fb8f6e14afa6e8a0c05d4ebc94523ff775396`) in a local browser. Screenshot API captured the emulator directly. A temporary loopback-only HTTP wrapper supplied those PTY bytes; it was not a second product dashboard, and no raster/HTML reconstruction of the CLI was used. Menlo 14px, line height 1.18, true-color ANSI; native terminal font/profile differences remain expected.
 
-The computer-use tool refused access to `com.apple.Terminal` and `com.openai.codex`. Those restrictions were respected; native macOS Terminal/Desktop rendering is not claimed. Screenshots establish the terminal-emulator output, not native app adoption, live provider calls, real quota or completion of Hook integration. Final appearance acceptance belongs to the user.
+The computer-use tool refused access to `com.apple.Terminal` and `com.openai.codex`. Those restrictions were respected; native macOS Terminal/Desktop rendering is not claimed. Screenshots establish the terminal-emulator output, not native app adoption, live provider calls, real quota or completion of Hook integration. The human subsequently accepted this visual direction and requested continuation using it. This does not establish native macOS Terminal rendering.
 
 ## Focused checks
 

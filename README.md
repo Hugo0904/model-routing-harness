@@ -2,6 +2,8 @@
 
 可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E6 本機候選 0.3.0**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；E5 的兩版原生 CLI 隔離安裝證據仍適用安裝機制。E6 改用同一次委派的各項事實，分別判斷 Main／Fixed／一般路由資格；新版封裝只做離線入口回放。正式宿主仍缺必要事實契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
+E8 已完成並經 A 接受的範圍，是 pinned Codex source 的真實 ToolRegistry → 原生 Hook 子程序 → MRH → 同次委派控制；9 次隔離 dispatch 通過，分類服務使用替身，preserve 端使用受控 handler。這不是安裝版 CLI、正式啟用或真模型驗證，詳見 [E8 證據](docs/e8-live-hook-proof.md)。
+
 ## 直接執行視覺 Demo
 
 不需安裝套件，使用本機 Python 3.11+：
