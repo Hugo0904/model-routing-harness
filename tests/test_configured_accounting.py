@@ -90,7 +90,7 @@ class AccountingTests(unittest.TestCase):
             for event in (pre, pre, post, post): self.hook(event, resolver=host, transport=fake)
         stats = Store(self.path.parent / "events.sqlite3").stats(True)
         self.assertEqual(stats["proposals"], 1)
-        self.assertEqual(stats["outcomes"], {"unresolved_host_configuration": 1})
+        self.assertEqual(stats["outcomes"], {"missing_role_protection": 1})
         self.assertEqual(stats["synthetic_attempts"], 0)
         self.assertEqual(stats["simulated_children"], 1)
         self.assertEqual(stats["actual_models"], {})
@@ -110,7 +110,7 @@ class AccountingTests(unittest.TestCase):
              patch("mrh.typesafe.TypesafeClassifier.classify", side_effect=AssertionError("classifier ran")):
             self.hook(pre, production=True); self.hook(post, production=True)
         stats = Store(self.path.parent / "events.sqlite3").stats()
-        self.assertEqual(stats["outcomes"], {"unresolved_host_configuration": 1})
+        self.assertEqual(stats["outcomes"], {"missing_role_protection": 1})
         self.assertEqual(stats["reported_children"], 1)
         self.assertEqual(stats["jev_attempts"], 0)
         self.assertEqual(stats["confirmed_children"], 0); self.assertEqual(stats["actual_models"], {})

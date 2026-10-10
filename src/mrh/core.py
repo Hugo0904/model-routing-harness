@@ -4,6 +4,7 @@ import queue
 import threading
 from .types import Classification, ContextSummary, Decision, REASONS, TIERS, safe_id
 from .attempts import GuardedAttempts
+from .facts import snapshot_for
 
 
 class ClassifierUnavailable(Exception):
@@ -83,6 +84,95 @@ def cheaper(source, target):
     return all(b[k] <= a[k] for k in a) and any(b[k] < a[k] for k in a)
 
 
+def validated_facts(proposal, value):
+    """One validation/role gate for fresh decisions and cached effect replay."""
+    try:
+        facts = snapshot_for(proposal, value)
+        invalid = facts.validation_reason(proposal)
+    except (ValueError, TypeError, AttributeError):
+        return None, "invalid_host_facts"
+    if invalid:
+        return None, invalid
+    protection = facts.role_protection
+    if not protection.known:
+        return None, "missing_role_protection"
+    if protection.value != "unprotected":
+        return None, "fixed_role_effort" if protection.value == "effort" else "fixed_role_model"
+    return facts, None
+
+
+def action_eligibility(proposal, policy, facts, tier):
+    original = proposal.tool_input
+    # Return a precise blocker and a model/effort-only patch. Each field
+    # used here was validated for this exact call and evidence partition.
+    if tier == "Top" and policy.get("top_mode", "Main") == "Main":
+        if not facts.deny_supported.known:
+            return "missing_deny_capability", None
+        return (None, {}) if facts.deny_supported.value else ("unsupported_deny_capability", None)
+    control = facts.rewrite_supported
+    if not control.known:
+        return "missing_rewrite_capability", None
+    if not control.value:
+        return "unsupported_role", None
+    tiers = policy.get("tiers", {})
+    mapping = policy.get("fixed") if tier == "Top" else tiers.get(tier) if isinstance(tiers, dict) else None
+    if not isinstance(mapping, dict) or not safe_id(mapping.get("model")):
+        return "invalid_policy", None
+    model = mapping["model"]
+    target = facts.target(model)
+    if target is None or not target.available.known:
+        return "missing_target_model", None
+    if not target.available.value:
+        return "unsupported_model", None
+    requested = original.get("reasoning_effort", mapping.get("effort"))
+    explicit_effort = requested is not None
+    if explicit_effort and not safe_id(requested):
+        return "unsupported_effort", None
+    if explicit_effort:
+        effective = requested
+    elif not target.inherited_effort.known:
+        return "missing_effective_effort", None
+    else:
+        effective = target.inherited_effort.value
+    if not target.efforts.known:
+        return "missing_target_effort", None
+    if effective not in target.efforts.value:
+        return "unsupported_effort", None
+    if tier != "Top":
+        if not facts.original_model.known or not facts.original_effort.known:
+            return "missing_original_baseline", None
+        rates = policy.get("rates", {})
+        if not isinstance(rates, dict):
+            return "invalid_policy", None
+        if not cheaper(rates.get(facts.original_model.value), rates.get(model)):
+            return "cost_unknown", None
+    patch = {"model": model}
+    if explicit_effort:
+        patch["reasoning_effort"] = requested
+    # A verified inherited effort is checked, never silently forced.
+    return None, patch
+
+
+def cached_effect_blocker(proposal, policy, value, decision):
+    """Revalidate an effect without classification or changing saved facts."""
+    if decision.action == "preserve":
+        return None
+    if proposal.tool_input.get("model") is not None:
+        return "explicit_model"
+    facts, reason = validated_facts(proposal, value)
+    if reason:
+        return reason
+    if not isinstance(policy, dict) or policy.get("top_mode", "Main") not in ("Main", "Fixed"):
+        return "invalid_policy"
+    reason, patch = action_eligibility(proposal, policy, facts, decision.tier)
+    if reason:
+        return reason
+    expected = "return_to_main" if decision.tier == "Top" and policy.get("top_mode", "Main") == "Main" else "request_child"
+    if expected != decision.action or patch != decision.patch:
+        return "cached_effect_mismatch"
+    return None
+
+
 def route(proposal, policy, host_capabilities, classifier=None, optional_context=None, record_attempt=lambda *_, **__: None):
     synthetic = proposal.synthetic
     classification = None
@@ -98,15 +188,9 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     original = proposal.tool_input
     if original.get("model") is not None:
         return preserve("explicit_model")
-    role = original.get("agent_type", "default")
-    roles = host_capabilities.get("roles", {}) if isinstance(host_capabilities, dict) else {}
-    role_config = roles.get(role) if isinstance(roles, dict) else None
-    if not isinstance(role_config, dict):
-        role_config = None
-    if role_config and role_config.get("fixed_model"):
-        return preserve("fixed_role_model")
-    if not isinstance(host_capabilities, dict) or not host_capabilities.get("configuration_known") or not role_config or not role_config.get("known"):
-        return preserve("unresolved_host_configuration")
+    facts, blocker = validated_facts(proposal, host_capabilities)
+    if blocker:
+        return preserve(blocker)
     if not isinstance(policy, dict) or policy.get("top_mode", "Main") not in ("Main", "Fixed"):
         return preserve("invalid_policy")
     timeout = policy.get("timeout_seconds", 1.0)
@@ -115,6 +199,11 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     classifier = classifier or UnavailableClassifier()
     if bool(getattr(classifier, "synthetic", False)) != synthetic:
         return preserve("evidence_partition_mismatch")
+    configured = ["Top"] + [tier for tier in TIERS[:-1] if isinstance(policy.get("tiers"), dict) and tier in policy["tiers"]]
+    eligibility = {tier: action_eligibility(proposal, policy, facts, tier) for tier in configured}
+    if not any(reason is None for reason, _ in eligibility.values()):
+        return preserve(eligibility["Top"][0])
+    # Only a legally possible effect permits context/Jev/key/HTTP work.
     context = None
     if optional_context is not None:
         try:
@@ -156,39 +245,11 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     classification = result
     if result.confidence < 0.5:
         return preserve("low_confidence")
+    reason, patch = action_eligibility(proposal, policy, facts, result.tier)
+    if reason is not None:
+        return preserve(reason)
     if result.tier == "Top" and policy.get("top_mode", "Main") == "Main":
         return Decision("return_to_main", "top_main_requested", result.tier, result.confidence,
                         synthetic=synthetic, context_status=context_status)
-    tiers = policy.get("tiers", {})
-    mapping = policy.get("fixed") if result.tier == "Top" else tiers.get(result.tier) if isinstance(tiers, dict) else None
-    if not isinstance(mapping, dict) or not safe_id(mapping.get("model", "")):
-        return preserve("invalid_policy")
-    model = mapping["model"]
-    effort = original.get("reasoning_effort", mapping.get("effort"))
-    if effort is not None and not safe_id(effort):
-        return preserve("unsupported_effort")
-    catalog = host_capabilities.get("models", {})
-    selected = catalog.get(model) if isinstance(catalog, dict) else None
-    if not isinstance(selected, dict) or selected.get("available") is not True:
-        return preserve("unsupported_model")
-    if effort is not None and effort not in selected.get("efforts", []):
-        return preserve("unsupported_effort")
-    if not role_config.get("rewrite_allowed"):
-        return preserve("unsupported_role")
-    if result.tier != "Top":
-        rates = policy.get("rates", {})
-        if not isinstance(rates, dict):
-            return preserve("invalid_policy")
-        source_model = host_capabilities.get("original_model")
-        source_effort = host_capabilities.get("original_effort")
-        if (not safe_id(source_model) or host_capabilities.get("original_resolution_known") is not True
-                or "original_effort" not in host_capabilities
-                or (source_effort is not None and not safe_id(source_effort))):
-            return preserve("cost_unknown")
-        if not cheaper(rates.get(source_model), rates.get(model)):
-            return preserve("cost_unknown")
-    patch = {"model": model}
-    if effort is not None:
-        patch["reasoning_effort"] = effort
     return Decision("request_child", "top_fixed_requested" if result.tier == "Top" else "cheaper_child_requested",
                     result.tier, result.confidence, patch, synthetic, context_status)

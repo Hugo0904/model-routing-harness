@@ -61,7 +61,10 @@ class SettingsRuntimeTests(unittest.TestCase):
         self.assertFalse(settings.read(self.path)["enabled"])
         before = {p.name: p.read_bytes() for p in self.path.parent.iterdir()}
         with patch("mrh.typesafe.environment_credential", side_effect=AssertionError("key read")):
-            self.assertEqual(self.cli(["settings", "show", "--path", str(self.path)])[0], 0)
+            code, output, _ = self.cli(["settings", "show", "--path", str(self.path)])
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads(output)["readiness_reason"], "missing_role_protection")
+            self.assertFalse(json.loads(output)["live_routing_ready"])
             self.assertEqual(self.cli(["doctor", "--plain"])[0], 0)
         self.assertEqual({p.name: p.read_bytes() for p in self.path.parent.iterdir()}, before)
         settings.update(self.path, enabled=True)

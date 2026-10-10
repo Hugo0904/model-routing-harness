@@ -43,10 +43,10 @@ class FactsTests(unittest.TestCase):
         caps["original_model"] = "gpt-6-astra"
         self.assertEqual(decide().action, "request_child")
         caps["original_resolution_known"] = False
-        self.assertEqual(decide().reason, "cost_unknown")
+        self.assertEqual(decide().reason, "missing_original_baseline")
         caps["original_resolution_known"] = True
         del caps["original_effort"]
-        self.assertEqual(decide().reason, "cost_unknown")
+        self.assertEqual(decide().reason, "missing_original_baseline")
         policy["top_mode"] = "Fixed"
         self.assertEqual(route(self.proposal(), policy, caps, ScriptedClassifier([Classification("Top", 0.9)])).action, "request_child")
 

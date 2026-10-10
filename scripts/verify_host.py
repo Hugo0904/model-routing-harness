@@ -425,7 +425,7 @@ from mrh.core import Classification, ScriptedClassifier
 from mrh.store import Store
 event=json.load(sys.stdin)
 scenario=Path(sys.argv[4]).read_text().strip()
-caps={"configuration_known":True,"main_model":"mrh-synthetic-parent","main_effort":"low",
+caps={"configuration_known":True,"deny_supported":True,"main_model":"mrh-synthetic-parent","main_effort":"low",
       "original_model":"mrh-synthetic-parent","original_effort":"low","original_resolution_known":True,
       "roles":{"default":{"known":True,"rewrite_allowed":True}},
       "models":{"mrh-synthetic-fixed":{"available":True,"efforts":["high"]}}}

@@ -25,6 +25,7 @@
   },
   "capabilities": {
     "configuration_known": true,
+    "deny_supported": true,
     "main_model": "gpt-6-luna",
     "main_effort": "max",
     "roles": {

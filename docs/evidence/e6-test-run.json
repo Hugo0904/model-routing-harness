@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+    "-m",
+    "unittest",
+    "test_action_facts",
+    "test_core",
+    "test_configured_accounting",
+    "test_codex_host_receipt",
+    "test_e3_facts.FactsTests.test_resolved_baseline_cost_negative_positive_unknown_and_fixed",
+    "test_settings_runtime.SettingsRuntimeTests.test_each_export_gate_combination_has_zero_key_and_transport_until_all_true",
+    "test_settings_runtime.SettingsRuntimeTests.test_public_hook_uses_real_factory_and_parser_main_fixed_receipt_disable",
+    "test_settings_runtime.SettingsRuntimeTests.test_unknown_host_explicit_fixed_role_unrelated_and_failures_preserve",
+    "test_settings_runtime.SettingsRuntimeTests.test_disable_is_neutral_for_new_invocations_without_promising_inflight_cancellation",
+    "test_integration.IntegrationTests.test_cli_json_and_text_share_stats_without_reclassification",
+    "test_integration.IntegrationTests.test_cli_hook_default_and_explicit_simulation_end_to_end",
+    "test_cli.CliTests.test_stats_json_is_the_store_object_without_presentation_fields",
+    "-v"
+  ],
+  "environment": "PATH, PYTHONPATH=src:tests, PYTHONDONTWRITEBYTECODE=1, LANG only; credentials not forwarded",
+  "exit_code": 0,
+  "command_wall_seconds": 0.575,
+  "tests": 31,
+  "runner_seconds": 0.462,
+  "scope": "per-action minimal facts; protected/unknown/scope guards; core confidence/context/fail-open; affected public runtime, E5R accounting/receipt/replay, baseline cost and CLI/JSON consumers; cached effect guarded without reclassification/history mutation",
+  "full_suite": false,
+  "native_goal_or_provider_full_rerun": false,
+  "status": "final_after_cached_effect_guard_repair"
+}

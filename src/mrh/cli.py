@@ -264,7 +264,7 @@ def _cmd_settings(args):
                                                   parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
             value = settings.update(args.path, expected_revision=args.expected_revision, **changes)
         _write_json({"settings": value, "routing_enabled": value["enabled"],
-                     "live_routing_ready": False, "readiness_reason": "unresolved_host_configuration",
+                     "live_routing_ready": False, "readiness_reason": "missing_role_protection",
                      "installation_status": "not_inferred_from_settings", "credentials_probed": False})
         return 0
     except SettingsError as exc:

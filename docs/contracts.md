@@ -6,15 +6,21 @@
 
 `core.route(Proposal, policy, host_capabilities, classifier, optional_context)` 是純政策；`service.process(...)` 加 Store 原子 claim、冪等、fail-open。平台接頭只轉換事件、參數與結果。
 
-Identity 含 platform/surface/session/turn/tool-call 五部分，都是有界識別字。Message／未知 tool_input 僅在記憶體供分類或 transient Hook rewrite 使用；DB 只保存 locally keyed HMAC fingerprint。同 ID 不同 input 拒絕；completed replay 回 cached patch，pending/crash 保留原呼叫，不重送未知請求。一次 proposal 的決策凍結，新委派使用新 ID。
+Identity 含 platform/surface/session/turn/tool-call 五部分，都是有界識別字。Message／未知 tool_input 僅在記憶體供分類或 transient Hook rewrite 使用；DB 只保存 locally keyed HMAC fingerprint。同 ID 不同 input 拒絕；completed replay 保留 cached decision，具有 routing effect 的快取在輸出前仍須重驗當次 facts／該分支資格。Foreign scope、protected role、失效 control／target／baseline／cost，或 current policy action／patch 與 cached intent 不同，都改成此次 neutral，輸出 bounded diagnostic；不分類、增加 attempt 或更改歷史 decision／stats。Cached preserve 保持原結果。Pending/crash 保留原呼叫，不重送未知請求。一次 proposal 的歷史決策凍結，新委派使用新 ID。
 
 Classifier `classify(task, permitted_context_or_none, guarded_attempts)` 回 `Classification(tier, confidence, reason_code)`。Tier 是 Light/Small/Mid/Top，confidence 有限 [0,1]，bool 不是數值。E3 對真 serializer/parser 使用 fake transport，但 live Jev attempts 仍為 0。錯誤只留固定 reason/stage，無 raw exception。
 
-順序：canonical delegation → 顯式 child model／known fixed role 保留並略過分類 → known host precedence → valid policy → optional context → valid classification → `<0.5` 保留 → Top Main/Fixed 或成本比較。主模型選擇不是指定 child。0.5 有資格繼續，但不能越過 compatibility/cost guard。
+順序：canonical delegation → 顯式 child model 保留並略過 host resolution／分類 → 驗證同次委派快照及角色保護 → valid policy → 預算各個已配置分支是否可合法執行 → 至少一個可執行才取 optional context／分類 → `<0.5` 保留 → 只重新核對回傳等級的必要事實。主模型選擇不是指定 child。0.5 有資格繼續，但不能越過該分支的 control／compatibility／cost guard。
 
 Policy 包含 top_mode（Main 預設／Fixed）、fixed／tiers 的 model/effort 對照、timeout_seconds（正有限且 <=30，預設1），以及 rates。Rate vector 要相同 currency/unit/service、sourced source_ref、相同所有已知 billed component keys；target 每項不高且至少一項較低才可路由。缺資料保留 cost_unknown，只表示 configured estimate，無 measured savings。
 
-Capabilities 由同 surface 可信 owner 注入：configuration_known、main_model/main_effort、**original_model/original_effort/original_resolution_known=True**（解析 role／agents defaults 後的原委派基準）、roles known/fixed_model/rewrite_allowed、models available/efforts。普通 tier 比 original_model 的 rates，不比 main_model；缺原基準欄位保留 cost_unknown。原 effort 可明確為 null，其他值需安全有效。若 effort 影響計價，rate owner 必須供該已解析基準的保守 rate。原 proposal 顯式 effort 留存且需 target 支援。Fixed Top 既有例外不變；合成 catalog 不代表帳號型號。
+`facts.HostSnapshot` 是 frozen 的內部型別，scope 綁 platform／session／turn／tool-call，另核對 synthetic partition。每項 `Fact` 有 known、immutable value、bounded source 及同 scope；unknown 不可帶值。Parent model、workspace metadata、role_protection、deny／rewrite、original model／effort 及各 target 的 availability／efforts／inherited effective effort 分開驗證。Target tuple／effort tuple 有大小限制，不能含重複項。Malformed、跨 call／turn／partition 快照保留並留固定 reason；不保存 raw snapshot。Source label 本身不驗證真偽。
+
+只有可信程序 adapter 或明確 synthetic dependency 建立快照；它不是公開 host wire schema，也不是 operator 設定格式。Settings／task／tool_input 無法宣告關鍵事實 known。Generic production dictionary 拒絕為 `invalid_host_facts`；舊 dictionary 僅在 synthetic proposal 中經隔離 `synthetic_legacy_snapshot` 轉換，每項明示的 fixture 事實重新綁同 call；缺 deny 仍 unknown，configuration_known 已不作 gate。[合成設定](../examples/synthetic-policy.json) 的 capabilities 是此歷史 fixture 介面，不能交給正式設定讀取器。
+
+Unknown role protection 保留 `missing_role_protection`；已知固定 model／effort 分別保留 `fixed_role_model`／`fixed_role_effort`。Main 只要求 unprotected role、same-call deny support 與 Main policy，無需 parent effort、original baseline、cost、target 或 rewrite。Fixed 要求 unprotected role、rewrite、valid Fixed mapping、same-call target availability／effective effort compatibility；Top 成本例外仍適用。原 proposal 的有效顯式 effort 優先，其次 policy 明示 effort，均可獨立於 parent。若需要繼承且 target inherited effort 未知，保留 `missing_effective_effort`；已知繼承 effort 只核對相容，不偷偷寫入 effort。Target effort 未知保留 `missing_target_effort`。
+
+一般 tier 再要求 original resolved model／effort（含可明示 null），否則 `missing_original_baseline`；普通 tier 比 original model 的 rates，不比 parent model。Unknown／不可比較／非更低的 sourced vector 保留 `cost_unknown`。若 effort 影響計價，rate owner 必須供已解析原基準和目標的保守 rate。Main／Fixed 可行時，成本未知不會阻擋分類；分類回普通等級仍按其缺口保留。沒有任何 configured 分支可行就零 context／classifier／key／HTTP，deterministic reason 使用 Top 分支 blocker。合成事實不代表帳號型號。
 
 Decision v1：preserve/request_child/return_to_main、固定 reason、tier/confidence（可null）、model/effort-only patch、synthetic、bounded context_status。Store complete 另驗證型別/枚舉/欄位，不讓 cached patch 夾帶正文。
 
@@ -42,7 +48,7 @@ Monitor 本階段只有格式、合成例與查詢說明，無 DB/API 寫入或 
 
 ## Codex / installer boundaries
 
-只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或可信程序依賴才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。PostToolUse 的 rewritten input 可以含 model，仍以同五段 identity 關聯既有 proposal；explicit-model skip 只適用 Pre。 E5R 中 explicit Pre 只略過 host resolution／分類，不略過已授權的 proposal/outcome 紀錄。Unknown 或 resolver exception 走既有 unresolved preserve 事實；Post 不重新解析模型能力，只依 accepted proposal／partition 關聯 reported 或 synthetic receipt，不能提升為 actual／confirmed。Malformed IDs、settings 或未通過 permission／scope gate 仍沒有事實寫入。E4／E4G／E5 驗證 native-v1 與 scripted provider 的 deny 零 child／合成型號採用，未驗證主代理自主續作或實際模型智能。
+只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或可信程序依賴才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。PostToolUse 的 rewritten input 可以含 model，仍以同五段 identity 關聯既有 proposal；explicit-model skip 只適用 Pre。E5R 中 explicit Pre 只略過 host resolution／分類，不略過已授權的 proposal/outcome 紀錄。E6 production resolver 僅由合法 canonical Hook model／cwd 建 partial snapshot，角色、控制、基準及 targets 仍 unknown；unknown／resolver exception 記 `missing_role_protection`，不得猜 default role。Historical `unresolved_host_configuration` reason 繼續接受／讀取。Post 不重新解析模型能力，只依 accepted proposal／partition 關聯 reported 或 synthetic receipt，不能提升為 actual／confirmed。Malformed IDs、settings 或未通過 permission／scope gate 仍沒有事實寫入。E4／E4G／E5 驗證 native-v1 與 scripted provider 的 deny 零 child／合成型號採用，未驗證主代理自主續作或實際模型智能。精確版本契約缺口及 prospective export design 見 [E6](e6-action-facts-proof.md)，未實作新的 host export。
 
 預覽讀 explicit target，不 dump private commands。A D3：public apply/disable 拒絕 exclusive_target_unverified；只有自行建立、持有 synthetic home 的 helper 可測候選。Lock 只保護同 helper 合作呼叫，不保護非合作編輯器；反例保留在 tests。無 auto-trust/force/unsafe，真正 S4 shared-home 安裝/停用仍未完成。
 

@@ -2,10 +2,13 @@
 from .core import Classification, ScriptedClassifier
 from .service import process
 from .types import Proposal
+from .facts import synthetic_legacy_snapshot
 
 
 def demo_capabilities():
-    return {"configuration_known": True, "main_model": "gpt-6-luna", "main_effort": "max",
+    # Legacy editable fixture builder, converted once into scoped typed facts;
+    # configuration_known is historical fixture data, not a production gate.
+    return {"configuration_known": True, "deny_supported": True, "main_model": "gpt-6-luna", "main_effort": "max",
             "original_model": "gpt-6-luna", "original_effort": "max", "original_resolution_known": True,
             "roles": {"default": {"known": True, "rewrite_allowed": True},
                       "fixed": {"known": True, "rewrite_allowed": False, "fixed_model": "gpt-6-astra"}},
@@ -21,6 +24,10 @@ def demo_policy():
             "rates": {}}
 
 
+def demo_facts(proposal):
+    return synthetic_legacy_snapshot(proposal, demo_capabilities())
+
+
 def run_demo(store):
     for index, (tier, confidence, mode) in enumerate([
             ("Light", 0.9, "Main"), ("Small", 0.49, "Main"), ("Mid", 0.5, "Main"),
@@ -29,5 +36,5 @@ def run_demo(store):
         policy["top_mode"] = mode
         proposal = Proposal("codex", "simulation", "demo-v1", "turn-1", f"call-{index}",
                             {"message": "Synthetic fixture only", "agent_type": "default"}, True)
-        process(proposal, policy, demo_capabilities(), store, ScriptedClassifier([Classification(tier, confidence)]))
+        process(proposal, policy, demo_facts(proposal), store, ScriptedClassifier([Classification(tier, confidence)]))
     return store.stats(synthetic=True)

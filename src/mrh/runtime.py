@@ -6,6 +6,9 @@ from .settings import read, workspace_allowed
 from .settings_schema import SettingsError
 from .typesafe import classifier_from_config
 from .types import safe_id
+from .facts import CallScope, Fact, HostSnapshot, synthetic_legacy_snapshot
+from .types import Proposal
+from .owned import canonical_path
 
 
 class SupportedHostResolver:
@@ -18,7 +21,21 @@ class SupportedHostResolver:
     synthetic = False
 
     def resolve(self, event):
-        return {"configuration_known": False, "roles": {}, "models": {}}
+        return partial_hook_snapshot(event)
+
+
+def partial_hook_snapshot(event, synthetic=False):
+    scope = CallScope.for_hook(event)
+    parent = Fact.observed(scope, event["model"], "canonical-hook-model") if safe_id(event.get("model")) else Fact()
+    workspace = Fact()
+    try:
+        if isinstance(event.get("cwd"), str):
+            workspace = Fact.observed(scope, str(canonical_path(event["cwd"])), "canonical-hook-cwd")
+    except (ValueError, OSError):
+        pass
+    # No default-role, effort, control or compatibility inference from these
+    # observed metadata fields. Model is a Hook slug, not provider execution.
+    return HostSnapshot(scope, synthetic, parent_model=parent, workspace=workspace)
 
 
 def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None):
@@ -46,12 +63,17 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
                                              "enabled": value["enabled"], "task_export_permitted": value["task_export_permitted"]}, **injected)
         if bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
             return {}
-        caps = {"configuration_known": False, "roles": {}, "models": {}}
+        caps = partial_hook_snapshot(event, classifier.synthetic)
         if event["hook_event_name"] == "PreToolUse" and original.get("model") is None:
             try:
                 observed = resolver.resolve(event)
-                if isinstance(observed, dict):
+                if type(observed) is HostSnapshot:
                     caps = observed
+                elif classifier.synthetic and isinstance(observed, dict):
+                    proposal = Proposal("codex", "simulation", event["session_id"], event["turn_id"], event["tool_use_id"], original, True)
+                    caps = synthetic_legacy_snapshot(proposal, observed)
+                elif observed is not None:
+                    caps = observed  # core rejects generic production assertions
             except Exception:
                 # A bounded unavailable state reaches the same core/facts path;
                 # no guessed capabilities or raw resolver exception is stored.

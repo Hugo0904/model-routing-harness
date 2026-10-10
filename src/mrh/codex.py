@@ -5,6 +5,7 @@ import sys
 from .core import Classification, ScriptedClassifier, UnavailableClassifier
 from .service import process
 from .types import Proposal, safe_id
+from .facts import CallScope, HostSnapshot
 
 
 def serialize(decision, original, call_id):
@@ -64,9 +65,9 @@ def handle_event(event, store=None, candidate=False, simulation=None, *, classif
             print("mrh: child_receipt_rejected", file=sys.stderr)
         return {}
     from .simulation import demo_capabilities, demo_policy
-    # No unknown wire protocol or environment credential lookup exists here.
-    caps = capabilities if capabilities is not None else demo_capabilities() if synthetic else {"configuration_known": True,
-            "roles": {"default": {"known": True, "rewrite_allowed": False}}, "models": {}}
+    # No default-role or capability inference in a production caller. Legacy
+    # dictionaries remain confined to the explicitly synthetic adapter path.
+    caps = capabilities if capabilities is not None else demo_capabilities() if synthetic else HostSnapshot(CallScope.for_proposal(proposal), False)
     policy = policy if policy is not None else demo_policy() if synthetic else {"top_mode": "Main"}
     classifier = classifier or UnavailableClassifier()
     if simulation is not None:

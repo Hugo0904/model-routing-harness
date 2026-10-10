@@ -37,8 +37,9 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(self.decide(v)[0].reason, "malformed_classification")
 
     def test_failure_unavailable_timeout_fail_open(self):
-        p = self.proposal(synthetic=False)
-        self.assertEqual(route(p, demo_policy(), demo_capabilities(), UnavailableClassifier()).reason, "classifier_unavailable")
+        p = self.proposal()
+        class UnavailableFixture(UnavailableClassifier): synthetic = True
+        self.assertEqual(route(p, demo_policy(), demo_capabilities(), UnavailableFixture()).reason, "classifier_unavailable")
         for result, reason in [(RuntimeError("SECRET_ERROR_CANARY"), "classifier_error"),
                                (TimeoutError("SECRET_ERROR_CANARY"), "classifier_timeout")]:
             self.assertEqual(self.decide(result)[0].reason, reason)
@@ -65,12 +66,12 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(self.decide(policy=pol, caps=role_caps)[0].reason, "unsupported_role")
         self.assertEqual(self.decide(proposal=self.proposal(tool_input={"reasoning_effort": "ultra"}), policy=pol)[0].reason, "unsupported_effort")
         pol["fixed"]["model"] = "unsupported"
-        self.assertEqual(self.decide(policy=pol)[0].reason, "unsupported_model")
+        self.assertEqual(self.decide(policy=pol)[0].reason, "missing_target_model")
         pol["fixed"] = {"model": "gpt-6-astra", "effort": "unsupported"}
         self.assertEqual(self.decide(policy=pol)[0].reason, "unsupported_effort")
-        self.assertEqual(self.decide(policy=demo_policy(), caps={"configuration_known": False})[0].reason, "unresolved_host_configuration")
+        self.assertEqual(self.decide(policy=demo_policy(), caps={"configuration_known": False})[0].reason, "missing_role_protection")
         malformed_caps = demo_capabilities(); malformed_caps["roles"] = ["bad"]
-        self.assertEqual(self.decide(caps=malformed_caps)[0].reason, "unresolved_host_configuration")
+        self.assertEqual(self.decide(caps=malformed_caps)[0].reason, "missing_role_protection")
         invalid_policy = demo_policy(); invalid_policy["top_mode"] = "bad"
         self.assertEqual(self.decide(policy=invalid_policy)[0].reason, "invalid_policy")
 

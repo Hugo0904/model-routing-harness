@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E5R 本機候選 0.2.1**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；兩版原生 CLI 隔離安裝已驗證。正式宿主能力解析仍缺契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E6 本機候選 0.3.0**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；E5 的兩版原生 CLI 隔離安裝證據仍適用安裝機制。E6 改用同一次委派的各項事實，分別判斷 Main／Fixed／一般路由資格；新版封裝只做離線入口回放。正式宿主仍缺必要事實契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
 ## 使用
 
@@ -29,7 +29,7 @@ mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 
 TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限與 runtime credential resolver 見 [資料契約](docs/contracts.md)。[完整公開設定](examples/settings-disabled.json) 不含 key，載入不讀憑證；E5 的 `settings` 指令與 `hook --settings` 共用同一 reader／factory，再加 operator 指定的 workspace 範圍。政策不等於已驗證宿主能力。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
 
-新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。正式 resolver 目前保留原呼叫，不自行推測角色／effort。
+新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。正式 resolver 只讀 Hook 提供的 model／cwd／correlation metadata，角色保護等必要事實保持 unknown，記 `missing_role_protection` 並保留原呼叫；不讀 key 或呼叫 Jev。[E6 事實與支援邊界](docs/e6-action-facts-proof.md) 列出精確版本缺口。
 
 ```sh
 mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh
@@ -44,10 +44,10 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 | 項目 | 目前證據 |
 |---|---|
-| 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作，隔離本機驗證 |
+| 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作；E6 每個分支的最小事實及負例經合成 core／公開入口驗證 |
 | Codex Hook JSON、Main deny／Fixed rewrite | 已於兩個安裝版app-server，以native v1＋腳本provider驗取消／改寫；Desktop UI／真型號／自主接回未驗證 |
 | 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
-| TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 host resolver 不足、真 API 未驗證 |
+| TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 Main／Fixed／一般路由缺同次委派事實而未支援，真 API 未驗證 |
 | 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
 | Claude Code、Gemini CLI | 未支援，只有盤點與接頭差異文件 |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
@@ -68,3 +68,5 @@ python3 scripts/verify_package.py --evidence-prefix e3
 後續 [E4 installed-host證據](docs/e4-host-proof.md) 與 [E4G Goal 證據](docs/e4g-goal-and-plugin-proof.md) 區分 shell 與 Desktop-bundled runtime，均沒有正式啟用。[E5](docs/e5-settings-plugin-proof.md) 已補上兩版的隔離 native plugin／installed entry／第三方 Hook 共存證據與 34 項聚焦檢查；設定接線用 true factory＋合成 HTTP/context，正式 host resolution 仍缺契約。沒有重跑既有 Goal、全部核心或真 provider 測試。歷史審查拒絕與完整 R1 接受狀態保留在任務記錄。
 
 [E5R 記錄修正](docs/e5r-accounting-proof.md) 讓通過原 gate 的 explicit／unknown preserve 也留下 proposal／outcome，Post 不再查新的 host 能力即可關聯收據；分類、key 與 HTTP 仍為零。新版 archive 回放證據與 E5 舊 native-installed hash 分開，未重跑原生 lifecycle 或 Goal。
+
+[E6](docs/e6-action-facts-proof.md) 移除整份 configuration_known 門檻：Main 只需角色未受保護與可 deny；Fixed 另需 rewrite、目標模型及有效 effort 相容；一般等級另需原委派基準與保守成本資料。沒有任何可合法執行的分支時，先保留並略過 context／Jev／key／HTTP。只有程序內可信 adapter 或明確 synthetic fixture 可建立 typed facts；設定與任務內容無法自報 known。兩個安裝版本的公開契約缺口已確認並停止搜尋，完整 R1 仍未完成。

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""D9: rebuild own archive and replay saved consumer shapes, no native/provider."""
-import hashlib,json,os,subprocess,sys,tempfile,time
+"""Rebuild own archive and replay saved consumer shapes, no native/provider."""
+import argparse,hashlib,json,os,subprocess,sys,tempfile,time
 from pathlib import Path
 
 BOOTSTRAP = r'''import copy,io,json,sys
@@ -35,7 +35,7 @@ for event in (pre,post):
     unknown.append(value)
 for event in (unknown[0],unknown[0],unknown[1],unknown[1]):invoke(event)
 store=Store(path.parent/"events.sqlite3");stats=store.stats(True)
-assert stats["proposals"]==2 and stats["outcomes"]=={"explicit_model":1,"unresolved_host_configuration":1}
+assert stats["proposals"]==2 and stats["outcomes"]=={"explicit_model":1,"missing_role_protection":1}
 assert stats["synthetic_attempts"]==0 and stats["simulated_children"]==2
 assert stats["confirmed_children"]==0 and stats["actual_models"]=={}
 assert keys==[] and http.calls==0
@@ -45,7 +45,7 @@ for option in ("--json","--plain"):
     assert cli.main(["stats","--db",str(store.path),"--synthetic",option],stdout=output,stderr=io.StringIO())==0
     outputs.append(output.getvalue())
 assert json.loads(outputs[0])==stats and store.stats(True)==stats
-assert "explicit_model: 1" in outputs[1] and "unresolved_host_configuration: 1" in outputs[1]
+assert "explicit_model: 1" in outputs[1] and "missing_role_protection: 1" in outputs[1]
 assert store.stats()["proposals"]==0
 # Distinct production-unknown facts use the same archive and actual default
 # factory. Block any accidental transport call before it could open a socket.
@@ -57,7 +57,7 @@ typesafe.HttpTransport.request=no_network
 for event in unknown:
     value=copy.deepcopy(event);value["tool_use_id"]+="-reported";invoke(value,True)
 live=Store(path.parent/"events.sqlite3").stats()
-assert live["proposals"]==1 and live["outcomes"]=={"unresolved_host_configuration":1} and live["reported_children"]==1
+assert live["proposals"]==1 and live["outcomes"]=={"missing_role_protection":1} and live["reported_children"]==1
 assert live["jev_attempts"]==0 and live["confirmed_children"]==0 and live["actual_models"]=={}
 assert keys==[] and live_http==[]
 print(json.dumps({"synthetic_stats":stats,"production_unknown_stats":live,"provider_key_resolutions":len(keys),"synthetic_transport_calls":http.calls,"production_transport_calls":len(live_http),"explicit_host_resolution_calls":0,"unknown_host_resolution_calls":host.calls,"stats_reads_do_not_increment":True,"public_cli_used":True,"factory":"existing TypesafeClassifier, not replacement classifier","synthetic_dependency_boundary":"code-level host/HTTP injection; production unknown HTTP explicitly blocked"}))
@@ -65,8 +65,11 @@ print(json.dumps({"synthetic_stats":stats,"production_unknown_stats":live,"provi
 
 
 def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--evidence-prefix", choices=("e5r","e6"), default="e6")
+    prefix=parser.parse_args().evidence_prefix
     start=time.monotonic();source=Path(__file__).resolve().parents[1];rows=[]
-    with tempfile.TemporaryDirectory(prefix="mrh-e5r-package-") as alias:
+    with tempfile.TemporaryDirectory(prefix="mrh-"+prefix+"-package-") as alias:
         scratch=Path(alias).resolve();work=scratch/"work";work.mkdir();home=scratch/"home";home.mkdir()
         env={"PATH":"/usr/bin:/bin:/usr/sbin:/sbin","HOME":str(home),"LANG":"en_US.UTF-8"}
         def run(args,input=None):
@@ -79,6 +82,7 @@ def main():
         run([str(python),"-m","pip","--no-cache-dir","install","--no-index","--no-deps","--no-build-isolation",str(source)])
         bundle=scratch/"bundle";state=scratch/"state/settings.json"
         prepared=json.loads(run([str(executable),"plugin","prepare","--root",str(bundle),"--settings",str(state)]))
+        assert prepared["live_routing_ready"] is False and prepared["readiness_reason"]=="missing_role_protection"
         archive=bundle/"plugins/model-routing-harness/runtime.pyz"
         archive_hash=hashlib.sha256(archive.read_bytes()).hexdigest()
         installed=json.loads(run([str(python),"-I","-c","import importlib.metadata,json,mrh;print(json.dumps({'version':importlib.metadata.version('model-routing-harness'),'module':mrh.__file__}))"]))
@@ -99,7 +103,7 @@ def main():
           "real_provider_requests":0,"formal_hook_changes":False,"credential_environment_forwarded":False,
           "elapsed_scope":"venv/package/archive preparation, public entry replay and owned cleanup"}
     result["temporary_files_removed"]=not Path(alias).exists();result["elapsed_seconds"]=round(time.monotonic()-start,3)
-    (source/"docs/evidence/e5r-package.json").write_text(json.dumps(result,indent=2)+"\n")
+    (source/("docs/evidence/"+prefix+"-package.json")).write_text(json.dumps(result,indent=2)+"\n")
     print(json.dumps({"version":installed["version"],"archive_sha256":archive_hash,"proposals":accounting["synthetic_stats"]["proposals"],"receipts":accounting["synthetic_stats"]["simulated_children"],"key_resolutions":accounting["provider_key_resolutions"],"elapsed_seconds":result["elapsed_seconds"],"cleanup":result["temporary_files_removed"]}))
 
 if __name__=="__main__":main()

@@ -17,6 +17,10 @@ REASONS.update({"typesafe_disabled", "typesafe_export_denied", "typesafe_missing
                 "typesafe_http_401", "typesafe_http_422", "typesafe_http_429", "typesafe_http_529",
                 "typesafe_http_5xx", "typesafe_http_error", "typesafe_network_error",
                 "typesafe_timeout", "typesafe_oversized_response", "typesafe_redirect_rejected"})
+REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_protection", "fixed_role_effort",
+                "missing_deny_capability", "unsupported_deny_capability", "missing_rewrite_capability",
+                "missing_target_model", "missing_target_effort", "missing_effective_effort", "missing_original_baseline",
+                "cached_effect_mismatch"})
 
 
 def safe_id(value, limit=128):

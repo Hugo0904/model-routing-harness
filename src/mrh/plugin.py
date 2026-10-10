@@ -101,7 +101,7 @@ def prepare(root, settings_path, python=None):
     except metadata.PackageNotFoundError:
         # Development callers are explicitly labeled; host proof uses installed
         # wheel metadata and records the packaged bytes independently.
-        version = "0.2.1"
+        version = "0.3.0"
     runtime = _runtime_archive()
     prefix = "plugins/" + NAME + "/"
     command = shlex.quote(python) + ' -I "${PLUGIN_ROOT}/launcher.py"'
@@ -146,7 +146,7 @@ def show(root):
     if artifact is None:
         raise owned.OwnedError("artifact_incomplete")
     return {"status": "prepared", "native_registration": "unverified", "hook_trust": "unverified",
-            "live_routing_ready": False, "readiness_reason": "unresolved_host_configuration", "artifact": artifact,
+            "live_routing_ready": False, "readiness_reason": "missing_role_protection", "artifact": artifact,
             "native_commands": [["codex", "plugin", "marketplace", "add", str(root), "--json"],
                 ["codex", "plugin", "add", PLUGIN_ID, "--json"], ["codex", "plugin", "list", "--json"],
                 ["codex", "plugin", "remove", PLUGIN_ID, "--json"]],

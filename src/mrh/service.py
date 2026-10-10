@@ -1,6 +1,6 @@
 """Idempotent dispatch boundary. Persistence faults fail open with safe diagnostics."""
 import sys
-from .core import route
+from .core import route, cached_effect_blocker
 from .types import Decision
 
 
@@ -17,6 +17,15 @@ def process(proposal, policy, capabilities, store=None, classifier=None, optiona
         except Exception:
             return failure("claim")
         if state == "cached":
+            try:
+                blocker = cached_effect_blocker(proposal, policy, capabilities, cached)
+            except Exception:
+                blocker = "invalid_host_facts"
+            if blocker:
+                # Historical classification/decision remains frozen. Current
+                # facts may prevent emitting its effect, without a new attempt.
+                print("mrh: cached_effect_preserved reason=" + blocker, file=sys.stderr)
+                return Decision(reason=blocker, synthetic=proposal.synthetic)
             return cached
         if state in ("pending", "conflict"):
             return Decision(reason="proposal_" + state, synthetic=proposal.synthetic)

@@ -1,0 +1,146 @@
+{
+  "package": "E6-B-001",
+  "date": "2026-10-10",
+  "base_commit": "8530165b8558ed3c309a4f731009fbea90644325",
+  "branch": "mrh-001",
+  "version": "0.3.0",
+  "status": "bounded_per_action_facts_package_delivered_A_acceptance_pending",
+  "full_R1_complete": false,
+  "changes": [
+    "validated immutable scoped per-field facts; production generic known dictionaries rejected",
+    "Main/Fixed independent of irrelevant parent/cost uncertainty; ordinary requires original baseline and conservative sourced vectors",
+    "no viable configured effect skips context/classification/key/HTTP",
+    "production partial resolver retains canonical model/cwd only, missing_role_protection fallback",
+    "cached effects revalidate facts/action/patch without classification or history mutation",
+    "precise public settings/plugin readiness diagnostic; consolidated REQUIREMENTS status"
+  ],
+  "final_routing_tests": {
+    "argv": [
+      "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+      "-m",
+      "unittest",
+      "test_action_facts",
+      "test_core",
+      "test_configured_accounting",
+      "test_codex_host_receipt",
+      "test_e3_facts.FactsTests.test_resolved_baseline_cost_negative_positive_unknown_and_fixed",
+      "test_settings_runtime.SettingsRuntimeTests.test_each_export_gate_combination_has_zero_key_and_transport_until_all_true",
+      "test_settings_runtime.SettingsRuntimeTests.test_public_hook_uses_real_factory_and_parser_main_fixed_receipt_disable",
+      "test_settings_runtime.SettingsRuntimeTests.test_unknown_host_explicit_fixed_role_unrelated_and_failures_preserve",
+      "test_settings_runtime.SettingsRuntimeTests.test_disable_is_neutral_for_new_invocations_without_promising_inflight_cancellation",
+      "test_integration.IntegrationTests.test_cli_json_and_text_share_stats_without_reclassification",
+      "test_integration.IntegrationTests.test_cli_hook_default_and_explicit_simulation_end_to_end",
+      "test_cli.CliTests.test_stats_json_is_the_store_object_without_presentation_fields",
+      "-v"
+    ],
+    "environment": "PATH, PYTHONPATH=src:tests, PYTHONDONTWRITEBYTECODE=1, LANG only; credentials not forwarded",
+    "exit_code": 0,
+    "command_wall_seconds": 0.575,
+    "tests": 31,
+    "runner_seconds": 0.462,
+    "scope": "per-action minimal facts; protected/unknown/scope guards; core confidence/context/fail-open; affected public runtime, E5R accounting/receipt/replay, baseline cost and CLI/JSON consumers; cached effect guarded without reclassification/history mutation",
+    "full_suite": false,
+    "native_goal_or_provider_full_rerun": false,
+    "status": "final_after_cached_effect_guard_repair"
+  },
+  "final_status_tests": {
+    "argv": [
+      "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+      "-m",
+      "unittest",
+      "test_settings_runtime.SettingsRuntimeTests.test_public_configuration_and_enable_are_independent_idempotent_and_read_only_show",
+      "-v"
+    ],
+    "exit_code": 0,
+    "command_wall_seconds": 0.118,
+    "tests": 1,
+    "runner_seconds": 0.014,
+    "scope": "precise public settings readiness diagnostic; no key lookup or state mutation on show",
+    "prior_31_unchanged_routing_results_reused": true
+  },
+  "distinct_final_checks": 32,
+  "development_runs": [
+    {
+      "checks": 22,
+      "runner_seconds": 0.274,
+      "scope": "core/settings runtime/accounting early pass",
+      "source": "prior tool output"
+    },
+    {
+      "checks": 14,
+      "runner_seconds": 0.051,
+      "scope": "new action facts/core/baseline early pass",
+      "source": "prior tool output"
+    },
+    {
+      "checks": 7,
+      "runner_seconds": 0.171,
+      "scope": "minimal publicruntime test addition",
+      "source": "tool output"
+    },
+    {
+      "checks": 31,
+      "runner_seconds": 0.464,
+      "scope": "pre-cache-guard pass; not final guard evidence",
+      "source": "e6-test-run-before-cache-guard.json"
+    },
+    {
+      "checks": 20,
+      "runner_seconds": 0.342,
+      "scope": "post-finding focused repair pass",
+      "source": "tool output"
+    }
+  ],
+  "new_archive": {
+    "sha256": "664a7fd6804c107f1cc562cc1882094386a3041c521e57cec2057a315c1b0115",
+    "matches_current_source_archive": true,
+    "installed_version": "0.3.0",
+    "evidence": "e6-package.json",
+    "elapsed_seconds": 3.086,
+    "new_native_install_execution": false
+  },
+  "earlier_archive_smoke": {
+    "sha256": "d25606e2e1552079d3d25ca30b889720eeeb0e2da23ef5cddfc1985a85745323",
+    "elapsed_seconds": 3.412,
+    "status": "passed before final public readiness string; final smoke repeated only because archived source changed",
+    "evidence": "e6-package-before-status.json"
+  },
+  "saved_hook_inputs": "unchanged E5 shell/bundled consumer shapes; replay only, not new host execution",
+  "production_partial_snapshot": "canonical Hook model/cwd known metadata; role/native controls/original baseline/targets unknown",
+  "production_Main_Fixed_ordinary": "unsupported for precise missing same-call host facts; exact-version search CLOSED",
+  "host_contract_findings": "e6-host-contract-gap.json",
+  "prospective_host_export": "DESIGN_REQUIREMENT_ONLY; not implemented/activated/authorized host change",
+  "review": "e6-review.json",
+  "real_provider_requests": 0,
+  "real_credentials_resolved": 0,
+  "synthetic_positive_tests": "minimal public Main and Fixed each use 1 dummy credential resolution and 1 fake HTTP request; subsequent valid/invalid cache replay adds zero. Other reused fixture tests have their own synthetic calls; no aggregate live claim",
+  "archive_smoke_key_resolutions": 0,
+  "archive_smoke_transport_calls": 0,
+  "unchanged_evidence_reused": [
+    "E3 wire parser/transport/deadline",
+    "E4 native deny/rewrite",
+    "E4G Goal interception",
+    "E5 isolated plugin lifecycle/trust/coexistence/ownership"
+  ],
+  "native_lifecycle_rerun": false,
+  "goal_rerun": false,
+  "full_provider_suite_rerun": false,
+  "actual_model_main_intelligence_jev_api_Desktop_UI": "unverified",
+  "cleanup": {
+    "schema_temp_roots_removed": true,
+    "final_smoke_temporary_files_removed": true,
+    "earlier_smoke_temporary_files_removed": true,
+    "generated_caches_removed": [
+      "__pycache__",
+      "src/mrh/__pycache__",
+      "tests/__pycache__"
+    ]
+  },
+  "formal_hook_changes": false,
+  "other_project_writes": false,
+  "A_or_B_execution_goal_created": false,
+  "push_performed": false,
+  "quota_remaining_percent_last_read": 16,
+  "quota_threshold_below_15_triggered": false,
+  "task_tracking": "MONITOR_TRACKING_CONTEXT absent; no fabricated profile/task identity, no Monitor DB write"
+}

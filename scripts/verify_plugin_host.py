@@ -16,7 +16,7 @@ event=json.load(sys.stdin)
 class Host:
     synthetic=True
     def resolve(self,event):
-        return {"configuration_known":True,"main_model":"mrh-synthetic-parent","main_effort":"low",
+        return {"configuration_known":True,"deny_supported":True,"main_model":"mrh-synthetic-parent","main_effort":"low",
                 "original_model":"mrh-synthetic-parent","original_effort":"low","original_resolution_known":True,
                 "roles":{"default":{"known":True,"rewrite_allowed":True}},
                 "models":{"mrh-synthetic-fixed":{"available":True,"efforts":["high"]}}}
