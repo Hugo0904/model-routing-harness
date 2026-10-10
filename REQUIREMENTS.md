@@ -268,7 +268,7 @@ C2C 尚未能讀取新專案時，只回報存取缺口，不擅自放寬權限�
 | S3 CLI 與事實統計 | E9R 四級真配置表、edit/view、保存／取消／版本衝突、同檔與關聯 DB 讀回；原 JSON／冪等分區；已驗目前安裝版入口及寬窄 PTY/xterm 畫面 | 原生 Mac Terminal 外觀未觀測；reported／synthetic 不等於 confirmed；child tokens／cost／quota 不可取得 |
 | S4 安裝與宿主行為 | 自有 bundle／設定；E4/E5 兩版隔離 native deny 零 child／Fixed scripted model、E4G 同 Goal 跨回合、E5 trust／remove／共存；E9R 當前 wheel 安裝版 CLI；E7/E8 source resolver 與原生 Hook 隔離整合 | E9R 未重跑 native lifecycle；Desktop UI、真模型、主代理自主接回與自主 Goal 續跑未驗證；正式全域 Hook 未啟用 |
 | S5 選配接入 | Canopy 摘要及 Monitor 統計契約／合成例；缺席與失效可回退 | 第一階段不含 live Canopy／Monitor 接入；既有三專案未修改 |
-| S6 審查及交付 | 原 GPT 設定與視覺對焦；A 已接受 E8/E9R 限定候選，操作指南／證據／清理／本機 Git 齊備 | 原 GPT 最後摘要審查支持限定接受；B 收尾回報待確認；全 R1 未驗收，沒有 push |
+| S6 審查及交付 | 原 GPT 設定與視覺對焦；A 已接受 E8/E9R 限定候選，操作指南／證據／清理／本機 Git 齊備 | 原 GPT 最後摘要審查支持限定接受；B 收尾已確認；全 R1 未驗收，沒有 push |
 
 版本、測試、archive identity、exact-version matrix 和支持限制見 [E6 證據](docs/e6-action-facts-proof.md)；歷史接受與目前工作指示見 [任務記錄](docs/MRH-001.md)。新舊封裝／native／provider／production 證據各自保留，不互相替代。
 
