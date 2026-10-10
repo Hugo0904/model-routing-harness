@@ -7,7 +7,7 @@
 | shell CLI 0.159.3 | Main／Fixed／double／explicit／low／failure 六情境通過 | 3.220s |
 | Desktop bundle CLI 0.162.0-alpha.17.2 | 同六情境通過 | 2.457s |
 | Desktop UI | 未操作／未驗證 | — |
-| 隔離 Goal | 自動審查拒絕，未執行 | — |
+| 隔離 Goal（E4 當時） | 自動審查拒絕，未執行；後續 E4G 已另補證據 | — |
 | 真實模型／Jev、正式共享 home 安裝 | 未驗證／未啟用 | — |
 
 證據在 [shell runtime](evidence/e4-shell-host.json)、[bundle runtime](evidence/e4-bundled-host.json)、[E4總表](evidence/e4-verification.json)。時間只列最後正式命令，準備／診斷／授權等待另計；原operation計時不含最後teardown，也保留在JSON。每份記錄含官方信任讀回、真 Hook input/output、native parent/child IDs／事件、loopback 收到的 model/effort，以及 synthetic/live Stats。每個版本皆有7個 proposal、6個合成分類 attempt、4個原生 fixture child；product synthetic partition 保存4筆 child receipt，live confirmed／Jev attempts均為0。Requested synthetic alias 不是 actual OpenAI model。

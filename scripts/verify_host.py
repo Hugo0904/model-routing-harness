@@ -86,7 +86,7 @@ class Fixture:
         self.requests.append({"model": body.get("model"), "reasoning": body.get("reasoning"),
                               "native_namespace_tools": namespaces, "is_parent": is_parent,
                               "function_outputs": [x for x in body.get("input", []) if x.get("type") == "function_call_output"]})
-        if is_parent and self.step < (2 if self.scenario in ("double", "goal") else 1):
+        if is_parent and self.step < (2 if self.scenario == "double" else 1):
             self.step += 1
             ns = next((name for name, functions in namespaces.items() if "spawn_agent" in functions), None)
             if not ns:
@@ -281,6 +281,76 @@ def check_case(scenario, parent, completed, requests, events, logs):
             "requested_synthetic_child_models": [x["model"] for x in children], "autonomous_main_handback": False}
 
 
+def require_goal(response, parent, status, identity=None):
+    assert "error" not in response, "goal_rpc_refused"
+    goal = response["result"]["goal"]
+    assert goal is not None and goal["threadId"] == parent and goal["status"] == status, "goal_state_mismatch"
+    if identity is not None:
+        assert all(goal[key] == identity[key] for key in ("threadId", "createdAt", "objective")), "goal_identity_changed"
+    return goal
+
+
+def run_goal_turns(rpc, parent, fixture):
+    """Two explicitly requested turns, within one actual temporary host Goal."""
+    proof = {"continuation_initiator": "harness_turn_start", "host_autonomous_continuation_proven": False,
+             "state_readbacks": [], "parent_turn_ids": []}
+    before = rpc.request("thread/goal/get", {"threadId": parent})
+    proof["state_readbacks"].append({"stage": "before_creation", "response": before})
+    if "error" in before:
+        return None, {**proof, "status": "unsupported", "unsupported_stage": "before_creation"}
+    assert before["result"]["goal"] is None, "fixture_goal_preexisted"
+    created = rpc.request("thread/goal/set", {"threadId": parent,
+        "objective": "Exercise fresh scripted delegations across two isolated parent turns",
+        "status": "active", "origin": "user"})
+    proof["create_response"] = created
+    if "error" in created:
+        return None, {**proof, "status": "unsupported", "unsupported_stage": "creation"}
+    completed = None
+    try:
+        identity = require_goal(created, parent, "active")
+        proof["goal_identity"] = {key: identity[key] for key in ("threadId", "createdAt", "objective")}
+        for index, stage in enumerate(("before_first_turn", "between_turns"), 1):
+            state = rpc.request("thread/goal/get", {"threadId": parent})
+            proof["state_readbacks"].append({"stage": stage, "response": state})
+            require_goal(state, parent, "active", identity)
+            fixture.step = 0
+            completed = rpc.turn(parent, "MRH_PARENT_goal turn " + str(index) +
+                                 " credential-free fixture. Use native delegation only.")
+            assert "error" not in completed and completed["params"]["turn"]["status"] == "completed", "goal_turn_failed"
+            proof["parent_turn_ids"].append(completed["params"]["turn"]["id"])
+        assert len(set(proof["parent_turn_ids"])) == 2, "goal_turn_reused"
+        after = rpc.request("thread/goal/get", {"threadId": parent})
+        proof["state_readbacks"].append({"stage": "after_second_turn", "response": after})
+        require_goal(after, parent, "active", identity)
+        proof["status"] = "passed"
+    finally:
+        # Lifecycle affects only this fresh thread; read back every transition.
+        done = rpc.request("thread/goal/set", {"threadId": parent, "status": "complete", "origin": "user"})
+        proof["complete_response"] = done
+        complete = rpc.request("thread/goal/get", {"threadId": parent})
+        proof["state_readbacks"].append({"stage": "completed", "response": complete})
+        cleared = rpc.request("thread/goal/clear", {"threadId": parent})
+        proof["clear_response"] = cleared
+        empty = rpc.request("thread/goal/get", {"threadId": parent})
+        proof["state_readbacks"].append({"stage": "cleared", "response": empty})
+        require_goal(done, parent, "complete")
+        require_goal(complete, parent, "complete")
+        assert cleared.get("result", {}).get("cleared") is True, "goal_clear_refused"
+        assert "error" not in empty and empty["result"]["goal"] is None, "goal_clear_readback_failed"
+        proof["completed_and_cleared"] = True
+    return completed, proof
+
+
+def check_goal_delegations(goal, logs):
+    pre = [x for x in logs if x["event"]["hook_event_name"] == "PreToolUse"]
+    assert [x["event"]["turn_id"] for x in pre] == goal["parent_turn_ids"], "goal_cross_turn_hook_mismatch"
+    calls = [x["event"]["tool_use_id"] for x in pre]
+    assert len(calls) == 2 and len(set(calls)) == 2 and all(calls), "goal_call_identity_reused"
+    goal["fresh_native_call_ids"] = calls
+    goal["each_turn_classified"] = all(x["classifier_calls"] == 1 for x in pre)
+    assert goal["each_turn_classified"], "goal_classification_missing"
+
+
 def inspect(binary, scenario, catalog_path=None):
     started = time.monotonic()
     fixture = Fixture(scenario)
@@ -393,17 +463,14 @@ print(json.dumps(output))
                     parent = thread["result"]["thread"]["id"]; fixture.root_id = parent
                     goal = None
                     if case == "goal":
-                        goal = rpc.request("thread/goal/set", {"threadId": parent, "objective": "Exercise two scripted delegations in this isolated fixture", "status": "active", "origin": "user"})
-                        if "error" in goal:
-                            cases.append({"scenario": case, "status": "unsupported", "goal_response": goal}); continue
-                    completed = rpc.turn(parent, "MRH_PARENT_" + case + " credential-free fixture. Use native delegation only.")
+                        completed, goal = run_goal_turns(rpc, parent, fixture)
+                        if goal["status"] == "unsupported":
+                            cases.append({"scenario": case, "status": "unsupported", "goal_state": goal}); continue
+                    else:
+                        completed = rpc.turn(parent, "MRH_PARENT_" + case + " credential-free fixture. Use native delegation only.")
                     events = rpc.events[event_start:]
                     child_ids = {i for e in events if e.get("method") == "item/completed" for i in e.get("params", {}).get("item", {}).get("receiverThreadIds", [])}
                     rpc.await_children(child_ids)
-                    if goal is not None:
-                        goal = rpc.request("thread/goal/get", {"threadId": parent})
-                        rpc.request("thread/goal/set", {"threadId": parent, "status": "complete", "origin": "user"})
-                        rpc.request("thread/goal/clear", {"threadId": parent})
                     parent_read = rpc.request("thread/read", {"threadId": parent, "includeTurns": False})
                     parent_config = {k: parent_read["result"]["thread"].get(k) for k in ("id", "model", "reasoningEffort", "modelProvider")}
                     assert parent_config["model"] == "mrh-synthetic-parent" and parent_config["reasoningEffort"] == "low", "configured_parent_changed"
@@ -411,6 +478,8 @@ print(json.dumps(output))
                     requests = fixture.requests[request_start:]
                     logs = [json.loads(line) for line in log.read_text().splitlines()[before_logs:]] if log.exists() else []
                     proof = check_case(case, parent, completed, requests, events, logs)
+                    if goal is not None:
+                        check_goal_delegations(goal, logs)
                     cases.append({"scenario": case, "parent_configured_identity": parent_config, "proof": proof,
                                   "requests": requests, "native_events": curate_events(events), "hook_events": logs, "goal_state": goal})
                 result = {"evidence_kind": "installed_host_scripted_loopback_provider", "binary": binary, "version": version,
@@ -418,8 +487,7 @@ print(json.dumps(output))
                           "real_provider_requests": 0, "desktop_ui_validation": False,
                           "actual_OpenAI_model_execution": False, "actual_Jev_execution": False,
                           "rpc_methods": rpc.methods, "credential_environment_forwarded": False,
-                          "auth_files_copied": False, "provider_auth_header_supplied": False,
-                          "elapsed_seconds": round(time.monotonic()-started, 3)}
+                          "auth_files_copied": False, "provider_auth_header_supplied": False}
                 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"src"))
                 from mrh.store import Store
                 store = Store(db_path)
@@ -435,6 +503,8 @@ print(json.dumps(output))
     finally:
         server.shutdown(); server.server_close(); serving.join(2)
     result["server_stopped"] = not serving.is_alive()
+    result["elapsed_seconds"] = round(time.monotonic()-started, 3)
+    result["elapsed_scope"] = "fixture setup, operation, lifecycle readback and final teardown"
     return result
 
 

@@ -40,13 +40,13 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 ## 支援狀態
 
-| 項目 | E3 結果 |
+| 項目 | 目前證據 |
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作，隔離本機驗證 |
 | Codex Hook JSON、Main deny／Fixed rewrite | 已於兩個安裝版app-server，以native v1＋腳本provider驗取消／改寫；Desktop UI／真型號／自主接回未驗證 |
 | 安裝預覽 | 可用；共享 home 安裝／停用拒寫，未支援 |
 | TypeSafe Jev 接頭 | 已實作、預設關閉；serializer/parser/deadline 以 fake transport 驗證，真 API 未驗證 |
-| 後續真 Goal 委派 | 未驗證 |
+| 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
 | Claude Code、Gemini CLI | 未支援，只有盤點與接頭差異文件 |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
 | Jev tokens／估算 | 可保存有效 usage；E3 只有 synthetic；未知保持 null，匹配版本才估算 |
@@ -63,4 +63,4 @@ python3 scripts/verify_package.py --evidence-prefix e3
 
 前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。
 
-後續 [E4 installed-host證據](docs/e4-host-proof.md) 區分shell與Desktop-bundled runtime；沒有正式啟用。E4增加native PostToolUse JSON字串解析與聚焦檢查，未影響E3已驗證的provider／核心保障。隔離Goal仍有當次審查阻礙，完整R1接受狀態見任務記錄。
+後續 [E4 installed-host證據](docs/e4-host-proof.md) 區分shell與Desktop-bundled runtime；沒有正式啟用。E4增加native PostToolUse JSON字串解析與聚焦檢查，未影響E3已驗證的provider／核心保障。[E4G Goal 與 plugin 前提](docs/e4g-goal-and-plugin-proof.md) 補上隔離 Goal 跨回合證據；歷史審查拒絕保留在任務記錄，新增直接人類授權後本次審查允許執行。Plugin 只核對 help／官方契約，尚未實際安裝或載入；完整 R1 接受狀態見任務記錄。

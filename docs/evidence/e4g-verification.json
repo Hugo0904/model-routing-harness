@@ -1,0 +1,89 @@
+{
+  "package": "E4G-B-001",
+  "date": "2026-10-10",
+  "base_commit": "289afc1e28361d1a5d7fcf94b7716a630718cf64",
+  "status": "goal_cross_turn_passed_plugin_prerequisites_only_A_acceptance_pending",
+  "goal_results": [
+    {
+      "surface": "shell",
+      "version": "codex-cli 0.159.3",
+      "status": "passed",
+      "goal_identity": {
+        "threadId": "01a12471-a87b-7fd2-b921-9d67ae40b388",
+        "createdAt": 1791612791,
+        "objective": "Exercise fresh scripted delegations across two isolated parent turns"
+      },
+      "turn_ids": [
+        "01a12471-a945-7f40-943b-c6e0dad3dd61",
+        "01a12471-a9cb-7151-b2f7-08e0ee6d876e"
+      ],
+      "classified_events": 2,
+      "goal_completed_and_cleared": true,
+      "fixture_elapsed_seconds": 2.573,
+      "command_wall_seconds": 2.655,
+      "cleanup": {
+        "app_server_exit": 0,
+        "temporary_files_removed": true,
+        "server_stopped": true
+      }
+    },
+    {
+      "surface": "bundled",
+      "version": "codex-cli 0.162.0-alpha.17.2",
+      "status": "passed",
+      "goal_identity": {
+        "threadId": "01a12472-3e9b-7682-bc6a-089b84d4c088",
+        "createdAt": 1791612829,
+        "objective": "Exercise fresh scripted delegations across two isolated parent turns"
+      },
+      "turn_ids": [
+        "01a12472-3f55-7351-bfe5-4b7390709edc",
+        "01a12472-3fb1-7ba2-ae56-6f77b32ff9b8"
+      ],
+      "classified_events": 2,
+      "goal_completed_and_cleared": true,
+      "fixture_elapsed_seconds": 1.962,
+      "command_wall_seconds": 2.143,
+      "cleanup": {
+        "app_server_exit": 0,
+        "temporary_files_removed": true,
+        "server_stopped": true
+      }
+    }
+  ],
+  "goal_continuation": "harness-requested; host autonomous Goal wakeup and actual intelligence unverified",
+  "tests": {
+    "command": "python3 -m unittest discover -s tests -p test_host_goal.py -v",
+    "exit_code": 0,
+    "wall_seconds": 0.109,
+    "scope": "changed Goal fixture lifecycle and evidence rejection"
+  },
+  "unchanged_results_reused": [
+    "E3 offline core/provider/package",
+    "E4 eleven focused checks and twelve core installed-host scenarios"
+  ],
+  "plugin_audit": "e4g-plugin-prerequisites.json; read-only help/docs/tag-source; install/load untested",
+  "cleanup": {
+    "public_catalog_temp_removed": true,
+    "package_generated_caches_removed": [
+      "tests/__pycache__",
+      "scripts/__pycache__",
+      "src/mrh/__pycache__"
+    ],
+    "owned_goal_lifecycle_and_process_cleanup": "per-host readbacks and exit flags in actual evidence"
+  },
+  "authority": {
+    "A_thread": "01a12262-186b-7670-9af0-59566703db4a",
+    "human_turn": "01a12461-1c83-7f71-acf7-bbf0b6392c63",
+    "human_item": "01a12461-24af-7c20-87fa-22c26de44f4f",
+    "same_review_path_accepted_after_direct_human_authority": true
+  },
+  "real_provider_calls": 0,
+  "formal_hook_changes": false,
+  "other_project_writes": false,
+  "native_A_or_B_execution_goal_created": false,
+  "push_performed": false,
+  "quota_latest_known_remaining_percent": 17,
+  "quota_secondary": "unavailable",
+  "full_R1_complete": false
+}
