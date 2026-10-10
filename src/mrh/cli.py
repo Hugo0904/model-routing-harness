@@ -7,6 +7,7 @@ import json
 import math
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -41,6 +42,7 @@ def _add_stats_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--db", type=Path, default=None, help="event database path")
     parser.add_argument("--synthetic", action="store_true", help="read the isolated synthetic partition")
     parser.add_argument("--json", action="store_true", help="print the unmodified statistics object")
+    parser.add_argument("--details", action="store_true", help="show full statistics and telemetry")
     _add_display_options(parser)
 
 
@@ -93,9 +95,10 @@ def build_parser() -> argparse.ArgumentParser:
     show = plugin_actions.add_parser("show")
     show.add_argument("--root", required=True, type=Path)
 
-    demo = commands.add_parser("demo", help="write labeled synthetic examples to an explicit partition")
+    demo = commands.add_parser("demo", help="show isolated synthetic examples (temporary database by default)")
     demo.add_argument("--db", type=Path, default=None, help="event database path")
     demo.add_argument("--json", action="store_true", help="print the synthetic statistics object")
+    demo.add_argument("--details", action="store_true", help="show full statistics and telemetry")
     _add_display_options(demo)
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
@@ -136,7 +139,7 @@ def _cmd_stats(args: argparse.Namespace) -> int:
         _write_json(stats)
     else:
         width = args.width or terminal_width()
-        sys.stdout.write(render_stats(stats, width=width, color=_wants_color(args)))
+        sys.stdout.write(render_stats(stats, width=width, color=_wants_color(args), details=args.details))
     return 0
 
 
@@ -213,25 +216,19 @@ def _cmd_config(args: argparse.Namespace) -> int:
 
 
 def _cmd_demo(args: argparse.Namespace) -> int:
-    from .simulation import run_demo
+    from .simulation import demo_policy, run_demo
 
-    stats = run_demo(_store(args.db))
+    if args.db is None:
+        with tempfile.TemporaryDirectory(prefix="mrh-demo-") as temporary:
+            stats = run_demo(_store(Path(temporary) / "events.sqlite3"))
+    else:
+        stats = run_demo(_store(args.db))
     if args.json:
         _write_json(stats)
     else:
-        sys.stdout.write(
-            render_report(
-                "MRH  /  synthetic demo",
-                {
-                    "Synthetic statistics": [
-                        "The following counts are synthetic examples, not live provider or host evidence."
-                    ]
-                },
-                width=args.width or terminal_width(),
-                color=_wants_color(args),
-            )
-        )
-        sys.stdout.write(render_stats(stats, width=args.width or terminal_width(), color=_wants_color(args)))
+        sys.stdout.write(render_stats(stats, width=args.width or terminal_width(),
+                                      color=_wants_color(args), details=args.details,
+                                      demo_policy=demo_policy()))
     return 0
 
 

@@ -181,7 +181,7 @@ def _share(count: int, total: int) -> str:
     return f"{percentage:.1f}%"
 
 
-def render_stats(
+def render_details(
     stats: Mapping[str, Any],
     *,
     width: int | None = None,
@@ -305,3 +305,152 @@ def render_report(
             lines.extend(_wrap(body, columns, "  "))
     lines.append("")
     return "\n".join(lines)
+
+
+# The dashboard owns presentation only. The detailed view and JSON retain every
+# recorded field; absent quota/configuration is never inferred from event counts.
+_BG = "\x1b[48;2;35;38;45m"
+_FG = "\x1b[38;2;239;240;246m"
+_DIM = "\x1b[38;2;155;158;171m"
+_EDGE = "\x1b[38;2;76;80;94m"
+_LAVENDER = "\x1b[38;2;173;178;250m"
+_PALETTE = ("\x1b[38;2;142;150;198m", "\x1b[38;2;107;117;219m",
+            "\x1b[38;2;173;178;250m", "\x1b[38;2;226;226;253m")
+
+
+def cell_width(text: str) -> int:
+    return sum(0 if unicodedata.combining(c) else
+               2 if unicodedata.east_asian_width(c) in {"W", "F"} else 1
+               for c in _ANSI.sub("", text))
+
+
+def _fit(value: Any, size: int) -> str:
+    text = sanitize_text(value)
+    if cell_width(text) > size:
+        clipped = ""
+        for c in text:
+            if cell_width(clipped + c) > size - 1:
+                break
+            clipped += c
+        text = clipped + "…"
+    return text + " " * max(0, size - cell_width(text))
+
+
+def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
+                 color: bool = False, details: bool = False,
+                 demo_policy: Mapping[str, Any] | None = None) -> str:
+    """Compact, width-aware dashboard over unchanged statistics.
+
+    Policy is an explicitly labeled demo fixture, never discovered or asserted
+    as live configuration. Live policy remains unavailable in this stats seam.
+    """
+    if details:
+        return render_details(stats, width=width, color=color)
+    columns = min(140, _width(width))
+    inner = columns - 4
+    synthetic = stats.get("partition") == "synthetic"
+    policy = demo_policy if synthetic else None
+
+    def ink(text: str, tone: str = _FG, bold: bool = False) -> str:
+        return (tone + ("\x1b[1m" if bold else "") + text +
+                "\x1b[22m" + _FG) if color else text
+
+    def row(text: str = "") -> str:
+        # All variable text is sanitized before it reaches styled spans.
+        padded = text + " " * max(0, inner - cell_width(text))
+        return "  " + padded + "  "
+
+    def box(title: str, contents: list[str], size: int) -> list[str]:
+        label = _fit(title, size - 6).rstrip()
+        top = ink("╭─ ", _EDGE) + ink(label, _DIM) + ink(" " + "─" * (size - 5 - cell_width(label)) + "╮", _EDGE)
+        return [top] + [ink("│", _EDGE) + " " + item +
+               " " * max(0, size - 3 - cell_width(item)) + ink("│", _EDGE)
+               for item in contents] + [ink("╰" + "─" * (size - 2) + "╯", _EDGE)]
+
+    lines = [row(), row(ink(_fit("MRH  /  DELEGATION ROUTER", inner), _LAVENDER, True)),
+             row(), row(ink(_fit("Route each task. Keep the big picture.", inner), bold=True)),
+             row(ink(_fit("SYNTHETIC DEMO  ·  isolated examples / no live calls" if synthetic else
+                               "LOCAL EVENTS  ·  all recorded history", inner), _DIM)),
+             row(ink(_fit("Updated: " + _value(stats.get("updated_at")), inner), _DIM)), row()]
+    lines.append(row(ink(_fit("01  HOW A DELEGATION IS ROUTED", inner), _LAVENDER)))
+    lines.append(row())
+    stages = [("Orchestrator", "Writes the task brief"), ("Jev", "Classifies complexity"),
+              ("Tier", "Light Small Mid Top"), ("Model", "Selected by policy")]
+    if inner >= 96:
+        size = (inner - 9) // 4
+        cards = [box(name, [ink(_fit(desc, size - 4), _DIM)], size) for name, desc in stages]
+        for index in range(3):
+            lines.append(row((" → " if index == 1 else "   ").join(card[index] for card in cards)))
+    else:
+        for index, (name, desc) in enumerate(stages, 1):
+            lines.append(row(ink(_fit(f"{index}. {name}  /  {desc}", inner), _DIM)))
+    lines.append(row())
+    lines.append(row(ink(_fit("TIER POLICY  /  demo examples" if policy else
+                                    "TIER POLICY  /  configuration not loaded", inner), _DIM)))
+    counts = [_count((stats.get("tiers") or {}).get(tier)) for tier in _TIER_ORDER]
+    total = sum(counts)
+    if inner >= 70:
+        model_size = inner - 39
+        lines.append(row(ink("  " + _fit("TIER", 10) + _fit("MODEL / EFFORT", model_size) +
+                            _fit("TASKS", 9) + _fit("SHARE", 9) + "SOURCE", _DIM)))
+        lines.append(row(ink("─" * inner, _EDGE)))
+        for i, tier in enumerate(_TIER_ORDER):
+            mapping = policy.get("tiers", {}).get(tier, {}) if policy else {}
+            model = f"{mapping.get('model')} / {mapping.get('effort')}" if mapping else "Unavailable"
+            if policy and tier == "Top":
+                model = "Main / Fixed (per example)"
+            line = "▏ " if tier == "Top" else "  "
+            line += _fit(tier, 10) + _fit(model, model_size) + _fit(counts[i], 9)
+            line += _fit(_share(counts[i], total) if total else "—", 9) + ("Demo" if policy else "Unknown")
+            lines.append(row(ink(line, _LAVENDER if tier == "Top" else _FG, tier == "Top")))
+    else:
+        for i, tier in enumerate(_TIER_ORDER):
+            share = _share(counts[i], total) if total else "—"
+            lines.append(row(ink(_fit(f"{tier:<6} {counts[i]:>4} tasks  {share}", inner),
+                                 _LAVENDER if tier == "Top" else _FG)))
+            mapping = policy.get("tiers", {}).get(tier, {}) if policy else {}
+            model = f"{mapping.get('model')} / {mapping.get('effort')}" if mapping else "Unavailable"
+            if policy and tier == "Top":
+                model = "Main / Fixed (per example)"
+            lines.append(row(ink(_fit("  " + model, inner), _DIM)))
+    lines.append(row())
+    lines.extend(row(ink(item, _DIM)) for item in _wrap(
+        "Policy selects a request; confirmed execution is recorded separately.", inner))
+    lines.append(row())
+
+    panel_size = (inner - 3) // 2 if inner >= 90 else inner
+    content_size = panel_size - 4
+    bar_width = content_size - 3
+    sizes = _bar_segments(counts, bar_width)
+    bar = "│".join(ink(("█" if color else _TIER_GLYPH[tier]) * n, _PALETTE[i]) for i, (tier, n) in
+                    enumerate(zip(_TIER_ORDER, sizes))) if total else ink("░" * content_size, _EDGE)
+    composition = [ink(_fit(f"{total} classified tasks", content_size), bold=True), "", bar, ""]
+    for i, tier in enumerate(_TIER_ORDER):
+        label = f"{tier} {counts[i]} ({_share(counts[i], total)})" if total else f"{tier} 0 (—)"
+        composition.append(ink(_fit(label, content_size), _PALETTE[i]))
+    quota = [ink(_fit("Quota: " + _value(stats.get("quota")), content_size), bold=True),
+             ink(_fit("Reset: Unavailable", content_size), _DIM), "",
+             ink(_fit("Cost: " + _value(stats.get("cost")), content_size)),
+             ink(_fit("Tokens: " + _value(stats.get("tokens")), content_size)), "",
+             ink(_fit(("No quota source is connected." if stats.get("quota") is None else "Quota as recorded in event data."), content_size), _DIM),
+             ink(_fit("Unavailable does not mean zero.", content_size), _DIM)]
+    left, right = box("TIER COMPOSITION", composition, panel_size), box("USAGE / QUOTA", quota, panel_size)
+    if inner >= 90:
+        lines.extend(row(a + "   " + b) for a, b in zip(left, right))
+    else:
+        lines.extend(row(a) for a in left)
+        lines.append(row())
+        lines.extend(row(b) for b in right)
+    lines.append(row())
+    activity = (f"Proposals {_value(stats.get('proposals'))}   ·   "
+                f"Confirmed children {_value(stats.get('confirmed_children'))}   ·   "
+                f"Low confidence {_value(stats.get('low_confidence_tasks'))}")
+    for item in _wrap(activity, inner):
+        lines.append(row(ink(item, _DIM)))
+    lines.append(row(ink("─" * inner, _EDGE)))
+    lines.extend(row(ink(item, _DIM)) for item in _wrap(
+        "--details  full telemetry     --json  raw data     --plain  no color", inner))
+    lines.append(row())
+    if color:
+        return "\n".join(_BG + _FG + line + _RESET for line in lines) + "\n"
+    return "\n".join(lines) + "\n"

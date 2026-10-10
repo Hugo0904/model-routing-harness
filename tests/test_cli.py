@@ -62,6 +62,19 @@ def forbid_store_imports():
 
 
 class TerminalTests(unittest.TestCase):
+    def test_dashboard_fits_wide_narrow_and_unicode_and_keeps_detail_view(self) -> None:
+        from mrh.terminal import cell_width
+        stats = dict(SAMPLE_STATS, updated_at="範例標籤" * 30)
+        for width in (24, 28, 48, 80, 100, 120, 140):
+            for color in (False, True):
+                rendered = render_stats(stats, width=width, color=color)
+                self.assertTrue(all(cell_width(line) <= width for line in rendered.splitlines()), width)
+        details = render_stats(stats, width=80, details=True)
+        self.assertIn("ACTUAL MODELS", details)
+        self.assertIn("JEV TELEMETRY", details)
+        self.assertIn("Quota: Unavailable", render_stats(stats, width=120))
+        self.assertNotIn("0%", render_stats(stats, width=120))
+
     def test_terminal_controls_are_removed(self) -> None:
         self.assertEqual(sanitize_text("\x1b[31mTop\x1b[0m\n\x00x\u202e"), "Top x")
 
@@ -91,6 +104,15 @@ class TerminalTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_demo_without_db_is_temporary_and_json_remains_synthetic(self) -> None:
+        output = io.StringIO()
+        with patch.object(cli, "_default_db", side_effect=AssertionError("live DB touched")):
+            self.assertEqual(cli.main(["demo", "--json"], stdout=output), 0)
+        stats = json.loads(output.getvalue())
+        self.assertEqual(stats["partition"], "synthetic")
+        self.assertEqual(stats["proposals"], 5)
+        self.assertEqual(stats["confirmed_children"], 0)
+
     def test_color_respects_tty_plain_and_no_color(self) -> None:
         class TTY:
             def isatty(self):

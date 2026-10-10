@@ -2,6 +2,18 @@
 
 可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E6 本機候選 0.3.0**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；E5 的兩版原生 CLI 隔離安裝證據仍適用安裝機制。E6 改用同一次委派的各項事實，分別判斷 Main／Fixed／一般路由資格；新版封裝只做離線入口回放。正式宿主仍缺必要事實契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
+## 直接執行視覺 Demo
+
+不需安裝套件，使用本機 Python 3.11+：
+
+```sh
+/Users/shawn/Code/model-routing-harness/demo --color --width 120
+```
+
+畫面依使用者參考圖重做為石墨灰／紫色的終端儀表板，含四段流程、tier 表格、組成條與用量面板。窄視窗改用直向排列；`--details` 保留完整紀錄，`--json` 維持原始資料。`demo` 未指定 `--db` 時自動建立並清除暫存資料庫，不寫入正式統計、不呼叫模型或 API。一般使用可省略 `--color`／`--width` 讓終端自動選擇。
+
+[120 欄實際終端截圖](docs/evidence/cli-demo-wide.jpg) · [56 欄實際終端截圖](docs/evidence/cli-demo-narrow.jpg) · [驗證與限制](docs/cli-visual-proof.md)。截圖為真實 PTY 輸出在 xterm.js 的呈現；不是 macOS Terminal 截圖。終端字型與真彩色支援會影響外觀。
+
 ## 使用
 
 E7 另提供[隔離 Codex source 匯出實驗](docs/e7-host-export-proof.md)：以固定版本的實際 resolver 產生唯讀委派事實，再接入 MRH 合成回放。Patch、來源版本與重現方法均留在本專案；已安裝的 Codex 與正式 resolver 沒有啟用這個入口，完整 R1 仍未完成。
@@ -23,7 +35,7 @@ mrh stats --db /private/tmp/mrh-demo.sqlite3 --json
 mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 ```
 
-`demo` 明確使用合成分級，冪等且不呼叫 provider。普通 stats 排除合成資料；重複查詢不記錄事件。TTY 有顏色與組成條；`--plain`／`NO_COLOR` 可停用，JSON 不含裝飾。預設 DB 是 `~/.local/state/model-routing-harness/events.sqlite3`；測試／demo 建議顯式指定暫存 DB。help／doctor／預覽不建立 DB、不探查網路或憑證。
+`demo` 明確使用合成分級，冪等且不呼叫 provider。普通 stats 排除合成資料；重複查詢不記錄事件。TTY 有顏色與組成條；`--plain`／`NO_COLOR` 可停用，JSON 不含裝飾。一般指令的預設 DB 是 `~/.local/state/model-routing-harness/events.sqlite3`；demo 未指定 `--db` 時使用自動清除的暫存 DB。help／doctor／預覽不建立 DB、不探查網路或憑證。
 
 ## Hook 與安裝界線
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from mrh.terminal import render_stats
+from mrh.terminal import render_details as render_stats
 
 
 def provider_stats() -> dict:
