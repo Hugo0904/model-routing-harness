@@ -1,0 +1,6 @@
+{
+  "command": "PYTHONPATH=src:tests python3 -m unittest test_configured_accounting test_settings_runtime test_codex_host_receipt -v",
+  "exit_code": 0,
+  "command_wall_seconds": 0.364,
+  "scope": "configured preserve accounting, gates, rewritten Post/known fixed-role and direct CLI/stat consumers"
+}

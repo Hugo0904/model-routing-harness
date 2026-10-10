@@ -142,11 +142,16 @@ class SettingsRuntimeTests(unittest.TestCase):
                 ("explicit", {**self.event, "tool_input": {"message": "task", "model": "operator-choice"}}, SyntheticHost()),
                 ("unrelated", {**self.event, "tool_name": "exec_command"}, SyntheticHost()),
                 ("fixed-role", {**self.event, "tool_input": {"message": "task", "agent_type": "fixed"}}, SyntheticHost())]:
+            event = {**event, "tool_use_id": "independent-" + name}
             fake = FakeTransport(); before = self.resolutions
             with contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(configured_event(event, self.path, host_resolver=resolver, transport=fake,
                                                  credential_resolver=self.key), {}, name)
             self.assertEqual(fake.calls, [], name); self.assertEqual(self.resolutions, before, name)
+        observed = Store(self.path.parent / "events.sqlite3").stats(True)
+        self.assertEqual(observed["outcomes"].get("fixed_role_model"), 1)
+        self.assertEqual(observed["outcomes"].get("explicit_model"), 1)
+        self.assertEqual(observed["synthetic_attempts"], 0)
         for call, resolver, fake in [("missing-key", lambda: None, FakeTransport()),
                                      ("failure", self.key, FakeTransport(error=OSError("PRIVATE_ERROR_CANARY")))]:
             event = {**self.event, "tool_use_id": call}

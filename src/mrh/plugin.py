@@ -101,7 +101,7 @@ def prepare(root, settings_path, python=None):
     except metadata.PackageNotFoundError:
         # Development callers are explicitly labeled; host proof uses installed
         # wheel metadata and records the packaged bytes independently.
-        version = "0.2.0"
+        version = "0.2.1"
     runtime = _runtime_archive()
     prefix = "plugins/" + NAME + "/"
     command = shlex.quote(python) + ' -I "${PLUGIN_ROOT}/launcher.py"'

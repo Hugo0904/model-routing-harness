@@ -5,6 +5,7 @@ from .codex import handle_event
 from .settings import read, workspace_allowed
 from .settings_schema import SettingsError
 from .typesafe import classifier_from_config
+from .types import safe_id
 
 
 class SupportedHostResolver:
@@ -21,26 +22,21 @@ class SupportedHostResolver:
 
 
 def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None):
-    # Unrelated and explicit requests are skipped even before settings/provider
-    # construction. Settings never come from cwd or tool_input.
+    # Settings never come from cwd/tool_input. Invalid identities are neutral
+    # before any data creation; preserving a valid admitted call still records
+    # its existing canonical facts without executing a classifier.
     if not isinstance(event, dict) or event.get("tool_name") != "spawn_agent":
         return {}
     if event.get("hook_event_name") not in ("PreToolUse", "PostToolUse"):
         return {}
     original = event.get("tool_input")
-    if not isinstance(original, dict) or (event.get("hook_event_name") == "PreToolUse" and original.get("model") is not None):
+    if not isinstance(original, dict) or not all(safe_id(event.get(k)) for k in ("session_id", "turn_id", "tool_use_id")):
         return {}
     try:
         value = read(settings_path)
         if not value["enabled"] or not value["task_export_permitted"] or not workspace_allowed(value, event.get("cwd")):
             return {}
         resolver = host_resolver if host_resolver is not None else SupportedHostResolver()
-        caps = resolver.resolve(event)
-        # Test contexts must explicitly label synthetic evidence; transports
-        # retain existing strict factory checks and matching partitions.
-        if not isinstance(caps, dict) or not caps.get("configuration_known"):
-            print("mrh: unresolved_host_configuration", file=sys.stderr)
-            return {}
         injected = {}
         if transport is not None:
             injected["transport"] = transport
@@ -50,6 +46,18 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
                                              "enabled": value["enabled"], "task_export_permitted": value["task_export_permitted"]}, **injected)
         if bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
             return {}
+        caps = {"configuration_known": False, "roles": {}, "models": {}}
+        if event["hook_event_name"] == "PreToolUse" and original.get("model") is None:
+            try:
+                observed = resolver.resolve(event)
+                if isinstance(observed, dict):
+                    caps = observed
+            except Exception:
+                # A bounded unavailable state reaches the same core/facts path;
+                # no guessed capabilities or raw resolver exception is stored.
+                pass
+        # Explicit Pre wins in core before resolution/classification. Post uses
+        # proposal correlation, independent of any fresh host-capability query.
         from .store import Store
         store = Store(Path(settings_path).parent / "events.sqlite3")
         return handle_event(event, store, True, classifier=classifier, policy=value["policy"], capabilities=caps)

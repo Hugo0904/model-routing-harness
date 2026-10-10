@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E5 本機候選 0.2.0**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；兩版原生 CLI 隔離安裝已驗證。正式宿主能力解析仍缺契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E5R 本機候選 0.2.1**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；兩版原生 CLI 隔離安裝已驗證。正式宿主能力解析仍缺契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
 ## 使用
 
@@ -66,3 +66,5 @@ python3 scripts/verify_package.py --evidence-prefix e3
 前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。
 
 後續 [E4 installed-host證據](docs/e4-host-proof.md) 與 [E4G Goal 證據](docs/e4g-goal-and-plugin-proof.md) 區分 shell 與 Desktop-bundled runtime，均沒有正式啟用。[E5](docs/e5-settings-plugin-proof.md) 已補上兩版的隔離 native plugin／installed entry／第三方 Hook 共存證據與 34 項聚焦檢查；設定接線用 true factory＋合成 HTTP/context，正式 host resolution 仍缺契約。沒有重跑既有 Goal、全部核心或真 provider 測試。歷史審查拒絕與完整 R1 接受狀態保留在任務記錄。
+
+[E5R 記錄修正](docs/e5r-accounting-proof.md) 讓通過原 gate 的 explicit／unknown preserve 也留下 proposal／outcome，Post 不再查新的 host 能力即可關聯收據；分類、key 與 HTTP 仍為零。新版 archive 回放證據與 E5 舊 native-installed hash 分開，未重跑原生 lifecycle 或 Goal。

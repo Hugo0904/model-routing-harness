@@ -42,7 +42,7 @@ Monitor 本階段只有格式、合成例與查詢說明，無 DB/API 寫入或 
 
 ## Codex / installer boundaries
 
-只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或可信程序依賴才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。PostToolUse 的 rewritten input 可以含 model，仍以同五段 identity 關聯既有 proposal；explicit-model skip 只適用 Pre。E4／E4G／E5 驗證 native-v1 與 scripted provider 的 deny 零 child／合成型號採用，未驗證主代理自主續作或實際模型智能。
+只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或可信程序依賴才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。PostToolUse 的 rewritten input 可以含 model，仍以同五段 identity 關聯既有 proposal；explicit-model skip 只適用 Pre。 E5R 中 explicit Pre 只略過 host resolution／分類，不略過已授權的 proposal/outcome 紀錄。Unknown 或 resolver exception 走既有 unresolved preserve 事實；Post 不重新解析模型能力，只依 accepted proposal／partition 關聯 reported 或 synthetic receipt，不能提升為 actual／confirmed。Malformed IDs、settings 或未通過 permission／scope gate 仍沒有事實寫入。E4／E4G／E5 驗證 native-v1 與 scripted provider 的 deny 零 child／合成型號採用，未驗證主代理自主續作或實際模型智能。
 
 預覽讀 explicit target，不 dump private commands。A D3：public apply/disable 拒絕 exclusive_target_unverified；只有自行建立、持有 synthetic home 的 helper 可測候選。Lock 只保護同 helper 合作呼叫，不保護非合作編輯器；反例保留在 tests。無 auto-trust/force/unsafe，真正 S4 shared-home 安裝/停用仍未完成。
 
