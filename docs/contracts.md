@@ -1,6 +1,6 @@
 # Routing and statistics contract v2
 
-這是 MRH 內部政策／facts 格式，**不是 Jev wire API**。E3 增加遵循官方 wire API 的 TypeSafe 接頭，預設關閉；CLI 仍用 UnavailableClassifier，零網路／憑證讀取、零重試。E3 證據全為離線 synthetic。
+這是 MRH 內部政策／facts 格式，**不是 Jev wire API**。TypeSafe 接頭預設關閉；E5 公開設定／installed Hook 共用既有 factory，透過 HTTP 邊界替身驗證。正式 host resolver 資訊不足時保留原呼叫，零網路／憑證讀取、零重試。E3／E5 provider 證據全為 synthetic。
 
 ## 路由與配置
 
@@ -42,17 +42,17 @@ Monitor 本階段只有格式、合成例與查詢說明，無 DB/API 寫入或 
 
 ## Codex / installer boundaries
 
-只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或明確注入 classifier 才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。Deny 只請求接回，未驗證主代理續作/zero actual child；rewrite 未驗證型號採用。
+只有 PreToolUse+canonical spawn_agent 進 route。Default `{}` 不改權限或參數。Explicit simulation 或可信程序依賴才可能序列化 Main deny／Fixed updatedInput；replacement 保留原任務/未知欄位、不持久化正文。PostToolUse 的 rewritten input 可以含 model，仍以同五段 identity 關聯既有 proposal；explicit-model skip 只適用 Pre。E4／E4G／E5 驗證 native-v1 與 scripted provider 的 deny 零 child／合成型號採用，未驗證主代理自主續作或實際模型智能。
 
 預覽讀 explicit target，不 dump private commands。A D3：public apply/disable 拒絕 exclusive_target_unverified；只有自行建立、持有 synthetic home 的 helper 可測候選。Lock 只保護同 helper 合作呼叫，不保護非合作編輯器；反例保留在 tests。無 auto-trust/force/unsafe，真正 S4 shared-home 安裝/停用仍未完成。
 
 Claude/Gemini 未支援，介面差異見 [盤點](capabilities.md)，不能共用 Codex tool name/effort。
 
-## TypeSafe wire adapter 與未來接線
+## TypeSafe wire adapter 與公開接線
 
 官方來源於 2026-10-10 核對：[API](https://docs.typesafe.ai/api)、[models／pricing](https://docs.typesafe.ai/models)、[choice](https://docs.typesafe.ai/primitives/choice)、[confidence](https://docs.typesafe.ai/confidence)、[coding agents](https://docs.typesafe.ai/introduction/coding-agents)。固定 POST `https://api.typesafe.ai/v1/systemone`、標準 TLS checks、Bearer runtime key，不接受 configurable endpoint、不跟隨 redirect。沒有 SDK、credential file 掃描、CLI key 參數。
 
-`classifier_from_config` 只接受 schema_version=1、enabled／task_export_permitted 布林、model=jev-1.13.0；[範例](../examples/typesafe-disabled.json) 全關閉。兩個開關都明確 true 才評估 injected credential resolver／`TYPESAFE_API_KEY` runtime resolver。Disabled／無 export／無 key 都是零 transport invocation，保留原委派。CLI／Hook 沒有 provider 啟用開關。未來有授權的 host caller 可使用以下程序介面；片段本身未啟用或讀 key：
+`classifier_from_config` 只接受 schema_version=1、enabled／task_export_permitted 布林、model=jev-1.13.0；[factory 範例](../examples/typesafe-disabled.json) 全關閉。兩個開關都明確 true 才評估 injected credential resolver／`TYPESAFE_API_KEY` runtime resolver。E5 `settings`／`hook --settings` 用[完整設定](../examples/settings-disabled.json)共用 strict reader，另要求 operator 的 canonical workspace 範圍與可信 host resolver。Disabled／無 export／out-of-scope／host 未解析／無 key 都是零 transport invocation。程序依賴介面如下；片段本身未啟用或讀 key：
 
 ```python
 from mrh.typesafe import classifier_from_config
@@ -62,6 +62,10 @@ classifier = classifier_from_config(config, credential_resolver=runtime_key_reso
 decision = process(proposal, vetted_policy, vetted_capabilities, store, classifier,
                    optional_context=permitted_summary_provider)
 ```
+
+公開設定 schema1 的 required fields：owner、revision、enabled、task_export_permitted、allowed_workspaces、provider=typesafe、classifier_model=jev-1.13.0、policy。未知欄位、duplicate keys、非有限數字、非 canonical lexical workspace、錯誤型別或超過65536 bytes 拒絕；不接受 key 值、URL 或自報 capabilities。寫入前也驗證序列化大小。原生 launcher 明確綁定 absolute settings.json，沒有 task-cwd 自動發現。可驗證的 MRH 自有 root 與 cooperating-writer lock 保護自身更新，expected revision 衝突拒絕；不宣稱非合作 writer 的 filesystem CAS。
+
+`plugin prepare` 只改自己的版本化 plugin／marketplace／stdlib runtime archive，settings／telemetry 在外部自有 state root。重複準備不重新啟用，不覆寫既有 settings；own code 被外部修改或有未知內容／symlink／ownership 歧義則拒絕。Prepared、native installed、routing enabled、trust、live ready 是不同狀態。Native uninstall 不刪 separate state，也不恢復共享 snapshots。`settings disable` 讓新 invocation neutral 且零 classifier/key/transport；已 admission 的 invocation 可依 captured settings/deadline 完成，不宣稱遠端或跨程序取消，不會回寫設定重新開啟。詳細命令與實測邊界見 [E5](e5-settings-plugin-proof.md)。
 
 Body 是 model/state/questions，state 只有 task 和許可的 context_summary；tier 為 choice，以 lower-case light/small/mid/top 使用本地 **mrh-tier-v1** rubric（mechanical／bounded comprehension／substantive implementation／cross-system tradeoff）。State 視為資料，不可改 tier／選模型。這不是原作者已驗證 prompt，也不是防 prompt injection 的保證。
 

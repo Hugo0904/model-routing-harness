@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "owner": "org.model-routing-harness.settings.v1",
+  "revision": 0,
+  "enabled": false,
+  "task_export_permitted": false,
+  "allowed_workspaces": [],
+  "provider": "typesafe",
+  "classifier_model": "jev-1.13.0",
+  "policy": {
+    "top_mode": "Main",
+    "timeout_seconds": 1.0,
+    "tiers": {},
+    "rates": {}
+  }
+}

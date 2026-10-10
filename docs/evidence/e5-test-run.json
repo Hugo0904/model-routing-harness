@@ -1,0 +1,6 @@
+{
+  "command": "PYTHONPATH=src:tests python3 -m unittest test_settings_schema test_settings_runtime test_owned_plugin test_cli -v",
+  "exit_code": 0,
+  "command_wall_seconds": 0.54,
+  "scope": "settings schema/IO, public configured factory, owned plugin preparation and direct CLI consumers; no unchanged full suite"
+}

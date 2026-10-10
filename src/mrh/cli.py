@@ -68,12 +68,38 @@ def build_parser() -> argparse.ArgumentParser:
     config.add_argument("--apply", dest="write", action="store_true", help="write the prepared change")
     _add_display_options(config)
 
+    settings = commands.add_parser("settings", help="manage an explicit MRH-owned settings file")
+    actions = settings.add_subparsers(dest="settings_action", required=True)
+    for action in ("init", "show", "configure", "enable", "disable"):
+        item = actions.add_parser(action)
+        item.add_argument("--path", required=True, type=Path, help="canonical absolute settings.json path")
+        if action not in ("init", "show"):
+            item.add_argument("--expected-revision", type=int)
+        if action == "configure":
+            item.add_argument("--provider", choices=("typesafe",))
+            item.add_argument("--policy", type=Path, help="explicit policy JSON file; does not enable routing/export")
+            item.add_argument("--allow-workspace", action="append", default=None)
+            item.add_argument("--clear-workspaces", action="store_true")
+            export = item.add_mutually_exclusive_group()
+            export.add_argument("--permit-task-export", dest="export_permission", action="store_true", default=None)
+            export.add_argument("--deny-task-export", dest="export_permission", action="store_false")
+
+    plugin = commands.add_parser("plugin", help="prepare owned plugin files; native install and trust remain explicit")
+    plugin_actions = plugin.add_subparsers(dest="plugin_action", required=True)
+    prepare = plugin_actions.add_parser("prepare")
+    prepare.add_argument("--root", required=True, type=Path, help="fresh or verified MRH-owned bundle root")
+    prepare.add_argument("--settings", required=True, type=Path, help="separate absolute MRH settings.json path")
+    prepare.add_argument("--python", type=Path, help="installed Python 3.11+ interpreter")
+    show = plugin_actions.add_parser("show")
+    show.add_argument("--root", required=True, type=Path)
+
     demo = commands.add_parser("demo", help="write labeled synthetic examples to an explicit partition")
     demo.add_argument("--db", type=Path, default=None, help="event database path")
     demo.add_argument("--json", action="store_true", help="print the synthetic statistics object")
     _add_display_options(demo)
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
+    hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
     hook.add_argument("--db", type=Path, default=None, help="event database path")
     hook.add_argument("--candidate", action="store_true", help="enable the isolated candidate adapter")
     hook.add_argument(
@@ -209,7 +235,64 @@ def _cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any) -> int:
+def _cmd_settings(args):
+    from . import settings
+    from .settings_schema import SettingsError
+    try:
+        action = args.settings_action
+        if action == "init":
+            value = settings.init(args.path)
+        elif action == "show":
+            value = settings.read(args.path)
+        else:
+            changes = {}
+            if action in ("enable", "disable"):
+                changes["enabled"] = action == "enable"
+            else:
+                if args.provider is not None:
+                    changes["provider"] = args.provider
+                if args.export_permission is not None:
+                    changes["task_export_permitted"] = args.export_permission
+                if args.clear_workspaces and args.allow_workspace is not None:
+                    raise SettingsError("settings_conflict")
+                if args.allow_workspace is not None or args.clear_workspaces:
+                    changes["allowed_workspaces"] = args.allow_workspace or []
+                if args.policy is not None:
+                    from .owned import read_regular
+                    from .typesafe import _no_duplicate_keys
+                    changes["policy"] = json.loads(read_regular(args.policy), object_pairs_hook=_no_duplicate_keys,
+                                                  parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
+            value = settings.update(args.path, expected_revision=args.expected_revision, **changes)
+        _write_json({"settings": value, "routing_enabled": value["enabled"],
+                     "live_routing_ready": False, "readiness_reason": "unresolved_host_configuration",
+                     "installation_status": "not_inferred_from_settings", "credentials_probed": False})
+        return 0
+    except SettingsError as exc:
+        sys.stderr.write("mrh: " + exc.reason + "\n")
+    except Exception:
+        sys.stderr.write("mrh: settings_invalid\n")
+    return 2
+
+
+def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, runtime_dependencies=None) -> int:
+    if args.settings is not None:
+        if args.candidate or args.simulate_tier is not None or args.simulate_confidence is not None or args.db is not None:
+            stderr.write("mrh: settings_candidate_conflict\n")
+            stdout.write("{}\n")
+            return 0
+        try:
+            payload = stdin.read(2_000_001)
+            if len(payload.encode()) > 2_000_000:
+                raise ValueError()
+            event = json.loads(payload)
+            from .runtime import configured_event
+            response = configured_event(event, args.settings, **(runtime_dependencies or {}))
+            encoded = json.dumps(response, separators=(",", ":"), allow_nan=False)
+        except Exception:
+            stderr.write("mrh: configured_hook_error\n")
+            encoded = "{}"
+        stdout.write(encoded + "\n")
+        return 0
     simulation_requested = args.simulate_tier is not None or args.simulate_confidence is not None
     simulation = None
     if simulation_requested:
@@ -255,6 +338,7 @@ def main(
     stdin: Any = None,
     stdout: Any = None,
     stderr: Any = None,
+    runtime_dependencies: dict | None = None,
 ) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -267,7 +351,7 @@ def main(
 
     # The hook path owns explicit streams because Codex consumes stdout as protocol.
     if args.command == "hook":
-        return _cmd_hook(args, stdin, stdout, stderr)
+        return _cmd_hook(args, stdin, stdout, stderr, runtime_dependencies)
 
     # Keep command output directed through the caller-provided streams as well.
     old_stdout, old_stderr = sys.stdout, sys.stderr
@@ -279,6 +363,17 @@ def main(
             return _cmd_doctor(args)
         if args.command == "config":
             return _cmd_config(args)
+        if args.command == "settings":
+            return _cmd_settings(args)
+        if args.command == "plugin":
+            from . import plugin
+            from .owned import OwnedError
+            try:
+                _write_json(plugin.prepare(args.root, args.settings, args.python) if args.plugin_action == "prepare" else plugin.show(args.root))
+                return 0
+            except OwnedError as exc:
+                stderr.write("mrh: " + exc.reason + "\n")
+                return 2
         if args.command == "demo":
             return _cmd_demo(args)
         parser.error("unknown command")

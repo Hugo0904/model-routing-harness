@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E3 本機候選**。已實作預設關閉的 TypeSafe `jev-1.13.0` 接頭，以離線 transport 驗證；真 API、正式 Hook 與主代理交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E5 本機候選 0.2.0**。已有自有 plugin bundle、公開設定與既有 TypeSafe `jev-1.13.0` factory 接線，預設關閉；兩版原生 CLI 隔離安裝已驗證。正式宿主能力解析仍缺契約，因此實際路由尚未就緒；真 API、正式 Hook 與主代理自主交回仍未驗證。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
 ## 使用
 
@@ -27,7 +27,9 @@ mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 
 `mrh hook` 讀 stdin JSON、只輸出 Hook JSON，預設 `{}` 原樣放行。`--candidate --db ...` 可記錄委派，CLI 仍不啟用 TypeSafe，沒有有效分級就不改寫原呼叫。隔離合成需另加 `--simulate-tier Top --simulate-confidence 0.9`、`--candidate` 與明確 `--db`；不是正式 Jev 請求。
 
-TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限、runtime credential resolver 與未來接線範例見 [資料契約](docs/contracts.md)。[預設關閉設定](examples/typesafe-disabled.json) 不含 key，載入不讀憑證。E3 未提供 CLI 啟用開關。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
+TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限與 runtime credential resolver 見 [資料契約](docs/contracts.md)。[完整公開設定](examples/settings-disabled.json) 不含 key，載入不讀憑證；E5 的 `settings` 指令與 `hook --settings` 共用同一 reader／factory，再加 operator 指定的 workspace 範圍。政策不等於已驗證宿主能力。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
+
+新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。正式 resolver 目前保留原呼叫，不自行推測角色／effort。
 
 ```sh
 mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh
@@ -36,7 +38,7 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 這些是零寫入預覽，不顯示其他工具的命令內容。**公開 `--apply` 安裝與停用目前一律拒寫**，回 `exclusive_target_unverified`／非零 exit。尚無保護共享設定免受非合作編輯器覆寫的宿主交易契約；額外 hash／MRH lock 不能取代它。沒有 force／unsafe，不改信任、安全權限或主模型。
 
-只有開發／測試 `SyntheticHome()` helper 能自行建立並持有 private TemporaryDirectory、在 fixture 內套用／停用候選。它不接受既有 home；同 helper 的合作呼叫全程序列化，非合作 writer race 仍是限制反例。TOML hooks、ownership 歧義、格式錯誤、symlink 或來源變更皆拒絕。真正 S4 安裝／停用仍未完成。
+只有開發／測試 `SyntheticHome()` helper 能自行建立並持有 private TemporaryDirectory、在 fixture 內套用／停用候選。它不接受既有 home；同 helper 的合作呼叫全程序列化，非合作 writer race 仍是限制反例。TOML hooks、ownership 歧義、格式錯誤、symlink 或來源變更皆拒絕。這是舊共享 hooks.json 路徑的限制；新自有 bundle／native CLI 路徑的隔離證據與正式 readiness 邊界見 E5。
 
 ## 支援狀態
 
@@ -44,8 +46,8 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作，隔離本機驗證 |
 | Codex Hook JSON、Main deny／Fixed rewrite | 已於兩個安裝版app-server，以native v1＋腳本provider驗取消／改寫；Desktop UI／真型號／自主接回未驗證 |
-| 安裝預覽 | 可用；共享 home 安裝／停用拒寫，未支援 |
-| TypeSafe Jev 接頭 | 已實作、預設關閉；serializer/parser/deadline 以 fake transport 驗證，真 API 未驗證 |
+| 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
+| TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 host resolver 不足、真 API 未驗證 |
 | 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
 | Claude Code、Gemini CLI | 未支援，只有盤點與接頭差異文件 |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
@@ -63,4 +65,4 @@ python3 scripts/verify_package.py --evidence-prefix e3
 
 前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。
 
-後續 [E4 installed-host證據](docs/e4-host-proof.md) 區分shell與Desktop-bundled runtime；沒有正式啟用。E4增加native PostToolUse JSON字串解析與聚焦檢查，未影響E3已驗證的provider／核心保障。[E4G Goal 與 plugin 前提](docs/e4g-goal-and-plugin-proof.md) 補上隔離 Goal 跨回合證據；歷史審查拒絕保留在任務記錄，新增直接人類授權後本次審查允許執行。Plugin 只核對 help／官方契約，尚未實際安裝或載入；完整 R1 接受狀態見任務記錄。
+後續 [E4 installed-host證據](docs/e4-host-proof.md) 與 [E4G Goal 證據](docs/e4g-goal-and-plugin-proof.md) 區分 shell 與 Desktop-bundled runtime，均沒有正式啟用。[E5](docs/e5-settings-plugin-proof.md) 已補上兩版的隔離 native plugin／installed entry／第三方 Hook 共存證據與 34 項聚焦檢查；設定接線用 true factory＋合成 HTTP/context，正式 host resolution 仍缺契約。沒有重跑既有 Goal、全部核心或真 provider 測試。歷史審查拒絕與完整 R1 接受狀態保留在任務記錄。

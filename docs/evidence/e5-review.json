@@ -1,0 +1,29 @@
+{
+  "reviewer": "independent terminal-leaf risk_reviewer gpt-6.1-sol/xhigh",
+  "scope": "owned-file IO/export gates and native co-denial/correlation evidence",
+  "findings": [
+    {
+      "priority": "P2",
+      "failure": "oversized serialized settings replaced old file before rejected readback",
+      "resolution": "parse bounded serialized output before replacement; original-bytes preservation regression"
+    },
+    {
+      "priority": "P2",
+      "failure": "wrong UID existing empty directory received ownership marker before rejection",
+      "resolution": "lstat UID/type/write-permissions before any marker write; zero-write refusal regression"
+    },
+    {
+      "priority": "P2",
+      "failure": "explicit model skip suppressed native Fixed rewritten Post receipt",
+      "resolution": "skip only Pre; rewritten Post correlation test and actual native receipt evidence"
+    }
+  ],
+  "final_disposition": "all three counterexamples closed; no unresolved material finding within reviewed scope",
+  "native_conclusion": "same call has MRH Fixed rewrite+third-party deny+native blocked, zero child; rewritten Post correlations match receipt; live partition zero",
+  "not_claimed": [
+    "production host resolution",
+    "actual Jev or OpenAI model intelligence",
+    "general competing-rewrite order/conflict detection"
+  ],
+  "reviewer_executed_new_tests_or_host": false
+}

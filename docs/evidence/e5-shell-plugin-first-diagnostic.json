@@ -1,0 +1,466 @@
+{
+  "status": "failed_or_unsupported",
+  "native_commands": [
+    {
+      "command": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "codex-cli 0.159.3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "-m",
+        "venv",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/venv"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/venv/bin/python",
+        "-m",
+        "pip",
+        "--no-cache-dir",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-build-isolation",
+        "/Users/shawn/Code/model-routing-harness"
+      ],
+      "exit_code": 0,
+      "stdout": "Processing /Users/shawn/Code/model-routing-harness\n  Preparing metadata (pyproject.toml): started\n  Preparing metadata (pyproject.toml): finished with status 'done'\nBuilding wheels for collected packages: model-routing-harness\n  Building wheel for model-routing-harness (pyproject.toml): started\n  Building wheel for model-routing-harness (pyproject.toml): finished with status 'done'\n  Created wheel for model-routing-harness: filename=model_routing_harness-0.2.0-py3-none-any.whl size=41184 sha256=0504e603bd18dabdb0d4baf00eb03d7cfabd0c4bacc0af4be2b3c65cfa100393\n  Stored in directory: /private/tmp/pip-ephem-wheel-cache-tz5s1w1j/wheels/c3/d7/cd/31b3905468ba27ecbf8c08296fddea822f414220a40de57bdf\nSuccessfully built model-routing-harness\nInstalling collected packages: model-routing-harness\nSuccessfully installed model-routing-harness-0.2.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/venv/bin/mrh",
+        "plugin",
+        "prepare",
+        "--root",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle",
+        "--settings",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/state/settings.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"prepared\",\n  \"native_registration\": \"unverified\",\n  \"hook_trust\": \"unverified\",\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"artifact\": {\n    \"files\": {\n      \".agents/plugins/marketplace.json\": \"c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6\",\n      \"plugins/model-routing-harness/binding.json\": \"60d10d2cdd667da7ab390123761a57d0b66b383bd9b18d703b12a5697169d4dd\",\n      \"plugins/model-routing-harness/hooks/hooks.json\": \"395e57fd86c21b5823d9030f0f0399d634f4167dee537bca5e5968cd198c0409\",\n      \"plugins/model-routing-harness/launcher.py\": \"93479ca1f1e8003fca75582238e53d16d6a7e60455ca583b279c8ac352afe000\",\n      \"plugins/model-routing-harness/plugin.json\": \"b586dfe34e7eaae2d416c1b0fbc597e213f4bcc59155091a656396cd08396144\",\n      \"plugins/model-routing-harness/runtime.pyz\": \"c7a9498ed468ba628b4511cc7a36cbe8fc80a6bd70ef53b9ee80160c580c33ca\"\n    },\n    \"owner\": \"org.model-routing-harness\",\n    \"plugin_id\": \"model-routing-harness@model-routing-harness-local\",\n    \"python\": \"/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11\",\n    \"python_version\": \"3.11\",\n    \"schema_version\": 1,\n    \"settings_path\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/state/settings.json\",\n    \"version\": \"0.2.0\"\n  },\n  \"native_commands\": [\n    [\n      \"codex\",\n      \"plugin\",\n      \"marketplace\",\n      \"add\",\n      \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"add\",\n      \"model-routing-harness@model-routing-harness-local\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"list\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"remove\",\n      \"model-routing-harness@model-routing-harness-local\",\n      \"--json\"\n    ]\n  ],\n  \"next_trust_step\": \"Review the current definitions in the native /hooks UI\",\n  \"removal_state_policy\": \"Native uninstall preserves separate MRH settings and telemetry; no automatic deletion\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"installedRoot\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle\",\n  \"alreadyAdded\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"installed\": [\n    {\n      \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n      \"name\": \"model-routing-harness\",\n      \"marketplaceName\": \"model-routing-harness-local\",\n      \"version\": \"local\",\n      \"installed\": true,\n      \"enabled\": true,\n      \"source\": {\n        \"source\": \"local\",\n        \"path\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle/plugins/model-routing-harness\"\n      },\n      \"marketplaceSource\": {\n        \"sourceType\": \"local\",\n        \"source\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle\"\n      },\n      \"installPolicy\": \"AVAILABLE\",\n      \"authPolicy\": \"ON_USE\"\n    }\n  ],\n  \"available\": []\n}\n",
+      "stderr": ""
+    }
+  ],
+  "cases": [
+    {
+      "scenario": "before-trust",
+      "parent_id": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+          "turn": {
+            "id": "01a1248f-2944-7fc3-889d-c2005b399573",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614724,
+            "completedAt": 1791614724,
+            "durationMs": 128
+          }
+        },
+        "emittedAtMs": 1791614724555
+      },
+      "native_events": [
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-1",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+            "turnId": "01a1248f-2944-7fc3-889d-c2005b399573",
+            "startedAtMs": 1791614724502
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-1",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+              "receiverThreadIds": [
+                "01a1248f-299a-78c1-98bb-d2e5ed17ef54"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "01a1248f-299a-78c1-98bb-d2e5ed17ef54": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+            "turnId": "01a1248f-2944-7fc3-889d-c2005b399573",
+            "completedAtMs": 1791614724540
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a1248f-28e5-7b52-9ec7-35c654d0f806",
+          "turn": {
+            "id": "01a1248f-2944-7fc3-889d-c2005b399573",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614724,
+            "completedAt": 1791614724,
+            "durationMs": 128
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a1248f-299a-78c1-98bb-d2e5ed17ef54",
+          "turn": {
+            "id": "01a1248f-29ba-7501-beb3-78047ade8f75",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614724,
+            "completedAt": 1791614724,
+            "durationMs": 15
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a1248f-29bf-7553-bd7e-723beaad6d31",
+              "call_id": "call-fixture-1",
+              "output": "{\"agent_id\":\"01a1248f-299a-78c1-98bb-d2e5ed17ef54\",\"nickname\":\"Hypatia\"}"
+            }
+          ]
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        }
+      ],
+      "child_ids": [
+        "01a1248f-299a-78c1-98bb-d2e5ed17ef54"
+      ],
+      "injected_runtime_events": [],
+      "third_party_events": [],
+      "parent_unchanged": true
+    }
+  ],
+  "evidence_kind": "installed_native_plugin_scripted_loopback_provider",
+  "real_provider_requests": 0,
+  "formal_global_changes": false,
+  "desktop_ui_validation": false,
+  "synthetic_dependencies": "process bootstrap into installed runtime archive; production host resolver remains unknown",
+  "version": "0.159.3",
+  "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/bin/codex",
+  "catalog": {
+    "source_tag": "rust-v0.159.3",
+    "sha256": "fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b",
+    "overrides": {
+      "tool_mode": null,
+      "multi_agent_version": "v1",
+      "use_responses_lite": false,
+      "supports_search_tool": false
+    },
+    "actual_model_execution": false
+  },
+  "prepared_artifact": {
+    "files": {
+      ".agents/plugins/marketplace.json": "c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6",
+      "plugins/model-routing-harness/binding.json": "60d10d2cdd667da7ab390123761a57d0b66b383bd9b18d703b12a5697169d4dd",
+      "plugins/model-routing-harness/hooks/hooks.json": "395e57fd86c21b5823d9030f0f0399d634f4167dee537bca5e5968cd198c0409",
+      "plugins/model-routing-harness/launcher.py": "93479ca1f1e8003fca75582238e53d16d6a7e60455ca583b279c8ac352afe000",
+      "plugins/model-routing-harness/plugin.json": "b586dfe34e7eaae2d416c1b0fbc597e213f4bcc59155091a656396cd08396144",
+      "plugins/model-routing-harness/runtime.pyz": "c7a9498ed468ba628b4511cc7a36cbe8fc80a6bd70ef53b9ee80160c580c33ca"
+    },
+    "owner": "org.model-routing-harness",
+    "plugin_id": "model-routing-harness@model-routing-harness-local",
+    "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+    "python_version": "3.11",
+    "schema_version": 1,
+    "settings_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/state/settings.json",
+    "version": "0.2.0"
+  },
+  "marketplace_add": {
+    "marketplaceName": "model-routing-harness-local",
+    "installedRoot": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle",
+    "alreadyAdded": false
+  },
+  "plugin_add": {
+    "pluginId": "model-routing-harness@model-routing-harness-local",
+    "name": "model-routing-harness",
+    "marketplaceName": "model-routing-harness-local",
+    "version": "local",
+    "installedPath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+    "authPolicy": "ON_USE"
+  },
+  "plugin_repeat_add": {
+    "pluginId": "model-routing-harness@model-routing-harness-local",
+    "name": "model-routing-harness",
+    "marketplaceName": "model-routing-harness-local",
+    "version": "local",
+    "installedPath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+    "authPolicy": "ON_USE"
+  },
+  "plugin_list": {
+    "installed": [
+      {
+        "pluginId": "model-routing-harness@model-routing-harness-local",
+        "name": "model-routing-harness",
+        "marketplaceName": "model-routing-harness-local",
+        "version": "local",
+        "installed": true,
+        "enabled": true,
+        "source": {
+          "source": "local",
+          "path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle/plugins/model-routing-harness"
+        },
+        "marketplaceSource": {
+          "sourceType": "local",
+          "source": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/bundle"
+        },
+        "installPolicy": "AVAILABLE",
+        "authPolicy": "ON_USE"
+      }
+    ],
+    "available": []
+  },
+  "installed_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+  "installed_runtime_sha256": "c7a9498ed468ba628b4511cc7a36cbe8fc80a6bd70ef53b9ee80160c580c33ca",
+  "before_trust_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/workspace",
+          "hooks": [
+            {
+              "key": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/third.py /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/third.jsonl /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/third-mode",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 5,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/hooks.json",
+              "source": "user",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:221c2c6bc19832aedf2cf31095ca4a48ecacaf108ccde0db8d191591c495128d",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:08cb8a62671759ca8ee86395a2a00e809953f42637b035f568a98f46d8c85027",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:718414196de109f610a1fd0e3807cc7bc9ff80779773c0f9237686751c7ad093",
+              "trustStatus": "untrusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "error_type": "ValueError",
+  "error_code": "trust_review_completion_unverified:  Folder access/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-tt1ub7zc/workspace              Trustthisfolder?Codexcanread,edit,andrunfileshere,subjecttoyourpermissionsettings.Foldersettingscanruncodeautomatically,evenwithoutamodelrequest.Continueonlyifyoutrustthesefiles.Yourtrustdecisionwillbesaved.\u203a 1. Trust and continue                                                                             2.Quitenter continue \u00b7 esc quit   >_ OpenAI Codex (v0.159.3)     ~/workspace   Here for a quick fix or the extended edition?  \u203a Ask Codex to do anything   Hooks need review3 hooks are new or changed.Hooks can run outside the sandbox after you trust them.\u203a 1. Review hooks                                                                                   2.Trustallandcontinue3.Continuewithouttrusting(hookswon'trun)enter confirm \u00b7 esc skip                                                                            1. Review hooks\u203a 2. Trust all and continue                                                                         Trusting hooks...\u203a    Review hooks     Trust all and continue     Continue without trusting (hooks won't run)                                                                                                     >_ OpenAI Codex (v0.159.3)     ~/workspace   Here for a quick fix or the extended edition?  \u203a Ask Codex to do anything   \u001b]0;workspace\u0007MRH fixture parent default\u00b7~/workspace\u001bM\u001bM\u001bM\u001bM\u001bM\u001bM\u001bM\u001bM\r\n\r\n  >_ OpenAI Codex (v0.159.3)\r\n     ~/workspace\r\n\r\n  Here for a quick fix or the extended edition?\r\n\r\n  Tip: New Build faster with the Desktop app. Run 'codex app' or visit\r\n  \u001b]8;;https://chatgpt.com/codex?app-landing-page=true\u0007https://chatgpt.com/codex?app-landing-page=true\u001b]8;;\u0007  \u203a Ask Codex to do anything   MRH fixture parent low \u00b7 ~/workspace ",
+  "temporary_files_removed": true,
+  "server_stopped": true,
+  "elapsed_seconds": 10.017,
+  "elapsed_scope": "package preparation, native CLI lifecycle, fixture operation and final cleanup"
+}
