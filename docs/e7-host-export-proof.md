@@ -1,0 +1,35 @@
+# E7 isolated host export
+
+E7 adds a reviewable source experiment to the E6 candidate. It does not enable production routing. Exact base, patch, license and reproduction are in [integrations/codex-host-export](../integrations/codex-host-export/README.md). [Verification](evidence/e7-verification.json), [producer/consumer capture](evidence/e7-producer-consumer.json) and [independent review](evidence/e7-review.json) distinguish executed evidence from remaining gaps. A owns acceptance of this package; original R1 remains incomplete.
+
+## Chosen seam and transport
+
+The selected transport is an additive versioned `pending_delegation` field on native-v1 PreToolUse. It is delivered by the host registry before child creation. A separate process/config query would lack the pending step's captured settings and role-file projection. A bridge or daemon would add state and a second lifecycle without establishing these facts. Neither alternative is implemented.
+
+The patch shares the actual `agent/role.rs` parser/projection and `agent/child_config.rs` model/default/role precedence. A typed role override protects model/effort whenever the relevant option is present, even when its value equals the current value. Configured same-name/default roles retain precedence over built-ins. It does not parse a guessed second configuration format.
+
+The V1 handler captures a private per-invocation plan from the step configuration and parsed role. Normal input and model-only Hook rewrites consume that plan; the actual registry rewrite retains its Arc. Role/fork rewrites invalidate the plan and use existing fresh resolution. Original model/default failure makes that baseline unknown while retaining valid role/control facts for Main. Export failure returns no optional field and still runs existing Hooks. Full-history inherited role is unknown. Explicit original model skips this optional export.
+
+Target preferences are host-process inputs, bounded to five queries/1024 bytes, and reuse the same captured plan and real resolver. Explicit effort and inherited effort are resolved independently. Only local acceptance/configured-request effort is exported; account availability remains unknown. Invalid or unsupported targets stay unavailable. The source exports no prices.
+
+## Binding, lifetime and trust
+
+The source plan owns the captured effective step config and immutable parsed role projection. Later role-file edits cannot replace it. IDs bind the original platform/session/turn/call; a random invocation nonce identifies the frozen exchange. External facts expire at Hook completion. Live service tier and runtime permission policy are refreshed before actual spawn. Existing deny precedence and latest-completed Hook rewrite selection are preserved; the experiment does not promise authority over competing role/fork rewrites.
+
+IDs, revision, nonce, source labels and `known` flags are **not authenticators**. The MRH experimental consumer can be constructed only by a trusted code-level driver executing an owned regular producer with an independently supplied SHA256 outside the wire. It validates absolute paths, owner, mode, owned build location, hash before/after execution, bounded strict JSON and exact scope. It ignores both event-level and tool-input fact assertions. Operator policy and the production CLI/settings factory cannot create this exchange. Ordinary local code/storage and the reviewed launcher are trust assumptions; it is not a defense against arbitrary hostile writes by the same owner.
+
+This consumer is always synthetic. Its explicit close expires a **source-test/replay** exchange, which is not proof of live native Hook freshness. Production `SupportedHostResolver` remains conservative and ignores the new generic input. A live host-origin transport, activation and native lifecycle would need separate review and execution evidence before production adoption.
+
+Exported fields are allowlisted role protection, control support, configured original model/effort, target local acceptance/effort, IDs and validity. No task text, role-file content/path, full Config, auth/provider headers, environment, raw errors or secret-derived fingerprints are emitted. A known null configured effort records the resolver's request setting; it does not prove the later inference/provider effort. Original/target facts are not actual model execution or account telemetry.
+
+## Evidence and limits
+
+Actual compiled Rust tests cover built-in/default, configured same-name effort-only protection (including equal-value presence), role-file freezing, protected-role model rewrite through the real registry method, baseline failure independent of Main, child defaults distinct from parent, explicit versus inherited target effort and unavailable target. Export construction does not call child creation and leaves the parent config unchanged. Hook schema is generated from the patched Rust type and checked against its fixture.
+
+The producer driver executes the built Rust lib-test binary and captures three actual exports. These captured bytes reach the existing MRH settings -> TypeSafe factory -> E6 facts/core -> Hook output with scripted in-process transport and a dummy credential. Main produces deny; protected roles, foreign/expired exchanges and unknown-account Fixed preserve with zero scripted transport. Repeating the same Main call adds no attempt. Source emissions are real; MRH policy/provider/Hook output replay is synthetic. Same-call changed-context cache, unsupported wire versions, task forgery and launcher negatives have separately labeled handmade parser fixtures.
+
+There is no patched native CLI run, real child/model/provider/Jev request, Desktop UI test, autonomous Main handback, formal Hook activation or new Goal. E3–E6 accounting/native installation/lifecycle results are reused only for unchanged behavior. Production installation and full R1 readiness remain unverified. No broader suite, both-version matrix or new archive smoke is implied by these checks.
+
+The first build paid dependency/toolchain setup and core compilation. The verification record retains fixture/type errors, the clang sandbox temp permission failure, successful safe retry, and the target fixture diagnosis rather than rewriting them as product passes. After the target fixture repeated its failure, parent inspected actual pinned catalog and parent defaults, narrowed the check to the single unresolved case and disabled nextest retries; five unaffected passes were retained. Check execution timings, preparation and cleanup are separately recorded. A package pass is not whole-objective acceptance.
+
+Final crate-scoped `just fix` passed for core and hooks; it checks their selected test targets without executing cases. The exact tested patch and binary hash remain saved separately from the final patch's reviewed neutral lint cleanup. Tests were not rerun after fix, as upstream instructs. Full workspace tests and the unrelated multi-language root formatter were not run; affected Rust paths used the pinned formatter. This is not an upstream merge/release gate result.

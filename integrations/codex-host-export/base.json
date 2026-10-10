@@ -1,0 +1,19 @@
+{
+  "origin": "https://github.com/openai/codex.git",
+  "tag": "rust-v0.159.3",
+  "revision": "01fc69f4026735edfdf6789820549727a4867b11",
+  "license": "Apache-2.0",
+  "license_sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+  "notice_sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+  "activation": "owned host process CODEX_MRH_PENDING_EXPORT_V1=1 only; installed host unchanged",
+  "consumer": "code-level SourceTestProducer; always synthetic; no production factory/CLI activation",
+  "platform": "macOS arm64 source test",
+  "toolchain": "Rust 1.95.0; just 1.58.0; cargo-nextest 0.9.148",
+  "full_workspace_tests": false,
+  "target_account_availability": "unknown",
+  "cargo_lock_note": "Release tag workspace packages are version 0.159.3, upstream Cargo.lock has 159 workspace packages at 0.0.0. Cargo rewrites these version fields only; no dependencies changed. Generated lock is not in the source patch.",
+  "patch_sha256": "04a60ea84be6d88af0c17a26f6c28c4ed6c19cecbc0035f08320e18c48563054",
+  "patch_bytes": 57776,
+  "tested_patch_sha256": "17b5dd169cfa31fec1032c1b4632a7487660b655ea9f1e79a0b2528608531eb2",
+  "lint_delta": "final core/hook just fix passed; unused existing registry import removed and final use of unknown.clone() changed to move; unrelated suite import cleanup reverted. All are behavior-neutral."
+}

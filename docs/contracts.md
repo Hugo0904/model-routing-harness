@@ -88,3 +88,7 @@ Core 完成或 timeout 關 gate，遲到 callback 與「invoke 到 transport ent
 `jev` 包含 source、attempt_states、requested_models／response_models、input_tokens／output_tokens（全部 usage 已知才有總值，否則 null）、known_input_tokens／known_output_tokens（已知子集合）、usage_unavailable_attempts、estimated_cost。Unknown 與 late_returned 是同一次 attempt 的狀態／旗標，不能相加算次數。Jev reported model/tokens 不混入 child actual model/tokens；source 顯示 actual_provider_transport 或 explicit_synthetic_offline_transport，沒有新 provider rows 則 unavailable。E3 actual-provider count=0。
 
 只有全部 provider rows usage 已知且 returned model 全匹配 jev-1.13.0，才用 reported input_tokens×$0.042／1,000,000（官方 output free）產生 **estimate**，附 USD、model、unit、price_source、price_date=2026-10-10。Synthetic estimate 仍是合成資料，不是帳單／savings／真 API 證據；unknown/mismatch 保持 null。Child cost/tokens/quota 與實測節省仍不可取得。
+
+## E7 source-test 出口邊界
+
+`pending_delegation` schema v1 是 pinned Codex source 的可選實驗欄位；正式 MRH Hook／設定不據此採信 generic JSON。只有可信程式層以外部指定的 reviewed binary SHA 執行 owned Rust test producer、捕獲其輸出，才能建立 experimental `ExportExchange`；全部維持 synthetic。Model-supplied task facts、來源字串、nonce 或匹配 IDs 不能建立 producer 信任。Facts 使用既有 E6 型別與分支 gate，unknown account availability 不提升成 target available。Configured-request effort 與 provider 實際 inference 分開；出口不提供成本。有效期、第三方改寫限制、原始 source／replay／fixture 證據及未啟用狀態見 [E7](e7-host-export-proof.md)。

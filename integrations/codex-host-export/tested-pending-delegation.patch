@@ -1,0 +1,1415 @@
+diff --git a/codex-rs/core/src/agent/child_config.rs b/codex-rs/core/src/agent/child_config.rs
+index 713c441..e3377fe 100644
+--- a/codex-rs/core/src/agent/child_config.rs
++++ b/codex-rs/core/src/agent/child_config.rs
+@@ -4,7 +4,8 @@
+ //! inheritance, and validation messages remain the same for each multi-agent version.
+ 
+ use crate::agent::role::DEFAULT_ROLE_NAME;
+-use crate::agent::role::apply_role_to_config;
++use crate::agent::role::ResolvedAgentRole;
++use crate::agent::role::resolve_agent_role;
+ use crate::config::Config;
+ use crate::session::session::Session;
+ use crate::session::step_context::StepContext;
+@@ -16,6 +17,7 @@ use codex_protocol::openai_models::ModelPreset;
+ use codex_protocol::openai_models::ReasoningEffort;
+ use codex_protocol::openai_models::ReasoningEffortPreset;
+ use codex_protocol::protocol::MultiAgentVersion;
++use std::sync::Arc;
+ 
+ pub(crate) const MAX_SPAWN_AGENT_MODEL_OVERRIDES: usize = 5;
+ 
+@@ -45,6 +47,7 @@ pub(crate) struct SpawnConfigOptions<'a> {
+ pub(crate) struct PreparedSpawnConfig {
+     pub(crate) config: Config,
+     pub(crate) role_name: Option<String>,
++    pub(crate) frozen: Arc<FrozenSpawnConfig>,
+ }
+ 
+ /// Resolves child settings before starting the thread, retaining the invoking tool's precedence.
+@@ -56,6 +59,8 @@ pub(crate) async fn prepare_agent_spawn_config(
+     let turn = step_context.turn.as_ref();
+     let mut config =
+         build_agent_spawn_config(&session.get_base_instructions().await, step_context)?;
++    let base = config.clone();
++    let mut captured_role = None;
+     if options.version == SpawnConfigVersion::V1 && options.full_history_fork {
+         reject_full_fork_agent_type_override(options.role_name)?;
+     }
+@@ -64,13 +69,15 @@ pub(crate) async fn prepare_agent_spawn_config(
+         step_context,
+         &mut config,
+         options.model,
+-        options.reasoning_effort,
++        options.reasoning_effort.clone(),
+     )
+     .await?;
+     if !options.full_history_fork
+         || (options.version == SpawnConfigVersion::V2 && options.role_name.is_some())
+     {
+-        apply_spawn_agent_role(session, &mut config, options.role_name).await?;
++        let role = resolve_agent_role(&config, options.role_name).await?;
++        apply_captured_spawn_role(session, &mut config, &role).await?;
++        captured_role = Some(role);
+         if options.version == SpawnConfigVersion::V2
+             && options.full_history_fork
+             && config.developer_instructions.is_none()
+@@ -96,7 +103,173 @@ pub(crate) async fn prepare_agent_spawn_config(
+             .then_some(DEFAULT_ROLE_NAME)
+         })
+         .map(str::to_owned);
+-    Ok(PreparedSpawnConfig { config, role_name })
++    let frozen = Arc::new(FrozenSpawnConfig {
++        base,
++        role: captured_role,
++        original: Some(config.clone()),
++        role_name: role_name.clone(),
++        version: options.version,
++        full_history_fork: options.full_history_fork,
++        requested_role: options.role_name.map(str::to_owned),
++        requested_model: options.model.map(str::to_owned),
++        requested_effort: options.reasoning_effort,
++    });
++    Ok(PreparedSpawnConfig {
++        config,
++        role_name,
++        frozen,
++    })
++}
++
++/// Private per-invocation plan. No full Config or role contents are exported.
++pub(crate) struct FrozenSpawnConfig {
++    base: Config,
++    role: Option<ResolvedAgentRole>,
++    original: Option<Config>,
++    role_name: Option<String>,
++    version: SpawnConfigVersion,
++    full_history_fork: bool,
++    requested_role: Option<String>,
++    requested_model: Option<String>,
++    requested_effort: Option<ReasoningEffort>,
++}
++
++impl FrozenSpawnConfig {
++    pub(crate) fn matches(&self, options: &SpawnConfigOptions<'_>) -> bool {
++        self.version == options.version
++            && self.full_history_fork == options.full_history_fork
++            && self.requested_role.as_deref() == options.role_name
++    }
++
++    pub(crate) fn routing_export(
++        &self,
++        session: &str,
++        turn: &str,
++        call: &str,
++    ) -> serde_json::Value {
++        let fact = |value: serde_json::Value, source: &str| serde_json::json!({"known":true,"value":value,"source":source});
++        let unknown = serde_json::json!({"known":false,"source":"unavailable"});
++        let protection = self.role.as_ref().map_or(unknown.clone(), |role| {
++            fact(serde_json::json!(role.protection()), role.source)
++        });
++        let original_model = self
++            .original
++            .as_ref()
++            .and_then(|config| config.model.as_ref())
++            .filter(|value| {
++                !value.is_empty()
++                    && value.len() <= 128
++                    && value
++                        .bytes()
++                        .all(|v| v.is_ascii_alphanumeric() || b"_.-".contains(&v))
++                    && !["sk-", "bearer", "password", "secret"]
++                        .iter()
++                        .any(|prefix| value.to_ascii_lowercase().starts_with(prefix))
++            })
++            .map_or(unknown.clone(), |value| {
++                fact(serde_json::json!(value), "resolved-spawn-config")
++            });
++        let original_effort = self.original.as_ref().map_or(unknown.clone(), |config| {
++            fact(
++                serde_json::json!(config.model_reasoning_effort),
++                "resolved-spawn-config",
++            )
++        });
++        serde_json::json!({
++            "schema_version":1,"producer_revision":"01fc69f4026735edfdf6789820549727a4867b11",
++            "surface":"native-v1","scope":{"platform":"codex","session_id":session,"turn_id":turn,"tool_call_id":call},
++            "validity":{"kind":"frozen-invocation","nonce":uuid::Uuid::new_v4().to_string(),"expires":"hook-completion"},
++            "facts":{"role_protection":protection,
++                "deny_supported":fact(serde_json::json!(true),"native-pretooluse"),
++                "rewrite_supported":fact(serde_json::json!(true),"native-pretooluse"),
++                "original_model":original_model,
++                "original_effort":original_effort},
++            "targets":[],"target_availability":"unknown-account; no catalog promotion",
++            "effort_semantics":"configured-request-not-provider-execution"
++        })
++    }
++}
++
++/// The export captures role protection independently of an unavailable original
++/// model/effort baseline. This never changes normal Hook error/repair ordering.
++pub(crate) async fn capture_pending_spawn_config(
++    session: &Session,
++    step_context: &StepContext,
++    options: SpawnConfigOptions<'_>,
++) -> Result<Arc<FrozenSpawnConfig>, String> {
++    let base = build_agent_spawn_config(&session.get_base_instructions().await, step_context)?;
++    if options.version == SpawnConfigVersion::V1 && options.full_history_fork {
++        reject_full_fork_agent_type_override(options.role_name)?;
++    }
++    let role = if !options.full_history_fork
++        || (options.version == SpawnConfigVersion::V2 && options.role_name.is_some())
++    {
++        Some(resolve_agent_role(&base, options.role_name).await?)
++    } else {
++        None
++    };
++    let mut frozen = Arc::new(FrozenSpawnConfig {
++        base,
++        role,
++        original: None,
++        role_name: options.role_name.map(str::to_owned),
++        version: options.version,
++        full_history_fork: options.full_history_fork,
++        requested_role: options.role_name.map(str::to_owned),
++        requested_model: options.model.map(str::to_owned),
++        requested_effort: options.reasoning_effort.clone(),
++    });
++    let original = prepare_frozen_spawn_config(session, step_context, &frozen, options)
++        .await
++        .ok()
++        .map(|value| value.config);
++    Arc::get_mut(&mut frozen)
++        .expect("unpublished invocation plan")
++        .original = original;
++    Ok(frozen)
++}
++
++/// Retains the original resolver order with the same parsed role projection.
++/// A role/fork rewrite invalidates the plan and uses the existing fresh path.
++pub(crate) async fn prepare_frozen_spawn_config(
++    session: &Session,
++    step_context: &StepContext,
++    frozen: &Arc<FrozenSpawnConfig>,
++    options: SpawnConfigOptions<'_>,
++) -> Result<PreparedSpawnConfig, String> {
++    if !frozen.matches(&options) {
++        return prepare_agent_spawn_config(session, step_context, options).await;
++    }
++    let config = if let Some(original) = frozen.original.as_ref()
++        && frozen.requested_model.as_deref() == options.model
++        && frozen.requested_effort == options.reasoning_effort
++    {
++        let mut config = original.clone();
++        apply_spawn_agent_service_tier(session, &mut config).await?;
++        apply_spawn_agent_runtime_overrides(&mut config, step_context.turn.as_ref())?;
++        config
++    } else {
++        let mut config = frozen.base.clone();
++        apply_requested_spawn_agent_model_overrides(
++            session,
++            step_context,
++            &mut config,
++            options.model,
++            options.reasoning_effort,
++        )
++        .await?;
++        if let Some(role) = &frozen.role {
++            apply_captured_spawn_role(session, &mut config, role).await?;
++        }
++        apply_spawn_agent_service_tier(session, &mut config).await?;
++        apply_spawn_agent_runtime_overrides(&mut config, step_context.turn.as_ref())?;
++        config
++    };
++    Ok(PreparedSpawnConfig {
++        config,
++        role_name: frozen.role_name.clone(),
++        frozen: Arc::clone(frozen),
++    })
+ }
+ 
+ /// Builds the base config snapshot for a newly spawned sub-agent.
+@@ -280,14 +453,14 @@ pub(crate) async fn apply_spawn_agent_service_tier(
+     Ok(())
+ }
+ 
+-async fn apply_spawn_agent_role(
++async fn apply_captured_spawn_role(
+     session: &Session,
+     config: &mut Config,
+-    role_name: Option<&str>,
++    role: &ResolvedAgentRole,
+ ) -> Result<(), String> {
+     let previous_model = config.model.clone();
+     let previous_reasoning_effort = config.model_reasoning_effort.clone();
+-    apply_role_to_config(config, role_name).await?;
++    role.apply(config)?;
+     if config.model == previous_model && config.model_reasoning_effort == previous_reasoning_effort
+     {
+         return Ok(());
+diff --git a/codex-rs/core/src/agent/role.rs b/codex-rs/core/src/agent/role.rs
+index f6633e7..9cbc543 100644
+--- a/codex-rs/core/src/agent/role.rs
++++ b/codex-rs/core/src/agent/role.rs
+@@ -33,7 +33,7 @@ use toml::Value as TomlValue;
+ pub const DEFAULT_ROLE_NAME: &str = "default";
+ const AGENT_TYPE_UNAVAILABLE_ERROR: &str = "agent type is currently not available";
+ 
+-#[derive(Default, Serialize)]
++#[derive(Clone, Default, Serialize)]
+ struct AgentRoleOverrides {
+     developer_instructions: Option<String>,
+     model: Option<String>,
+@@ -52,13 +52,48 @@ pub(crate) async fn apply_role_to_config(
+     config: &mut Config,
+     role_name: Option<&str>,
+ ) -> Result<(), String> {
+-    let role_name = role_name.unwrap_or(DEFAULT_ROLE_NAME);
++    resolve_agent_role(config, role_name).await?.apply(config)
++}
++
++#[derive(Clone)]
++pub(crate) struct ResolvedAgentRole {
++    pub(crate) source: &'static str,
++    overrides: AgentRoleOverrides,
++    layer: TomlValue,
++}
++
++impl ResolvedAgentRole {
++    pub(crate) fn protection(&self) -> &'static str {
++        match (
++            self.overrides.model.is_some(),
++            self.overrides.model_reasoning_effort.is_some(),
++        ) {
++            (false, false) => "unprotected",
++            (true, false) => "model",
++            (false, true) => "effort",
++            (true, true) => "model_effort",
++        }
++    }
++
++    pub(crate) fn apply(&self, config: &mut Config) -> Result<(), String> {
++        if self.layer.as_table().is_some_and(toml::map::Map::is_empty) {
++            return Ok(());
++        }
++        *config = role_overrides::build_next_config(config, self.layer.clone(), &self.overrides)
++            .map_err(|_| AGENT_TYPE_UNAVAILABLE_ERROR.to_string())?;
++        Ok(())
++    }
++}
+ 
++pub(crate) async fn resolve_agent_role(
++    config: &Config,
++    role_name: Option<&str>,
++) -> Result<ResolvedAgentRole, String> {
++    let role_name = role_name.unwrap_or(DEFAULT_ROLE_NAME);
+     let role = resolve_role_config(config, role_name)
+         .cloned()
+         .ok_or_else(|| format!("unknown agent_type '{role_name}'"))?;
+-
+-    apply_role_to_config_inner(config, role_name, &role)
++    resolve_agent_role_inner(config, role_name, &role)
+         .await
+         .map_err(|err| {
+             tracing::warn!("failed to apply role to config: {err}");
+@@ -66,14 +101,23 @@ pub(crate) async fn apply_role_to_config(
+         })
+ }
+ 
+-async fn apply_role_to_config_inner(
+-    config: &mut Config,
++async fn resolve_agent_role_inner(
++    config: &Config,
+     role_name: &str,
+     role: &AgentRoleConfig,
+-) -> anyhow::Result<()> {
++) -> anyhow::Result<ResolvedAgentRole> {
+     let is_built_in = !config.agent_roles.contains_key(role_name);
++    let source = if is_built_in {
++        "builtin-role"
++    } else {
++        "configured-role"
++    };
+     let Some(config_file) = role.config_file.as_ref() else {
+-        return Ok(());
++        return Ok(ResolvedAgentRole {
++            source,
++            overrides: AgentRoleOverrides::default(),
++            layer: TomlValue::Table(Default::default()),
++        });
+     };
+     let role_layer_toml = load_role_layer_toml(config, config_file, is_built_in, role_name).await?;
+     let role_config = deserialize_config_toml_with_base(role_layer_toml, &config.codex_home)?;
+@@ -117,14 +161,11 @@ async fn apply_role_to_config_inner(
+     }
+ 
+     let role_layer_toml = TomlValue::try_from(&overrides)?;
+-    if role_layer_toml
+-        .as_table()
+-        .is_some_and(toml::map::Map::is_empty)
+-    {
+-        return Ok(());
+-    }
+-    *config = role_overrides::build_next_config(config, role_layer_toml, &overrides)?;
+-    Ok(())
++    Ok(ResolvedAgentRole {
++        source,
++        overrides,
++        layer: role_layer_toml,
++    })
+ }
+ 
+ async fn load_role_layer_toml(
+diff --git a/codex-rs/core/src/agent/role_tests.rs b/codex-rs/core/src/agent/role_tests.rs
+index fad4e30..5c64a2d 100644
+--- a/codex-rs/core/src/agent/role_tests.rs
++++ b/codex-rs/core/src/agent/role_tests.rs
+@@ -779,3 +779,44 @@ fn built_in_config_file_contents_resolves_explorer_only() {
+         None
+     );
+ }
++
++#[tokio::test]
++async fn pending_delegation_role_projection_preserves_presence_precedence_and_freezes_files() {
++    let (home, mut config) = test_config_with_cli_overrides(Vec::new()).await;
++    let default = resolve_agent_role(&config, None)
++        .await
++        .expect("builtin default");
++    assert_eq!(default.protection(), "unprotected");
++    assert_eq!(default.source, "builtin-role");
++    let path = write_role_config(
++        &home,
++        "same-name.toml",
++        "model_reasoning_effort = \"high\"\n",
++    )
++    .await;
++    config.model_reasoning_effort = Some(ReasoningEffort::High);
++    config.agent_roles.insert(
++        "default".to_string(),
++        crate::config::AgentRoleConfig {
++            description: None,
++            config_file: Some(path.clone()),
++            nickname_candidates: None,
++        },
++    );
++    let projected = resolve_agent_role(&config, None)
++        .await
++        .expect("custom same-name default");
++    assert_eq!(projected.protection(), "effort"); // equal value still protected
++    assert_eq!(projected.source, "configured-role");
++    tokio::fs::write(&path, "model_reasoning_effort = \"low\"\n")
++        .await
++        .expect("update role fixture");
++    projected
++        .apply(&mut config)
++        .expect("frozen typed projection");
++    assert_eq!(config.model_reasoning_effort, Some(ReasoningEffort::High));
++    apply_role_to_config(&mut config, None)
++        .await
++        .expect("fresh invocation recomputes role");
++    assert_eq!(config.model_reasoning_effort, Some(ReasoningEffort::Low));
++}
+diff --git a/codex-rs/core/src/hook_runtime.rs b/codex-rs/core/src/hook_runtime.rs
+index 30c4162..a053605 100644
+--- a/codex-rs/core/src/hook_runtime.rs
++++ b/codex-rs/core/src/hook_runtime.rs
+@@ -191,9 +191,11 @@ pub(crate) async fn run_pre_tool_use_hooks(
+     tool_use_id: String,
+     tool_name: &HookToolName,
+     tool_input: &Value,
++    pending_delegation: Option<Value>,
+ ) -> PreToolUseHookResult {
+     let turn_context = &step_context.turn;
+     let request = PreToolUseRequest {
++        pending_delegation,
+         session_id: sess.session_id().into(),
+         turn_id: turn_context.sub_id.clone(),
+         subagent: thread_spawn_subagent_hook_context(sess, turn_context),
+diff --git a/codex-rs/core/src/session/tests.rs b/codex-rs/core/src/session/tests.rs
+index 1562257..72f4256 100644
+--- a/codex-rs/core/src/session/tests.rs
++++ b/codex-rs/core/src/session/tests.rs
+@@ -7549,6 +7549,7 @@ async fn request_permissions_tool_resolves_legacy_paths_against_selected_environ
+         async move {
+             handler
+                 .handle(ToolInvocation {
++                    pending_spawn: None,
+                     session,
+                     step_context,
+                     turn: turn_context,
+@@ -7633,6 +7634,7 @@ async fn request_permissions_tool_rejects_invalid_requests(
+     let step_context = StepContext::for_test(Arc::clone(&turn_context));
+     let result = RequestPermissionsHandler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::new(session),
+             step_context,
+             turn: turn_context,
+@@ -12939,6 +12941,7 @@ async fn unified_exec_rejects_escalated_permissions_when_policy_not_on_request()
+     let handler = ExecCommandHandler::default();
+     let resp = handler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             turn: Arc::clone(&turn_context),
+             step_context,
+diff --git a/codex-rs/core/src/session/tests/guardian_tests.rs b/codex-rs/core/src/session/tests/guardian_tests.rs
+index 2d78c4a..a733ce1 100644
+--- a/codex-rs/core/src/session/tests/guardian_tests.rs
++++ b/codex-rs/core/src/session/tests/guardian_tests.rs
+@@ -603,6 +603,7 @@ async fn guardian_allows_exec_command_additional_permissions_requests_past_polic
+     let step_context = StepContext::for_test(Arc::clone(&turn_context));
+     let resp = handler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             turn: Arc::clone(&turn_context),
+             step_context,
+@@ -732,6 +733,7 @@ async fn strict_auto_review_turn_grant_forces_guardian_for_exec_command_policy_s
+     let step_context = StepContext::for_test(Arc::clone(&turn_context));
+     let resp = handler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             turn: Arc::clone(&turn_context),
+             step_context,
+@@ -884,6 +886,7 @@ async fn delayed_exec_command_uses_its_captured_authority_after_next_turn_starts
+     let command = "echo captured-action-authority";
+     let handler = crate::tools::handlers::ExecCommandHandler::default();
+     let invocation = handler.handle(ToolInvocation {
++        pending_spawn: None,
+         session: Arc::clone(&session),
+         turn: Arc::clone(&action_turn),
+         step_context,
+@@ -1061,6 +1064,7 @@ async fn guardian_allows_unified_exec_additional_permissions_requests_past_polic
+     let handler = ExecCommandHandler::default();
+     let resp = handler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             turn: Arc::clone(&turn_context),
+             step_context,
+@@ -1197,6 +1201,7 @@ async fn exec_command_allows_sticky_turn_permissions_without_inline_request_perm
+     let step_context = StepContext::for_test(Arc::clone(&turn_context));
+     let resp = handler
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             turn: Arc::clone(&turn_context),
+             step_context,
+diff --git a/codex-rs/core/src/tools/context.rs b/codex-rs/core/src/tools/context.rs
+index 1b02ab7..a4c8525 100644
+--- a/codex-rs/core/src/tools/context.rs
++++ b/codex-rs/core/src/tools/context.rs
+@@ -78,6 +78,7 @@ pub struct ToolInvocation {
+     pub tool_name: ToolName,
+     pub source: ToolCallSource,
+     pub payload: ToolPayload,
++    pub(crate) pending_spawn: Option<Arc<crate::agent::child_config::FrozenSpawnConfig>>,
+ }
+ 
+ /// Identity of the model call that started a tool invocation, retained across code-mode waits.
+diff --git a/codex-rs/core/src/tools/handlers/apply_patch_tests.rs b/codex-rs/core/src/tools/handlers/apply_patch_tests.rs
+index 8fb831c..f1dabe0 100644
+--- a/codex-rs/core/src/tools/handlers/apply_patch_tests.rs
++++ b/codex-rs/core/src/tools/handlers/apply_patch_tests.rs
+@@ -46,6 +46,7 @@ async fn invocation_for_payload(payload: ToolPayload) -> ToolInvocation {
+     let (session, turn) = make_session_and_context().await;
+     let turn = Arc::new(turn);
+     ToolInvocation {
++        pending_spawn: None,
+         session: session.into(),
+         step_context: StepContext::for_test(Arc::clone(&turn)),
+         turn,
+diff --git a/codex-rs/core/src/tools/handlers/extension_tools.rs b/codex-rs/core/src/tools/handlers/extension_tools.rs
+index 927e9b3..6681c43 100644
+--- a/codex-rs/core/src/tools/handlers/extension_tools.rs
++++ b/codex-rs/core/src/tools/handlers/extension_tools.rs
+@@ -388,6 +388,7 @@ mod tests {
+         let (session, turn) = crate::session::tests::make_session_and_context().await;
+         let turn = Arc::new(turn);
+         let invocation = ToolInvocation {
++            pending_spawn: None,
+             session: session.into(),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+@@ -482,6 +483,7 @@ mod tests {
+         model_info.node_repl_disabled = !turn.model_info().node_repl_disabled;
+         let node_repl_disabled = model_info.node_repl_disabled;
+         let invocation = ToolInvocation {
++            pending_spawn: None,
+             session,
+             step_context,
+             turn,
+diff --git a/codex-rs/core/src/tools/handlers/mcp.rs b/codex-rs/core/src/tools/handlers/mcp.rs
+index 2287f7d..3066d7f 100644
+--- a/codex-rs/core/src/tools/handlers/mcp.rs
++++ b/codex-rs/core/src/tools/handlers/mcp.rs
+@@ -623,6 +623,7 @@ mod tests {
+             .expect("MCP tool spec should build");
+         assert_eq!(
+             handler.pre_tool_use_payload(&ToolInvocation {
++                pending_spawn: None,
+                 session: session.into(),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -657,6 +658,7 @@ mod tests {
+ 
+         assert_eq!(
+             handler.pre_tool_use_payload(&ToolInvocation {
++                pending_spawn: None,
+                 session: session.into(),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -687,6 +689,7 @@ mod tests {
+         let invocation = handler
+             .with_updated_hook_input(
+                 ToolInvocation {
++                    pending_spawn: None,
+                     session: session.into(),
+                     step_context: StepContext::for_test(Arc::clone(&turn)),
+                     turn,
+@@ -748,6 +751,7 @@ mod tests {
+         let handler = McpHandler::new(tool_info("filesystem", "filesystem", "read_file"))
+             .expect("MCP tool spec should build");
+         let invocation = ToolInvocation {
++            pending_spawn: None,
+             session: session.into(),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents.rs b/codex-rs/core/src/tools/handlers/multi_agents.rs
+index 87afc2b..a5523b4 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents.rs
+@@ -81,6 +81,8 @@ pub(crate) mod close_agent;
+ mod resume_agent;
+ mod send_input;
+ mod spawn;
++#[cfg(test)]
++use spawn::pending_export_for_invocation;
+ pub(crate) mod wait;
+ 
+ pub(crate) fn collab_tool_call_status(
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+index 9bfc557..6f78161 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+@@ -3,7 +3,9 @@ use crate::agent::api::AgentInput;
+ use crate::agent::api::SpawnRequest;
+ use crate::agent::child_config::SpawnConfigOptions;
+ use crate::agent::child_config::SpawnConfigVersion;
++use crate::agent::child_config::capture_pending_spawn_config;
+ use crate::agent::child_config::prepare_agent_spawn_config;
++use crate::agent::child_config::prepare_frozen_spawn_config;
+ use crate::agent::control::render_input_preview;
+ use crate::agent::exceeds_thread_spawn_depth_limit;
+ use crate::agent::next_thread_spawn_depth;
+@@ -58,6 +60,7 @@ async fn handle_spawn_agent(
+         step_context,
+         payload,
+         call_id,
++        pending_spawn,
+         ..
+     } = invocation;
+     let turn = &step_context.turn;
+@@ -95,18 +98,18 @@ async fn handle_spawn_agent(
+             }),
+         )
+         .await;
+-    let prepared = prepare_agent_spawn_config(
+-        &session,
+-        step_context.as_ref(),
+-        SpawnConfigOptions {
+-            version: SpawnConfigVersion::V1,
+-            full_history_fork: args.fork_context,
+-            role_name,
+-            model: args.model.as_deref(),
+-            reasoning_effort: args.reasoning_effort.clone(),
+-        },
+-    )
+-    .await
++    let options = SpawnConfigOptions {
++        version: SpawnConfigVersion::V1,
++        full_history_fork: args.fork_context,
++        role_name,
++        model: args.model.as_deref(),
++        reasoning_effort: args.reasoning_effort.clone(),
++    };
++    let prepared = if let Some(frozen) = pending_spawn {
++        prepare_frozen_spawn_config(&session, step_context.as_ref(), &frozen, options).await
++    } else {
++        prepare_agent_spawn_config(&session, step_context.as_ref(), options).await
++    }
+     .map_err(FunctionCallError::RespondToModel)?;
+     let config = prepared.config;
+     let fork_mode = args.fork_context.then_some(SpawnAgentForkMode::FullHistory);
+@@ -208,11 +211,141 @@ async fn handle_spawn_agent(
+ }
+ 
+ impl CoreToolRuntime for Handler {
++    fn prepare_pending_delegation<'a>(
++        &'a self,
++        invocation: &'a mut ToolInvocation,
++    ) -> futures::future::BoxFuture<'a, Option<serde_json::Value>> {
++        Box::pin(async move {
++            // Isolated source experiment only; absent by default. Neither tool
++            // input nor MRH settings can supply this host process feature flag.
++            if std::env::var("CODEX_MRH_PENDING_EXPORT_V1").as_deref() != Ok("1") {
++                return None;
++            }
++            let queries = std::env::var("CODEX_MRH_EXPORT_TARGETS")
++                .ok()
++                .filter(|raw| raw.len() <= 1024)
++                .and_then(|raw| serde_json::from_str::<Vec<PendingTargetQuery>>(&raw).ok())
++                .filter(|queries| {
++                    queries.len() <= crate::agent::child_config::MAX_SPAWN_AGENT_MODEL_OVERRIDES
++                })
++                .unwrap_or_default();
++            pending_export_for_invocation(invocation, queries).await
++        })
++    }
++
+     fn matches_kind(&self, payload: &ToolPayload) -> bool {
+         matches!(payload, ToolPayload::Function { .. })
+     }
+ }
+ 
++pub(super) async fn pending_export_for_invocation(
++    invocation: &mut ToolInvocation,
++    queries: Vec<PendingTargetQuery>,
++) -> Option<serde_json::Value> {
++    let arguments = function_arguments(invocation.payload.clone()).ok()?;
++    let args: SpawnAgentArgs = parse_arguments(&arguments).ok()?;
++    if args.model.is_some() {
++        return None;
++    }
++    let role_name = args
++        .agent_type
++        .as_deref()
++        .map(str::trim)
++        .filter(|role| !role.is_empty());
++    let frozen = capture_pending_spawn_config(
++        &invocation.session,
++        invocation.step_context.as_ref(),
++        SpawnConfigOptions {
++            version: SpawnConfigVersion::V1,
++            full_history_fork: args.fork_context,
++            role_name,
++            model: args.model.as_deref(),
++            reasoning_effort: args.reasoning_effort,
++        },
++    )
++    .await
++    .ok()?; // unavailable export; existing Hooks still run on failure
++    let mut export = frozen.routing_export(
++        &invocation.session.session_id().to_string(),
++        &invocation.step_context.turn.sub_id,
++        &invocation.call_id,
++    );
++    // This is a bounded host-process preference query, never a known
++    // declaration from tool_input. Local acceptance is not account availability.
++    if queries.len() <= crate::agent::child_config::MAX_SPAWN_AGENT_MODEL_OVERRIDES {
++        let mut targets = Vec::new();
++        for query in queries {
++            if !safe_export_model(&query.model) {
++                continue;
++            }
++            let resolved = prepare_frozen_spawn_config(
++                &invocation.session,
++                invocation.step_context.as_ref(),
++                &frozen,
++                SpawnConfigOptions {
++                    version: SpawnConfigVersion::V1,
++                    full_history_fork: args.fork_context,
++                    role_name,
++                    model: Some(&query.model),
++                    reasoning_effort: query.reasoning_effort,
++                },
++            )
++            .await;
++            let inherited = prepare_frozen_spawn_config(
++                &invocation.session,
++                invocation.step_context.as_ref(),
++                &frozen,
++                SpawnConfigOptions {
++                    version: SpawnConfigVersion::V1,
++                    full_history_fork: args.fork_context,
++                    role_name,
++                    model: Some(&query.model),
++                    reasoning_effort: None,
++                },
++            )
++            .await;
++            let inherited_known = inherited
++                .as_ref()
++                .is_ok_and(|value| value.config.model.as_deref() == Some(&query.model));
++            let inherited_effort = inherited
++                .ok()
++                .and_then(|value| value.config.model_reasoning_effort);
++            let accepted = resolved
++                .as_ref()
++                .is_ok_and(|value| value.config.model.as_deref() == Some(&query.model));
++            let effort = resolved
++                .ok()
++                .and_then(|value| value.config.model_reasoning_effort);
++            targets.push(serde_json::json!({"model":query.model,
++                "host_accepted":{"known":true,"value":accepted,"source":"actual-spawn-resolver"},
++                "available":{"known":false,"source":"remote-account-unknown"},
++                "efforts":{"known":accepted,"value":if accepted { serde_json::json!([effort]) } else { serde_json::Value::Null },"source":"actual-spawn-resolver"},
++                "inherited_effort":{"known":inherited_known,"value":inherited_effort,"source":"actual-spawn-resolver"}}));
++        }
++        export["targets"] = serde_json::json!(targets);
++    }
++    invocation.pending_spawn = Some(frozen);
++    Some(export)
++}
++
++#[derive(Deserialize)]
++#[serde(deny_unknown_fields)]
++pub(super) struct PendingTargetQuery {
++    pub(super) model: String,
++    pub(super) reasoning_effort: Option<ReasoningEffort>,
++}
++
++fn safe_export_model(value: &str) -> bool {
++    !value.is_empty()
++        && value.len() <= 128
++        && value
++            .bytes()
++            .all(|v| v.is_ascii_alphanumeric() || b"_.-".contains(&v))
++        && !["sk-", "bearer", "password", "secret"]
++            .iter()
++            .any(|prefix| value.to_ascii_lowercase().starts_with(prefix))
++}
++
+ #[derive(Debug, Deserialize)]
+ struct SpawnAgentArgs {
+     message: Option<String>,
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents_tests.rs b/codex-rs/core/src/tools/handlers/multi_agents_tests.rs
+index e7c0f2d..a530b85 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents_tests.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents_tests.rs
+@@ -107,6 +107,7 @@ fn invocation(
+ ) -> ToolInvocation {
+     let step_context = StepContext::for_test(Arc::clone(&turn));
+     ToolInvocation {
++        pending_spawn: None,
+         session,
+         step_context,
+         turn,
+@@ -4737,3 +4738,254 @@ async fn build_agent_resume_config_clears_base_instructions() {
+         .expect("approval policy set");
+     assert_eq!(config, expected);
+ }
++
++#[tokio::test]
++async fn pending_delegation_export_uses_real_resolver_and_frozen_role() {
++    use crate::agent::child_config::{
++        SpawnConfigOptions, SpawnConfigVersion, prepare_frozen_spawn_config,
++    };
++    let (mut session, mut turn) = make_session_and_context().await;
++    set_agent_control(
++        &mut session,
++        crate::agent::LocalAgentControl::default().with_session_id(
++            codex_protocol::SessionId::from_string("00000000-0000-4000-8000-000000000001")
++                .expect("fixture identity"),
++            /*max_threads*/ 6,
++        ),
++    );
++    turn.sub_id = "e7-source-turn".to_string();
++    let role_name = install_role_with_model_override(&mut turn).await;
++    let role_path = turn.config.agent_roles[&role_name]
++        .config_file
++        .clone()
++        .expect("configured role");
++    let mut call = invocation(
++        Arc::new(session),
++        Arc::new(turn),
++        "spawn_agent",
++        ToolPayload::Function {
++            arguments: json!({
++                "message":"TASK_MUST_NOT_APPEAR_IN_EXPORT", "agent_type":role_name,
++                "pending_delegation":{"known":true,"role_protection":"unprotected"}
++            })
++            .to_string(),
++        },
++    );
++    call.call_id = "e7-source-call".to_string();
++    let packet = pending_export_for_invocation(&mut call, Vec::new())
++        .await
++        .expect("actual producer export");
++    assert_eq!(
++        packet["facts"]["role_protection"]["value"],
++        json!("model_effort")
++    );
++    assert_eq!(
++        packet["facts"]["role_protection"]["source"],
++        json!("configured-role")
++    );
++    assert_eq!(
++        packet["facts"]["original_model"]["value"],
++        json!("gpt-5-role-override")
++    );
++    assert_eq!(
++        packet["facts"]["original_effort"]["value"],
++        json!("minimal")
++    );
++    assert!(
++        !packet
++            .to_string()
++            .contains("TASK_MUST_NOT_APPEAR_IN_EXPORT")
++    );
++    assert!(
++        !packet
++            .to_string()
++            .contains(&role_path.display().to_string())
++    );
++    tokio::fs::write(&role_path, "model = \"gpt-5-changed-after-hook\"\n")
++        .await
++        .expect("change role fixture");
++    let before_rewrite = Arc::clone(call.pending_spawn.as_ref().expect("captured plan"));
++    let updated_model = call.step_context.settings.model_info.slug.clone();
++    let call = SpawnAgentHandler::default()
++        .with_updated_hook_input(
++            call,
++            json!({
++                "message":"fixture", "agent_type":role_name, "model":updated_model,
++            }),
++        )
++        .expect("actual Hook rewrite retains private plan");
++    let frozen = call
++        .pending_spawn
++        .as_ref()
++        .expect("plan survives registry rewrite");
++    assert!(Arc::ptr_eq(&before_rewrite, frozen));
++    let prepared = prepare_frozen_spawn_config(
++        &call.session,
++        call.step_context.as_ref(),
++        frozen,
++        SpawnConfigOptions {
++            version: SpawnConfigVersion::V1,
++            full_history_fork: false,
++            role_name: Some(&role_name),
++            model: Some(&updated_model),
++            reasoning_effort: None,
++        },
++    )
++    .await
++    .expect("rewritten model preserves captured role after file change");
++    assert_eq!(
++        prepared.config.model.as_deref(),
++        Some("gpt-5-role-override")
++    );
++    println!("MRH_PENDING_EXPORT_JSON={packet}");
++}
++
++#[tokio::test]
++async fn pending_delegation_export_failure_is_unavailable_not_hook_abort() {
++    let (session, turn) = make_session_and_context().await;
++    let mut call = invocation(
++        Arc::new(session),
++        Arc::new(turn),
++        "spawn_agent",
++        ToolPayload::Function {
++            arguments: json!({
++                "message":"fixture", "agent_type":"missing-role"
++            })
++            .to_string(),
++        },
++    );
++    assert_eq!(
++        pending_export_for_invocation(&mut call, Vec::new()).await,
++        None
++    );
++    assert!(call.pending_spawn.is_none());
++    // Registry always proceeds to run_pre_tool_use_hooks after this None.
++}
++
++#[tokio::test]
++async fn pending_delegation_export_default_main_has_no_child_effect() {
++    let (mut session, mut turn) = make_session_and_context().await;
++    set_agent_control(
++        &mut session,
++        crate::agent::LocalAgentControl::default().with_session_id(
++            codex_protocol::SessionId::from_string("00000000-0000-4000-8000-000000000001")
++                .expect("fixture identity"),
++            /*max_threads*/ 6,
++        ),
++    );
++    turn.sub_id = "e7-source-turn".to_string();
++    let before = (*turn.config).clone();
++    let mut call = invocation(
++        Arc::new(session),
++        Arc::new(turn),
++        "spawn_agent",
++        ToolPayload::Function {
++            arguments: json!({"message":"fixture"}).to_string(),
++        },
++    );
++    call.call_id = "e7-default-call".to_string();
++    let packet = pending_export_for_invocation(&mut call, Vec::new())
++        .await
++        .expect("actual default resolver export");
++    assert_eq!(
++        packet["facts"]["role_protection"]["value"],
++        json!("unprotected")
++    );
++    assert_eq!(*call.step_context.turn.config, before);
++    println!("MRH_PENDING_EXPORT_JSON={packet}");
++}
++
++#[tokio::test]
++async fn pending_delegation_main_role_known_when_original_default_unavailable() {
++    let (session, mut turn) = make_session_and_context().await;
++    let mut config = (*turn.config).clone();
++    config.agent_default_subagent_model = Some("e7-unavailable-model".to_string());
++    turn.config = Arc::new(config);
++    let mut call = invocation(
++        Arc::new(session),
++        Arc::new(turn),
++        "spawn_agent",
++        ToolPayload::Function {
++            arguments: json!({"message":"fixture"}).to_string(),
++        },
++    );
++    let packet = pending_export_for_invocation(&mut call, Vec::new())
++        .await
++        .expect("role independent from original baseline");
++    assert_eq!(
++        packet["facts"]["role_protection"]["value"],
++        json!("unprotected")
++    );
++    assert_eq!(packet["facts"]["original_model"]["known"], json!(false));
++    assert_eq!(packet["facts"]["original_effort"]["known"], json!(false));
++}
++
++#[tokio::test]
++async fn pending_delegation_target_explicit_and_inherited_use_actual_resolver() {
++    let (mut session, mut turn) = make_session_and_context().await;
++    session.services.models_manager = Arc::new(StaticModelsManager::new(
++        None,
++        codex_models_manager::bundled_models_response().expect("pinned bundled catalog"),
++    ));
++    set_agent_control(
++        &mut session,
++        crate::agent::LocalAgentControl::default().with_session_id(
++            codex_protocol::SessionId::from_string("00000000-0000-4000-8000-000000000001")
++                .expect("fixture identity"),
++            6,
++        ),
++    );
++    turn.sub_id = "e7-source-turn".to_string();
++    let mut config = (*turn.config).clone();
++    let parent_model = turn.model_info().slug.clone();
++    let default_model = "gpt-6.1-sol";
++    config.agent_default_subagent_model = Some(default_model.to_string());
++    config.agent_default_subagent_reasoning_effort = Some(ReasoningEffort::High);
++    turn.config = Arc::new(config);
++    let mut call = invocation(
++        Arc::new(session),
++        Arc::new(turn),
++        "spawn_agent",
++        ToolPayload::Function {
++            arguments: json!({"message":"fixture"}).to_string(),
++        },
++    );
++    let model = default_model.to_string();
++    call.call_id = "e7-target-call".to_string();
++    let packet = pending_export_for_invocation(
++        &mut call,
++        vec![
++            spawn::PendingTargetQuery {
++                model: model.clone(),
++                reasoning_effort: Some(ReasoningEffort::Low),
++            },
++            spawn::PendingTargetQuery {
++                model: "e7-unavailable-model".to_string(),
++                reasoning_effort: None,
++            },
++        ],
++    )
++    .await
++    .expect("bounded actual target resolver export");
++    assert_ne!(parent_model, default_model);
++    assert_eq!(
++        packet["facts"]["original_model"]["value"],
++        json!(default_model)
++    );
++    assert_eq!(packet["facts"]["original_effort"]["value"], json!("high"));
++    assert_eq!(packet["targets"][0]["model"], json!(model));
++    assert_eq!(packet["targets"][0]["host_accepted"]["value"], json!(true));
++    assert_eq!(packet["targets"][0]["available"]["known"], json!(false));
++    assert_eq!(packet["targets"][0]["efforts"]["value"], json!(["low"]));
++    assert_eq!(
++        packet["targets"][0]["inherited_effort"]["value"],
++        json!("high")
++    );
++    assert_eq!(packet["targets"][1]["host_accepted"]["value"], json!(false));
++    assert_eq!(packet["targets"][1]["efforts"]["known"], json!(false));
++    assert_eq!(
++        packet["targets"][1]["inherited_effort"]["known"],
++        json!(false)
++    );
++    println!("MRH_PENDING_EXPORT_JSON={packet}");
++}
+diff --git a/codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs b/codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs
+index b2f6c7b..9d2fc36 100644
+--- a/codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs
++++ b/codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs
+@@ -58,6 +58,7 @@ async fn request_plugin_install_rejects_subagent_threads(presentation: ToolSugge
+ 
+     let result = RequestPluginInstallHandler::new(Vec::new(), presentation)
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::new(session),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+diff --git a/codex-rs/core/src/tools/handlers/request_user_input_tests.rs b/codex-rs/core/src/tools/handlers/request_user_input_tests.rs
+index 1c1dbfc..6c23b60 100644
+--- a/codex-rs/core/src/tools/handlers/request_user_input_tests.rs
++++ b/codex-rs/core/src/tools/handlers/request_user_input_tests.rs
+@@ -40,6 +40,7 @@ async fn multi_agent_v2_request_user_input_rejects_subagent_threads() {
+         available_modes: Vec::new(),
+     }
+     .handle(ToolInvocation {
++        pending_spawn: None,
+         session: Arc::new(session),
+         step_context: StepContext::for_test(Arc::clone(&turn)),
+         turn,
+@@ -118,6 +119,7 @@ async fn request_user_input_sets_non_blocking_outside_plan_mode(
+                 available_modes: vec![ModeKind::Default],
+             }
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session,
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -239,6 +241,7 @@ async fn request_user_input_sets_blocking_from_turn_mode() {
+                 available_modes: vec![ModeKind::Plan],
+             }
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session,
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+diff --git a/codex-rs/core/src/tools/handlers/unified_exec_tests.rs b/codex-rs/core/src/tools/handlers/unified_exec_tests.rs
+index 46fa63d..fafefc3 100644
+--- a/codex-rs/core/src/tools/handlers/unified_exec_tests.rs
++++ b/codex-rs/core/src/tools/handlers/unified_exec_tests.rs
+@@ -34,6 +34,7 @@ async fn invocation_for_payload(
+     let (session, turn) = make_session_and_context().await;
+     let turn = Arc::new(turn);
+     ToolInvocation {
++        pending_spawn: None,
+         session: session.into(),
+         step_context: StepContext::for_test(Arc::clone(&turn)),
+         turn,
+@@ -191,6 +192,7 @@ async fn exec_command_rejects_login_when_selected_environment_disallows_it() {
+ 
+     let turn = Arc::new(turn);
+     let invocation = ToolInvocation {
++        pending_spawn: None,
+         session: session.into(),
+         step_context: StepContext::for_test(Arc::clone(&turn)),
+         turn,
+@@ -344,6 +346,7 @@ async fn exec_command_reuses_foreign_windows_grant() {
+ 
+     let response = ExecCommandHandler::default()
+         .handle(ToolInvocation {
++            pending_spawn: None,
+             session: Arc::clone(&session),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+@@ -384,6 +387,7 @@ async fn exec_command_pre_tool_use_payload_uses_raw_command() {
+ 
+     assert_eq!(
+         handler.pre_tool_use_payload(&ToolInvocation {
++            pending_spawn: None,
+             session: session.into(),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+@@ -412,6 +416,7 @@ async fn exec_command_pre_tool_use_payload_skips_write_stdin() {
+ 
+     assert_eq!(
+         handler.pre_tool_use_payload(&ToolInvocation {
++            pending_spawn: None,
+             session: session.into(),
+             step_context: StepContext::for_test(Arc::clone(&turn)),
+             turn,
+diff --git a/codex-rs/core/src/tools/handlers/view_image.rs b/codex-rs/core/src/tools/handlers/view_image.rs
+index e5ff7f2..04e0785 100644
+--- a/codex-rs/core/src/tools/handlers/view_image.rs
++++ b/codex-rs/core/src/tools/handlers/view_image.rs
+@@ -390,6 +390,7 @@ mod tests {
+ 
+         let result = ViewImageHandler::default()
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session: Arc::new(session),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -420,6 +421,7 @@ mod tests {
+ 
+         let result = ViewImageHandler::default()
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session: Arc::new(session),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -463,6 +465,7 @@ mod tests {
+ 
+         let result = ViewImageHandler::default()
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session: Arc::new(session),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+@@ -501,6 +504,7 @@ mod tests {
+ 
+         let result = ViewImageHandler::default()
+             .handle(ToolInvocation {
++                pending_spawn: None,
+                 session: Arc::new(session),
+                 step_context: StepContext::for_test(Arc::clone(&turn)),
+                 turn,
+diff --git a/codex-rs/core/src/tools/registry.rs b/codex-rs/core/src/tools/registry.rs
+index 7d88650..18af0e6 100644
+--- a/codex-rs/core/src/tools/registry.rs
++++ b/codex-rs/core/src/tools/registry.rs
+@@ -131,6 +131,15 @@ pub(crate) trait CoreToolRuntime: ToolExecutor<ToolInvocation> {
+         })
+     }
+ 
++    /// Optional host-owned facts from the actual pending resolver. Preparation
++    /// failure is unavailable evidence and must never bypass existing hooks.
++    fn prepare_pending_delegation<'a>(
++        &'a self,
++        _invocation: &'a mut ToolInvocation,
++    ) -> BoxFuture<'a, Option<Value>> {
++        Box::pin(async { None })
++    }
++
+     fn pre_tool_use_payload(&self, invocation: &ToolInvocation) -> Option<PreToolUsePayload> {
+         let ToolPayload::Function { arguments } = &invocation.payload else {
+             return None;
+@@ -601,12 +610,14 @@ impl ToolRegistry {
+         }
+ 
+         if let Some(pre_tool_use_payload) = tool.pre_tool_use_payload(&invocation) {
++            let pending_delegation = tool.prepare_pending_delegation(&mut invocation).await;
+             match run_pre_tool_use_hooks(
+                 &invocation.session,
+                 invocation.step_context.as_ref(),
+                 invocation.call_id.clone(),
+                 &pre_tool_use_payload.tool_name,
+                 &pre_tool_use_payload.tool_input,
++                pending_delegation,
+             )
+             .await
+             {
+diff --git a/codex-rs/core/src/tools/registry_tests.rs b/codex-rs/core/src/tools/registry_tests.rs
+index 895d8d4..39d889b 100644
+--- a/codex-rs/core/src/tools/registry_tests.rs
++++ b/codex-rs/core/src/tools/registry_tests.rs
+@@ -452,6 +452,7 @@ async fn function_tools_expose_default_hook_payloads_and_rewrites() -> anyhow::R
+         tool_name: tool_name.clone(),
+     };
+     let invocation = ToolInvocation {
++        pending_spawn: None,
+         payload: ToolPayload::Function {
+             arguments: serde_json::json!({ "message": "hello" }).to_string(),
+         },
+@@ -498,6 +499,7 @@ async fn function_hook_input_defaults_empty_arguments_to_object() {
+         tool_name: tool_name.clone(),
+     };
+     let invocation = ToolInvocation {
++        pending_spawn: None,
+         payload: ToolPayload::Function {
+             arguments: "  ".to_string(),
+         },
+@@ -530,6 +532,7 @@ async fn spawn_agent_function_tools_use_agent_matcher_alias() {
+             tool_name: tool_name.clone(),
+         };
+         let invocation = ToolInvocation {
++            pending_spawn: None,
+             payload: ToolPayload::Function {
+                 arguments: serde_json::json!({ "message": "inspect this repo" }).to_string(),
+             },
+@@ -827,6 +830,7 @@ fn test_invocation(
+ ) -> ToolInvocation {
+     let step_context = StepContext::for_test(Arc::clone(&turn));
+     ToolInvocation {
++        pending_spawn: None,
+         session,
+         step_context,
+         turn,
+diff --git a/codex-rs/core/src/tools/router.rs b/codex-rs/core/src/tools/router.rs
+index d9f1f63..2a2612c 100644
+--- a/codex-rs/core/src/tools/router.rs
++++ b/codex-rs/core/src/tools/router.rs
+@@ -367,6 +367,7 @@ impl ToolRouter {
+         // Keep the legacy ToolInvocation.turn field tied to the same request state until handlers migrate.
+         let turn = Arc::clone(&step_context.turn);
+         let invocation = ToolInvocation {
++            pending_spawn: None,
+             session,
+             turn,
+             step_context,
+diff --git a/codex-rs/core/src/tools/tool_dispatch_trace_tests.rs b/codex-rs/core/src/tools/tool_dispatch_trace_tests.rs
+index 086ed39..f3d531f 100644
+--- a/codex-rs/core/src/tools/tool_dispatch_trace_tests.rs
++++ b/codex-rs/core/src/tools/tool_dispatch_trace_tests.rs
+@@ -356,6 +356,7 @@ fn test_invocation_with_payload(
+ ) -> ToolInvocation {
+     let step_context = StepContext::for_test(Arc::clone(&turn));
+     ToolInvocation {
++        pending_spawn: None,
+         session,
+         step_context,
+         turn,
+diff --git a/codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json b/codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json
+index 48dd4c5..ac69990 100644
+--- a/codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json
++++ b/codex-rs/hooks/schema/generated/pre-tool-use.command.input.schema.json
+@@ -26,6 +26,7 @@
+     "model": {
+       "type": "string"
+     },
++    "pending_delegation": true,
+     "permission_mode": {
+       "enum": [
+         "default",
+diff --git a/codex-rs/hooks/src/engine/mod_tests.rs b/codex-rs/hooks/src/engine/mod_tests.rs
+index a185e45..124a89f 100644
+--- a/codex-rs/hooks/src/engine/mod_tests.rs
++++ b/codex-rs/hooks/src/engine/mod_tests.rs
+@@ -637,6 +637,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
+     assert!(listed.hooks[0].is_managed);
+     let cwd = cwd();
+     let preview = engine.preview_pre_tool_use(&PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+@@ -654,6 +655,7 @@ with Path(r"{log_path}").open("a", encoding="utf-8") as handle:
+ 
+     let outcome = engine
+         .run_pre_tool_use(PreToolUseRequest {
++            pending_delegation: None,
+             session_id: ThreadId::new(),
+             turn_id: "turn-1".to_string(),
+             subagent: None,
+@@ -728,6 +730,7 @@ async fn requirements_managed_hooks_execute_windows_command_override() {
+ 
+     let outcome = engine
+         .run_pre_tool_use(PreToolUseRequest {
++            pending_delegation: None,
+             session_id: ThreadId::new(),
+             turn_id: "turn-1".to_string(),
+             subagent: None,
+@@ -1124,6 +1127,7 @@ fn requirements_managed_hooks_load_when_managed_dir_is_missing() {
+     assert!(engine.warnings().is_empty());
+     let cwd = cwd();
+     let preview = engine.preview_pre_tool_use(&PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+@@ -1554,6 +1558,7 @@ fn discovers_hooks_from_json_and_toml_in_the_same_layer() {
+ 
+     let cwd = cwd();
+     let preview = engine.preview_pre_tool_use(&PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+@@ -1645,6 +1650,7 @@ fn profile_user_layers_load_shared_hooks_json_once() {
+     assert!(engine.warnings().is_empty());
+     assert_eq!(engine.handlers.len(), 1);
+     let preview = engine.preview_pre_tool_use(&PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+@@ -2062,6 +2068,7 @@ print(json.dumps({
+     );
+ 
+     let preview = engine.preview_pre_tool_use(&PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+@@ -2094,6 +2101,7 @@ print(json.dumps({
+ 
+     let outcome = engine
+         .run_pre_tool_use(PreToolUseRequest {
++            pending_delegation: None,
+             session_id: ThreadId::new(),
+             turn_id: "turn-1".to_string(),
+             subagent: None,
+@@ -2716,6 +2724,7 @@ async fn mcp_tool_hooks_expand_event_input_and_apply_pre_tool_decisions() {
+     .expect("config layer stack");
+ 
+     let request = PreToolUseRequest {
++        pending_delegation: None,
+         session_id: ThreadId::new(),
+         turn_id: "turn-1".to_string(),
+         subagent: None,
+diff --git a/codex-rs/hooks/src/events/pre_tool_use.rs b/codex-rs/hooks/src/events/pre_tool_use.rs
+index c1baebd..dddf892 100644
+--- a/codex-rs/hooks/src/events/pre_tool_use.rs
++++ b/codex-rs/hooks/src/events/pre_tool_use.rs
+@@ -22,6 +22,7 @@ use crate::schema::SubagentCommandInputFields;
+ 
+ #[derive(Debug, Clone)]
+ pub struct PreToolUseRequest {
++    pub pending_delegation: Option<Value>,
+     pub session_id: ThreadId,
+     pub turn_id: String,
+     pub subagent: Option<common::SubagentHookContext>,
+@@ -175,6 +176,7 @@ fn latest_updated_input(
+ fn command_input_json(request: &PreToolUseRequest) -> Result<String, serde_json::Error> {
+     let subagent = SubagentCommandInputFields::from(request.subagent.as_ref());
+     serde_json::to_string(&PreToolUseCommandInput {
++        pending_delegation: request.pending_delegation.clone(),
+         session_id: request.session_id.to_string(),
+         turn_id: request.turn_id.clone(),
+         agent_id: subagent.agent_id,
+@@ -804,6 +806,7 @@ mod tests {
+ 
+     fn request_for_tool_use(tool_use_id: &str) -> super::PreToolUseRequest {
+         super::PreToolUseRequest {
++            pending_delegation: None,
+             session_id: ThreadId::new(),
+             turn_id: "turn-1".to_string(),
+             subagent: None,
+diff --git a/codex-rs/hooks/src/schema.rs b/codex-rs/hooks/src/schema.rs
+index bb50807..92dfa7d 100644
+--- a/codex-rs/hooks/src/schema.rs
++++ b/codex-rs/hooks/src/schema.rs
+@@ -276,6 +276,8 @@ pub(crate) enum PreToolUseDecisionWire {
+ #[serde(deny_unknown_fields)]
+ #[schemars(rename = "pre-tool-use.command.input")]
+ pub(crate) struct PreToolUseCommandInput {
++    #[serde(skip_serializing_if = "Option::is_none")]
++    pub pending_delegation: Option<Value>,
+     pub session_id: String,
+     /// Codex extension: expose the active turn id to internal turn-scoped hooks.
+     pub turn_id: String,
+@@ -1201,6 +1203,7 @@ mod tests {
+             agent_type: "worker".to_string(),
+         }));
+         let input = PreToolUseCommandInput {
++            pending_delegation: None,
+             session_id: "session-1".to_string(),
+             turn_id: "turn-1".to_string(),
+             agent_id: subagent.agent_id,
+@@ -1234,6 +1237,7 @@ mod tests {
+         );
+ 
+         let root_input = PreToolUseCommandInput {
++            pending_delegation: None,
+             session_id: "session-1".to_string(),
+             turn_id: "turn-1".to_string(),
+             agent_id: None,

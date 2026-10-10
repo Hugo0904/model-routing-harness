@@ -4,6 +4,8 @@
 
 ## 使用
 
+E7 另提供[隔離 Codex source 匯出實驗](docs/e7-host-export-proof.md)：以固定版本的實際 resolver 產生唯讀委派事實，再接入 MRH 合成回放。Patch、來源版本與重現方法均留在本專案；已安裝的 Codex 與正式 resolver 沒有啟用這個入口，完整 R1 仍未完成。
+
 安裝到自行選擇的虛擬環境；不需要 build dependency 或 provider 憑證：
 
 ```sh

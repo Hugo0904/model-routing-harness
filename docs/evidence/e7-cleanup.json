@@ -1,0 +1,8 @@
+{
+  "owned_root": "runtime/e7-host",
+  "owner": "MRH-001-E7",
+  "removed": true,
+  "elapsed_seconds": 13.743,
+  "removed_content": "owned checkout, Rust/clippy tools, dependency/build caches, lib-test binary, logs and temporary state; reviewable patches/base/license/sanitized evidence retained",
+  "installed_or_global_files_removed": false
+}
