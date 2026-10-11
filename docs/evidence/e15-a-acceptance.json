@@ -1,0 +1,66 @@
+{
+  "root": "/private/tmp/mrh-a-e15-qv4x3ljy",
+  "bundle": "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces",
+  "env": {
+    "HOME": "/private/tmp/mrh-a-e15-qv4x3ljy/home",
+    "PATH": "/private/tmp/mrh-a-e15-qv4x3ljy/bin",
+    "TMPDIR": "/private/tmp/mrh-a-e15-qv4x3ljy",
+    "TERM": "xterm-256color",
+    "LANG": "en_US.UTF-8",
+    "NO_COLOR": "1"
+  },
+  "source_hashes_verified": 34,
+  "manifest_entries_verified": 2059,
+  "artifact_sha256": "38b7d2038cadae1feb744e0fcf97a058087bdcc2b8c6190479a26d772574af8f",
+  "interpreter": {
+    "executable": "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/bin/python3.11",
+    "prefix": "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime",
+    "path": [
+      "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/lib/python311.zip",
+      "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/lib/python3.11",
+      "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/lib/python3.11/lib-dynload",
+      "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/lib/python3.11/site-packages"
+    ],
+    "isolated": 1
+  },
+  "settings_path": "/private/tmp/mrh-a-e15-qv4x3ljy/mrh-profile-e071cc1ce0fb4cbaa70546e4f03ad371/settings.json",
+  "saved_sha256": "2d995591dfc249623891cc960cda072fa34ee6c8d7dbbc1e230a38846d35f28b",
+  "saved_policy": {
+    "allowed_workspaces": [],
+    "classifier_model": "jev-1.13.0",
+    "enabled": false,
+    "owner": "org.model-routing-harness.settings.v1",
+    "policy": {
+      "rates": {},
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "sonnet"
+        }
+      },
+      "timeout_seconds": 1.0,
+      "top_mode": "Main"
+    },
+    "provider": "typesafe",
+    "revision": 1,
+    "schema_version": 1,
+    "task_export_permitted": false
+  },
+  "tool_version": "2.1.267 (Claude Code)",
+  "cancel_policy_bytes_unchanged": true,
+  "plugin_python": "/private/tmp/mrh-a-e15-qv4x3ljy/Application With Spaces/runtime/bin/python3.11",
+  "launcher_disabled": {},
+  "launcher_integrity": {
+    "systemMessage": "MRH: runtime integrity verification failed; original tool call preserved. Use mrh stats --details with this profile's --settings or --db. Recording and warning deduplication are unavailable; this fault may be absent from history."
+  },
+  "proposals": 0,
+  "jev_attempts": 0,
+  "manual_pty": {
+    "columns": 56,
+    "save": "sonnet/low",
+    "cancel": "haiku/inherit"
+  },
+  "source_tip": "8a726552a25965a9084a94b664240319ca15ccc9",
+  "scope": "A actual local standalone entry and keyboard operation; matching B relocation/Codex/packager evidence reused; no provider or production claim",
+  "owned_root_absent": true
+}

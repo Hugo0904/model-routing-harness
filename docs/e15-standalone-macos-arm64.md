@@ -1,6 +1,6 @@
 # E15：可搬移的 macOS arm64 本機候選包
 
-這個候選包讓使用者保留「MRH 加所選 vendor CLI」的操作方式，不需要另外建立 Python 環境、安裝 AI SDK／Node 或部署 bridge。MRH 自帶私有 CPython；vendor CLI 本身的安裝需求仍由該 CLI 負責。這是供 A 本人驗收的本機候選，不是已發布、簽章／notarize 的全平台 release，也不代表 R1 或 R2／Gemini 已完成。
+這個候選包讓使用者保留「MRH 加所選 vendor CLI」的操作方式，不需要另外建立 Python 環境、安裝 AI SDK／Node 或部署 bridge。MRH 自帶私有 CPython；vendor CLI 本身的安裝需求仍由該 CLI 負責。A 已親自操作並接受這份本機候選，詳見 [A 驗收](evidence/e15-a-acceptance.json)。它不是已發布、簽章／notarize 的全平台 release，也不代表 R1 或 R2／Gemini 已完成。
 
 ## 取出與操作
 

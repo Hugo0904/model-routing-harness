@@ -1,6 +1,8 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E10R 本機來源候選 0.3.0**。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。A 已親自驗證 Codex 公開清單、選單保存，以及隔離公開 Hook 的停止／更新後保持停止／手動新委派流程。先前安裝版證據不包含 E10R 修正，詳見 [本次驗收](docs/evidence/e10r-a-acceptance.json)。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+子代理任務分級器與終端工具，MRH-001 **E15 本機候選 0.3.0**。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。Codex／Claude 的工具宣告清單與保存操作已經 A 驗收；Gemini 清單尚未接入。模型清單支援不等於該 AI 的子代理路由已接通。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+
+Mac arm64 可直接使用[自帶執行環境的候選包](docs/e15-standalone-macos-arm64.md)：解壓後在資料夾內執行 `./mrh model`，只需另行準備所選 vendor CLI，不需自行安裝 Python 或 SDK。A 已親自驗證這份封裝；目前仍是本機候選，未公開發布。下面的 Python／venv 指令保留供開發使用。
 
 首次使用請看[安裝、設定與確認結果](docs/quickstart.md)。設定檔、CLI 編輯與畫面讀取共用同一來源；設定完成不等於正式 Hook 已啟用。
 
