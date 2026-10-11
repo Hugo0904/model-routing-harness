@@ -67,6 +67,7 @@ class NativeFixture(Fixture):
             # documented collaboration surface; do not fabricate a tool table.
             namespace=next((name for name,functions in namespaces.items() if 'spawn_agent' in functions),'collaboration')
             arguments={'message':'MRH_CHILD_'+self.scenario,'task_name':'owned_'+self.scenario.replace('-','_'),'fork_turns':'none'}
+            if self.scenario=='light':arguments.update(model=None,reasoning_effort=None)
             if self.scenario=='explicit-model':arguments['model']='gpt-6.1-sol'
             if self.scenario=='explicit-effort':arguments['reasoning_effort']='high'
             if self.scenario=='special-role':arguments['agent_type']='explorer'

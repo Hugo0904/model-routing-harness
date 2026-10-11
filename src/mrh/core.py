@@ -130,7 +130,8 @@ def action_eligibility(proposal, policy, facts, tier):
         return "missing_target_model", None
     if not target.available.value:
         return "unsupported_model", None
-    requested = original.get("reasoning_effort", mapping.get("effort"))
+    requested = original.get('reasoning_effort')
+    if requested is None:requested = mapping.get('effort')
     explicit_effort = requested is not None
     if explicit_effort and not safe_id(requested):
         return "unsupported_effort", None
@@ -177,7 +178,8 @@ def selected_unavailability(proposal, policy, facts, tier):
         return None
     if not target.available.value:
         return model, 'unsupported_model'
-    effort = proposal.tool_input.get('reasoning_effort', mapping.get('effort'))
+    effort = proposal.tool_input.get('reasoning_effort')
+    if effort is None:effort = mapping.get('effort')
     if effort is None:
         effort = target.inherited_effort.value if target.inherited_effort.known else None
     known_effort = safe_id(effort) or (effort is None and target.inherited_effort.known)

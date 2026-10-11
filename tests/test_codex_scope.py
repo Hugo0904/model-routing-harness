@@ -10,9 +10,11 @@ from types import SimpleNamespace
 
 from mrh import codex_scope,plugin,settings
 from mrh.catalog import executable_hash
-from mrh.core import ScriptedClassifier,route,cached_effect_blocker
+from mrh.core import ScriptedClassifier,route,cached_effect_blocker,cached_operator_stop
 from mrh.facts import HostSnapshot
 from mrh.types import Proposal,Classification
+from dataclasses import replace
+from mrh.facts import Fact
 
 
 class ScopeTests(unittest.TestCase):
@@ -53,6 +55,52 @@ class ScopeTests(unittest.TestCase):
             result=route(self.proposal,policy,self.facts(),ScriptedClassifier([Classification(tier,.9)]))
             self.assertEqual(result.action,action)
             if action=='request_child':self.assertEqual(result.patch,{'model':'gpt-5.6-luna','reasoning_effort':'low'})
+
+    def test_omitted_and_null_generic_effort_use_same_mapping_without_mutating_arguments(self):
+        for fields in ({},{'model':None,'reasoning_effort':None}):
+            original={**self.event['tool_input'],**fields};before=copy.deepcopy(original)
+            proposal=replace(self.proposal,tool_input=original)
+            decision=route(proposal,self.policy,self.facts(),ScriptedClassifier([Classification('Light',.9)]))
+            self.assertEqual(decision.patch,{'model':'gpt-5.6-luna','reasoning_effort':'low'})
+            self.assertEqual(original,before)
+
+    def test_null_selected_unsupported_effort_keeps_d23_and_cached_replay_stop(self):
+        proposal=replace(self.proposal,tool_input={**self.event['tool_input'],'model':None,'reasoning_effort':None})
+        assurance=self.facts();initial=route(proposal,self.policy,assurance,ScriptedClassifier([Classification('Top',.9)]))
+        policy=copy.deepcopy(self.policy);policy['fixed']['effort']='unsupported-selected'
+        stopped=route(proposal,policy,assurance,ScriptedClassifier([Classification('Top',.9)]))
+        self.assertEqual((stopped.action,stopped.reason),('operator_update_required','unsupported_effort'))
+        targets=tuple(replace(t,efforts=Fact.configured(t.efforts.scope,('high',),'synthetic-effort-change'))
+                      if t.model=='gpt-5.6-luna' else t for t in assurance.targets)
+        changed=replace(assurance,facts=replace(assurance.facts,targets=targets))
+        replay=cached_operator_stop(proposal,self.policy,changed,initial)
+        self.assertEqual((replay.action,replay.reason,replay.target_model),('operator_update_required','unsupported_effort','gpt-5.6-luna'))
+
+    def test_startup_override_forms_refused_and_direct_local_modes_retained(self):
+        valid=[['codex','--no-daemon'],['codex','--no-daemon','--no-alt-screen','-C',str(self.work)],
+               ['codex','--no-daemon','--cd='+str(self.work)],['codex','--no-daemon','-C'+str(self.work)],
+               ['codex','app-server','--listen','stdio://'],['codex','app-server','--listen=stdio://']]
+        for args in valid:self.assertTrue(codex_scope.supported_startup(args),args)
+        forms=json.loads((Path(__file__).resolve().parents[1]/'docs/evidence/e17r-parser-forms.json').read_text())['rows']
+        for row in forms:self.assertFalse(codex_scope.supported_startup(['codex','--no-daemon',*row['argv']]),row['argv'])
+        for args in (['codex'],['codex','--remote=unix://x'],['codex','resume','--no-daemon'],
+                     ['codex','--no-daemon','--unknown-mode'],['codex','--no-daemon','app-server','--listen=ws://localhost']):
+            self.assertFalse(codex_scope.supported_startup(args),args)
+
+    def test_visible_startup_override_stops_before_key_or_jev(self):
+        from mrh.runtime import configured_event
+        from test_typesafe import FakeTransport
+        descriptor=self.descriptor();binding=self.root/'binding.json';binding.write_text(json.dumps({'codex_scope':descriptor}))
+        path=self.root/'state/settings.json';settings.init(path)
+        settings.update(path,enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.work)],policy=self.policy)
+        transport=FakeTransport();keys=[]
+        def native(scope):
+            if not codex_scope.supported_startup(['codex','--no-daemon','--config=agents.default_subagent_model="protected"']):
+                raise codex_scope.ScopeError('scope_host_unverified')
+        with patch('mrh.codex_scope._native_parent',side_effect=native):
+            output=configured_event(self.event,path,transport=transport,credential_resolver=lambda:keys.append(1),scope_binding=binding)
+        self.assertIn('systemMessage',output);self.assertNotIn('hookSpecificOutput',output)
+        self.assertEqual((keys,transport.calls),([],[]))
 
     def test_explicit_model_effort_and_special_role_skip_classifier(self):
         for fields,reason in (({'model':'chosen'},'explicit_model'),({'reasoning_effort':'high'},'explicit_effort'),

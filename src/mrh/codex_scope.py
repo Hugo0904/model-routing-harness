@@ -124,6 +124,40 @@ def prepare(binary, home, workspace):
             'excluded_overrides':'session/turn model-effort-config and dynamic role overrides; not observed by Hook'}
 
 
+def supported_startup(argv):
+    """Bounded allowlist for the pinned local invocation, not a CLI parser.
+
+    Split/equals/attached startup overrides are all outside this contract.
+    Initial prompts/options with ambiguous ps serialization are rejected;
+    normal prompts are entered after the supported interactive startup.
+    """
+    if not isinstance(argv,list) or not argv or len(argv)>64:return False
+    args=argv[1:];mode='interactive';no_daemon=False;listen=False;i=0
+    while i<len(args):
+        arg=args[i]
+        if arg=='--no-daemon':no_daemon=True
+        elif arg in ('--no-alt-screen','--strict-config'):pass
+        elif arg=='app-server' and mode=='interactive':mode='app-server'
+        elif arg in ('-C','--cd','--listen'):
+            i+=1
+            if i>=len(args) or not args[i] or args[i].startswith('-'):return False
+            if arg=='--listen':
+                if args[i]!='stdio://':return False
+                listen=True
+        elif arg.startswith(('--cd=','-C')) and arg not in ('--cd','-C'):
+            value=arg.split('=',1)[1] if arg.startswith('--cd=') else arg[2:]
+            if not value:return False
+        elif arg.startswith('--listen='):
+            if arg!='--listen=stdio://':return False
+            listen=True
+        else:
+            # All other flags/positionals, including -cVALUE/-mMODEL/-pNAME,
+            # --config=... and provider/feature/remote overrides, are excluded.
+            return False
+        i+=1
+    return listen if mode=='app-server' else no_daemon and not listen
+
+
 def _native_parent(scope):
     pid=os.getppid()
     for _ in range(8):
@@ -143,10 +177,7 @@ def _native_parent(scope):
             size=lib.proc_pidpath(pid,buffer,len(buffer))
             command=buffer.value.decode() if size>0 else None
             if command==scope['binary']:
-                if (not argv or any(x in argv for x in ('-c','--config','-p','--profile','-m','--model','--enable','--disable',
-                                                      'resume','fork','cloud','--dangerously-bypass-hook-trust'))):
-                    raise ScopeError('scope_host_unverified')
-                if 'app-server' in argv and ('--listen' not in argv or argv[argv.index('--listen')+1]!='stdio://'):
+                if not supported_startup(argv):
                     raise ScopeError('scope_host_unverified')
                 return
             pid=parent
