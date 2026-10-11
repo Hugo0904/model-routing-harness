@@ -1,0 +1,243 @@
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  FIRST USE  /  choose an installed tool
+
+  > 1. Gemini
+    2. Codex Desktop bundled CLI
+    3. Cancel; keep policy and exit
+
+  >
+  Gemini / 0.63.0
+  This creates an MRH profile, not an account login
+  or working routing. Models are tool-advertised;
+  account access is unconfirmed. No Hook is
+  activated.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  CONFIRM MRH PROFILE
+
+  > 1. Bind this MRH profile
+    2. Cancel; leave unchanged
+
+  >
+  MRH profile bound. Policy remains unchanged until
+  Save.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 0
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Preserve
+    Model: Unset
+    Effort: —
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: gemini:acp-session-new:isolated-defaults /
+  0.63.0 / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+  > 1. Auto (auto)
+    2. gemini-3.1-pro-preview (gemini-3.1-pro-preview-
+  customtools)
+    3. gemini-3-flash-preview (gemini-3-flash-preview)
+    4. gemini-2.5-pro (gemini-2.5-pro)
+    5. gemini-3.8-flash (gemini-3.8-flash)
+    6. gemini-3.5-flash-lite (gemini-3.5-flash-lite)
+    7. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. Auto (auto)
+  > 2. gemini-3.1-pro-preview (gemini-3.1-pro-preview-
+  customtools)
+    3. gemini-3-flash-preview (gemini-3-flash-preview)
+    4. gemini-2.5-pro (gemini-2.5-pro)
+    5. gemini-3.8-flash (gemini-3.8-flash)
+    6. gemini-3.5-flash-lite (gemini-3.5-flash-lite)
+    7. Cancel; keep policy and exit
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. Cancel; keep policy and exit
+
+  >
+  Back. Draft retained; nothing has been saved.
+  Source: gemini:acp-session-new:isolated-defaults /
+  0.63.0 / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. Auto (auto)
+  > 2. gemini-3.1-pro-preview (gemini-3.1-pro-preview-
+  customtools) [current]
+    3. gemini-3-flash-preview (gemini-3-flash-preview)
+    4. gemini-2.5-pro (gemini-2.5-pro)
+    5. gemini-3.8-flash (gemini-3.8-flash)
+    6. gemini-3.5-flash-lite (gemini-3.5-flash-lite)
+    7. Cancel; keep policy and exit
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Light: Unset / preserve original ->
+  gemini-3.1-pro-preview-customtools / inherit
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Back. Draft retained; nothing has been saved.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Light: Unset / preserve original ->
+  gemini-3.1-pro-preview-customtools / inherit
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Saved.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 1
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gemini-3.1-pro-preview-customtools
+    Effort: inherit
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.

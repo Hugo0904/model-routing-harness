@@ -1,0 +1,123 @@
+{
+  "scope": "Gemini public metadata -> parser/identity -> selector/CAS -> packaged entry",
+  "new_and_affected_checks": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_gemini_catalog test_model_selector test_operator_stop",
+    "count": 39,
+    "seconds": 0.44,
+    "exit": 0,
+    "result": "OK"
+  },
+  "actual_offline_acp_probe": {
+    "without_key_error": -32000,
+    "with_invalid_nonsecret_placeholder_models": 6,
+    "methods": [
+      "initialize",
+      "session/new"
+    ],
+    "prompt_or_user_messages": 0,
+    "real_credential": false,
+    "server_auth_claim": false,
+    "outbound_denied": true,
+    "seconds": 3.88
+  },
+  "actual_isolation_canaries": {
+    "private_read_denied": true,
+    "outside_write_denied": true,
+    "keychain_program_denied": true,
+    "outbound_denied": true
+  },
+  "actual_bundle_consumer": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/verify_gemini_entry.py --bundle dist/model-routing-harness-0.3.0-e16-macos-arm64 --output docs/evidence/e16-bundled-entry.json",
+    "exit": 0,
+    "seconds": 16.036,
+    "keyboard_geometry": [
+      24,
+      56
+    ],
+    "keys": "directions/Enter only",
+    "save_back_cancel_policy_history": true,
+    "changed_payload_same_stub_failure_readonly_cancel": true,
+    "module_source_bundle_local": true
+  },
+  "build": {
+    "source_commit": "735aa24ccff2fe1a0fdcaddae45c1fc69f075a43",
+    "directory": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e16-macos-arm64",
+    "archive": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e16-macos-arm64.tar.gz",
+    "archive_sha256": "75e20010339a93aa4aa940dd506c9825725897343579d3aa77302a27db7b303c",
+    "archive_bytes": 26802300,
+    "manifest_sha256": "0ae368b9bbcfe9afe5ed77ce20f3a5014333858957dc08d4b2950eb5c15a6ac9",
+    "runtime_asset_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10",
+    "runtime_files": 2059,
+    "notices": 19,
+    "e15_candidate_preserved": true
+  },
+  "cleanup": {
+    "owned_groups": [
+      {
+        "group": 38787,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 38797,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 38880,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 38886,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 38920,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 26284,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      },
+      {
+        "group": 26301,
+        "pgrep_exit": 1,
+        "stdout_empty": true,
+        "stderr": ""
+      }
+    ],
+    "bundle_entry_root_absent": true,
+    "public_probe_root_absent": true,
+    "initial_pty_harness_failed_run_exact_argv_query": {
+      "pgrep_exit": 1,
+      "stdout_empty": true
+    },
+    "final_e16_and_accepted_e15_artifacts_preserved": true,
+    "real_vendor_installation_unchanged": true,
+    "screenshots": "none"
+  },
+  "reused": [
+    "E15 fixed runtime/packager/license/relocation/Codex/Claude evidence",
+    "E14 routing/notification semantics remain unchanged; no full suite/native host replay"
+  ],
+  "remaining_unverified": [
+    "A personal E16 acceptance",
+    "account-confirmed availability",
+    "real provider/model execution",
+    "Gemini cross-vendor routing adapter",
+    "R1 formal adoption/original overall denominator",
+    "other OS/CLI version/notarized/published release"
+  ],
+  "monitor": "ready with no resumable original identity; none selected",
+  "diff_check_exit": 0
+}

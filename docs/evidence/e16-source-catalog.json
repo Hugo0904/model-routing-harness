@@ -1,0 +1,72 @@
+{
+  "binding": {
+    "tool": "gemini",
+    "executable": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@google/gemini-cli/bundle/gemini.js",
+    "label": "Gemini",
+    "supported": true,
+    "version": "0.63.0",
+    "executable_sha256": "bb5e78f65f97e95716b3bfafd955d7ada3658e0959fc3993d64b11f7373219d8"
+  },
+  "catalog": {
+    "binding_id": "e16-source",
+    "tool": "gemini",
+    "scope": "bb5e78f65f97e95716b3bfafd955d7ada3658e0959fc3993d64b11f7373219d8",
+    "version": "0.63.0",
+    "source": "gemini:acp-session-new:isolated-defaults",
+    "fetched_at": 1791713735.4039779,
+    "models": [
+      {
+        "id": "auto",
+        "label": "Auto",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      },
+      {
+        "id": "gemini-3.1-pro-preview-customtools",
+        "label": "gemini-3.1-pro-preview",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      },
+      {
+        "id": "gemini-3-flash-preview",
+        "label": "gemini-3-flash-preview",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      },
+      {
+        "id": "gemini-2.5-pro",
+        "label": "gemini-2.5-pro",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      },
+      {
+        "id": "gemini-3.8-flash",
+        "label": "gemini-3.8-flash",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      },
+      {
+        "id": "gemini-3.5-flash-lite",
+        "label": "gemini-3.5-flash-lite",
+        "efforts": [],
+        "state": "available",
+        "retirement_ref": null,
+        "resolved_model": null
+      }
+    ],
+    "assurance": "tool-advertised",
+    "complete": true
+  },
+  "seconds": 4.028,
+  "installation_file_count": 829
+}

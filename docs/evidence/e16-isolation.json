@@ -1,0 +1,19 @@
+{
+  "checks": {
+    "private_read_denied": true,
+    "outside_write_denied": true,
+    "keychain_program_denied": true,
+    "outbound_denied": true
+  },
+  "profile": "(version 1)\n(deny default)\n(allow process*)\n(allow sysctl-read)\n(allow signal)\n(allow file-read-data (literal \"/\"))\n(allow file-read-metadata (literal \"/\") (literal \"/System\") (literal \"/dev\") (literal \"/opt\") (literal \"/opt/homebrew\") (literal \"/private\") (literal \"/private/tmp\"))\n(allow file-read* (subpath \"/private/tmp/mrh-gemini-wv4ssofm\") (subpath \"/System/Library\") (subpath \"/System/Applications\") (subpath \"/System/DriverKit\") (subpath \"/usr\") (subpath \"/bin\") (subpath \"/sbin\") (subpath \"/opt/homebrew/Cellar\") (subpath \"/opt/homebrew/opt\") (subpath \"/private/tmp/mrh-gemini-wv4ssofm\") (subpath \"/dev/null\") (subpath \"/dev/urandom\"))\n(allow file-write* (subpath \"/private/tmp/mrh-gemini-wv4ssofm\") (literal \"/dev/null\"))\n(deny file-read* (subpath \"/Users\") (subpath \"/System/Volumes/Data/Users\"))\n(deny file-read* (subpath \"/private/tmp/mrh-gemini-wv4ssofm/private-canary\"))\n(deny process-exec (literal \"/usr/bin/security\"))\n(deny mach-lookup)\n(deny network*)\n",
+  "owned_root": "/private/tmp/mrh-gemini-wv4ssofm",
+  "outer_root": "/private/tmp/mrh-e16-outside-v3ipw2zq",
+  "node_sha256": "d1c54537f00093999715de0617c0ef2191dbf1875720201d4c2fde16195a9287",
+  "installation_sha256": "bb5e78f65f97e95716b3bfafd955d7ada3658e0959fc3993d64b11f7373219d8",
+  "npm_files": 829,
+  "entry": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@google/gemini-cli/bundle/gemini.js",
+  "node": "/Users/shawn/.nvm/versions/node/v20.19.4/bin/node",
+  "real_credentials_or_provider": false,
+  "owned_root_absent": true,
+  "outside_root_absent": true
+}
