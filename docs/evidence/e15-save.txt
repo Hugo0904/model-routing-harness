@@ -1,0 +1,202 @@
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  FIRST USE  /  choose an installed tool
+
+  > 1. Codex
+    2. Claude
+    3. Codex Desktop bundled CLI
+    4. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  FIRST USE  /  choose an installed tool
+
+    1. Codex
+  > 2. Claude
+    3. Codex Desktop bundled CLI
+    4. Cancel; keep policy and exit
+
+  >
+  Claude / 2.1.267 (Claude Code)
+  This creates an MRH profile, not an account login
+  or working routing. Models are tool-advertised;
+  account access is unconfirmed. No Hook is
+  activated.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  CONFIRM MRH PROFILE
+
+  > 1. Bind this MRH profile
+    2. Cancel; leave unchanged
+
+  >
+  MRH profile bound. Policy remains unchanged until
+  Save.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 0
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Preserve
+    Model: Unset
+    Effort: —
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: claude:stream-json-initialize:isolated-
+  defaults / 2.1.267 (Claude Code) / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+  > 1. Default (recommended) (default) [resolved: clau
+  de-opus-5[1m]]
+    2. Opus (1M context) (opus[1m]) [resolved: claude-
+  opus-5[1m]]
+    3. Sonnet (sonnet) [resolved: claude-sonnet-5]
+    4. Haiku (haiku) [resolved: claude-haiku-4-5-20251
+  001]
+    5. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. Default (recommended) (default) [resolved: clau
+  de-opus-5[1m]]
+  > 2. Opus (1M context) (opus[1m]) [resolved: claude-
+  opus-5[1m]]
+    3. Sonnet (sonnet) [resolved: claude-sonnet-5]
+    4. Haiku (haiku) [resolved: claude-haiku-4-5-20251
+  001]
+    5. Cancel; keep policy and exit
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. low
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed) [
+  current]
+  > 2. low
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Light: Unset / preserve original -> opus[1m] / low
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Saved.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 1
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: opus[1m]
+    Effort: low
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.

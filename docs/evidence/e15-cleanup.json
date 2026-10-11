@@ -1,0 +1,87 @@
+{
+  "owned_verification_root_absent": true,
+  "owned_groups": [
+    {
+      "group": 11218,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11277,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11299,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11316,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11327,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11328,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11334,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11340,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11341,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11374,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11429,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11460,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    },
+    {
+      "group": 11466,
+      "pgrep_exit": 1,
+      "stdout_empty": true,
+      "stderr": ""
+    }
+  ],
+  "initial_candidate_removed": true,
+  "final_candidate_preserved": true,
+  "fixed_public_build_cache_preserved": true,
+  "screenshots": "none; actual PTY text retained"
+}
