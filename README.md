@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E9R 本機候選 0.3.0**。CLI 已有四級配置表、互動設定、取消／衝突保護及同檔讀回；當前程式已透過隔離安裝版入口驗證。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+可離線安裝的 Python 3.11+ 路由核心與終端工具，MRH-001 **E10R 本機來源候選 0.3.0**。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。A 已親自驗證 Codex 公開清單、選單保存，以及隔離公開 Hook 的停止／更新後保持停止／手動新委派流程。先前安裝版證據不包含 E10R 修正，詳見 [本次驗收](docs/evidence/e10r-a-acceptance.json)。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
 首次使用請看[安裝、設定與確認結果](docs/quickstart.md)。設定檔、CLI 編輯與畫面讀取共用同一來源；設定完成不等於正式 Hook 已啟用。
 

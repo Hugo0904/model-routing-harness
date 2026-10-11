@@ -10,36 +10,46 @@
 
 Demo 使用隔離的五筆示範資料並自動清除；不是你的實際委派歷史。`--plain` 關閉色彩，省略 `--width` 會依目前終端寬度排列。
 
-## 安裝 CLI
+## 現在直接使用模型選單
 
-下面的 venv 與設定路徑由你明確選擇，與已安裝 Codex 分開。這份指南沒有替你執行正式安裝。
+需要 Python 3.11+，不需要 API key：
+
+```sh
+cd /Users/shawn/Code/model-routing-harness
+PYTHONPATH=src python3.11 -m mrh model light
+```
+
+將 `light` 換成 `small`、`mid`、`top`，或省略等級進入選單。首次選擇已安裝工具並確認建立 MRH profile；單一綁定會自動載入。這是 MRH 設定關聯，不是帳號登入。
+
+- ↑／↓ 選擇，Enter 確認；模型與推理強度不必手打。
+- ← 回上一頁並保留草稿，Esc 取消；取消不保存政策。
+- 最後選 Save 才保存。版本衝突或清單改變時，不會直接覆寫。
+- Top 先選 Main 或 Fixed；Main 不更改主視窗模型，Fixed 再選子代理模型。
+
+預設使用 MRH 自有使用者資料夾。`--root /完整路徑` 可指定另一個綁定登錄目錄，profile 會建立在該目錄的上一層。驗證請使用全新的自有父資料夾，避免混用正式設定。
+
+## 安裝後用短指令
+
+下面是一次性獨立安裝範例，尚未替你執行。請使用尚未存在的 venv 位置；不修改 Codex 登入、Hook 或全域 PATH。
 
 ```sh
 python3.11 -m venv "$HOME/.local/share/mrh/venv"
 "$HOME/.local/share/mrh/venv/bin/python" -m pip install --no-index --no-deps --no-build-isolation /Users/shawn/Code/model-routing-harness
-mrh_cli="$HOME/.local/share/mrh/venv/bin/mrh"
-mrh_settings="$HOME/.local/share/mrh/codex/settings.json"
-"$mrh_cli" settings init --path "$mrh_settings"
+source "$HOME/.local/share/mrh/venv/bin/activate"
+mrh model light
 ```
 
-`init` 只接受全新的資料夾或已屬於 MRH 的設定資料夾；不會接管任意既有 JSON。設定檔必須使用完整路徑，檔名是 `settings.json`。每個宿主可使用各自的設定目錄；目前只有 Codex 候選接頭，不能把另存設定當成 Claude／Gemini 已支援。
+日後在終端啟用同一個 venv 後，即可使用 `mrh model`。E10 已驗過套件入口與模組包含；E10R 修正經來源驗收，沒有把舊 wheel 當成本次修正版。
 
-## 修改模型與推理強度
+## 模型不能使用時
 
-```sh
-"$mrh_cli" settings edit --path "$mrh_settings"
-```
+清單讀取失敗時可 Retry、Back 或 Cancel。舊清單只供顯示，不能確認新設定；連線失敗不會被誤判為模型下架。已確認下架的模型會提示手動選替代項目，保留舊設定與歷史。
 
-編輯器依序詢問 Light、Small、Mid 的模型與 effort，接著是 Top 模式。模型名稱與 effort 是你要求的值，並不是已驗證的帳號支援清單。
+在已驗證具備拒絕能力的接頭中，分級選定後若有可信事實確認目標模型／推理強度不可用，會停止該次委派，指出等級及指令，例如 `mrh model top`。更新後，操作者必須重新發起新委派；原委派保持停止，不會自動換模型、交給主模型或自行恢復。這已在隔離公開 Hook 驗證；正式宿主尚未採用，沒有可讀取的下游模型錯誤時也無法代為偵測。
 
-- Enter：保留目前值。
-- `unset`：移除 Light／Small／Mid 的模型指定，保留原委派。
-- `inherit`：不指定 effort，讓宿主沿用其規則；畫面不會猜繼承後的數值。
-- Top `Main`：交回目前主代理，不在此更改主視窗模型或 effort。
-- Top `Fixed`：指定子代理模型與可選 effort。
-- 檢查最後的修改摘要，輸入 `save` 才保存；`cancel`、EOF 或儲存確認前 Ctrl-C 都不寫入。
+## 進階設定
 
-如果編輯期間同一份設定被更新，儲存會拒絕覆蓋並要求重開。修改模型不會自動開啟路由、允許 task 外送，或改掉費率、workspace 等其他設定。既有 `settings configure --policy /absolute/policy.json` 仍可用，兩種方式操作同一份設定。
+舊的 `settings edit` 文字輸入編輯器仍保留；正常選模型請使用上述 `model` 選單。以下讀取指令中的 `mrh_cli` 是安裝後的執行檔完整路徑，`mrh_settings` 是選單綁定的 profile 所使用之 `settings.json` 完整路徑；不要另外初始化另一份設定後誤以為是同一份。修改政策不會自動開啟路由、task 外送或改動其他權限。
 
 ## 確認保存的內容
 
@@ -66,6 +76,16 @@ Jev 讀取本次子任務與四級標準，回傳等級及信心度，MRH 再套
 這不是把 Light 固定等同某個低階模型，也不是把 Mid 固定成 high effort。分類標準與提示詞目前不提供使用者編輯入口；信心度低於 0.5 仍保留原呼叫。明確指定模型、受保護角色、相容性與成本檢查仍適用，Fixed 不會繞過它們。
 
 ## 已驗證與尚未完成
+
+A 已親自驗證 E10R 的 Codex 公開預設清單、方向鍵選擇／返回／保存、取消保存不變與錯誤引導；停止委派採隔離公開 Hook 逐步驗證。見 [A 驗收](evidence/e10r-a-acceptance.json)及[E10R 說明](e10r-operator-stop.md)。
+
+| AI 工具 | 目前實際支援 |
+|---|---|
+| Codex CLI | 工具公開模型／推理清單、鍵盤選擇及保存；帳號權限與正式真模型委派未確認 |
+| Codex Desktop | 可發現內附 CLI；Desktop UI 與正式完整整合未確認 |
+| Claude Code | 清楚顯示尚未支援；可靠模型清單／推理設定／路由接頭仍缺 |
+| Gemini CLI | 清楚顯示尚未支援；可靠模型清單／推理設定／路由接頭仍缺 |
+
 
 [E9R 安裝版證據](e9r-configured-table-proof.md) 已涵蓋離線安裝、實際 CLI 編輯、同檔讀回及寬窄終端呈現。[E8](e8-live-hook-proof.md) 已驗隔離 source 的真實 Hook 子程序控制，但不是你目前已安裝的 Codex。
 
