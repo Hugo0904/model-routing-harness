@@ -1,0 +1,20 @@
+{
+  "decision_id": "D57_AUTH_RISK",
+  "kind": "independent_read_only_risk_reviewer",
+  "requested_profile": {
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "xhigh"
+  },
+  "spawn_accepted": true,
+  "callee_effective_profile_metadata": "not_returned_by_collaboration_tools",
+  "finding": {
+    "priority": "P2",
+    "trigger": "source config replaced by FIFO after reference creation blocks open before regular-file rejection",
+    "resolution": "O_NONBLOCK before fstat; credentials remain unopened by MRH",
+    "verification": "tests.application.test_subscription_auth.SubscriptionAuthTests.test_replaced_config_fifo_is_rejected_before_process_and_cancel_cleans",
+    "result": "passed"
+  },
+  "reviewer_runtime_checks": false,
+  "parent_resolved_finding": true,
+  "scope": "auth reference, cleanup, cancellation, cooperating-process serialization"
+}

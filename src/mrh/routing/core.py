@@ -146,7 +146,7 @@ def action_eligibility(proposal, policy, facts, tier):
     if effective not in target.efforts.value:
         return "unsupported_effort", None
     if tier != "Top":
-        if not facts.original_model.known or not facts.original_effort.known:
+        if not facts.original_model.known:
             return "missing_original_baseline", None
         rates = policy.get("rates", {})
         if not isinstance(rates, dict):

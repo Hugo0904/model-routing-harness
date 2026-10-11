@@ -90,7 +90,7 @@ class SubscriptionTests(unittest.TestCase):
             with self.assertRaises(ClassifierFailure) as caught:parse_stream(data)
             self.assertEqual(caught.exception.reason,'codex_subscription_tool_activity')
 
-    def test_home_instruction_fault_before_any_process_or_attempt(self):
+    def test_auth_source_fault_before_any_process_or_attempt(self):
         with tempfile.TemporaryDirectory() as root:
             home=Path(root);(home/'AGENTS.md').write_text('owned canary')
             events=[];rec=GuardedAttempts(2,lambda *a,**k:events.append(a))
@@ -98,14 +98,14 @@ class SubscriptionTests(unittest.TestCase):
                  patch('mrh.adapters.catalogs.catalog.executable_hash',return_value='4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878'),\
                  patch('subprocess.Popen',side_effect=AssertionError('started')):
                 with self.assertRaises(ClassifierFailure) as caught:CodexSubscriptionClassifier(enabled=True,task_export_permitted=True).classify('literal',None,rec)
-            self.assertEqual(caught.exception.reason,'codex_subscription_home_instructions');self.assertEqual(events,[]);rec.cancel()
+            self.assertEqual(caught.exception.reason,'codex_subscription_auth_source_unconfirmed');self.assertEqual(events,[]);rec.cancel()
 
     def test_sanitized_environment_and_home_instruction_metadata_guard(self):
         with tempfile.TemporaryDirectory() as root:
-            home=Path(root)/'auth';home.mkdir()
+            home=Path(root)/'home';home.mkdir()
             with patch.dict(os.environ,{'CODEX_HOME':str(home),'OPENAI_API_KEY':'private-canary','CODEX_API_KEY':'private-canary',
                                        'TYPESAFE_API_KEY':'private-canary','CODEX_THREAD_ID':'private'},clear=False):
-                env=sanitized_environment(Path(root)/'work')
+                env=sanitized_environment(Path(root))
                 self.assertEqual(env['CODEX_HOME'],str(home));self.assertEqual(env[SENTINEL],'1')
                 self.assertNotIn('private-canary',str(env));self.assertNotIn('CODEX_THREAD_ID',env)
                 for name in ('AGENTS.md','AGENTS.override.md'):
@@ -118,12 +118,17 @@ class SubscriptionTests(unittest.TestCase):
         for status in (b'Logged in using an API key',b'Unknown auth',b'Not logged in'):
             with tempfile.TemporaryDirectory() as root:
                 rec=GuardedAttempts(2);emit=[];rec.emit=lambda *a,**k:emit.append((a,k));calls=[]
+                from mrh.adapters.providers.subscription_auth import FileAuthSource, source_lock
+                home=Path(root).resolve();(home/'work').mkdir();(home/'auth.json').write_text('synthetic-auth');(home/'auth.json').chmod(0o600)
+                source=FileAuthSource.resolve(home,home/'work')
                 def run(argv,*args,**kwargs):
                     calls.append(argv)
                     return (0,b'codex-cli 0.159.3',b'') if '--version' in argv else (0,b'',status)
                 with patch.dict(os.environ,{'CODEX_HOME':root}),patch('mrh.adapters.catalogs.catalog.discover',return_value=[{'tool':'codex','executable':'/official'}]),\
                      patch('mrh.adapters.catalogs.catalog.executable_hash',return_value='4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878'),\
-                     patch('mrh.adapters.providers.codex_subscription.run_process',side_effect=run):
+                     patch('mrh.adapters.providers.codex_subscription.run_process',side_effect=run),\
+                     patch('mrh.adapters.providers.subscription_auth.source_for_binding',return_value=source),\
+                     patch('mrh.adapters.providers.subscription_auth.source_lock',side_effect=lambda s,r,_root=None:source_lock(s,r,home/'locks')):
                     with self.assertRaises(ClassifierFailure) as caught:CodexSubscriptionClassifier(enabled=True,task_export_permitted=True).classify('literal',None,rec)
                 self.assertEqual(caught.exception.reason,'codex_subscription_chatgpt_login_required')
                 self.assertEqual(len(calls),2);self.assertEqual(emit,[]);rec.cancel()

@@ -51,7 +51,7 @@ mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 
 `mrh hook` 讀 stdin JSON、只輸出 Hook JSON，預設 `{}` 原樣放行。`--candidate --db ...` 可記錄委派，CLI 仍不啟用 TypeSafe，沒有有效分級就不改寫原呼叫。隔離合成需另加 `--simulate-tier Top --simulate-confidence 0.9`、`--candidate` 與明確 `--db`；不是正式 Jev 請求。
 
-TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限與 runtime credential resolver 見 [資料契約](docs/contracts.md)。[完整公開設定](examples/settings-disabled.json) 不含 key，載入不讀憑證；E5 的 `settings` 指令與 `hook --settings` 共用同一 reader／factory，再加 operator 指定的 workspace 範圍。政策不等於已驗證宿主能力。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
+TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限與 runtime credential resolver 見 [資料契約](docs/contracts.md)。[完整公開設定](examples/settings-disabled.json) 不含 key，載入不讀憑證；E5 的 `settings` 指令與 `hook --settings` 共用同一 reader／factory，再加 operator 指定的 workspace 範圍。政策不等於已驗證宿主能力。普通 tier 成本使用原委派解析後的 model；未知就保留。目標推理設定仍須已驗證，固定角色與明確推理指定仍保護。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
 
 新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。未準備 configuration scope 的舊 resolver 只讀 Hook 提供的 metadata，必要事實 unknown 時保留原呼叫；已驗證的 pinned CLI 入口另外使用 E17R/E19 scope binding，不把 configuration assurance 說成同 call 的直接觀察。[E6 事實與支援邊界](docs/e6-action-facts-proof.md) 列出精確版本缺口。
 
@@ -83,7 +83,7 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 ## 開發結構與驗證
 
-程式依責任分成 `routing`、`application`、`adapters`、`infrastructure`、`presentation`，測試與開發腳本也按用途放在子目錄。命令入口仍是 `mrh`／`python -m mrh`；root `mrh.cli:main` 保留，內部 imports 使用新套件路徑。對照見[結構搬移與打包交接](docs/architecture-migration.md)。現有啟用指令仍指已接受的 E19 套件，直到 B 交付整合後的新版本；登入、session 與設定不需重建。
+程式依責任分成 `routing`、`application`、`adapters`、`infrastructure`、`presentation`，測試與開發腳本也按用途放在子目錄。命令入口仍是 `mrh`／`python -m mrh`；root `mrh.cli:main` 保留，內部 imports 使用新套件路徑。對照見[結構搬移與打包交接](docs/architecture-migration.md)。現有啟用指令仍指已接受的 E20 套件；D57 的登入隔離與熱讀白名單 source 尚未重新打包或接到日常 Hook；登入、session 與設定不需重建。
 
 依變更選必要 case；以下是開發工具入口，不代表每次都要跑整個 suite 或重做歷史驗收：
 

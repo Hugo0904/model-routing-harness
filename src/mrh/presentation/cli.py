@@ -95,6 +95,9 @@ def build_parser() -> argparse.ArgumentParser:
             item.add_argument("--policy", type=Path, help="explicit policy JSON file; does not enable routing/export")
             item.add_argument("--allow-workspace", action="append", default=None)
             item.add_argument("--clear-workspaces", action="store_true")
+            allowlist = item.add_mutually_exclusive_group()
+            allowlist.add_argument("--workspace-allowlist-file", type=Path)
+            allowlist.add_argument("--clear-workspace-allowlist-file", action="store_true")
             export = item.add_mutually_exclusive_group()
             export.add_argument("--permit-task-export", dest="export_permission", action="store_true", default=None)
             export.add_argument("--deny-task-export", dest="export_permission", action="store_false")
@@ -292,6 +295,8 @@ def _cmd_settings(args, stdin):
                     raise SettingsError("settings_conflict")
                 if args.allow_workspace is not None or args.clear_workspaces:
                     changes["allowed_workspaces"] = args.allow_workspace or []
+                if args.workspace_allowlist_file is not None or args.clear_workspace_allowlist_file:
+                    changes["workspace_allowlist_file"] = args.workspace_allowlist_file
                 if args.policy is not None:
                     from mrh.infrastructure.owned import read_regular
                     from mrh.adapters.providers.typesafe import _no_duplicate_keys

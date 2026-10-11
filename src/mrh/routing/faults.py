@@ -5,6 +5,10 @@ All public notices are fixed text; caller data and exception text stay out.
 """
 
 FAULTS = {
+    'codex_subscription_auth_source_unconfirmed': 'the File-auth source could not be confirmed',
+    'codex_subscription_auth_source_invalid': 'the saved authentication source metadata is unsafe or unavailable',
+    'codex_subscription_auth_reference_invalid': 'the isolated authentication reference changed',
+    'codex_subscription_auth_lock_unavailable': 'the classifier authentication lock was unavailable',
     'scope_unsupported': 'the installed configuration is outside the supported routing scope',
     'scope_changed': 'the routing scope configuration changed; re-prepare this plugin',
     'scope_host_unverified': 'the native invocation is outside the supported local mode',

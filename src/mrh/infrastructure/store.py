@@ -17,6 +17,32 @@ def now():
 
 
 class Store:
+    @classmethod
+    def for_receipt(cls, path, proposal):
+        """Open only an already completed matching admission; never initialize."""
+        from mrh.infrastructure import owned
+        import stat
+        path = owned.canonical_path(path)
+        key = Path(str(path) + ".key")
+        if not path.exists() or not key.exists():
+            return None
+        for item in (path, key):
+            info = item.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+                raise ValueError("unsafe_store_path")
+        obj = cls.__new__(cls)
+        obj.path = path
+        obj.key = owned.read_regular(key, 32)
+        obj.existing_only = True
+        if len(obj.key) != 32:
+            raise ValueError("invalid_runtime_key")
+        with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=5) as db:
+            row = db.execute("SELECT state,platform,surface,session_id,turn_id,tool_call_id,synthetic FROM proposals WHERE id=?",
+                             (proposal.identity,)).fetchone()
+        expected = ("complete", proposal.platform, proposal.surface, proposal.session_id,
+                    proposal.turn_id, proposal.tool_call_id, int(proposal.synthetic))
+        return obj if row == expected else None
+
     def __init__(self, path):
         self.path = Path(path).absolute()
         if self.path.is_symlink():
@@ -96,7 +122,10 @@ class Store:
 
     @contextmanager
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=5)
+        if getattr(self, "existing_only", False):
+            db = sqlite3.connect(self.path.as_uri() + "?mode=rw", uri=True, timeout=5)
+        else:
+            db = sqlite3.connect(self.path, timeout=5)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
         try:

@@ -90,13 +90,18 @@ class ActionFactTests(unittest.TestCase):
         policy = {"top_mode": "Main", "tiers": {"Mid": {"model": "target", "effort": "high"}}}
         result, calls, _, _ = self.decide(facts, policy, "Mid")
         self.assertEqual(result.reason, "missing_original_baseline"); self.assertEqual(calls, 1)
-        baseline = replace(facts, original_model=self.known(p, "original"), original_effort=self.known(p, "low"))
+        baseline = replace(facts, original_model=self.known(p, "original"))
+        self.assertFalse(baseline.original_effort.known)
         result, calls, _, _ = self.decide(baseline, policy, "Mid")
         self.assertEqual(result.reason, "cost_unknown"); self.assertEqual(calls, 1)
         policy["rates"] = {name: {"currency": "USD", "unit": "token", "service": "fixture", "source_ref": "synthetic",
                                   "components": {"input": amount}} for name, amount in (("original", 2), ("target", 1))}
         result, calls, _, _ = self.decide(baseline, policy, "Mid")
         self.assertEqual(result.action, "request_child"); self.assertEqual(calls, 1)
+        blocked, calls, _, _ = self.decide(replace(baseline, original_model=Fact()), policy, "Mid")
+        self.assertEqual(blocked.reason,"missing_original_baseline")
+        blocked, calls, _, _ = self.decide(replace(baseline, role_protection=self.known(p,"effort")),policy,"Mid")
+        self.assertEqual((blocked.reason,calls),("fixed_role_effort",0))
         # Main unavailable but this ordinary branch remains viable independently.
         result, calls, _, _ = self.decide(replace(baseline, deny_supported=self.known(p, False)), policy, "Mid")
         self.assertEqual(result.action, "request_child"); self.assertEqual(calls, 1)

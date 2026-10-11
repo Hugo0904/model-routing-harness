@@ -38,7 +38,8 @@ class SettingsError(ValueError):
 
     def __init__(self, reason: str = "settings_invalid") -> None:
         if type(reason) is not str or reason not in {"settings_invalid", "settings_oversized", "settings_path_invalid",
-                "settings_unowned", "settings_read_failed", "settings_write_failed", "settings_conflict"}:
+                "settings_unowned", "settings_read_failed", "settings_write_failed", "settings_conflict",
+                "workspace_allowlist_invalid"}:
             reason = "settings_invalid"
         self.reason = reason
         super().__init__(reason)
@@ -151,7 +152,7 @@ def validate_settings(value: dict) -> dict:
     """Validate and return a fresh copy of a settings mapping."""
     if type(value) is not dict:
         _invalid()
-    _require_exact_keys(value, _TOP_LEVEL_KEYS)
+    _require_exact_keys(value, _TOP_LEVEL_KEYS, {"workspace_allowlist_file"})
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         _invalid()
     if type(value["owner"]) is not str or value["owner"] != _OWNER:
@@ -171,7 +172,7 @@ def validate_settings(value: dict) -> dict:
     if type(value["classifier_model"]) is not str or value["classifier_model"] != _PROVIDERS[value["provider"]]:
         _invalid()
 
-    return {
+    result = {
         "schema_version": 1,
         "owner": _OWNER,
         "revision": value["revision"],
@@ -182,6 +183,9 @@ def validate_settings(value: dict) -> dict:
         "classifier_model": value["classifier_model"],
         "policy": _validate_policy(value["policy"]),
     }
+    if "workspace_allowlist_file" in value:
+        result["workspace_allowlist_file"] = _validate_workspace_path(value["workspace_allowlist_file"])
+    return result
 
 
 def default_settings() -> dict:

@@ -1,0 +1,15 @@
+{
+  "evidence_kind": "official-public-login-status-only",
+  "model_requests": 0,
+  "credential_bytes_read_by_mrh": false,
+  "auth_files_copied": false,
+  "keyring_operations": false,
+  "forced_refresh": false,
+  "status": "chatgpt",
+  "source_regular": true,
+  "reference_symlink": true,
+  "owned_scratch": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-classifier-3ozge2s5",
+  "scratch_removed": true,
+  "source_retained": true,
+  "probe_lock_scratch_removed": true
+}

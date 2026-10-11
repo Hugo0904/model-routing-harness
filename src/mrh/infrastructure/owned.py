@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import stat
 import tempfile
+import time
 
 OWNER = "org.model-routing-harness"
 MARKER = ".mrh-owner.json"
@@ -25,7 +26,8 @@ def canonical_path(value):
 
 
 def read_regular(path, limit=65536):
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    # Reject FIFOs via fstat without blocking before cancellation can proceed.
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
@@ -94,14 +96,24 @@ def initialize(root, kind, allowed=None):
 
 
 @contextmanager
-def locked(root, kind, allowed=None):
+def locked(root, kind, allowed=None, *, recorder=None):
     root = verify(root, kind)
     fd = os.open(root / ".mrh.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
             raise OwnedError("unsafe_owned_file")
-        fcntl.flock(fd, fcntl.LOCK_EX)
+        if recorder is None:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        else:
+            while True:
+                recorder.check()
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    time.sleep(min(.02, recorder.remaining()))
+            recorder.check()
         verify(root, kind, allowed)
         yield root
     finally:

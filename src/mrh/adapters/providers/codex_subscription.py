@@ -6,7 +6,6 @@ from pathlib import Path
 import selectors
 import signal
 import subprocess
-import tempfile
 import threading
 import time
 
@@ -27,6 +26,7 @@ DISABLED = ('hooks', 'plugins', 'apps', 'shell_tool', 'multi_agent', 'multi_agen
             'computer_use', 'view_image', 'image_generation', 'memories', 'goals',
             'sleep_tool', 'tool_suggest', 'workspace_dependencies', 'unbounded_connection_retries')
 OVERRIDES = ('model_provider="openai"', 'model_reasoning_effort="low"',
+             'cli_auth_credentials_store="file"',
              'forced_login_method="chatgpt"', 'project_doc_max_bytes=0',
              'include_environment_context=false', 'include_apps_instructions=false',
              'skills.include_instructions=false', 'skills.bundled.enabled=false',
@@ -148,7 +148,7 @@ def run_process(argv, data, cwd, env, recorder, *, limit=MAX_STREAM):
     owner=_ProcessOwner(); recorder.add_cleanup(owner.close)
     proc=None
     try:
-        proc=owner.start(argv,cwd,env,recorder.check)
+        proc=owner.start(argv,cwd,env,getattr(recorder,'verify_reference',recorder.check))
         payload=memoryview(data); streams={'stdout':bytearray(),'stderr':bytearray()}
         with selectors.DefaultSelector() as selector:
             for pipe,name in ((proc.stdout,'stdout'),(proc.stderr,'stderr')):
@@ -180,14 +180,55 @@ def run_process(argv, data, cwd, env, recorder, *, limit=MAX_STREAM):
 
 def sanitized_environment(root):
     """Whitelist, not key-name filtering. Only CLI accesses its saved auth."""
-    auth_home=Path(os.environ.get('CODEX_HOME',Path.home()/'.codex'))
+    auth_home=Path(root)/'home'
     if not auth_home.is_absolute() or auth_home.is_symlink():_failure('isolation_unsupported')
-    # This pin loads home instructions independently of project_doc_max_bytes
-    # and ignore-user-config. Check metadata only, never their contents.
+    # Only the fresh execution home is visible to the CLI instruction loader.
     if any(os.path.lexists(auth_home/name) for name in ('AGENTS.md','AGENTS.override.md')):
         _failure('home_instructions')
     return {'HOME':str(root),'CODEX_HOME':str(auth_home),'PATH':os.defpath,
             'LANG':'en_US.UTF-8','NO_COLOR':'1',SENTINEL:'1'}
+
+
+def execution_login_status(binary, execution):
+    from mrh.adapters.catalogs.catalog import executable_hash
+    from mrh.adapters.hosts.codex_scope import BINARY_SHA256, VERSION
+    if executable_hash(binary)!=BINARY_SHA256:_failure('isolation_unsupported')
+    env=sanitized_environment(execution.root)
+    env['CODEX_SQLITE_HOME']=str(execution.root/'state');env['TMPDIR']=str(execution.root)
+    code,out,_=run_process([str(binary),'--version'],b'',execution.work,env,execution,limit=8192)
+    if code or out.decode().strip()!=VERSION:_failure('isolation_unsupported')
+    execution.check()
+    code,out,err=run_process([str(binary),'--no-daemon','-c','cli_auth_credentials_store="file"',
+                            '-c','forced_login_method="chatgpt"','login','status'],
+                           b'',execution.work,env,execution,limit=8192)
+    if chatgpt_status(code,out,err):category='chatgpt'
+    else:
+        lines=(out+err).decode('utf-8',errors='replace').splitlines()
+        lines=[line.strip() for line in lines if line.strip() and not line.startswith(
+            'WARNING: proceeding, even though we could not create PATH aliases:')]
+        category=('api' if len(lines)==1 and lines[0].startswith('Logged in using an API key') else
+                  'not_logged_in' if lines==['Not logged in'] else 'unknown')
+    return env,category
+
+
+def validate_execution(binary, execution):
+    env,category=execution_login_status(binary,execution)
+    if category!='chatgpt':_failure('chatgpt_login_required')
+    return env
+
+
+def public_login_status(binary, source_home, workspace, recorder, *, lock_root=None):
+    """Explicit operator probe: version and one login status, never a model."""
+    from mrh.adapters.providers.subscription_auth import FileAuthSource, execution_home
+    source=FileAuthSource.resolve(source_home,workspace)
+    with execution_home(source,recorder,lock_root) as execution:
+        _,category=execution_login_status(binary,execution)
+        result={'status':category,'source_regular':True,'reference_symlink':True,
+                'owned_scratch':str(execution.root),'model_requests':0}
+    result['scratch_removed']=not Path(result['owned_scratch']).exists()
+    source.verify()
+    result['source_retained']=True
+    return result
 
 
 def invocation(binary, work, schema):
@@ -224,17 +265,13 @@ class CodexSubscriptionClassifier:
                     candidate=_loads(read_regular(self.scope_binding))['codex_scope']['binary']
                 else:candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
                 if candidate is None or executable_hash(candidate)!=BINARY_SHA256:_failure('isolation_unsupported')
-                with tempfile.TemporaryDirectory(prefix='mrh-classifier-') as root:
-                    root=Path(root);env=sanitized_environment(root);work=root/'work';work.mkdir()
-                    # CLI writes its local auxiliary state only into owned scratch.
-                    env['CODEX_SQLITE_HOME']=str(root/'state');env['TMPDIR']=str(root)
-                    code,out,_=run_process([candidate,'--version'],b'',work,env,recorder,limit=8192)
-                    if code or out.decode().strip()!=VERSION:_failure('isolation_unsupported')
-                    code,out,err=run_process([candidate,'--no-daemon','login','status'],b'',work,env,recorder,limit=8192)
-                    if not chatgpt_status(code,out,err):_failure('chatgpt_login_required')
+                from mrh.adapters.providers.subscription_auth import source_for_binding, execution_home
+                source=source_for_binding(self.scope_binding)
+                with execution_home(source,recorder) as execution:
+                    root=execution.root;work=execution.work;env=validate_execution(candidate,execution)
                     schema=root/'answer.json';schema.write_text(json.dumps(SCHEMA))
                     def request(enter):
-                        enter();code,out,_=run_process(invocation(candidate,work,schema),data,work,env,recorder)
+                        execution.check();enter();code,out,_=run_process(invocation(candidate,work,schema),data,work,env,execution)
                         if code:_failure('process_failed')
                         return out
                     output=recorder.invoke('0',request,kind=kind,requested_model=MODEL)

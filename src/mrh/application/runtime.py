@@ -57,7 +57,9 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
         return {}
     try:
         value = read(settings_path)
-        if not value["enabled"] or not value["task_export_permitted"] or not workspace_allowed(value, event.get("cwd")):
+        if not value["enabled"] or not value["task_export_permitted"]:
+            return {}
+        if event["hook_event_name"] == "PreToolUse" and not workspace_allowed(value, event.get("cwd")):
             return {}
         resolver = host_resolver if host_resolver is not None else SupportedHostResolver()
         injected = {}
@@ -71,6 +73,12 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
             injected['subscription_binding']=scope_binding
         classifier = classifier_from_config({"provider":value['provider'], "schema_version": 1, "model": value["classifier_model"],
                                              "enabled": value["enabled"], "task_export_permitted": value["task_export_permitted"]}, **injected)
+        from mrh.infrastructure.store import Store
+        if event["hook_event_name"] == "PostToolUse":
+            proposal = Proposal("codex", "simulation" if classifier.synthetic else "unknown",
+                                event["session_id"], event["turn_id"], event["tool_use_id"], original, classifier.synthetic)
+            store = Store.for_receipt(Path(settings_path).parent / "events.sqlite3", proposal)
+            return handle_event(event, store, True, classifier=classifier) if store is not None else {}
         if not (scope_binding is not None and host_resolver is None) and bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
             return {}
         caps = partial_hook_snapshot(event, classifier.synthetic)
@@ -100,7 +108,6 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
                     caps=rejected(event,reason,classifier.synthetic)
         # Explicit Pre wins in core before resolution/classification. Post uses
         # proposal correlation, independent of any fresh host-capability query.
-        from mrh.infrastructure.store import Store
         store = Store(Path(settings_path).parent / "events.sqlite3")
         from mrh.infrastructure.bindings import target_veto
         policy = {**value['policy'], '_target_veto': target_veto(settings_path, synthetic=classifier.synthetic)}

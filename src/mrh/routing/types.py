@@ -27,7 +27,8 @@ REASONS.add('operator_stop_unavailable')
 REASONS.update({'codex_subscription_'+reason for reason in (
     'disabled','export_denied','recursion','invalid_task','malformed_response',
     'oversized_response','tool_activity','process_failed','timeout',
-    'chatgpt_login_required','home_instructions','isolation_unsupported','unverified_process')})
+    'chatgpt_login_required','home_instructions','isolation_unsupported','unverified_process',
+    'auth_source_unconfirmed','auth_source_invalid','auth_reference_invalid','auth_lock_unavailable')})
 UNAVAILABLE_REASONS = {'unsupported_model', 'unsupported_effort', 'catalog_model_unavailable', 'catalog_model_retired'}
 
 

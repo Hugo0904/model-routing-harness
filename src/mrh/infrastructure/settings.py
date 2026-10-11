@@ -50,7 +50,7 @@ def _encode(value):
 
 def update(path, *, expected_revision=None, **changes):
     path = _location(path, check_contents=False)
-    if set(changes) - {"enabled", "task_export_permitted", "allowed_workspaces", "policy", "provider", "classifier_model"}:
+    if set(changes) - {"enabled", "task_export_permitted", "allowed_workspaces", "workspace_allowlist_file", "policy", "provider", "classifier_model"}:
         raise SettingsError("settings_invalid")
     try:
         with owned.locked(path.parent, "settings", FILES):
@@ -62,6 +62,11 @@ def update(path, *, expected_revision=None, **changes):
                 # runtime uses host cwd metadata, never tool-input declarations.
                 changes["allowed_workspaces"] = [str(owned.canonical_path(p)) for p in changes["allowed_workspaces"]]
             candidate = {**value, **changes}
+            if "workspace_allowlist_file" in changes:
+                if changes["workspace_allowlist_file"] is None:
+                    candidate.pop("workspace_allowlist_file", None)
+                else:
+                    candidate["workspace_allowlist_file"] = str(owned.canonical_path(changes["workspace_allowlist_file"]))
             candidate = validate_settings(candidate)
             if candidate == value:
                 return value
@@ -73,10 +78,28 @@ def update(path, *, expected_revision=None, **changes):
 
 
 def workspace_allowed(value, cwd):
+    roots = value["allowed_workspaces"]
+    if "workspace_allowlist_file" in value:
+        try:
+            from mrh.infrastructure.settings_schema import _reject_duplicate_keys, _reject_nonfinite_constant
+            path = owned.canonical_path(value["workspace_allowlist_file"])
+            document = json.loads(owned.read_regular(path, 65536).decode("utf-8"),
+                                  object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_nonfinite_constant)
+            if (type(document) is not dict or set(document) != {"schema_version", "roots"}
+                    or type(document["schema_version"]) is not int or document["schema_version"] != 1
+                    or type(document["roots"]) is not list):
+                raise ValueError()
+            roots = document["roots"]
+            if any(type(root) is not str or str(owned.canonical_path(root)) != root for root in roots):
+                raise ValueError()
+            if len(roots) != len(set(roots)):
+                raise ValueError()
+        except (ValueError, OSError, UnicodeError, RecursionError, TypeError):
+            raise SettingsError("workspace_allowlist_invalid") from None
     if not isinstance(cwd, str):
         return False
     try:
         path = owned.canonical_path(cwd)
-        return any(path == Path(root) or Path(root) in path.parents for root in value["allowed_workspaces"])
+        return any(path == Path(root) or Path(root) in path.parents for root in roots)
     except (ValueError, OSError):
         return False
