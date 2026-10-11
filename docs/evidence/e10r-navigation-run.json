@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-10-11T05:16:32Z",
+  "scope": "E10R selector navigation and cross-tier draft revalidation",
+  "regression": {
+    "command": "/usr/bin/time -p env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3 -m unittest test_model_selector.ModelSelectorTests.test_save_revalidates_changed_mappings_across_tiers -v",
+    "before_fix": {
+      "result": "failed as expected",
+      "real_seconds": 0.45,
+      "observed": "The previously selected Light mapping canonical-small remained in settings after the save catalog no longer advertised it."
+    },
+    "after_fix": {
+      "result": "passed",
+      "real_seconds": 0.65,
+      "observed": "Revalidation returned to Light MODEL, retained the Light effort draft, then saved both confirmed mappings. Existing inactive fixed=legacy remained unchanged; settings revision advanced once."
+    }
+  },
+  "focused_checks": {
+    "command": "/usr/bin/time -p env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3 -m unittest test_model_selector.ModelSelectorTests.test_save_revalidates_changed_mappings_across_tiers test_model_selector.ModelSelectorTests.test_top_main_offline_keeps_fixed_and_fixed_picker_uses_supported_efforts test_model_selector.ModelSelectorTests.test_save_rechecks_removed_model_effort_and_concurrent_settings test_model_selector.ModelSelectorTests.test_reopened_model_refresh_preserves_only_compatible_effort -v",
+    "result": "passed",
+    "tests": 4,
+    "real_seconds": 1.05
+  },
+  "screen_navigation": {
+    "command": "/usr/bin/time -p env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 scripts/verify_model_navigation.py",
+    "result": "blocked by PTY child execution",
+    "real_seconds": 2.71,
+    "wrapper_wall_seconds": 8.831,
+    "failure": "RuntimeError: PTY exited before b'Light MODEL'; pid=23389 status=0; Screen reported Cannot exec '/Library/Frameworks/Python.framework/Versions/3.11/bin/python3': Operation not permitted.",
+    "screen_state_evidence": "none; 56/120-column redraw assertions did not run"
+  },
+  "cleanup": {
+    "temporary_roots": {
+      "/private/tmp/mrh-e10r-navigation-*": "absent",
+      "/private/tmp/mrh-screen-probe-*": "absent",
+      "/private/tmp/mrh-screen-pty-*": "absent"
+    },
+    "playwright_profiles": [
+      {
+        "path": "/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/playwright_chromiumdev_profile-ZOhf6p",
+        "birth_utc": "2026-10-06T19:58:16Z",
+        "disposition": "pre-existing; left untouched"
+      },
+      {
+        "path": "/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/playwright_chromiumdev_profile-mjCIMk",
+        "birth_utc": "2026-10-06T05:40:48Z",
+        "disposition": "pre-existing; left untouched"
+      }
+    ]
+  },
+  "sha256": {
+    "src/mrh/model_selector.py": "f148564ef5d93519b0786f95e9dac1b8e294f0f713e03893d08c5cf34c6ba816",
+    "tests/test_model_selector.py": "a981191c2417ad20e7a36f311dee353566298415aa8918ebc4af112b5e417545",
+    "scripts/verify_model_navigation.py": "34ef041eb03bcc7d77d994faef1d31a2e12e6cfa967933cff60abce8af48016d"
+  }
+}

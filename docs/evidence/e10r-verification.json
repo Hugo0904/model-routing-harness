@@ -1,4 +1,10 @@
 {
+  "account_limit_readback": {
+    "below_7_pause": false,
+    "remaining_percent": 96,
+    "reset_or_reserve_used": false,
+    "used_percent": 4
+  },
   "affected_checks": {
     "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_operator_stop test_action_facts test_core test_store test_config_table test_terminal_provider test_settings_runtime.SettingsRuntimeTests.test_each_export_gate_combination_has_zero_key_and_transport_until_all_true -v",
     "passed": 40,
@@ -62,6 +68,24 @@
       "kind": "affected expected reason",
       "resolution": "update D23 expectation; retain neutral output, unchanged statistics and zero new requests",
       "seconds": 1.129
+    },
+    {
+      "case": "Screen could not exec Python child",
+      "kind": "sandbox prerequisite",
+      "resolution": "tool-approved execution in owned isolated roots",
+      "seconds": 2.71
+    },
+    {
+      "case": "no hardcopy file after IPC acknowledgement",
+      "kind": "checker asynchronous hardcopy",
+      "resolution": "wait for asynchronous file write",
+      "seconds": 7.98
+    },
+    {
+      "case": "empty120column screen after forced resize",
+      "kind": "checker post-render resize",
+      "resolution": "verify inner PTY geometry before render; remove post-render resize and wait for nonempty stable snapshot",
+      "seconds": 4.59
     }
   ],
   "final_replay_checks": {
@@ -75,6 +99,30 @@
     "host_check": "ready",
     "reason": "trusted context has no existing tasks and current_native_user_item_unavailable; no request identity fabricated",
     "selection": "none"
+  },
+  "navigation_checks": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_model_selector -v",
+    "passed": 22,
+    "seconds": 1.277,
+    "source": "final parent run after D23 assertion correction and cross-tier regression fix"
+  },
+  "navigation_screen": {
+    "emulator": "GNU Screen 4.00.03",
+    "evidence": "docs/evidence/e10r-navigation.json",
+    "inner_and_outer_pty_sizes": [
+      [
+        24,
+        56
+      ],
+      [
+        24,
+        120
+      ]
+    ],
+    "real_seconds": 10.01,
+    "result": "passed",
+    "screenshots": false,
+    "states_per_width": 6
   },
   "not_run": [
     "full suite",

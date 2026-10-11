@@ -46,6 +46,14 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
         return answer
 
     def choose(title, items, current=None):
+        items = list(items)
+        if not any(value == 'cancel' for _,value in items):
+            items.append(('Cancel; keep policy and exit','cancel'))
+
+        def accept(value):
+            if value == 'cancel':raise Cancelled()
+            return value
+
         try:fd = stdin.fileno()
         except (AttributeError, OSError):fd = None
         if fd is not None and os.isatty(fd):
@@ -57,7 +65,7 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                 rows = [('> ' if i == focus else '  ')+f'{i+1}. {label}'+
                         (' [current]' if value == current else '') for i,(label,value) in enumerate(items)]
                 frame = render_choices(title, rows, width=width, color=color)
-                if replace:stdout.write('\x1b['+str(len(frame.splitlines()))+'A')
+                if replace:stdout.write('\r\x1b['+str(frame.count('\n'))+'A')
                 stdout.write(frame);stdout.write('  > ');stdout.flush()
             note('Up/Down: select. Enter: confirm. Left: back. Esc: cancel. Numbers are optional.')
             try:
@@ -70,7 +78,7 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                             number = int(digits)
                             if not 1 <= number <= len(items):digits = '';continue
                             focus = number-1
-                        return items[focus][1]
+                        return accept(items[focus][1])
                     if key.isdigit():digits = (digits+key.decode())[-3:];continue
                     digits = ''
                     if key != b'\x1b':continue
@@ -91,9 +99,9 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
         stdout.write(render_choices(title, rows, width=width, color=color))
         while True:
             answer = ask('Choose a number'+(' [Enter keeps current]' if current is not None else ''))
-            if not answer and current is not None and any(v == current for _,v in items):return current
-            if answer.isdigit() and 1 <= int(answer) <= len(items):return items[int(answer)-1][1]
-            if answer and any(v == answer for _,v in items):return answer
+            if not answer and current is not None and any(v == current for _,v in items):return accept(current)
+            if answer.isdigit() and 1 <= int(answer) <= len(items):return accept(items[int(answer)-1][1])
+            if answer and any(v == answer for _,v in items):return accept(answer)
             note('Choose one of the listed numbers; model names are not entered here.')
 
     def refresh(binding):
@@ -115,103 +123,262 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                     [m.label+' ('+m.id+')' for m in old.models], width=width, color=color))
             return None
 
+    drafts = {}
+
+    def draft_for(binding):
+        draft = drafts.get(binding['id'])
+        if draft is None:
+            initial = settings.read(binding['settings_path'])
+            draft = {'initial': initial, 'policy': copy.deepcopy(initial['policy']), 'last_tier': None}
+            drafts[binding['id']] = draft
+        return draft
+
+    def write_mapping(draft, selected_tier, model, effort):
+        mapping = {'model': model}
+        if effort != 'inherit':mapping['effort'] = effort
+        if selected_tier == 'Top':draft['policy']['fixed'] = mapping
+        else:draft['policy'].setdefault('tiers', {})[selected_tier] = mapping
+
     try:
         value = registry.read()
-        if bind or not value['bindings']:
-            candidates = discovery()
-            if not candidates:
-                note('No supported installed tool found. No binding created. Codex public model/list is required; Claude/Gemini catalogs are unsupported.')
-                return 2
-            while True:
-                index = choose('FIRST USE  /  choose an installed tool', [
-                    (c['label']+(' (catalog unsupported)' if not c['supported'] else ''), str(i))
-                    for i,c in enumerate(candidates)])
-                candidate = candidates[int(index)]
-                if candidate['supported']:break
-                note(candidate['label']+': no implemented reliable non-secret CLI catalog/binding source. No profile created.')
-            candidate = describe(candidate)
-            note(candidate['label']+' / '+candidate['version'])
-            note('This creates an MRH profile, not an account login or working routing. Models are tool-advertised; account access is unconfirmed. No Hook is activated.')
-            if associate is not None:
-                settings.read(associate)
-                note('Associate the explicit existing owned settings file: '+str(associate)+'; values are retained.')
-            if choose('CONFIRM MRH PROFILE', [('Bind this MRH profile','bind'),('Cancel; leave unchanged','cancel')]) != 'bind':raise Cancelled()
-            binding = registry.associate(candidate, expected_revision=value['revision'], existing=associate)
-            note('MRH profile bound. Policy remains unchanged until Save.')
-        else:
-            bindings = value['bindings']
-            if len(bindings) == 1:
-                binding = bindings[0];note('Loaded bound tool: '+binding['label'])
-            else:
-                ident = choose('BOUND TOOLS', [(b['label']+' / '+b['version'], b['id']) for b in bindings])
-                binding = next(b for b in bindings if b['id'] == ident)
-        registry.verify_profile(binding)
+        candidate_mode = bind or not value['bindings']
+        profile_picker_initial = not candidate_mode and len(value['bindings']) > 1
+        candidates = None
+        candidate_index = None
+        candidate = None
+        binding = None
+        draft = None
         selected_tier = tier
+        working = {'snapshot': None, 'model': None, 'effort': 'inherit', 'configuration_shown': False}
+        if candidate_mode:
+            step = 'candidate'
+        elif profile_picker_initial:
+            step = 'profiles'
+        else:
+            binding = value['bindings'][0]
+            note('Loaded bound tool: '+binding['label'])
+            registry.verify_profile(binding)
+            draft = draft_for(binding)
+            step = ('top_mode' if selected_tier == 'Top' else 'model') if selected_tier is not None else 'tier'
+
         while True:
-            try:
-                if selected_tier is None:
-                    selected_tier = choose('TIER', [(t,t) for t in ('Light','Small','Mid','Top')])
-                initial = settings.read(binding['settings_path'])
-                policy = copy.deepcopy(initial['policy'])
-                stdout.write(render_configuration(initial, width=width, color=color))
-                model = effort = None
-                mode = policy.get('top_mode', 'Main')
-                if selected_tier == 'Top':
+            if step == 'candidate':
+                if candidates is None:candidates = discovery()
+                if not candidates:
+                    note('No supported installed tool found. No binding created. Codex public model/list is required; Claude/Gemini catalogs are unsupported.')
+                    return 2
+                try:
+                    index = choose('FIRST USE  /  choose an installed tool', [
+                        (c['label']+(' (catalog unsupported)' if not c['supported'] else ''), str(i))
+                        for i,c in enumerate(candidates)], str(candidate_index) if candidate_index is not None else None)
+                except Back:
+                    raise Cancelled()
+                candidate_index = int(index)
+                candidate = candidates[candidate_index]
+                if not candidate['supported']:
+                    note(candidate['label']+': no implemented reliable non-secret CLI catalog/binding source. No profile created.')
+                    continue
+                candidate = describe(candidate)
+                note(candidate['label']+' / '+candidate['version'])
+                note('This creates an MRH profile, not an account login or working routing. Models are tool-advertised; account access is unconfirmed. No Hook is activated.')
+                if associate is not None:
+                    settings.read(associate)
+                    note('Associate the explicit existing owned settings file: '+str(associate)+'; values are retained.')
+                step = 'confirm'
+                continue
+
+            if step == 'confirm':
+                try:
+                    action = choose('CONFIRM MRH PROFILE', [('Bind this MRH profile','bind'),('Cancel; leave unchanged','cancel')])
+                except Back:
+                    step = 'candidate'
+                    continue
+                if action != 'bind':raise Cancelled()
+                binding = registry.associate(candidate, expected_revision=value['revision'], existing=associate)
+                note('MRH profile bound. Policy remains unchanged until Save.')
+                value = registry.read()
+                registry.verify_profile(binding)
+                draft = draft_for(binding)
+                selected_tier = tier
+                working = {'snapshot': None, 'model': None, 'effort': 'inherit', 'configuration_shown': False}
+                step = ('top_mode' if selected_tier == 'Top' else 'model') if selected_tier is not None else 'tier'
+                continue
+
+            if step == 'profiles':
+                bindings = value['bindings']
+                try:
+                    ident = choose('BOUND TOOLS', [(b['label']+' / '+b['version'], b['id']) for b in bindings],
+                                   binding['id'] if binding is not None else None)
+                except Back:
+                    raise Cancelled()
+                binding = next(b for b in bindings if b['id'] == ident)
+                registry.verify_profile(binding)
+                draft = draft_for(binding)
+                working = {'snapshot': None, 'model': None, 'effort': 'inherit', 'configuration_shown': False}
+                if profile_picker_initial:
+                    selected_tier = tier if tier is not None else draft['last_tier']
+                    step = ('top_mode' if selected_tier == 'Top' else 'model') if selected_tier is not None else 'tier'
+                    profile_picker_initial = False
+                else:
+                    selected_tier = draft['last_tier']
+                    step = 'tier'
+                note('Loaded bound tool: '+binding['label'])
+                continue
+
+            if step == 'tier':
+                try:
+                    selected_tier = choose('TIER', [(t,t) for t in ('Light','Small','Mid','Top')],
+                                           selected_tier if selected_tier is not None else draft['last_tier'])
+                except Back:
+                    step = 'profiles'
+                    continue
+                draft['last_tier'] = selected_tier
+                working = {'snapshot': None, 'model': None, 'effort': 'inherit', 'configuration_shown': True}
+                stdout.write(render_configuration(draft['initial'], width=width, color=color))
+                step = 'top_mode' if selected_tier == 'Top' else 'model'
+                continue
+
+            if step == 'top_mode':
+                mode = draft['policy'].get('top_mode', 'Main')
+                try:
                     mode = choose('TOP MODE', [('Main (existing main agent; no main model setting)','Main'),
                                                ('Fixed (select a child target)','Fixed')], mode)
-                    policy['top_mode'] = mode
+                except Back:
+                    step = 'tier'
+                    continue
+                draft['policy']['top_mode'] = mode
+                if mode == 'Main':
+                    working = {'snapshot': refresh(binding), 'model': None, 'effort': 'inherit',
+                               'configuration_shown': working['configuration_shown']}
+                    step = 'save'
+                else:
+                    working = {'snapshot': None, 'model': None, 'effort': 'inherit',
+                               'configuration_shown': working['configuration_shown']}
+                    step = 'model'
+                continue
+
+            if step == 'model':
+                if not working['configuration_shown']:
+                    stdout.write(render_configuration(draft['initial'], width=width, color=color))
+                    working['configuration_shown'] = True
                 snapshot = refresh(binding)
-                if selected_tier != 'Top' or mode == 'Fixed':
-                    if snapshot is None:
-                        action = choose('LIST UNAVAILABLE', [('Retry refresh','retry'),('Back','back'),('Cancel; keep policy','cancel')])
-                        if action == 'cancel':raise Cancelled()
-                        if action == 'back':raise Back()
-                        continue
-                    note('Source: '+snapshot.source+' / '+snapshot.version+' / '+snapshot.assurance)
-                    note('Scope: installed tool defaults. Account access and same-call compatibility are unconfirmed.')
-                    current = policy.get('fixed') if selected_tier == 'Top' else policy.get('tiers', {}).get(selected_tier)
-                    current = current or {}
-                    old = next((m for m in snapshot.models if m.id == current.get('model')), None)
-                    if current.get('model') and (old is None or old.state != 'available'):
-                        state = 'confirmed retired: '+old.retirement_ref if old and old.state == 'retired' else 'unavailable in this list/scope; global retirement is unconfirmed'
-                        note('Saved model '+current['model']+' is '+state+'. Old settings/history remain; choose a replacement explicitly.')
-                    options = [(m.label+' ('+m.id+')',m.id) for m in snapshot.models if m.state == 'available']
-                    if not options:
-                        note('No selectable model. Existing policy is preserved; no automatic replacement.')
-                        action = choose('NO SELECTABLE MODEL', [('Retry refresh','retry'),('Back','back'),('Cancel; keep policy','cancel')])
-                        if action == 'cancel':raise Cancelled()
-                        if action == 'back':raise Back()
-                        continue
-                    model = choose(selected_tier+' MODEL', options, current.get('model') if any(v == current.get('model') for _,v in options) else None)
-                    item = snapshot.option(model)
-                    efforts = [('inherit (resolved effort remains unconfirmed)','inherit')]+[(e,e) for e in item.efforts]
-                    current_effort = current.get('effort', 'inherit') if current.get('model') == model else 'inherit'
-                    effort = choose('REASONING EFFORT', efforts, current_effort if any(v == current_effort for _,v in efforts) else 'inherit')
-                    mapping = {'model': model}
-                    if effort != 'inherit':mapping['effort'] = effort
-                    if selected_tier == 'Top':policy['fixed'] = mapping
-                    else:policy.setdefault('tiers', {})[selected_tier] = mapping
+                if snapshot is None:
+                    step = 'unavailable'
+                    continue
+                note('Source: '+snapshot.source+' / '+snapshot.version+' / '+snapshot.assurance)
+                note('Scope: installed tool defaults. Account access and same-call compatibility are unconfirmed.')
+                policy = draft['policy']
+                current = policy.get('fixed') if selected_tier == 'Top' else policy.get('tiers', {}).get(selected_tier)
+                current = current or {}
+                old = next((m for m in snapshot.models if m.id == current.get('model')), None)
+                if current.get('model') and (old is None or old.state != 'available'):
+                    unavailable_state = 'confirmed retired: '+old.retirement_ref if old and old.state == 'retired' else 'unavailable in this list/scope; global retirement is unconfirmed'
+                    note('Saved model '+current['model']+' is '+unavailable_state+'. Old settings/history remain; choose a replacement explicitly.')
+                options = [(m.label+' ('+m.id+')',m.id) for m in snapshot.models if m.state == 'available']
+                if not options:
+                    note('No selectable model. Existing policy is preserved; no automatic replacement.')
+                    step = 'no_model'
+                    continue
+                try:
+                    model = choose(selected_tier+' MODEL', options,
+                                   current.get('model') if any(v == current.get('model') for _,v in options) else None)
+                except Back:
+                    step = 'top_mode' if selected_tier == 'Top' else 'tier'
+                    continue
+                item = snapshot.option(model)
+                old_effort = current.get('effort', 'inherit')
+                current_effort = old_effort if old_effort == 'inherit' or old_effort in item.efforts else 'inherit'
+                write_mapping(draft, selected_tier, model, current_effort)
+                working = {'snapshot': snapshot, 'model': model, 'effort': current_effort,
+                           'configuration_shown': working['configuration_shown']}
+                step = 'effort'
+                continue
+
+            if step == 'unavailable' or step == 'no_model':
+                title = 'LIST UNAVAILABLE' if step == 'unavailable' else 'NO SELECTABLE MODEL'
+                try:
+                    action = choose(title, [('Retry refresh','retry'),('Back','back'),('Cancel; keep policy','cancel')])
+                except Back:
+                    action = 'back'
+                if action == 'back':
+                    note('Back. Draft retained; nothing has been saved.')
+                    step = 'top_mode' if selected_tier == 'Top' else 'tier'
+                else:
+                    step = 'model'
+                continue
+
+            if step == 'effort':
+                snapshot = working['snapshot']
+                item = snapshot.option(working['model']) if snapshot is not None else None
+                if item is None:
+                    note('Chosen model is no longer in this catalog. Reopen the scoped model list.')
+                    step = 'model'
+                    continue
+                efforts = [('inherit (resolved effort remains unconfirmed)','inherit')]+[(e,e) for e in item.efforts]
+                current_effort = working['effort'] if any(v == working['effort'] for _,v in efforts) else 'inherit'
+                try:
+                    effort = choose('REASONING EFFORT', efforts, current_effort)
+                except Back:
+                    note('Back. Draft retained; nothing has been saved.')
+                    step = 'model'
+                    continue
+                working['effort'] = effort
+                write_mapping(draft, selected_tier, working['model'], effort)
+                step = 'save'
+                continue
+
+            if step == 'save':
+                initial = draft['initial']
+                policy = draft['policy']
                 before, after = dict(policy_rows(initial['policy'])), dict(policy_rows(policy))
                 changes = [f'{t}: {before[t]} -> {after[t]}' for t in before if before[t] != after[t]]
                 stdout.write(render_policy_review(changes, width=width, color=color))
-                action = choose('SAVE POLICY?', [('Save this policy','save'),('Back; keep editing','back'),('Cancel; keep policy','cancel')])
-                if action == 'cancel':raise Cancelled()
-                if action == 'back':raise Back()
-                # New successful catalog required for every model/effort save.
-                # Top Main sets no model, so it can be saved even while offline.
-                if model is not None:
+                try:
+                    action = choose('SAVE POLICY?', [('Save this policy','save'),('Back; keep editing','back'),('Cancel; keep policy','cancel')])
+                except Back:
+                    action = 'back'
+                if action == 'back':
+                    note('Back. Draft retained; nothing has been saved.')
+                    step = 'top_mode' if selected_tier == 'Top' and policy.get('top_mode', 'Main') == 'Main' else 'effort'
+                    continue
+                snapshot = working['snapshot']
+                model = working['model']
+                effort = working['effort']
+                changed_mappings = []
+                original_policy = initial['policy']
+                for target in ('Light','Small','Mid','Top'):
+                    before_mapping = (original_policy.get('fixed', {}) if target == 'Top' else
+                                      original_policy.get('tiers', {}).get(target, {})) or {}
+                    after_mapping = (policy.get('fixed', {}) if target == 'Top' else
+                                     policy.get('tiers', {}).get(target, {})) or {}
+                    target_model = after_mapping.get('model')
+                    if after_mapping != before_mapping and target_model:
+                        changed_mappings.append((target, target_model, after_mapping.get('effort')))
+                if model is not None and not any(target == selected_tier for target, _, _ in changed_mappings):
+                    changed_mappings.append((selected_tier, model,
+                                             None if effort == 'inherit' else effort))
+                # Verify every changed model choice against one new successful
+                # catalog. Unchanged mappings remain untouched; Top Main with
+                # no model changes can still be saved while the catalog is down.
+                if changed_mappings:
                     checked = refresh(binding)
-                    if checked is None or checked.option(model, None if effort == 'inherit' else effort) is None:
-                        note('Chosen model/effort changed or refresh failed. Nothing saved; return to selection.')
+                    invalid = next((target for target, target_model, target_effort in changed_mappings
+                                    if checked is None or checked.option(target_model, target_effort) is None), None)
+                    if invalid is not None:
+                        note('Draft model/effort for '+invalid+' changed or refresh failed. Nothing saved; return to selection.')
+                        selected_tier = invalid
+                        draft['last_tier'] = invalid
+                        working = {'snapshot': None, 'model': None, 'effort': 'inherit',
+                                   'configuration_shown': working['configuration_shown']}
+                        step = ('top_mode' if invalid == 'Top' and policy.get('top_mode', 'Main') == 'Main'
+                                else 'model')
                         continue
                     snapshot = checked
-                saved = registry.save(binding, initial, policy, snapshot, model,
+                saved = registry.save(binding, initial, copy.deepcopy(policy), snapshot, model,
                                       None if effort == 'inherit' else effort)
                 note('Saved.' if saved != initial else 'Unchanged. No settings rewrite.')
                 stdout.write(render_configuration(saved, width=width, color=color))
                 return 0
-            except Back:
-                note('Back. No policy changes saved.');selected_tier = None
     except (Cancelled, KeyboardInterrupt, Back):
         note('Cancelled. No policy changes saved.')
         return 0

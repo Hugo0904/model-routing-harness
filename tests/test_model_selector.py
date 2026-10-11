@@ -69,6 +69,16 @@ class ModelSelectorTests(unittest.TestCase):
         self.assertEqual(saved['revision'],1);self.assertFalse(saved['enabled']);self.assertFalse(saved['task_export_permitted'])
         self.assertEqual(saved['allowed_workspaces'],[])
 
+    def test_first_use_confirmation_back_returns_to_focused_candidate_without_writing(self):
+        second={**self.candidate,'label':'Second synthetic fixture'}
+        self.dependencies['discovery']=lambda:[self.candidate,second]
+        code,out,err=self.run_cli('light','2\nback\n\ncancel\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertIn('Cancel; keep policy and exit',out)
+        self.assertEqual(out.count('Second synthetic fixture / synthetic-version'),2)
+        self.assertFalse(self.root.exists())
+        self.assertEqual(self.provider.calls,0)
+
     def test_one_multiple_tier_picker_defaults_back_and_exact_ids(self):
         first=self.bind();second=self.bind('Second bound profile')
         code,out,err=self.run_cli(None,'2\n3\n2\n2\nsave\n',width=56)
@@ -76,9 +86,73 @@ class ModelSelectorTests(unittest.TestCase):
         self.assertEqual(settings.read(first['settings_path'])['policy']['tiers'],{})
         self.assertEqual(settings.read(second['settings_path'])['policy']['tiers']['Mid'],{'model':'canonical-top','effort':'high'})
         self.assertTrue(all(cell_width(l)<=56 for l in out.splitlines()))
-        code,out,_=self.run_cli('small','1\nback\n2\n1\n1\nsave\n')
+        code,out,_=self.run_cli('small','1\n1\nback\n1\n1\nsave\n')
         self.assertEqual(code,0);self.assertIn('Back.',out)
         self.assertEqual(settings.read(first['settings_path'])['policy']['tiers']['Small'],{'model':'canonical-small'})
+
+    def test_effort_back_returns_to_model_and_saves_the_same_tier(self):
+        b=self.bind()
+        code,out,err=self.run_cli('light','1\nback\n2\n2\nsave\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(settings.read(b['settings_path'])['policy']['tiers'],
+                         {'Light':{'model':'canonical-top','effort':'high'}})
+        self.assertEqual(out.count('Light MODEL'),2)
+        self.assertNotIn('\n  TIER\n',out)
+
+    def test_save_revalidates_changed_mappings_across_tiers(self):
+        b=self.bind()
+        settings.update(b['settings_path'],policy={'fixed':{'model':'legacy','effort':'high'}})
+        starting_revision=settings.read(b['settings_path'])['revision']
+        initial_rows=self.provider.rows
+        refreshed_rows=(Model('canonical-top','Friendly Top',('low','high')) ,)
+        self.provider.effect=lambda binding,n: self.provider.snapshot(
+            binding,initial_rows if n <= 3 else refreshed_rows)
+        code,out,err=self.run_cli(
+            'light','1\n2\nback\nback\nback\n2\n2\n2\n1\n1\n\n1\n')
+        saved=settings.read(b['settings_path'])
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(saved['policy']['tiers'],{
+            'Light':{'model':'canonical-top','effort':'low'},
+            'Small':{'model':'canonical-top','effort':'high'},
+        })
+        self.assertEqual(saved['policy']['fixed'],{'model':'legacy','effort':'high'})
+        self.assertEqual(saved['revision'],starting_revision+1)
+        self.assertEqual(self.provider.calls,6)
+        self.assertEqual(out.count('Light MODEL'),3)
+
+    def test_reopened_model_refresh_preserves_only_compatible_effort(self):
+        b=self.bind();path=Path(b['settings_path'])
+        initial_rows=(Model('canonical-small','Friendly Small',('low','high')) ,)
+        for reopened_efforts,expected in [
+            (('low','high'),{'model':'canonical-small','effort':'high'}),
+            (('low',),{'model':'canonical-small'}),
+        ]:
+            with self.subTest(reopened_efforts=reopened_efforts):
+                settings.update(path,policy={'tiers':{'Light':{'model':'canonical-small','effort':'high'}}})
+                starting_revision=settings.read(path)['revision']
+                starting_bytes=path.read_bytes()
+                reopened_rows=(Model('canonical-small','Friendly Small',reopened_efforts),)
+                self.provider.calls=0
+                self.provider.effect=lambda binding,n,first=initial_rows,reopened=reopened_rows: self.provider.snapshot(
+                    binding,first if n == 1 else reopened)
+                code,out,err=self.run_cli('light','1\nback\n1\n\nsave\n')
+                saved=settings.read(path)
+                self.assertEqual((code,err),(0,''))
+                self.assertEqual(saved['policy']['tiers']['Light'],expected)
+                changed=expected != {'model':'canonical-small','effort':'high'}
+                self.assertEqual(saved['revision'],starting_revision+int(changed))
+                if not changed:self.assertEqual(path.read_bytes(),starting_bytes)
+                self.assertEqual(self.provider.calls,3)
+                self.assertEqual(out.count('Light MODEL'),2)
+
+    def test_save_back_returns_to_effort_and_keeps_unsaved_draft(self):
+        b=self.bind()
+        code,out,err=self.run_cli('light','1\n3\nback\n2\nsave\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(settings.read(b['settings_path'])['policy']['tiers'],
+                         {'Light':{'model':'canonical-small','effort':'low'}})
+        self.assertEqual(out.count('Light MODEL'),1)
+        self.assertEqual(settings.read(b['settings_path'])['revision'],1)
 
     def test_unicode_labels_escape_sanitization_and_narrow_choice_geometry(self):
         self.bind();self.provider.rows=(Model('canonical-long-'+('a'*80),'模型名稱'*12+'\x1b]2;unsafe\x07',('low',)),)
@@ -99,6 +173,56 @@ class ModelSelectorTests(unittest.TestCase):
         code,out,_=self.run_cli('top','2\n2\n2\nsave\n')
         self.assertEqual(code,0);self.assertEqual(settings.read(b['settings_path'])['policy']['fixed'],{'model':'canonical-top','effort':'high'})
         self.assertNotIn('low [current]',out)
+
+    def test_top_fixed_model_back_returns_to_mode_and_retains_its_draft(self):
+        b=self.bind()
+        code,out,err=self.run_cli('top','2\n1\nback\nback\n1\nsave\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertIn('TOP MODE',out)
+        self.assertEqual(settings.read(b['settings_path'])['policy']['top_mode'],'Main')
+        self.assertEqual(settings.read(b['settings_path'])['policy']['fixed'],{'model':'canonical-small'})
+
+    def test_top_mode_back_returns_to_tier(self):
+        b=self.bind()
+        code,out,err=self.run_cli('top','back\n1\n1\n1\nsave\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertIn('TIER',out)
+        self.assertEqual(settings.read(b['settings_path'])['policy']['tiers']['Light'],{'model':'canonical-small'})
+
+    def test_top_main_save_back_returns_to_mode_and_keeps_fixed_choice(self):
+        b=self.bind()
+        code,out,err=self.run_cli('top','1\nback\n2\n1\n1\nsave\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(settings.read(b['settings_path'])['policy']['top_mode'],'Fixed')
+        self.assertEqual(settings.read(b['settings_path'])['policy']['fixed'],{'model':'canonical-small'})
+
+    def test_profile_navigation_keeps_drafts_scoped_to_each_bound_tool(self):
+        first=self.bind();second=self.bind('Second bound profile')
+        first_before=Path(first['settings_path']).read_bytes();second_before=Path(second['settings_path']).read_bytes()
+        code,out,err=self.run_cli(None,'1\n1\n2\n2\nback\n2\nback\nback\nback\n2\n1\nback\nback\n1\n\n\ncancel\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(out.count('Friendly Top (canonical-top) [current]'),2)
+        self.assertEqual(Path(first['settings_path']).read_bytes(),first_before)
+        self.assertEqual(Path(second['settings_path']).read_bytes(),second_before)
+
+    def test_failed_model_list_back_returns_to_tier_or_top_mode(self):
+        b=self.bind();before=Path(b['settings_path']).read_bytes()
+        self.provider.effect=lambda *a:(_ for _ in ()).throw(CatalogError('catalog_refresh_failed'))
+        code,out,err=self.run_cli('light','back\n2\nback\ncancel\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(self.provider.calls,2)
+        titles=[line.strip() for line in out.splitlines()]
+        self.assertEqual(titles.count('LIST UNAVAILABLE'),2)
+        self.assertIn('TIER',titles)
+        self.assertEqual(Path(b['settings_path']).read_bytes(),before)
+        self.provider.calls=0
+        code,out,err=self.run_cli('top','2\nback\n2\nback\ncancel\n')
+        self.assertEqual((code,err),(0,''))
+        self.assertEqual(self.provider.calls,2)
+        titles=[line.strip() for line in out.splitlines()]
+        self.assertEqual(titles.count('LIST UNAVAILABLE'),2)
+        self.assertEqual(titles.count('TOP MODE'),3)
+        self.assertEqual(Path(b['settings_path']).read_bytes(),before)
 
     def test_model_retired_missing_or_revoked_never_silently_substituted(self):
         b=self.bind();settings.update(b['settings_path'],policy={'tiers':{'Light':{'model':'legacy'}}})
@@ -168,7 +292,8 @@ class ModelSelectorTests(unittest.TestCase):
         policy=demo_policy();policy['top_mode']='Fixed'
         target=policy['fixed']['model'];policy['_target_veto']={target:'catalog_model_retired'}
         decision=route(p,policy,demo_capabilities(),ScriptedClassifier([Classification('Top',.9)]))
-        self.assertEqual(decision.action,'preserve');self.assertEqual(decision.reason,'catalog_model_retired')
+        self.assertEqual(decision.action,'operator_update_required');self.assertEqual(decision.reason,'catalog_model_retired')
+        self.assertEqual(decision.patch,{})
         policy.pop('_target_veto')
         caps=demo_capabilities();caps['models']={}
         decision=route(p,policy,caps,ScriptedClassifier([Classification('Top',.9)]))
@@ -184,7 +309,7 @@ class ModelSelectorTests(unittest.TestCase):
         self.assertEqual(cached_effect_blocker(p,policy,demo_capabilities(),accepted),'catalog_model_unavailable')
         fresh=ScriptedClassifier([Classification('Top',.9)])
         decision=route(p,policy,demo_capabilities(),fresh)
-        self.assertEqual(decision.action,'preserve');self.assertEqual(fresh.calls,0)
+        self.assertEqual(decision.action,'operator_update_required');self.assertEqual(fresh.calls,1)
         b=self.bind();settings.update(b['settings_path'],policy={'tiers':{'Light':{'model':'outside-default-list'}}})
         advertised=self.provider.snapshot(b)
         advertised=Catalog(**{**advertised.__dict__,'assurance':'tool-advertised'})
