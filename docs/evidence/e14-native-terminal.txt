@@ -1,0 +1,31 @@
+WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-gs4r7d4j" (codex_home: AbsolutePathBuf("/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-gs4r7d4j/home"))
+   >_ OpenAI Codex (v0.159.3)     loading   What are we cooking up?  › Ask Codex to do anything   ~/workspaceMRH synthetic parent default·~/workspace
+╭───────────────────────────────────────────────────────────────╮
+│ ✨ Update available! 0.159.3 -> 0.162.1                       │
+│ See https://github.com/openai/codex for installation options. │
+│                                                               │
+│ See full release notes:                                       │
+│ https://github.com/openai/codex/releases/latest               │
+╰───────────────────────────────────────────────────────────────╯   >_ OpenAI Codex (v0.159.3)     ~/workspace   What are we cooking up? • Queued follow-up inputs  ↳ MRH_PARENT_launcher_fault synthetic fixture    shift+← edit last queued message › Ask Codex to do anything   MRH synthetic parent default · ~/workspace
+
+
+  >_ OpenAI Codex (v0.159.3)
+     ~/workspace
+
+  What are we cooking up?
+
+  Tip: New Build faster with the Desktop app. Run 'codex app' or visit
+  https://chatgpt.com/codex?app-landing-page=true
+
+
+› MRH_PARENT_launcher_fault synthetic fixture
+  › Ask Codex to do anything   MRH synthetic parent low · ~/workspace  • Working (0s • esc to interrupt)  › Ask Codex to do anything   MRH synthetic parent low · ~/workspace ·⠸⠼
+
+↳ Hook · MRH: runtime integrity verification failed; original tool call preserved. Use mrh stats
+--details with this profile's --settings or --db. Recording and warning deduplication are
+unavailable; this fault may be absent from history.
+
+• Spawned 01a12a1b-8412-77c3-94a1-bc129c47b8b3 (mrh-synthetic-parent low)
+  └ MRH_CHILD_failure·Main[default]◦
+
+• MRH scripted fixture complete.  › Ask Codex to do anything   MRH synthetic parent low · ~/workspace · Main [default]
