@@ -4,7 +4,7 @@ from pathlib import Path
 from . import owned
 from .settings_schema import SettingsError, default_settings, parse_settings, validate_settings
 
-FILES = {"settings.json", "events.sqlite3", "events.sqlite3.lock", "events.sqlite3.key", "events.sqlite3-wal", "events.sqlite3-shm"}
+FILES = {"settings.json", "model-profile.json", "events.sqlite3", "events.sqlite3.lock", "events.sqlite3.key", "events.sqlite3-wal", "events.sqlite3-shm"}
 
 
 def _location(path, *, check_contents=True):

@@ -1,0 +1,136 @@
+  Loaded bound tool: Codex Desktop bundled CLI
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 2
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6.1-sol
+    Effort: low
+
+  Small / Model
+    Model: synthetic-missing-old-target
+    Effort: inherit
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: codex:model-list:isolated-defaults /
+  codex-cli 0.162.0-alpha.17.2 / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Saved model synthetic-missing-old-target is
+  unavailable in this list/scope; global retirement
+  is unconfirmed. Old settings/history remain;
+  choose a replacement explicitly.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Small MODEL
+
+  > 1. GPT-6.1-Sol (gpt-6.1-sol)
+    2. GPT-6-Astra (gpt-6-astra)
+    3. GPT-6-Sol (gpt-6-sol)
+    4. GPT-6-Luna (gpt-6-luna)
+    5. GPT-5.6-Sol (gpt-5.6-sol)
+    6. GPT-5.6-Terra (gpt-5.6-terra)
+    7. GPT-5.6-Luna (gpt-5.6-luna)
+    8. GPT-5.5 (gpt-5.5)
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. low
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. ultra
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Small: synthetic-missing-old-target / inherit ->
+  gpt-6.1-sol / inherit
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Saved.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 3
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6.1-sol
+    Effort: low
+
+  Small / Model
+    Model: gpt-6.1-sol
+    Effort: inherit
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.

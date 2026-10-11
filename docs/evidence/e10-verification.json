@@ -1,0 +1,104 @@
+{
+  "report": "E10-B-001",
+  "baseline": "R2 retaining original R1",
+  "assignment": "D19 with D20 keyboard acceptance",
+  "effective_executor": {
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "turn_id": "01a12914-e4b8-7ae1-99cb-a3cb4fe436c2"
+  },
+  "verification_scope": "public CLI -> binding/catalog -> existing writer -> current-policy display and negative eligibility",
+  "review": "A0 parent; A actual interaction acceptance pending",
+  "focused_checks": {
+    "count": 25,
+    "passed": true,
+    "reported_seconds": 0.451,
+    "new_selector_groups": 12,
+    "affected_existing_fact_table_settings_groups": 13
+  },
+  "installed_entry": {
+    "passed": true,
+    "seconds": 3.736,
+    "wheel_sha256": "ee086d828710f3d9fbafa5633898f83d3d807d33730e0068d079c099fc890cdb",
+    "runtime_files": 26,
+    "keyboard": "Up/Down and Enter only",
+    "actual_model_requests": 0
+  },
+  "synthetic_error_pty": {
+    "cases": 5,
+    "seconds": 0.562,
+    "keyboard_only": true,
+    "retired_signal_is_synthetic": true,
+    "cancel_preserves_bytes": true
+  },
+  "discovery": {
+    "Codex": "actual isolated public account/read refreshToken=false plus model/list; tool-advertised only; live account confirmation unverified",
+    "Claude": "public CLI help and official model-config docs; SDK reference fetch failed due to size; no implemented scoped catalog/effort/account adapter",
+    "Gemini": "public bundled CLI help and official model/ACP docs; no implemented scoped catalog/effort/account adapter"
+  },
+  "runtime_limits": [
+    "No advertised-list absence is promoted into account unavailability",
+    "Existing trusted same-call unavailable target blocks and skips unnecessary classification",
+    "Synthetic catalog negative veto cannot enter production partition",
+    "No trusted downstream model-unavailable error observation seam in existing spawn PostToolUse agent-id receipt; no new listener or paid retry invented"
+  ],
+  "reused": [
+    "E9 persistence semantics and unrelated CLI paths",
+    "E8 source/native Hook proof",
+    "core/provider evidence outside affected eligibility chain"
+  ],
+  "not_run": [
+    "full suite",
+    "host rebuild",
+    "source hook replay",
+    "true API/model/account test",
+    "native macOS Terminal window",
+    "global activation",
+    "Monitor",
+    "push",
+    "new Goal"
+  ],
+  "failure_history": [
+    {
+      "stage": "9 new groups",
+      "seconds": 0.138,
+      "result": "1 geometry failure",
+      "cause": "prompt concatenated with next frame for a non-echoing TTY stream",
+      "repair": "explicit newline after read; 9 passed in 0.150s"
+    },
+    {
+      "stage": "initial installed helper before D20",
+      "seconds": null,
+      "result": "wrapped-string assertion failed",
+      "cause": "expected retirement phrase spanned terminal lines",
+      "repair": "normalize ANSI/whitespace; final candidate smoke replaced outdated keyboard flow"
+    },
+    {
+      "stage": "12 new groups",
+      "seconds": 0.184,
+      "result": "1 error",
+      "cause": "negative-only advertised omission reached option.state when option was None",
+      "repair": "guard None; final 25 focused checks passed"
+    }
+  ],
+  "cleanup": {
+    "install_root_removed": true,
+    "error_fixture_root_removed": true,
+    "user_preview_retained": true
+  },
+  "quota": {
+    "latest_used_percent": 1,
+    "latest_remaining_percent": 99,
+    "prior_A_checkpoint_remaining": 6,
+    "change_cause_unverified": true,
+    "B_used_reset_or_reserve": false
+  },
+  "remaining": [
+    "A actual keyboard/save readback acceptance",
+    "Claude/Gemini catalog/binding/effort adapters",
+    "account-confirmed catalog identity scope",
+    "authoritative actual retirement feed and trusted downstream unavailable-error observation",
+    "original R1 formal host/real provider/autonomous/Desktop criteria"
+  ],
+  "return_boundary": "bounded E10 unit returned to A; no self-assigned follow-on despite quota window change"
+}

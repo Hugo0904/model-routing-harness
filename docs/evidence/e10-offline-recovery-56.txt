@@ -1,0 +1,194 @@
+  Loaded bound tool: Codex Desktop bundled CLI
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 3
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6.1-sol
+    Effort: low
+
+  Small / Model
+    Model: gpt-6.1-sol
+    Effort: inherit
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Model list unavailable: synthetic_offline. No
+  model is marked retired by this failure.
+  Last successful list (display only; cannot select
+  or save): 2026-10-11T04:06:03.388835+00:00
+
+  MRH  /  MODEL POLICY
+
+  LAST SUCCESS  /  DISPLAY ONLY
+
+  GPT-6.1-Sol (gpt-6.1-sol)
+  GPT-6-Astra (gpt-6-astra)
+  GPT-6-Sol (gpt-6-sol)
+  GPT-6-Luna (gpt-6-luna)
+  GPT-5.6-Sol (gpt-5.6-sol)
+  GPT-5.6-Terra (gpt-5.6-terra)
+  GPT-5.6-Luna (gpt-5.6-luna)
+  GPT-5.5 (gpt-5.5)
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  LIST UNAVAILABLE
+
+  > 1. Retry refresh
+    2. Back
+    3. Cancel; keep policy
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 3
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6.1-sol
+    Effort: low
+
+  Small / Model
+    Model: gpt-6.1-sol
+    Effort: inherit
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: synthetic:refresh-recovery / codex-cli
+  0.162.0-alpha.17.2 / synthetic
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+  > 1. GPT-6.1-Sol (gpt-6.1-sol) [current]
+    2. GPT-6-Astra (gpt-6-astra)
+    3. GPT-6-Sol (gpt-6-sol)
+    4. GPT-6-Luna (gpt-6-luna)
+    5. GPT-5.6-Sol (gpt-5.6-sol)
+    6. GPT-5.6-Terra (gpt-5.6-terra)
+    7. GPT-5.6-Luna (gpt-5.6-luna)
+    8. GPT-5.5 (gpt-5.5)
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed)
+  > 2. low [current]
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. ultra
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  No policy changes.
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Unchanged. No settings rewrite.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 3
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6.1-sol
+    Effort: low
+
+  Small / Model
+    Model: gpt-6.1-sol
+    Effort: inherit
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.

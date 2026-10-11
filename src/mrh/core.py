@@ -119,6 +119,9 @@ def action_eligibility(proposal, policy, facts, tier):
     if not isinstance(mapping, dict) or not safe_id(mapping.get("model")):
         return "invalid_policy", None
     model = mapping["model"]
+    veto = policy.get('_target_veto', {}).get(model)
+    if veto in ('catalog_model_unavailable', 'catalog_model_retired'):
+        return veto, None
     target = facts.target(model)
     if target is None or not target.available.known:
         return "missing_target_model", None

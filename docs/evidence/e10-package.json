@@ -1,0 +1,442 @@
+{
+  "kind": "E10-offline-installed-entry-and-PTY",
+  "source_base": "cfd671a5f337fbb3c156d2c26190245d8b65a829",
+  "source_sha256": {
+    "src/mrh/__init__.py": "13d029d3be7f480ffffbd2e9a273e64ef1e5b4fd2d7b24811ca8899d6671ff0c",
+    "src/mrh/__main__.py": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7",
+    "src/mrh/attempts.py": "308cdd780dfabfecf5fb7531ed708da7fa259d7fd47320ab61ca2d3edba52441",
+    "src/mrh/bindings.py": "1d8f04b3017f807a16d6d1abf89352f958f44dcec7e6dd676b56182dae3e4c3f",
+    "src/mrh/catalog.py": "98ffa0d784f0425008d9df65e127c657801f3fe9a4d26f7c0e97a5947507279b",
+    "src/mrh/cli.py": "0f0d912562ed2e653b45be87d5ff85140a7e30f642f9a968cca6d0f73bf55501",
+    "src/mrh/codex.py": "392bd4a0b2a8ba3ec047b9ab8e9597f16154779bde4cc14f896f6dbb4546a03d",
+    "src/mrh/core.py": "b7a1ad659a79de3fab31917d1d214fb7ab3e5798a6552f9d817b82bb6e54a909",
+    "src/mrh/facts.py": "ca0a46a3e40f07ec5c713fb12fe983ee932e2f104ebfebc37efd24a2e890ce69",
+    "src/mrh/installer.py": "158a089d7d1c78b44f1e6042e44f4ec9f4cd70604b81148f25c2528a78578264",
+    "src/mrh/isolated_host_export.py": "96bd4d03a2190896a47c4180844e031478f5b1bff8fe204894b65854e78dc1d1",
+    "src/mrh/isolated_live_hook.py": "ad065042b218306de5626fd5efb305459c9720bf76ed9e90f746bcf2a13a9956",
+    "src/mrh/model_selector.py": "871f066ae5418dff7b4388d9a1b8e95a321ea0c188ca0e32826d7feda26bf81d",
+    "src/mrh/owned.py": "56cc22e01b52d16fec382e5bb32fc46d675a7247a4fabbd40b42009bba8f5eb9",
+    "src/mrh/plugin.py": "044b0fff605cf2534b605e25f8e67ee8fe584807dba5a1a902f2dff73f7c9b40",
+    "src/mrh/runtime.py": "cd9a518d05408c8d669d5599872da6314fc36b29963447c1a85153074aea4721",
+    "src/mrh/service.py": "0c2df1178b590ddf9b86333b78d66ae858b8a3d5ad0a7ba87ad10e89c4c1f5f4",
+    "src/mrh/settings.py": "612517f3f08e4bd8014c378daf42cc81f666bca64d2d8f065defb33751f233cb",
+    "src/mrh/settings_editor.py": "002a665c6e01a8794917ca1aeccbe02d26b4bad45aa86c55a628e525669fc734",
+    "src/mrh/settings_schema.py": "f1f404721cea25a6ffbdf6d5eea27473b5a55e22a1895d11f4942a43c3307132",
+    "src/mrh/simulation.py": "7b9b2a6e6ce10b10f329cc1b86c2e7c0eb53f7ee21b12666254b80c7d93db4d5",
+    "src/mrh/store.py": "9c4882ea8f10c3d8ec4a774ec42d8a1e771b36172404ab3d17dfee81e076ff78",
+    "src/mrh/terminal.py": "6a084f58ecb39d738905ea4cef67160d5406dc5e5d74aa4b560c4d4a1c3affb0",
+    "src/mrh/types.py": "2db9f9b242224518bbfa8533ead9f5332797c69cadfd6939ffb91ad7b6b7237a",
+    "src/mrh/typesafe.py": "ba9b8ea0e450621e3186831b263076fcb6ce6f02a0740a3117840f9ac55c51f7",
+    "src/mrh/typesafe_protocol.py": "a0dd156e74c67517062cb5e0505878f9618ad8964eb25567958c55d9cd34b612"
+  },
+  "wheel_sha256": "ee086d828710f3d9fbafa5633898f83d3d807d33730e0068d079c099fc890cdb",
+  "installed_identity": {
+    "module": "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/lib/python3.11/site-packages/mrh/__init__.py",
+    "selector": "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/lib/python3.11/site-packages/mrh/model_selector.py",
+    "bindings": "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/lib/python3.11/site-packages/mrh/bindings.py",
+    "catalog": "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/lib/python3.11/site-packages/mrh/catalog.py",
+    "cwd": "/private/tmp/mrh-e10-installed-zuz1h_9q/work"
+  },
+  "all_installed_bytes_match_source": true,
+  "no_pythonpath": true,
+  "outside_source_cwd": true,
+  "owned_root": "/private/tmp/mrh-e10-installed-zuz1h_9q",
+  "commands": [
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-m",
+        "venv",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.946
+    },
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-c",
+        "import sys;sys.path.insert(0,sys.argv[1]);import mrh_build;print(mrh_build.build_wheel(sys.argv[2]))",
+        "/Users/shawn/Code/model-routing-harness",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/wheel"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.047
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/python",
+        "-m",
+        "pip",
+        "--no-cache-dir",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-build-isolation",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/wheel/model_routing_harness-0.3.0-py3-none-any.whl"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.233
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/python",
+        "-I",
+        "-c",
+        "import json,os,mrh,mrh.model_selector,mrh.bindings,mrh.catalog;print(json.dumps({'module':mrh.__file__,'selector':mrh.model_selector.__file__,'bindings':mrh.bindings.__file__,'catalog':mrh.catalog.__file__,'cwd':os.getcwd()}))"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.05
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "model",
+        "light",
+        "--root",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/bindings"
+      ],
+      "exit_code": 2,
+      "elapsed_seconds": 0.373
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "model",
+        "light",
+        "--root",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/bindings",
+        "--width",
+        "120",
+        "--color"
+      ],
+      "exit_code": 0,
+      "pty_width": 120
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "settings",
+        "show",
+        "--path",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/mrh-profile-5abc09e9550048d48ed2b271119cd9b2/settings.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.049
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/python",
+        "-I",
+        "-c",
+        "import sys;from mrh import settings;p=sys.argv[1];s=settings.read(p);s['policy']['tiers']['Small']={'model':'synthetic-missing-old-target'};settings.update(p,expected_revision=s['revision'],policy=s['policy'])",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/mrh-profile-5abc09e9550048d48ed2b271119cd9b2/settings.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.046
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "model",
+        "small",
+        "--root",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/bindings",
+        "--width",
+        "56",
+        "--color"
+      ],
+      "exit_code": 0,
+      "pty_width": 56
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "settings",
+        "show",
+        "--path",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/mrh-profile-5abc09e9550048d48ed2b271119cd9b2/settings.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.05
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "model",
+        "top",
+        "--root",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/bindings",
+        "--width",
+        "120",
+        "--color"
+      ],
+      "exit_code": 0,
+      "pty_width": 120
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/python",
+        "-I",
+        "-c",
+        "import sys,time\nfrom mrh import cli\nfrom mrh.bindings import Registry\nfrom mrh.catalog import Catalog,CatalogError\nclass Provider:\n def __init__(self):self.n=0\n def refresh(self,b):\n  self.n+=1\n  if self.n==1:raise CatalogError('synthetic_offline')\n  c=Catalog.from_dict(Registry(sys.argv[1]).read()['bindings'][0]['catalog'])\n  return Catalog(**{**c.__dict__,'fetched_at':time.time(),'source':'synthetic:refresh-recovery','assurance':'synthetic'})\nraise SystemExit(cli.main(['model','light','--root',sys.argv[1],'--width','56','--color'],model_dependencies={'provider':Provider()}))\n",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/bindings"
+      ],
+      "exit_code": 0,
+      "pty_width": 56
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "settings",
+        "show",
+        "--path",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/mrh-profile-5abc09e9550048d48ed2b271119cd9b2/settings.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.047
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/venv/bin/mrh",
+        "stats",
+        "--settings",
+        "/private/tmp/mrh-e10-installed-zuz1h_9q/mrh-profile-5abc09e9550048d48ed2b271119cd9b2/settings.json",
+        "--json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.054
+    }
+  ],
+  "native_advertised_catalog_observation": {
+    "assurance": "tool-advertised",
+    "binding_id": "5abc09e9550048d48ed2b271119cd9b2",
+    "complete": true,
+    "fetched_at": 1791691562.844623,
+    "models": [
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "ultra"
+        ],
+        "id": "gpt-6.1-sol",
+        "label": "GPT-6.1-Sol",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "ultra"
+        ],
+        "id": "gpt-6-astra",
+        "label": "GPT-6-Astra",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "ultra"
+        ],
+        "id": "gpt-6-sol",
+        "label": "GPT-6-Sol",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "id": "gpt-6-luna",
+        "label": "GPT-6-Luna",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "ultra"
+        ],
+        "id": "gpt-5.6-sol",
+        "label": "GPT-5.6-Sol",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max",
+          "ultra"
+        ],
+        "id": "gpt-5.6-terra",
+        "label": "GPT-5.6-Terra",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "id": "gpt-5.6-luna",
+        "label": "GPT-5.6-Luna",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "id": "gpt-5.5",
+        "label": "GPT-5.5",
+        "retirement_ref": null,
+        "state": "available"
+      }
+    ],
+    "scope": "50ab38ba21d0d9f8346f32f41848382f15b556190f3c7a07e885a4fb73e379c8",
+    "source": "codex:model-list:isolated-defaults",
+    "tool": "codex",
+    "version": "codex-cli 0.162.0-alpha.17.2"
+  },
+  "synthetic_recovery_provider": true,
+  "first_saved_profile": {
+    "schema_version": 1,
+    "owner": "org.model-routing-harness.settings.v1",
+    "revision": 1,
+    "enabled": false,
+    "task_export_permitted": false,
+    "allowed_workspaces": [],
+    "provider": "typesafe",
+    "classifier_model": "jev-1.13.0",
+    "policy": {
+      "top_mode": "Main",
+      "timeout_seconds": 1.0,
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "gpt-6.1-sol"
+        }
+      },
+      "rates": {}
+    }
+  },
+  "final_profile": {
+    "schema_version": 1,
+    "owner": "org.model-routing-harness.settings.v1",
+    "revision": 3,
+    "enabled": false,
+    "task_export_permitted": false,
+    "allowed_workspaces": [],
+    "provider": "typesafe",
+    "classifier_model": "jev-1.13.0",
+    "policy": {
+      "top_mode": "Main",
+      "timeout_seconds": 1.0,
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "gpt-6.1-sol"
+        },
+        "Small": {
+          "model": "gpt-6.1-sol"
+        }
+      },
+      "rates": {}
+    }
+  },
+  "stats": {
+    "schema_version": 2,
+    "updated_at": null,
+    "partition": "live",
+    "proposals": 0,
+    "jev_attempts": 0,
+    "synthetic_attempts": 0,
+    "classified_tasks": 0,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 0
+    },
+    "outcomes": {},
+    "requested_models": {},
+    "confirmed_children": 0,
+    "simulated_children": 0,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [],
+    "event_ids": {
+      "proposals": [],
+      "attempts": [],
+      "receipts": []
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "unavailable",
+      "attempt_states": {},
+      "requested_models": {},
+      "response_models": {},
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "usage_unavailable_attempts": 0,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "actual_model_requests": 0,
+  "account_confirmation": false,
+  "global_install": false,
+  "native_mac_terminal_observed": false,
+  "keyboard_inputs": "Only Up/Down arrow sequences and Enter; no typed IDs/effort/paths/bind/save",
+  "cleanup_removed": true,
+  "elapsed_seconds": 3.736
+}

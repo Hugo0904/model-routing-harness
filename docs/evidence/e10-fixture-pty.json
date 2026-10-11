@@ -1,0 +1,155 @@
+{
+  "kind": "E10-synthetic-error-keyboard-PTY",
+  "cases": [
+    {
+      "scenario": "retired",
+      "width": 56,
+      "exit_code": 0,
+      "synthetic": true,
+      "keyboard_only": true,
+      "cancellation_bytes_preserved": false,
+      "saved_profile": {
+        "allowed_workspaces": [],
+        "classifier_model": "jev-1.13.0",
+        "enabled": false,
+        "owner": "org.model-routing-harness.settings.v1",
+        "policy": {
+          "rates": {},
+          "tiers": {
+            "Light": {
+              "effort": "high",
+              "model": "fixture-top-id"
+            }
+          },
+          "timeout_seconds": 1.0,
+          "top_mode": "Main"
+        },
+        "provider": "typesafe",
+        "revision": 2,
+        "schema_version": 1,
+        "task_export_permitted": false
+      }
+    },
+    {
+      "scenario": "unavailable",
+      "width": 120,
+      "exit_code": 0,
+      "synthetic": true,
+      "keyboard_only": true,
+      "cancellation_bytes_preserved": true,
+      "saved_profile": {
+        "allowed_workspaces": [],
+        "classifier_model": "jev-1.13.0",
+        "enabled": false,
+        "owner": "org.model-routing-harness.settings.v1",
+        "policy": {
+          "rates": {},
+          "tiers": {
+            "Light": {
+              "effort": "high",
+              "model": "fixture-old-id"
+            }
+          },
+          "timeout_seconds": 1.0,
+          "top_mode": "Main"
+        },
+        "provider": "typesafe",
+        "revision": 1,
+        "schema_version": 1,
+        "task_export_permitted": false
+      }
+    },
+    {
+      "scenario": "recovery",
+      "width": 56,
+      "exit_code": 0,
+      "synthetic": true,
+      "keyboard_only": true,
+      "cancellation_bytes_preserved": false,
+      "saved_profile": {
+        "allowed_workspaces": [],
+        "classifier_model": "jev-1.13.0",
+        "enabled": false,
+        "owner": "org.model-routing-harness.settings.v1",
+        "policy": {
+          "rates": {},
+          "tiers": {
+            "Light": {
+              "effort": "high",
+              "model": "fixture-top-id"
+            }
+          },
+          "timeout_seconds": 1.0,
+          "top_mode": "Main"
+        },
+        "provider": "typesafe",
+        "revision": 2,
+        "schema_version": 1,
+        "task_export_permitted": false
+      }
+    },
+    {
+      "scenario": "partial",
+      "width": 56,
+      "exit_code": 0,
+      "synthetic": true,
+      "keyboard_only": true,
+      "cancellation_bytes_preserved": false,
+      "saved_profile": {
+        "allowed_workspaces": [],
+        "classifier_model": "jev-1.13.0",
+        "enabled": false,
+        "owner": "org.model-routing-harness.settings.v1",
+        "policy": {
+          "rates": {},
+          "tiers": {
+            "Light": {
+              "effort": "high",
+              "model": "fixture-top-id"
+            }
+          },
+          "timeout_seconds": 1.0,
+          "top_mode": "Main"
+        },
+        "provider": "typesafe",
+        "revision": 2,
+        "schema_version": 1,
+        "task_export_permitted": false
+      }
+    },
+    {
+      "scenario": "offline",
+      "width": 120,
+      "exit_code": 0,
+      "synthetic": true,
+      "keyboard_only": true,
+      "cancellation_bytes_preserved": true,
+      "saved_profile": {
+        "allowed_workspaces": [],
+        "classifier_model": "jev-1.13.0",
+        "enabled": false,
+        "owner": "org.model-routing-harness.settings.v1",
+        "policy": {
+          "rates": {},
+          "tiers": {
+            "Light": {
+              "effort": "high",
+              "model": "fixture-old-id"
+            }
+          },
+          "timeout_seconds": 1.0,
+          "top_mode": "Main"
+        },
+        "provider": "typesafe",
+        "revision": 1,
+        "schema_version": 1,
+        "task_export_permitted": false
+      }
+    }
+  ],
+  "owned_root": "/private/tmp/mrh-e10-keyboard-fixtures-zyy26yql",
+  "cleanup_removed": true,
+  "elapsed_seconds": 0.562,
+  "real_catalog_or_model_requests": 0,
+  "native_mac_terminal_observed": false
+}

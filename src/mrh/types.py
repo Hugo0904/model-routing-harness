@@ -21,6 +21,7 @@ REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_
                 "missing_deny_capability", "unsupported_deny_capability", "missing_rewrite_capability",
                 "missing_target_model", "missing_target_effort", "missing_effective_effort", "missing_original_baseline",
                 "cached_effect_mismatch"})
+REASONS.update({'catalog_model_unavailable', 'catalog_model_retired'})
 
 
 def safe_id(value, limit=128):

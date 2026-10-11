@@ -82,7 +82,9 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
         # proposal correlation, independent of any fresh host-capability query.
         from .store import Store
         store = Store(Path(settings_path).parent / "events.sqlite3")
-        return handle_event(event, store, True, classifier=classifier, policy=value["policy"], capabilities=caps)
+        from .bindings import target_veto
+        policy = {**value['policy'], '_target_veto': target_veto(settings_path, synthetic=classifier.synthetic)}
+        return handle_event(event, store, True, classifier=classifier, policy=policy, capabilities=caps)
     except SettingsError as exc:
         print("mrh: " + exc.reason, file=sys.stderr)
     except Exception:

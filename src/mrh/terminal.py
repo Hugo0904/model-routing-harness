@@ -424,6 +424,15 @@ def render_policy_review(changes: list[str], *, width: int | None = None, color:
     return _policy_frame("REVIEW POLICY CHANGES", contents, width=width, color=color)
 
 
+def render_choices(title: str, entries: list[str], *, width: int, color: bool = False) -> str:
+    """Numbered catalog choices share the current-policy frame and cell geometry."""
+    inner = min(140, _width(width)) - 4
+    contents = []
+    for entry in entries:
+        contents.extend(_cell_chunks(entry, inner))
+    return _policy_frame(title, contents, width=width, color=color)
+
+
 def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
                  color: bool = False, details: bool = False,
                  demo_policy: Mapping[str, Any] | None = None,

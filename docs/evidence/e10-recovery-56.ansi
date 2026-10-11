@@ -1,0 +1,204 @@
+SYNTHETIC acceptance fixture. No actual outage/retirement/account is asserted.
+Owned settings readback: /private/tmp/mrh-e10-keyboard-fixtures-zyy26yql/mrh-profile-8dcacb9b56b3463bb63dbd1e78f409cc/settings.json
+  Loaded bound tool: SYNTHETIC E10 fixture
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 1                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and        [0m
+[48;2;35;38;45m[38;2;239;240;246m  effort.                                               [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light / Model                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: fixture-old-id                               [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: high                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small / Preserve                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid / Preserve                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1mTop / Main[22m[38;2;239;240;246m                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Model: Current main agent[22m[38;2;239;240;246m                           [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Effort: —[22m[38;2;239;240;246m                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the       [0m
+[48;2;35;38;45m[38;2;239;240;246m  original delegation.                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model              [0m
+[48;2;35;38;45m[38;2;239;240;246m  availability or execution.                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  Model list unavailable: synthetic_refresh_failed.
+  No model is marked retired by this failure.
+  Last successful list (display only; cannot select
+  or save): 2026-10-11T04:08:04.177361+00:00
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LAST SUCCESS  /  DISPLAY ONLY                         [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Old fixture model (fixture-old-id)                    [0m
+[48;2;35;38;45m[38;2;239;240;246m  Fixture Light (fixture-light-id)                      [0m
+[48;2;35;38;45m[38;2;239;240;246m  Fixture Top (fixture-top-id)                          [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LIST UNAVAILABLE                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 1. Retry refresh                                    [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. Back                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m    3. Cancel; keep policy                              [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > 
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 1                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and        [0m
+[48;2;35;38;45m[38;2;239;240;246m  effort.                                               [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light / Model                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: fixture-old-id                               [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: high                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small / Preserve                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid / Preserve                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1mTop / Main[22m[38;2;239;240;246m                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Model: Current main agent[22m[38;2;239;240;246m                           [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Effort: —[22m[38;2;239;240;246m                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the       [0m
+[48;2;35;38;45m[38;2;239;240;246m  original delegation.                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model              [0m
+[48;2;35;38;45m[38;2;239;240;246m  availability or execution.                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  Source: synthetic:E10:recovery /
+  synthetic-E10-fixture / synthetic
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Saved model fixture-old-id is unavailable in this
+  list/scope; global retirement is unconfirmed. Old
+  settings/history remain; choose a replacement
+  explicitly.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  Light MODEL                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 1. Fixture Light (fixture-light-id)                 [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. Fixture Top (fixture-top-id)                     [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > [8A[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  Light MODEL                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    1. Fixture Light (fixture-light-id)                 [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 2. Fixture Top (fixture-top-id)                     [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > 
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  REASONING EFFORT                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 1. inherit (resolved effort remains unconfirmed) [  [0m
+[48;2;35;38;45m[38;2;239;240;246m  current]                                              [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. high                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > [9A[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  REASONING EFFORT                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    1. inherit (resolved effort remains unconfirmed) [  [0m
+[48;2;35;38;45m[38;2;239;240;246m  current]                                              [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 2. high                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > 
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  REVIEW POLICY CHANGES                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  BEFORE -> AFTER                                       [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light: fixture-old-id / high -> fixture-top-id /      [0m
+[48;2;35;38;45m[38;2;239;240;246m  high                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing and task-sharing permissions stay as they     [0m
+[48;2;35;38;45m[38;2;239;240;246m  are.                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  SAVE POLICY?                                          [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 1. Save this policy                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. Back; keep editing                               [0m
+[48;2;35;38;45m[38;2;239;240;246m    3. Cancel; keep policy                              [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+  > 
+  Saved.
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 2                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and        [0m
+[48;2;35;38;45m[38;2;239;240;246m  effort.                                               [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Light / Model                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: fixture-top-id                               [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: high                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Small / Preserve                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Mid / Preserve                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Model: Unset                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    Effort: —                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1mTop / Main[22m[38;2;239;240;246m                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Model: Current main agent[22m[38;2;239;240;246m                           [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m  Effort: —[22m[38;2;239;240;246m                                           [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the       [0m
+[48;2;35;38;45m[38;2;239;240;246m  original delegation.                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model              [0m
+[48;2;35;38;45m[38;2;239;240;246m  availability or execution.                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                        [0m

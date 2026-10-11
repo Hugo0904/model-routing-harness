@@ -1,0 +1,65 @@
+SYNTHETIC acceptance fixture. No actual outage/retirement/account is asserted.
+Owned settings readback: /private/tmp/mrh-e10-keyboard-fixtures-zyy26yql/mrh-profile-6d02b8bef8194311ab37db03d2b97019/settings.json
+  Loaded bound tool: SYNTHETIC E10 fixture
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  CURRENT CONFIGURATION                                                                                                 [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Revision 1                                                                                                            [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Jev chooses the tier. You choose the model and effort.                                                                [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;155;158;171m  TIER      REQUESTED MODEL                                                                 EFFORT        MODE      [22m[38;2;239;240;246m  [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;76;80;94m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[22m[38;2;239;240;246m  [0m
+[48;2;35;38;45m[38;2;239;240;246m    Light     fixture-old-id                                                                  high          Model       [0m
+[48;2;35;38;45m[38;2;239;240;246m    Small     Unset                                                                           —             Preserve    [0m
+[48;2;35;38;45m[38;2;239;240;246m    Mid       Unset                                                                           —             Preserve    [0m
+[48;2;35;38;45m[38;2;239;240;246m  [38;2;173;178;250m[1m▏ Top       Current main agent                                                              —             Main      [22m[38;2;239;240;246m  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Routing requested: Off / Task export: Blocked                                                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m  inherit uses the host's effort. Unset keeps the original delegation.                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Configured requests do not confirm model availability or execution.                                                   [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  Model list unavailable: synthetic_refresh_failed. No model is marked retired by this failure.
+  Last successful list (display only; cannot select or save): 2026-10-11T04:08:04.329347+00:00
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LAST SUCCESS  /  DISPLAY ONLY                                                                                         [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  Old fixture model (fixture-old-id)                                                                                    [0m
+[48;2;35;38;45m[38;2;239;240;246m  Fixture Light (fixture-light-id)                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m  Fixture Top (fixture-top-id)                                                                                          [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  Up/Down: select. Enter: confirm. Left: back. Esc: cancel. Numbers are optional.
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LIST UNAVAILABLE                                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 1. Retry refresh                                                                                                    [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. Back                                                                                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m    3. Cancel; keep policy                                                                                              [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  > [9A[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LIST UNAVAILABLE                                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    1. Retry refresh                                                                                                    [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 2. Back                                                                                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m    3. Cancel; keep policy                                                                                              [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  > [9A[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  MRH  /  MODEL POLICY                                                                                                  [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;173;178;250m  LIST UNAVAILABLE                                                                                                      [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+[48;2;35;38;45m[38;2;239;240;246m    1. Retry refresh                                                                                                    [0m
+[48;2;35;38;45m[38;2;239;240;246m    2. Back                                                                                                             [0m
+[48;2;35;38;45m[38;2;239;240;246m  > 3. Cancel; keep policy                                                                                              [0m
+[48;2;35;38;45m[38;2;239;240;246m                                                                                                                        [0m
+  > 
+  Cancelled. No policy changes saved.

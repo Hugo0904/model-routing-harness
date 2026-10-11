@@ -55,6 +55,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
+    model = commands.add_parser('model', help='choose a tier model from a bound tool catalog')
+    model.add_argument('tier', nargs='?', type=str.lower, choices=('light','small','mid','top'),
+                       help='tier to configure (omit for a picker)')
+    model.add_argument('--root', type=Path, help='explicit MRH binding-state root for isolation')
+    model.add_argument('--bind', action='store_true', help='confirm association of another detected tool/profile')
+    model.add_argument('--associate-settings', type=Path, help='explicit known owned settings to associate (with --bind)')
+    _add_display_options(model)
+
     for name, help_text in (
         ("stats", "show event statistics"),
         ("status", "show current local routing status and statistics"),
@@ -359,6 +367,7 @@ def main(
     stdout: Any = None,
     stderr: Any = None,
     runtime_dependencies: dict | None = None,
+    model_dependencies: dict | None = None,
 ) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -377,6 +386,14 @@ def main(
     old_stdout, old_stderr = sys.stdout, sys.stderr
     sys.stdout, sys.stderr = stdout, stderr
     try:
+        if args.command == 'model':
+            from .bindings import default_root
+            from .model_selector import select
+            if args.associate_settings is not None and not args.bind:
+                stderr.write('mrh: --associate-settings requires --bind\n');return 2
+            return select(args.root or default_root(), args.tier.title() if args.tier else None,
+                          stdin=stdin, stdout=stdout, width=args.width or terminal_width(), color=_wants_color(args),
+                          bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
             return _cmd_stats(args)
         if args.command == "doctor":
