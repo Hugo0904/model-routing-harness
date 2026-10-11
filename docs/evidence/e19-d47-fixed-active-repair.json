@@ -1,0 +1,839 @@
+{
+  "kind": "real_subscription_remaining_policy_acceptance",
+  "scenario": "fixed",
+  "scripted_provider": false,
+  "host_facts_injected": false,
+  "private_rollout_read": false,
+  "turns": [
+    {
+      "task": "Delegate exactly one generic subtask without specifying its model or reasoning effort. Give the child this complete work description: Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Wait for its result and report it. If a Hook returns the unexecuted subtask, complete it in this same parent without another delegation. Use no commands, files, web access, real orders or external actions.",
+      "events": [
+        {
+          "method": "thread/started",
+          "thread": {
+            "id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "parentThreadId": null,
+            "model": "gpt-5.6-luna",
+            "reasoningEffort": "low",
+            "modelProvider": "openai",
+            "status": {
+              "type": "idle"
+            }
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd8901b081918dbcb97fdf642441",
+            "text": "",
+            "phase": "commentary",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd8901b081918dbcb97fdf642441",
+            "text": "I\u2019ll delegate the requested protocol-design subtask and wait for the child\u2019s result.",
+            "phase": "commentary",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "thread/tokenUsage/updated",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "tokenUsage": {
+              "total": {
+                "totalTokens": 16528,
+                "inputTokens": 16431,
+                "cachedInputTokens": 9984,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 97,
+                "reasoningOutputTokens": 33
+              },
+              "last": {
+                "totalTokens": 16528,
+                "inputTokens": 16431,
+                "cachedInputTokens": 9984,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 97,
+                "reasoningOutputTokens": 33
+              },
+              "modelContextWindow": 258400
+            }
+          }
+        },
+        {
+          "method": "hook/started",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "run": {
+              "id": "pre-tool-use:0:/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "displayOrder": 0,
+              "status": "running",
+              "statusMessage": null,
+              "startedAt": 1791741323,
+              "completedAt": null,
+              "durationMs": null,
+              "entries": []
+            }
+          }
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "run": {
+              "id": "pre-tool-use:0:/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "displayOrder": 0,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1791741323,
+              "completedAt": 1791741328,
+              "durationMs": 4732,
+              "entries": []
+            }
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "collabAgentToolCall",
+            "id": "exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+            "tool": "spawnAgent",
+            "status": "inProgress",
+            "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "receiverThreadIds": [],
+            "prompt": "Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Use no commands, files, web access, real orders or external actions.",
+            "model": "",
+            "reasoningEffort": "medium",
+            "agentsStates": {}
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "collabAgentToolCall",
+            "id": "exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+            "tool": "spawnAgent",
+            "status": "completed",
+            "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "receiverThreadIds": [
+              "01a12c1a-fb00-7f63-8174-a447d0eda68b"
+            ],
+            "prompt": "Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Use no commands, files, web access, real orders or external actions.",
+            "model": "gpt-5.6-luna",
+            "reasoningEffort": "low",
+            "agentsStates": {
+              "01a12c1a-fb00-7f63-8174-a447d0eda68b": {
+                "status": "pendingInit",
+                "message": null
+              }
+            }
+          }
+        },
+        {
+          "method": "hook/started",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "run": {
+              "id": "post-tool-use:1:/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "displayOrder": 1,
+              "status": "running",
+              "statusMessage": null,
+              "startedAt": 1791741328,
+              "completedAt": null,
+              "durationMs": null,
+              "entries": []
+            }
+          }
+        },
+        {
+          "method": "hook/completed",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "run": {
+              "id": "post-tool-use:1:/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "executionMode": "sync",
+              "scope": "turn",
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "displayOrder": 1,
+              "status": "completed",
+              "statusMessage": null,
+              "startedAt": 1791741328,
+              "completedAt": 1791741328,
+              "durationMs": 339,
+              "entries": []
+            }
+          }
+        },
+        {
+          "method": "thread/tokenUsage/updated",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "tokenUsage": {
+              "total": {
+                "totalTokens": 42473,
+                "inputTokens": 42223,
+                "cachedInputTokens": 26112,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 250,
+                "reasoningOutputTokens": 52
+              },
+              "last": {
+                "totalTokens": 25945,
+                "inputTokens": 25792,
+                "cachedInputTokens": 16128,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 153,
+                "reasoningOutputTokens": 19
+              },
+              "modelContextWindow": 258400
+            }
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd9178648191bb6603196fb61b36",
+            "text": "",
+            "phase": "commentary",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd9178648191bb6603196fb61b36",
+            "text": "The child has been delegated the complete bounded protocol-design task. I\u2019m waiting for its result now.",
+            "phase": "commentary",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "collabAgentToolCall",
+            "id": "exec-2f233a49-9680-4086-a0b7-251b08bb8f03",
+            "tool": "wait",
+            "status": "inProgress",
+            "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "receiverThreadIds": [
+              "01a12c1a-fb00-7f63-8174-a447d0eda68b"
+            ],
+            "prompt": null,
+            "model": null,
+            "reasoningEffort": null,
+            "agentsStates": {}
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "turnId": "01a12c1a-fb22-7bc0-9068-33336fda3fff",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_006540102ad99299016acbcd94b6dc8191a1b441735e1bbf3e",
+            "text": "",
+            "phase": "final_answer",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "turnId": "01a12c1a-fb22-7bc0-9068-33336fda3fff",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_006540102ad99299016acbcd94b6dc8191a1b441735e1bbf3e",
+            "text": "Use a fixed inventory partition: each item unit has one authoritative owner region. During normal operation, ownership transfers only through a two-phase handoff: source locks the unit, payment service durably records escrow, destination acknowledges, then both commit the new owner.\n\nInvariant: for every unit, at most one committed reservation or shipment exists; a reservation is committed only by its owner and only against unspent inventory.\n\nEach region may accept reservations while isolated, but only from its locally owned quota. Thus availability is preserved without cross-region overselling. Non-owner requests are queued, not accepted as committed reservations. Payment authorization is provisional until the reservation commit; duplicate or reordered messages are harmless because every operation has a unique idempotency key and monotonic version.\n\nShipping may be prepared in either region, but cannot become irreversible while ownership, payment, or reservation state is uncertain. Therefore the requirement that must be relaxed is immediate irreversible shipping: shipment remains cancellable or held in escrow until commit evidence is durable. If that is unacceptable, availability during partition must instead be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch. The highest valid committed epoch wins; stale messages are rejected. Uncommitted reservations expire and provisional payments are voided or refunded. Conflicting shipment preparations are canceled or quarantined. Only after reconciliation confirms a single committed reservation may shipping be finalized.",
+            "phase": "final_answer",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "thread/tokenUsage/updated",
+          "params": {
+            "threadId": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+            "turnId": "01a12c1a-fb22-7bc0-9068-33336fda3fff",
+            "tokenUsage": {
+              "total": {
+                "totalTokens": 16732,
+                "inputTokens": 16380,
+                "cachedInputTokens": 15104,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 352,
+                "reasoningOutputTokens": 75
+              },
+              "last": {
+                "totalTokens": 16732,
+                "inputTokens": 16380,
+                "cachedInputTokens": 15104,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 352,
+                "reasoningOutputTokens": 75
+              },
+              "modelContextWindow": 258400
+            }
+          }
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+            "turn": {
+              "id": "01a12c1a-fb22-7bc0-9068-33336fda3fff",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_006540102ad99299016acbcd94b6dc8191a1b441735e1bbf3e",
+                  "text": "Use a fixed inventory partition: each item unit has one authoritative owner region. During normal operation, ownership transfers only through a two-phase handoff: source locks the unit, payment service durably records escrow, destination acknowledges, then both commit the new owner.\n\nInvariant: for every unit, at most one committed reservation or shipment exists; a reservation is committed only by its owner and only against unspent inventory.\n\nEach region may accept reservations while isolated, but only from its locally owned quota. Thus availability is preserved without cross-region overselling. Non-owner requests are queued, not accepted as committed reservations. Payment authorization is provisional until the reservation commit; duplicate or reordered messages are harmless because every operation has a unique idempotency key and monotonic version.\n\nShipping may be prepared in either region, but cannot become irreversible while ownership, payment, or reservation state is uncertain. Therefore the requirement that must be relaxed is immediate irreversible shipping: shipment remains cancellable or held in escrow until commit evidence is durable. If that is unacceptable, availability during partition must instead be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch. The highest valid committed epoch wins; stale messages are rejected. Uncommitted reservations expire and provisional payments are voided or refunded. Conflicting shipment preparations are canceled or quarantined. Only after reconciliation confirms a single committed reservation may shipping be finalized.",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791741328,
+              "completedAt": 1791741335,
+              "durationMs": 7009
+            }
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "collabAgentToolCall",
+            "id": "exec-2f233a49-9680-4086-a0b7-251b08bb8f03",
+            "tool": "wait",
+            "status": "completed",
+            "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "receiverThreadIds": [
+              "01a12c1a-fb00-7f63-8174-a447d0eda68b"
+            ],
+            "prompt": null,
+            "model": null,
+            "reasoningEffort": null,
+            "agentsStates": {
+              "01a12c1a-fb00-7f63-8174-a447d0eda68b": {
+                "status": "completed",
+                "message": "Use a fixed inventory partition: each item unit has one authoritative owner region. During normal operation, ownership transfers only through a two-phase handoff: source locks the unit, payment service durably records escrow, destination acknowledges, then both commit the new owner.\n\nInvariant: for every unit, at most one committed reservation or shipment exists; a reservation is committed only by its owner and only against unspent inventory.\n\nEach region may accept reservations while isolated, but only from its locally owned quota. Thus availability is preserved without cross-region overselling. Non-owner requests are queued, not accepted as committed reservations. Payment authorization is provisional until the reservation commit; duplicate or reordered messages are harmless because every operation has a unique idempotency key and monotonic version.\n\nShipping may be prepared in either region, but cannot become irreversible while ownership, payment, or reservation state is uncertain. Therefore the requirement that must be relaxed is immediate irreversible shipping: shipment remains cancellable or held in escrow until commit evidence is durable. If that is unacceptable, availability during partition must instead be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch. The highest valid committed epoch wins; stale messages are rejected. Uncommitted reservations expire and provisional payments are voided or refunded. Conflicting shipment preparations are canceled or quarantined. Only after reconciliation confirms a single committed reservation may shipping be finalized."
+              }
+            }
+          }
+        },
+        {
+          "method": "thread/tokenUsage/updated",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "tokenUsage": {
+              "total": {
+                "totalTokens": 68547,
+                "inputTokens": 68224,
+                "cachedInputTokens": 51456,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 323,
+                "reasoningOutputTokens": 52
+              },
+              "last": {
+                "totalTokens": 26074,
+                "inputTokens": 26001,
+                "cachedInputTokens": 25344,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 73,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 258400
+            }
+          }
+        },
+        {
+          "method": "item/started",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd982e6c8191b9c22ce71cc5961f",
+            "text": "",
+            "phase": "final_answer",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "item/completed",
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "item": {
+            "type": "agentMessage",
+            "id": "msg_0076c9ffb573c55a016acbcd982e6c8191b9c22ce71cc5961f",
+            "text": "Use a fixed inventory partition: each unit has one authoritative owner region. Ownership transfers only via a two-phase handoff: the source locks the unit, payment durably records escrow, the destination acknowledges, then both commit the new owner.\n\nInvariant: each unit has at most one committed reservation or shipment, and only its owner may commit against unspent inventory.\n\nDuring isolation, each region accepts reservations only from its local quota. Non-owner requests are queued. Unique idempotency keys and monotonic versions make duplicate or reordered messages harmless.\n\nThe requirement that must be relaxed is immediate irreversible shipping. Shipping remains cancellable or held until ownership, payment, and reservation commits are durable. Otherwise, availability during partition must be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch; the highest valid committed epoch wins, and stale messages are rejected. Uncommitted reservations expire, provisional payments are voided or refunded, and conflicting shipment preparations are canceled or quarantined. Shipping becomes irreversible only after reconciliation confirms one committed reservation.",
+            "phase": "final_answer",
+            "memoryCitation": null,
+            "delivery": null,
+            "questions": null
+          }
+        },
+        {
+          "method": "thread/tokenUsage/updated",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turnId": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "tokenUsage": {
+              "total": {
+                "totalTokens": 95492,
+                "inputTokens": 94963,
+                "cachedInputTokens": 76800,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 529,
+                "reasoningOutputTokens": 52
+              },
+              "last": {
+                "totalTokens": 26945,
+                "inputTokens": 26739,
+                "cachedInputTokens": 25344,
+                "cacheWriteInputTokens": 0,
+                "outputTokens": 206,
+                "reasoningOutputTokens": 0
+              },
+              "modelContextWindow": 258400
+            }
+          }
+        },
+        {
+          "method": "turn/completed",
+          "params": {
+            "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+            "turn": {
+              "id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+              "items": [
+                {
+                  "type": "agentMessage",
+                  "id": "msg_0076c9ffb573c55a016acbcd982e6c8191b9c22ce71cc5961f",
+                  "text": "Use a fixed inventory partition: each unit has one authoritative owner region. Ownership transfers only via a two-phase handoff: the source locks the unit, payment durably records escrow, the destination acknowledges, then both commit the new owner.\n\nInvariant: each unit has at most one committed reservation or shipment, and only its owner may commit against unspent inventory.\n\nDuring isolation, each region accepts reservations only from its local quota. Non-owner requests are queued. Unique idempotency keys and monotonic versions make duplicate or reordered messages harmless.\n\nThe requirement that must be relaxed is immediate irreversible shipping. Shipping remains cancellable or held until ownership, payment, and reservation commits are durable. Otherwise, availability during partition must be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch; the highest valid committed epoch wins, and stale messages are rejected. Uncommitted reservations expire, provisional payments are voided or refunded, and conflicting shipment preparations are canceled or quarantined. Shipping becomes irreversible only after reconciliation confirms one committed reservation.",
+                  "phase": "final_answer",
+                  "memoryCitation": null,
+                  "delivery": null,
+                  "questions": null
+                }
+              ],
+              "itemsView": "summary",
+              "status": "completed",
+              "error": null,
+              "startedAt": 1791741317,
+              "completedAt": 1791741337,
+              "durationMs": 19520
+            }
+          }
+        }
+      ],
+      "child_metadata": [
+        {
+          "id": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "parentThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "model": "gpt-5.6-luna",
+          "reasoningEffort": "low",
+          "modelProvider": "openai",
+          "status": {
+            "type": "idle"
+          }
+        }
+      ],
+      "remaining": [],
+      "turn_id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+      "child_loaded_readbacks": [
+        {
+          "id": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "parentThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "model": "gpt-5.6-luna",
+          "reasoningEffort": "low",
+          "modelProvider": "openai",
+          "status": {
+            "type": "idle"
+          }
+        },
+        {
+          "id": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "parentThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "model": "gpt-5.6-luna",
+          "reasoningEffort": "low",
+          "modelProvider": "openai",
+          "status": {
+            "type": "active",
+            "activeFlags": []
+          }
+        }
+      ],
+      "child_while_native_active": [
+        {
+          "id": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+          "parentThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "model": "gpt-5.6-luna",
+          "reasoningEffort": "low",
+          "modelProvider": "openai",
+          "status": {
+            "type": "active",
+            "activeFlags": []
+          }
+        }
+      ],
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turn": {
+            "id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "msg_0076c9ffb573c55a016acbcd982e6c8191b9c22ce71cc5961f",
+                "text": "Use a fixed inventory partition: each unit has one authoritative owner region. Ownership transfers only via a two-phase handoff: the source locks the unit, payment durably records escrow, the destination acknowledges, then both commit the new owner.\n\nInvariant: each unit has at most one committed reservation or shipment, and only its owner may commit against unspent inventory.\n\nDuring isolation, each region accepts reservations only from its local quota. Non-owner requests are queued. Unique idempotency keys and monotonic versions make duplicate or reordered messages harmless.\n\nThe requirement that must be relaxed is immediate irreversible shipping. Shipping remains cancellable or held until ownership, payment, and reservation commits are durable. Otherwise, availability during partition must be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch; the highest valid committed epoch wins, and stale messages are rejected. Uncommitted reservations expire, provisional payments are voided or refunded, and conflicting shipment preparations are canceled or quarantined. Shipping becomes irreversible only after reconciliation confirms one committed reservation.",
+                "phase": "final_answer",
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791741317,
+            "completedAt": 1791741337,
+            "durationMs": 19520
+          }
+        },
+        "emittedAtMs": 1791741337359
+      },
+      "child_turns": {
+        "01a12c1a-fb00-7f63-8174-a447d0eda68b": [
+          {
+            "id": "01a12c1a-fb22-7bc0-9068-33336fda3fff",
+            "items": [
+              {
+                "type": "userMessage",
+                "id": "01a12c1b-05dc-7c11-930c-59f7c3128311",
+                "clientId": null,
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Use no commands, files, web access, real orders or external actions.",
+                    "text_elements": []
+                  }
+                ]
+              },
+              {
+                "type": "reasoning",
+                "id": "rs_006540102ad99299016acbcd94a7a8819192b049a0b10110e4",
+                "summary": [],
+                "content": []
+              },
+              {
+                "type": "agentMessage",
+                "id": "msg_006540102ad99299016acbcd94b6dc8191a1b441735e1bbf3e",
+                "text": "Use a fixed inventory partition: each item unit has one authoritative owner region. During normal operation, ownership transfers only through a two-phase handoff: source locks the unit, payment service durably records escrow, destination acknowledges, then both commit the new owner.\n\nInvariant: for every unit, at most one committed reservation or shipment exists; a reservation is committed only by its owner and only against unspent inventory.\n\nEach region may accept reservations while isolated, but only from its locally owned quota. Thus availability is preserved without cross-region overselling. Non-owner requests are queued, not accepted as committed reservations. Payment authorization is provisional until the reservation commit; duplicate or reordered messages are harmless because every operation has a unique idempotency key and monotonic version.\n\nShipping may be prepared in either region, but cannot become irreversible while ownership, payment, or reservation state is uncertain. Therefore the requirement that must be relaxed is immediate irreversible shipping: shipment remains cancellable or held in escrow until commit evidence is durable. If that is unacceptable, availability during partition must instead be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch. The highest valid committed epoch wins; stale messages are rejected. Uncommitted reservations expire and provisional payments are voided or refunded. Conflicting shipment preparations are canceled or quarantined. Only after reconciliation confirms a single committed reservation may shipping be finalized.",
+                "phase": "final_answer",
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "full",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791741328,
+            "completedAt": 1791741335,
+            "durationMs": 7009
+          }
+        ]
+      },
+      "parent_after": {
+        "id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+        "parentThreadId": null,
+        "model": "gpt-5.6-luna",
+        "reasoningEffort": "low",
+        "modelProvider": "openai",
+        "status": {
+          "type": "idle"
+        }
+      },
+      "parent_turns": [
+        {
+          "id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "items": [
+            {
+              "type": "userMessage",
+              "id": "01a12c1a-d9d0-7031-91fb-b5a85152f5ef",
+              "clientId": null,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Delegate exactly one generic subtask without specifying its model or reasoning effort. Give the child this complete work description: Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Wait for its result and report it. If a Hook returns the unexecuted subtask, complete it in this same parent without another delegation. Use no commands, files, web access, real orders or external actions.",
+                  "text_elements": []
+                }
+              ]
+            },
+            {
+              "type": "reasoning",
+              "id": "rs_0076c9ffb573c55a016acbcd88eb288191925b31d1593e48c4",
+              "summary": [],
+              "content": []
+            },
+            {
+              "type": "agentMessage",
+              "id": "msg_0076c9ffb573c55a016acbcd8901b081918dbcb97fdf642441",
+              "text": "I\u2019ll delegate the requested protocol-design subtask and wait for the child\u2019s result.",
+              "phase": "commentary",
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            },
+            {
+              "type": "reasoning",
+              "id": "rs_0076c9ffb573c55a016acbcd8ac38481918da7f7e0577fc240",
+              "summary": [],
+              "content": []
+            },
+            {
+              "type": "collabAgentToolCall",
+              "id": "exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+              "receiverThreadIds": [
+                "01a12c1a-fb00-7f63-8174-a447d0eda68b"
+              ],
+              "prompt": "Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Use no commands, files, web access, real orders or external actions.",
+              "model": "gpt-5.6-luna",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "01a12c1a-fb00-7f63-8174-a447d0eda68b": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            {
+              "type": "agentMessage",
+              "id": "msg_0076c9ffb573c55a016acbcd9178648191bb6603196fb61b36",
+              "text": "The child has been delegated the complete bounded protocol-design task. I\u2019m waiting for its result now.",
+              "phase": "commentary",
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            },
+            {
+              "type": "collabAgentToolCall",
+              "id": "exec-2f233a49-9680-4086-a0b7-251b08bb8f03",
+              "tool": "wait",
+              "status": "completed",
+              "senderThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+              "receiverThreadIds": [
+                "01a12c1a-fb00-7f63-8174-a447d0eda68b"
+              ],
+              "prompt": null,
+              "model": null,
+              "reasoningEffort": null,
+              "agentsStates": {
+                "01a12c1a-fb00-7f63-8174-a447d0eda68b": {
+                  "status": "completed",
+                  "message": "Use a fixed inventory partition: each item unit has one authoritative owner region. During normal operation, ownership transfers only through a two-phase handoff: source locks the unit, payment service durably records escrow, destination acknowledges, then both commit the new owner.\n\nInvariant: for every unit, at most one committed reservation or shipment exists; a reservation is committed only by its owner and only against unspent inventory.\n\nEach region may accept reservations while isolated, but only from its locally owned quota. Thus availability is preserved without cross-region overselling. Non-owner requests are queued, not accepted as committed reservations. Payment authorization is provisional until the reservation commit; duplicate or reordered messages are harmless because every operation has a unique idempotency key and monotonic version.\n\nShipping may be prepared in either region, but cannot become irreversible while ownership, payment, or reservation state is uncertain. Therefore the requirement that must be relaxed is immediate irreversible shipping: shipment remains cancellable or held in escrow until commit evidence is durable. If that is unacceptable, availability during partition must instead be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch. The highest valid committed epoch wins; stale messages are rejected. Uncommitted reservations expire and provisional payments are voided or refunded. Conflicting shipment preparations are canceled or quarantined. Only after reconciliation confirms a single committed reservation may shipping be finalized."
+                }
+              }
+            },
+            {
+              "type": "agentMessage",
+              "id": "msg_0076c9ffb573c55a016acbcd982e6c8191b9c22ce71cc5961f",
+              "text": "Use a fixed inventory partition: each unit has one authoritative owner region. Ownership transfers only via a two-phase handoff: the source locks the unit, payment durably records escrow, the destination acknowledges, then both commit the new owner.\n\nInvariant: each unit has at most one committed reservation or shipment, and only its owner may commit against unspent inventory.\n\nDuring isolation, each region accepts reservations only from its local quota. Non-owner requests are queued. Unique idempotency keys and monotonic versions make duplicate or reordered messages harmless.\n\nThe requirement that must be relaxed is immediate irreversible shipping. Shipping remains cancellable or held until ownership, payment, and reservation commits are durable. Otherwise, availability during partition must be relaxed.\n\nRecovery reconciles logs by operation ID and owner epoch; the highest valid committed epoch wins, and stale messages are rejected. Uncommitted reservations expire, provisional payments are voided or refunded, and conflicting shipment preparations are canceled or quarantined. Shipping becomes irreversible only after reconciliation confirms one committed reservation.",
+              "phase": "final_answer",
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "full",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1791741317,
+          "completedAt": 1791741337,
+          "durationMs": 19520
+        }
+      ],
+      "proposals": [
+        {
+          "id": "33ace44e34541c170f168c039c62bc9c81315d5c9108f9239bde18d662bc8366",
+          "session_id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+          "turn_id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+          "tool_call_id": "exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+          "state": "complete",
+          "action": "preserve",
+          "reason": "cost_unknown",
+          "tier": "Mid",
+          "confidence": 0.99,
+          "requested_model": null,
+          "requested_effort": null
+        }
+      ],
+      "classifier_invocations": 1,
+      "native_methods": [
+        "account/rateLimits/updated",
+        "deprecationNotice",
+        "hook/completed",
+        "hook/started",
+        "item/agentMessage/delta",
+        "item/completed",
+        "item/started",
+        "mcpServer/startupStatus/updated",
+        "thread/started",
+        "thread/status/changed",
+        "thread/tokenUsage/updated",
+        "turn/completed",
+        "turn/started",
+        "warning"
+      ],
+      "parent_substantive_completion": true
+    }
+  ],
+  "remaining": [],
+  "hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/tmp/mrh-e19-d45-mrc5zw54/work",
+          "hooks": [
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/runtime/bin/python3.11 -I -B \"/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:e1f6c96f0eb874537fb47a2156e7eaca655b6bfc0937cc9420d3914cc7c744ac",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/runtime/bin/python3.11 -I -B \"/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9c15b8b56b93b590b017175c9b2db7fa7477b2982e0f1733c003c5e29d7705a6",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "parent_id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+  "parent_before": {
+    "id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+    "parentThreadId": null,
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "modelProvider": "openai",
+    "status": {
+      "type": "idle"
+    }
+  },
+  "parent_after": {
+    "id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+    "parentThreadId": null,
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "modelProvider": "openai",
+    "status": {
+      "type": "idle"
+    }
+  },
+  "native_process_exit": 0,
+  "elapsed_seconds": 20.695,
+  "classifier_calls_d47_total": 4,
+  "all_batches_classifier_calls": 8
+}

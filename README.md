@@ -1,14 +1,16 @@
 # Model Routing Harness
 
-子代理任務分級器與終端工具，MRH-001 **E16R 本機候選 0.3.0**。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。Codex／Claude／Gemini 的工具宣告清單與保存操作已經 A 驗收；Gemini 目前只提供 inherit 推理設定。模型清單支援不等於該 AI 的子代理路由已接通。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通模型切換；D47 已觀察同 Goal 跨回合重新分級及 Top Fixed 的較高模型 child／結果，Main 真 Top deny 與 Fixed active 目標讀回仍未完成。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
 
-Mac arm64 可直接使用[最新候選包與 CLI 更新操作指南](docs/e16r-cli-update.md)，[封裝與安裝方式](docs/e15-standalone-macos-arm64.md)沿用既有設計：解壓後在資料夾內執行 `./mrh model`，只需另行準備所選 vendor CLI，不需自行安裝 Python 或 SDK。CLI 更新後可在同一份設定中重新確認版本與清單，保留設定及歷史。A 已親自驗證這份封裝；目前仍是本機候選，未公開發布。下面的 Python／venv 指令保留供開發使用。
+Mac arm64 可直接執行：
 
-首次使用請看[安裝、設定與確認結果](docs/quickstart.md)。設定檔、CLI 編輯與畫面讀取共用同一來源；設定完成不等於正式 Hook 已啟用。
+```sh
+/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh --help
+```
 
-[E14 故障提示](docs/e14-visible-faults.md) 已經 A 驗收：分類器或執行環境故障會顯示固定警告，摘要區分故障、正常保留與停止；重播不重複通知，後續有效路由評估才標示恢復。這只反映已觀測的工作階段，沒有活動不等於已啟用或運作正常。
+[啟用與停用的精確指令](docs/quickstart.md)使用已登入保留的 `/private/tmp/mrh-e19-d45-mrc5zw54` home、同一 `state/settings.json` 與 model registry。套件自帶 Python，不需安裝 SDK。MRH 目前 disabled／外送 denied；普通模型、Top Main／Fixed 可用方向鍵與 Enter 設定，保存前核對最新清單，取消保留舊政策。設定保存不會自動啟用路由。
 
-E8 已完成並經 A 接受的範圍，是 pinned Codex source 的真實 ToolRegistry → 原生 Hook 子程序 → MRH → 同次委派控制；9 次隔離 dispatch 通過，分類服務使用替身，preserve 端使用受控 handler。這不是安裝版 CLI、正式啟用或真模型驗證，詳見 [E8 證據](docs/e8-live-hook-proof.md)。
+[本次真實證據與限制](docs/e19-subscription-classifier.md)分清 CLI usage、configured model、provider identity、Main／Fixed／Goal 與剩餘義務。模型清單支援不等於 Claude／Gemini 路由已接通。完整需求與 A 接受紀錄維持在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。以下開發與歷史證據保留其原本來源，不視為新版真實驗收。
 
 ## 直接執行視覺 Demo
 
@@ -51,7 +53,7 @@ mrh status --db /private/tmp/mrh-demo.sqlite3 --synthetic --width 28
 
 TypeSafe 的固定 HTTPS API、雙重啟用／task 外送權限與 runtime credential resolver 見 [資料契約](docs/contracts.md)。[完整公開設定](examples/settings-disabled.json) 不含 key，載入不讀憑證；E5 的 `settings` 指令與 `hook --settings` 共用同一 reader／factory，再加 operator 指定的 workspace 範圍。政策不等於已驗證宿主能力。普通 tier 成本使用原委派解析後的 model/effort；未知就保留。Jev reported tokens/model 與 child actual model 分開，價格只標為估算。
 
-新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。正式 resolver 只讀 Hook 提供的 model／cwd／correlation metadata，角色保護等必要事實保持 unknown，記 `missing_role_protection` 並保留原呼叫；不讀 key 或呼叫 Jev。[E6 事實與支援邊界](docs/e6-action-facts-proof.md) 列出精確版本缺口。
+新路徑與安裝／停用指南見 [E5 證據與設定](docs/e5-settings-plugin-proof.md)。`mrh plugin prepare` 只準備 fresh 或可驗證的 MRH 自有 bundle；native registration／trust 要另以原生 CLI／UI 完成，不能把 prepared 視為 installed。未準備 configuration scope 的舊 resolver 只讀 Hook 提供的 metadata，必要事實 unknown 時保留原呼叫；已驗證的 pinned CLI 入口另外使用 E17R/E19 scope binding，不把 configuration assurance 說成同 call 的直接觀察。[E6 事實與支援邊界](docs/e6-action-facts-proof.md) 列出精確版本缺口。
 
 ```sh
 mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh
@@ -67,15 +69,15 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 | 項目 | 目前證據 |
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作；E6 每個分支的最小事實及負例經合成 core／公開入口驗證 |
-| Codex Hook JSON、Main deny／Fixed rewrite | 已於兩個安裝版app-server，以native v1＋腳本provider驗取消／改寫；Desktop UI／真型號／自主接回未驗證 |
+| Codex Hook／native 控制 | D46 真普通切換已驗收；D47 真 Fixed 較高 configured child／結果已觀察，active 目標讀回缺口保留；Main 尚未命中真 Top deny。E17R 腳本保護證據沿用，Desktop／自主接回未驗證 |
 | 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
-| TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 Main／Fixed／一般路由缺同次委派事實而未支援，真 API 未驗證 |
-| 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
+| 分級來源與公開設定 | 新設定使用 Codex 訂閱；真 ordinary 切換與 Goal fresh classification 已觀察。舊 TypeSafe factory／HTTP 替身及 settings 保留，真 Jev API 未驗證，沒有自動 fallback |
+| 後續真 Goal 委派 | D47 同一官方 Goal 的兩個 harness 回合各有新訂閱分級與完成結果，Goal 完成及 clear 讀回；自主排程未驗證。原 E4G 腳本 lifecycle 證據保留 |
 | Claude Code | macOS 2.1.267 的 CLI 宣告模型／推理選單已驗收，無 SDK 使用前提；路由接頭與帳號可用性未驗證，詳見 [E13](docs/e13-claude-catalog.md) |
 | Gemini CLI | macOS 0.63.0 的 CLI 宣告模型清單與 inherit 選單已驗收；支援同一設定的 CLI 更新確認，帳號可用性及路由接頭未驗證，詳見 [E16](docs/e16-gemini-catalog.md)／[E16R](docs/e16r-cli-update.md) |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
 | Jev tokens／估算 | 可保存有效 usage；E3 只有 synthetic；未知保持 null，匹配版本才估算 |
-| child tokens／cost／quota／實測節省 | 不可取得；不從次數或模型名推算 |
+| native usage／cost／quota／節省 | 本次公開 native／classifier usage 可得部分已保存；未知費用、quota、provider 身分與節省不從模型名推算 |
 
 政策、收據與 v2 統計見 [資料契約](docs/contracts.md)、[合成設定](examples/synthetic-policy.json)、[合成統計](examples/synthetic-stats.json)、[含 Jev 離線 transport 的合成統計](examples/synthetic-provider-stats.json)。這些統計是 MRH 格式，TypeSafe wire 格式另依官方 API。
 

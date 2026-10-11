@@ -1,0 +1,222 @@
+{
+  "kind": "D47_real_remaining_policy_and_activation_delivery",
+  "public_evidence_files": [
+    "e19-d47-goal-main.json",
+    "e19-d47-fixed.json",
+    "e19-d47-fixed-active-repair.json"
+  ],
+  "same_goal_identity": {
+    "threadId": "01a12c0d-f94f-7a11-93fc-f85fce184ae2",
+    "createdAt": 1791740476,
+    "objective": "Complete the bounded hypothetical inventory/payment/shipping design and a subsequent recovery analysis through two explicitly requested fresh delegation turns."
+  },
+  "goal_fresh_real_classification_two_turns": true,
+  "goal_work_complete_and_cleared": true,
+  "autonomous_goal_scheduling_verified": false,
+  "main_true_top_deny_verified": false,
+  "main_observed_classifications": [
+    {
+      "id": "914958923fc9ac94632754dad4efa5ef13f7de15d745eb5001f4e8116a47eae0",
+      "session_id": "01a12c0d-f94f-7a11-93fc-f85fce184ae2",
+      "turn_id": "01a12c0d-fd63-7cb3-86b8-05db40bc0a4a",
+      "tool_call_id": "call_BDD08dJqmIFQRCZEGo0Lx9pp",
+      "state": "complete",
+      "action": "preserve",
+      "reason": "low_confidence",
+      "tier": "Mid",
+      "confidence": 0.18,
+      "requested_model": null,
+      "requested_effort": null
+    },
+    {
+      "id": "60ccfdd543dca4236c6d8a1e006b6b78bd18ce55df385afb7004b20999012fda",
+      "session_id": "01a12c0d-f94f-7a11-93fc-f85fce184ae2",
+      "turn_id": "01a12c0e-9a14-7631-83d9-647bc6f28b49",
+      "tool_call_id": "call_G2ndozhZW4DfpZQ7wnr8vqV6",
+      "state": "complete",
+      "action": "preserve",
+      "reason": "low_confidence",
+      "tier": "Small",
+      "confidence": 0.39,
+      "requested_model": null,
+      "requested_effort": null
+    }
+  ],
+  "fixed_first_top_proposal": {
+    "id": "f307310081213fc75ff9573e7b8a4aa769ac58bcb0ec2e60464ad251355c298b",
+    "session_id": "01a12c12-080c-7893-b510-14d5b65c0af4",
+    "turn_id": "01a12c12-088b-7103-b7bf-dd171394101c",
+    "tool_call_id": "exec-8b1b088b-e1ec-41e2-b344-e80e791d5094",
+    "state": "complete",
+    "action": "request_child",
+    "reason": "top_fixed_requested",
+    "tier": "Top",
+    "confidence": 0.98,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "low"
+  },
+  "fixed_first_same_loaded_child_metadata": [
+    {
+      "id": "01a12c12-3203-7e82-83d9-2051680a27af",
+      "parentThreadId": "01a12c12-080c-7893-b510-14d5b65c0af4",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "low",
+      "modelProvider": "openai",
+      "status": {
+        "type": "idle"
+      }
+    }
+  ],
+  "fixed_first_child_readback_state": "idle in same still-live native process; not active",
+  "fixed_first_configured_higher_child_and_parent_results_observed": true,
+  "fixed_first_active_target_snapshot_verified": false,
+  "corrective_readback_observation": {
+    "proposal": {
+      "id": "33ace44e34541c170f168c039c62bc9c81315d5c9108f9239bde18d662bc8366",
+      "session_id": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+      "turn_id": "01a12c1a-d2c6-7853-8124-29834ac9d441",
+      "tool_call_id": "exec-7ed4f608-eda8-45e3-b71b-b7ddf01fb635",
+      "state": "complete",
+      "action": "preserve",
+      "reason": "cost_unknown",
+      "tier": "Mid",
+      "confidence": 0.99,
+      "requested_model": null,
+      "requested_effort": null
+    },
+    "active_child": [
+      {
+        "id": "01a12c1a-fb00-7f63-8174-a447d0eda68b",
+        "parentThreadId": "01a12c1a-cf96-72b2-add2-3aaeb497a59f",
+        "model": "gpt-5.6-luna",
+        "reasoningEffort": "low",
+        "modelProvider": "openai",
+        "status": {
+          "type": "active",
+          "activeFlags": []
+        }
+      }
+    ],
+    "driver_legacy_active_capture_corrected": true,
+    "fixed_target_top_in_corrective_run": false
+  },
+  "independent_runs_not_combined_as_single_success": true,
+  "actual_normal_invocations": 3,
+  "actual_single_driver_readback_repair_invocation": 1,
+  "d47_classifier_invocations": 4,
+  "all_batches_classifier_invocations": 8,
+  "classifier_attempts_with_known_usage": [
+    {
+      "proposal_id": "914958923fc9ac94632754dad4efa5ef13f7de15d745eb5001f4e8116a47eae0",
+      "phase": "returned",
+      "requested_model": "gpt-6-luna",
+      "response_model": null,
+      "input_tokens": 2562,
+      "output_tokens": 21
+    },
+    {
+      "proposal_id": "60ccfdd543dca4236c6d8a1e006b6b78bd18ce55df385afb7004b20999012fda",
+      "phase": "returned",
+      "requested_model": "gpt-6-luna",
+      "response_model": null,
+      "input_tokens": 2460,
+      "output_tokens": 21
+    },
+    {
+      "proposal_id": "f307310081213fc75ff9573e7b8a4aa769ac58bcb0ec2e60464ad251355c298b",
+      "phase": "returned",
+      "requested_model": "gpt-6-luna",
+      "response_model": null,
+      "input_tokens": 2180,
+      "output_tokens": 21
+    },
+    {
+      "proposal_id": "33ace44e34541c170f168c039c62bc9c81315d5c9108f9239bde18d662bc8366",
+      "phase": "returned",
+      "requested_model": "gpt-6-luna",
+      "response_model": null,
+      "input_tokens": 2172,
+      "output_tokens": 21
+    }
+  ],
+  "known_public_native_final_totals_by_thread": {
+    "01a12c0d-f94f-7a11-93fc-f85fce184ae2": {
+      "totalTokens": 194899,
+      "inputTokens": 194036,
+      "cachedInputTokens": 181760,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 863,
+      "reasoningOutputTokens": 23
+    },
+    "01a12c0e-2599-7f61-b823-7a1dcddf634a": {
+      "totalTokens": 19048,
+      "inputTokens": 18624,
+      "cachedInputTokens": 12032,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 424,
+      "reasoningOutputTokens": 119
+    },
+    "01a12c0e-be5f-7e70-b774-7d1c1f59b640": {
+      "totalTokens": 21837,
+      "inputTokens": 21521,
+      "cachedInputTokens": 17536,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 316,
+      "reasoningOutputTokens": 84
+    },
+    "01a12c12-080c-7893-b510-14d5b65c0af4": {
+      "totalTokens": 80153,
+      "inputTokens": 79528,
+      "cachedInputTokens": 64512,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 625,
+      "reasoningOutputTokens": 79
+    },
+    "01a12c12-3203-7e82-83d9-2051680a27af": {
+      "totalTokens": 20947,
+      "inputTokens": 20615,
+      "cachedInputTokens": 0,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 332,
+      "reasoningOutputTokens": 39
+    },
+    "01a12c1a-cf96-72b2-add2-3aaeb497a59f": {
+      "totalTokens": 95492,
+      "inputTokens": 94963,
+      "cachedInputTokens": 76800,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 529,
+      "reasoningOutputTokens": 52
+    },
+    "01a12c1a-fb00-7f63-8174-a447d0eda68b": {
+      "totalTokens": 16732,
+      "inputTokens": 16380,
+      "cachedInputTokens": 15104,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 352,
+      "reasoningOutputTokens": 75
+    }
+  },
+  "monetary_savings_estimated": false,
+  "retained_session": "/private/tmp/mrh-e19-d45-mrc5zw54",
+  "original_model_effort_policy_scope_restored": true,
+  "disabled_export_denied": true,
+  "public_same_home_chatgpt_status": true,
+  "old_and_new_session_refs_preserved": true,
+  "private_rollout_read": false,
+  "observer_reinstalled": false,
+  "product_source_or_bundle_changed": false,
+  "operator_definitions_and_readonly_consumers_verified": true,
+  "shipped_parser_operator_commands_verified": 11,
+  "binding_registry": "/private/tmp/mrh-e19-d45-mrc5zw54/model-bindings",
+  "same_profile_settings": "/private/tmp/mrh-e19-d45-mrc5zw54/state/settings.json",
+  "activation_document": "docs/quickstart.md",
+  "remaining": [
+    "true subscription Main Top denial and unchanged-parent handback",
+    "Fixed required active target snapshot on same confident Top call",
+    "original unknown Hook input diagnostic",
+    "Desktop/global/formal adoption",
+    "autonomous Goal scheduling",
+    "whole original R1"
+  ]
+}

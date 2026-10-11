@@ -89,4 +89,28 @@ V2 的公開 `subAgentActivity.agentThreadId` 提供實際 child ID；空 legacy
 
 已以官方介面移除 observer plugin／marketplace，`hooks/list` 讀回只剩原兩個 MRH Hook。相同 settings 已 disabled／export denied，仍只綁原 owned workspace；native 驗收與讀回程序均 exit 0。public login status 仍為 ChatGPT，沒有 logout／home 刪除。保留 home、workspace、state、原 parent／child sessions 與 ignored pointer `/Users/shawn/Code/model-routing-harness/build/e19-d45-pointer.json`，直到整體使用者成果由 A 驗收；回報或單批完成都不觸發登入清理。[同目標讀回及保留](evidence/e19-d45-retained-session.json)。
 
-本次普通切換完成；Top Main／Fixed、Goal、正式採用與完整 R1 保留為原剩餘義務，沒有被本次結果豁免。原始輸入診斷另列，未拿未授權來源填補，也未為此再消耗呼叫。A 負責整體验收與原範圍後續安排。
+本次普通切換完成；Top Main／Fixed、Goal、正式採用與完整 R1 保留為原剩餘義務，沒有被本次結果豁免。原始輸入診斷另列，未拿未授權來源填補，也未為此再消耗呼叫。A 負責整體驗收與原範圍後續安排。
+
+
+## D47：剩餘政策、同 Goal 與實際啟用入口
+
+沿用同一登入／home／workspace／state、原 E19 套件與有效證據，沒有重做 ordinary sorting、menu matrix、isolation 或全套測試。正常規劃是兩個 Goal/Main 回合及一個 Fixed 回合；另做一次已理解的 driver/readback 補驗，實際 **4 次 classifier／4 個 native turn**，以前 4 次保留，全部批次共 8 次。[結果與用量](evidence/e19-d47-result.json)、[live stats](evidence/e19-d47-stats.json)。classifier 本批已知 9,374 input／84 output；公開 native final totals 依 thread 保存，Goal parent 跨回合累計只取最後一筆，沒有重複加總。費用／節省未知。
+
+| 本次回合 | 真實分類及路由 | 實際結果／接受界線 |
+|---|---|---|
+| 同 Goal 的跨系統 inventory/payment/shipping 設計 | Mid／0.18；low_confidence 保留 | child 與同 Sol6.1 parent 完成設計；未命中 Main |
+| 同 Goal 的 lease-expiry/reallocation/shipping-ack failure analysis | Small／0.39；low_confidence 保留 | fresh call／proposal／classifier 與實質答案；未命中 Main |
+| Luna parent 的 Top Fixed 設計 | Top／0.98；top_fixed_requested | child configured Sol6.1／low，child 與同 Luna parent 完成；same loaded readback 為 idle，沒有 active 目標 snapshot |
+| 單次 legacy-readback 修正觀測 | Mid／0.99；cost_unknown 保留 | driver 可從 legacy receiver ID 捕捉 active child；本回是 Luna／low，不能拿來補前一回 Sol 的 active 證據 |
+
+同一新建原生 Goal `01a12c0d-f94f-7a11-93fc-f85fce184ae2` 的 thread／createdAt／objective 在 before、between 與 after 保持相同，兩個實際 turn／call／proposal 不同、各有一次 fresh 訂閱分級。兩個工作完成後，原生 Goal 自行標 complete。driver 原本只接受 active，修正讀回判斷後，經 public RPC 確認同 Goal complete 並 clear／get=null，**沒有重跑模型**。這是 harness 明確開始兩回合的真訂閱 Goal 證據，未證自主排程。[Goal 原生鏈](evidence/e19-d47-goal-main.json)、[同 Goal 關閉讀回](evidence/e19-d47-goal-close.json)。
+
+Fixed 首回的 proposal call ID 與公開 legacy collabAgentToolCall ID／receiver UUID 一致，public model／effort、child-parent 關聯、child 和 parent completed 都保存。driver 只在 V2 subAgentActivity 做即時讀回，漏了此回 legacy child identity；因此首回只保留同 process 中 loaded-idle metadata，未改稱 active。D47 允許的單次 readback 修正支援兩種原生 identity，初始化 metadata probe 最多三次。補驗雖真正捕捉 active，分類沒有再命中 Top，故不拼接兩回成一個完整成功、不再抽樣。[首次 Fixed](evidence/e19-d47-fixed.json)、[修正界線](evidence/e19-d47-fixed-readback-repair-setup.json)、[單次補驗](evidence/e19-d47-fixed-active-repair.json)。Main 真 Top deny／same-parent handback 與嚴格的 Fixed active 目標鏈仍未完成，交 A 按真結果裁決，未改 rubric／confidence／0.5 或注入答案。
+
+驗收用 model／effort 和 Top policy 已透過 owned config／CAS 恢復原值，再 prepare／官方 plugin refresh／核對 cache 和原兩個 Hook trust。MRH disabled／export denied，parent 原設定 Sol6.1／low、Top Main、普通 mappings／rates／history 不變。same-home public status 仍 ChatGPT；全部 native 驗收／讀回程序結束，Goal 已 clear；沒有 logout、原正式 home 更動、observer 重裝、私有 rollout 診斷或 bundle 重建。原及新 thread refs／pointer／home／workspace／state 保留到 A 驗收整體成果。[最後同目標讀回](evidence/e19-d47-restored-session.json)。B 有效 model／effort 不能由公開 read_thread 取得，僅保留 A 的請求設定，不宣稱該 metadata 已驗證。
+
+模型選單已透過真正 CLI 把 `$MRH_ROOT/model-bindings` 關聯同一 `$MRH_ROOT/state/settings.json`，避免另一份 profile。初始關聯程序在綁定後取消等待逾時，已終止 owned process、沒有 Save；後續 shipped Registry/profile consumer 核對同 settings／pin／版本，原政策已恢復。[關聯及讀回](evidence/e19-d47-profile-association.json)。
+
+實際操作見 [啟用與停用指令](quickstart.md)：獨立入口、明確同 profile、模型選單、export／enable、官方 `--no-daemon -C` 互動啟動、disable／deny-export／status／stats，以及另選 workspace 的 scope reprepare 說明。shipped parser 的 11 個指令、真 profile reader、startup allowlist、文件 shell 定義與實際 readonly settings／public auth consumer 已核對，沒有再呼叫模型或替其他 workspace 啟用。archive／manifest／application hash 不變。[操作指令驗證](evidence/e19-d47-operator-commands.json)。
+
+這是 pinned local CLI 的已觀察與可操作範圍；原未知 Hook input、Main、Fixed active 目標讀回、Desktop／正式 global adoption、自主 Goal 排程與完整 R1 維持原分母／未完成，不把此單位稱整個任務完成。

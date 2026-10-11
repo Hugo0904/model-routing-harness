@@ -1,0 +1,60 @@
+{
+  "same_owned_root": "/private/tmp/mrh-e19-d45-mrc5zw54",
+  "public_chatgpt_status": true,
+  "raw_auth_read": false,
+  "original_parent_model": "gpt-6.1-sol",
+  "original_parent_effort": "low",
+  "original_policy": {
+    "top_mode": "Main",
+    "timeout_seconds": 20,
+    "tiers": {
+      "Light": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      },
+      "Mid": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      },
+      "Small": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      }
+    },
+    "rates": {
+      "gpt-5.6-luna": {
+        "currency": "credits",
+        "unit": "per-million-tokens",
+        "service": "codex-standard-credit",
+        "source_ref": "openai-codex-pricing-2026-10-11",
+        "components": {
+          "cached_input": 0.5,
+          "input": 5,
+          "output": 30
+        }
+      },
+      "gpt-6.1-sol": {
+        "currency": "credits",
+        "unit": "per-million-tokens",
+        "service": "codex-standard-credit",
+        "source_ref": "openai-codex-pricing-2026-10-11",
+        "components": {
+          "cached_input": 2.5,
+          "input": 50,
+          "output": 250
+        }
+      }
+    }
+  },
+  "prior_live_mrh_classifier_invocations": 1,
+  "prior_batch_classifier_calls": 3,
+  "expected_distinct_d47_invocations": 3,
+  "reused_accepted_bundle": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh",
+  "mrh_scope_verified": true,
+  "observer_registered": false,
+  "B_requested_model_effort": "gpt-6.1-sol/xhigh per A",
+  "B_current_turn_id": "01a12c05-4b1d-75c0-b282-978f568c74d5",
+  "B_effective_model_effort": "not exposed by public native read_thread; unverified",
+  "driver_sha256": "3ec82000443cad1d6f302e0bc9b897bb9e5e1f91ea82203a10be347e9fdc2fa1",
+  "all_retained_old_session_references_preserved": true
+}

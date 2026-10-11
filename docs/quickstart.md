@@ -1,92 +1,74 @@
-# 安裝與設定四級模型
+# 啟用已驗證的本機 CLI 路徑
 
-目前可使用的是本機 CLI／設定候選。新設定的分級來源是 Codex 訂閱，使用既有 ChatGPT 登入，不要求 API key；舊 TypeSafe 設定保留原來源。模型政策保存後，仍須通過 Hook scope、task 外送與啟用檢查。目前登入 home 的全域 AGENTS 會觸發隔離保護，真實分級尚未驗收，見 [E19 說明](e19-subscription-classifier.md)。以下來源操作使用 Python 3.11+；E19 獨立套件已內含執行環境。
+使用現有 E19 獨立套件與已登入、保留的同一 home，不需 Python、SDK 或 API key。普通便宜模型切換已由 A 驗收。D47 另觀察同一 Goal 的兩回 fresh classification，以及 Top Fixed 的較高模型 child／結果；Main 的真 Top deny 尚未命中，Fixed 的 active 目標讀回仍有缺口。完整 R1、Desktop／原全域 home 與自主 Goal 續跑尚未完成，見 [E19 實際證據](e19-subscription-classifier.md)。目前 MRH disabled／task 外送 denied，啟用要由以下明確指令進行。
 
-## 先看畫面
-
-```sh
-/Users/shawn/Code/model-routing-harness/demo --color --width 120
-```
-
-Demo 使用隔離的五筆示範資料並自動清除；不是你的實際委派歷史。`--plain` 關閉色彩，省略 `--width` 會依目前終端寬度排列。
-
-## 現在直接使用模型選單
-
-需要 Python 3.11+，不需要 API key：
+## 在終端貼上這組入口
 
 ```sh
-cd /Users/shawn/Code/model-routing-harness
-PYTHONPATH=src python3.11 -m mrh model light
+MRH_ROOT=/private/tmp/mrh-e19-d45-mrc5zw54
+MRH_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh
+MRH_CODEX_DIR=/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin
+MRH_SETTINGS="$MRH_ROOT/state/settings.json"
+
+mrh_cli() {
+  env -i HOME=/Users/shawn CODEX_HOME="$MRH_ROOT/home"     PATH="$MRH_CODEX_DIR:/usr/bin:/bin:/usr/sbin:/sbin" TMPDIR="$MRH_ROOT/tmp"     LANG=en_US.UTF-8 NO_COLOR=1 TERM=xterm-256color "$MRH_ENTRY" "$@"
+}
+codex_cli() {
+  env -i HOME="$MRH_ROOT" CODEX_HOME="$MRH_ROOT/home"     PATH="$MRH_CODEX_DIR:/usr/bin:/bin:/usr/sbin:/sbin" TMPDIR="$MRH_ROOT/tmp"     LANG=en_US.UTF-8 NO_COLOR=1 TERM=xterm-256color "$MRH_CODEX_DIR/codex" --no-daemon "$@"
+}
 ```
 
-將 `light` 換成 `small`、`mid`、`top`，或省略等級進入選單。首次選擇已安裝工具並確認建立 MRH profile；單一綁定會自動載入。這是 MRH 設定關聯，不是帳號登入。
+MRH 工具讀取使用者的可信 CLI 安裝位置；model／settings 寫入下方明確的 owned registry／settings。實際 Codex 程序使用同一隔離 home／登入及固定的環境，不修改全域環境或正式 Codex home。已關聯的 Codex 版本為 `0.159.3`，同一 model registry 是 `$MRH_ROOT/model-bindings`，同一設定是 `$MRH_SETTINGS`。
 
-- ↑／↓ 選擇，Enter 確認；模型與推理強度不必手打。
-- ← 回上一頁並保留草稿，Esc 取消；取消不保存政策。
-- 最後選 Save 才保存。版本衝突或清單改變時，不會直接覆寫。
-- Top 先選 Main 或 Fixed；Main 不更改主視窗模型，Fixed 再選子代理模型。
-
-預設使用 MRH 自有使用者資料夾。`--root /完整路徑` 可指定另一個綁定登錄目錄，profile 會建立在該目錄的上一層。驗證請使用全新的自有父資料夾，避免混用正式設定。
-
-## 安裝後用短指令
-
-下面是一次性獨立安裝範例，尚未替你執行。請使用尚未存在的 venv 位置；不修改 Codex 登入、Hook 或全域 PATH。
+## 選模型與確認設定
 
 ```sh
-python3.11 -m venv "$HOME/.local/share/mrh/venv"
-"$HOME/.local/share/mrh/venv/bin/python" -m pip install --no-index --no-deps --no-build-isolation /Users/shawn/Code/model-routing-harness
-source "$HOME/.local/share/mrh/venv/bin/activate"
-mrh model light
+mrh_cli model light --root "$MRH_ROOT/model-bindings"
+mrh_cli settings view --path "$MRH_SETTINGS" --plain
+mrh_cli settings show --path "$MRH_SETTINGS"
 ```
 
-日後在終端啟用同一個 venv 後，即可使用 `mrh model`。E10 已驗過套件入口與模組包含；E10R 修正經來源驗收，沒有把舊 wheel 當成本次修正版。
+將 `light` 換成 `small`、`mid`、`top`，或省略等級。↑／↓ 選 AI、模型、推理強度與 Save；← 返回並保留草稿，Esc 取消。此 registry 已綁定現有設定，不會另建一份政策；不要省略 `--root`。新清單讀取失敗可 Retry／Back／Cancel，舊清單只供顯示，確認下架才要求手動替換。Top 可選 Main 或 Fixed，Main 不更動主模型；固定模型仍受角色及相容性保護。儲存政策不會自動啟用或允許外送。
 
-## 模型不能使用時
+分級器固定 `gpt-6-luna / low`，使用 ChatGPT 訂閱；四級選單設定的是後續 child。0.5 以下保留原委派。信心度是模型自報，沒有校準；TypeSafe 舊設定保留且沒有自動 provider／API fallback。
 
-清單讀取失敗時可 Retry、Back 或 Cancel。舊清單只供顯示，不能確認新設定；連線失敗不會被誤判為模型下架。已確認下架的模型會提示手動選替代項目，保留舊設定與歷史。
-
-在已驗證具備拒絕能力的接頭中，分級選定後若有可信事實確認目標模型／推理強度不可用，會停止該次委派，指出等級及指令，例如 `mrh model top`。更新後，操作者必須重新發起新委派；原委派保持停止，不會自動換模型、交給主模型或自行恢復。這已在隔離公開 Hook 驗證；正式宿主尚未採用，沒有可讀取的下游模型錯誤時也無法代為偵測。
-
-## 進階設定
-
-舊的 `settings edit` 文字輸入編輯器仍保留；正常選模型請使用上述 `model` 選單。以下讀取指令中的 `mrh_cli` 是安裝後的執行檔完整路徑，`mrh_settings` 是選單綁定的 profile 所使用之 `settings.json` 完整路徑；不要另外初始化另一份設定後誤以為是同一份。修改政策不會自動開啟路由、task 外送或改動其他權限。
-
-## 確認保存的內容
+## 啟用這個已準備的工作區
 
 ```sh
-"$mrh_cli" settings view --path "$mrh_settings" --color --width 120
-"$mrh_cli" status --settings "$mrh_settings" --color --width 120
-"$mrh_cli" settings show --path "$mrh_settings"
-"$mrh_cli" stats --settings "$mrh_settings" --json
+codex_cli login status
+mrh_cli settings configure --path "$MRH_SETTINGS" --permit-task-export
+mrh_cli settings enable --path "$MRH_SETTINGS"
+codex_cli -C "$MRH_ROOT/work"
 ```
 
-`view` 顯示目前四級配置；`status` 加上同資料夾事件庫的歷史統計。配置表與歷史次數分開，修改政策不會重算舊事件。`show`／`stats --json` 提供原始資料，`--details` 可查看完整統計。`--settings` 與 `--db` 不能同時指定。
+官方 status 應顯示 ChatGPT。這個空白 workspace 已綁定 scope、安裝並信任原兩個 MRH Hook；目前 parent 為 `gpt-6.1-sol / low`、Top Main、普通各級為 Luna／low。進入官方互動 CLI 後才輸入工作，不在啟動命令加 prompt、`-m`／`-c`／profile 或 turn model overrides；那超出目前 Hook 可核對的 scope。原 sandbox／approval 規則保留，這些指令沒有提高檔案寫入權限。單純詢問不會分級；只有新的、沒有明示模型／effort且角色未受保護的委派才進分級器。已停止的原提案不會自行重啟。
 
-## 任務是如何被分級的
+## 查結果與停用
 
-所選分級來源讀取本次子任務與四級標準，回傳等級及信心度，MRH 再套用你的子代理模型政策。新設定使用 `gpt-6-luna / low` 作為分級器；四級清單選的是後續子代理的模型與推理強度，兩者分開設定：
+```sh
+mrh_cli status --settings "$MRH_SETTINGS" --plain --details
+mrh_cli stats --settings "$MRH_SETTINGS" --json --details
+mrh_cli settings disable --path "$MRH_SETTINGS"
+mrh_cli settings configure --path "$MRH_SETTINGS" --deny-task-export
+mrh_cli settings show --path "$MRH_SETTINGS"
+```
 
-| 等級 | 判斷方向 |
-|---|---|
-| Light | 機械性處理，成果容易直接檢查 |
-| Small | 需要閱讀理解，但範圍與驗收明確 |
-| Mid | 實作、測試或診斷等較大工作 |
-| Top | 跨系統設計、證據衝突或重要取捨 |
+設定與統計使用同一 profile。ordinary／Main／Fixed request、故障保留和 operator stop 分開列；requested model、native configured model 與 provider-confirmed identity 不混用。public CLI／native usage 可保存時另列，未知費用／quota 保持 null。停用與禁止外送不會刪除登入、session 或歷史；現在的保留環境也不在交接或單批結束時清理。
 
-分類標準與提示詞目前不提供使用者編輯入口；信心度低於 0.5 仍保留原呼叫。Codex 分級信心度是模型自報，尚未校準，不是 Jev 機率。明確指定模型、受保護角色、相容性與成本檢查仍適用，Fixed 不會繞過它們。
+## 換到另一個明確選定的 workspace
 
-## 已驗證與尚未完成
+以下是操作說明，本次沒有替其他 workspace 啟用。將路徑換成你已明確選定的專案，先停止該 home 的原生程序並停用／禁止外送：
 
-A 已親自驗證 E10R 的 Codex 公開預設清單、方向鍵選擇／返回／保存、取消保存不變與錯誤引導；停止委派採隔離公開 Hook 逐步驗證。見 [A 驗收](evidence/e10r-a-acceptance.json)及[E10R 說明](e10r-operator-stop.md)。
+```sh
+MRH_WORKSPACE=/absolute/explicitly-chosen-workspace
+mrh_cli settings disable --path "$MRH_SETTINGS"
+mrh_cli settings configure --path "$MRH_SETTINGS" --deny-task-export
+mrh_cli plugin prepare --root "$MRH_ROOT/plugin" --settings "$MRH_SETTINGS"   --scope-workspace "$MRH_WORKSPACE" --codex-binary "$MRH_CODEX_DIR/codex"
+codex_cli plugin add model-routing-harness@model-routing-harness-local --json
+mrh_cli settings configure --path "$MRH_SETTINGS" --clear-workspaces --allow-workspace "$MRH_WORKSPACE"
+codex_cli -C "$MRH_WORKSPACE"
+```
 
-| AI 工具 | 目前實際支援 |
-|---|---|
-| Codex CLI | 工具公開模型／推理清單、鍵盤選擇及保存；帳號權限與正式真模型委派未確認 |
-| Codex Desktop | 可發現內附 CLI；Desktop UI 與正式完整整合未確認 |
-| Claude Code | macOS 2.1.267 可直接讀 CLI 宣告清單、選模型與來源提供的 effort；不需 SDK。其他版本、帳號可用性與路由接頭仍未驗證，詳見 [E13](e13-claude-catalog.md) |
-| Gemini CLI | 0.63.0 的工具宣告模型清單與 inherit 選單已驗收；CLI 更新可在同一份設定中重新確認，帳號可用性與路由接頭仍未驗證 |
+先完成官方 workspace／Hook trust review，再用前面的 permit／enable 指令並重開同 workspace CLI。原 home／登入沿用，不複製憑證或另建登入。prepare 會檢查版本、模型／effort、工作區和額外設定；若拒絕，維持停用並處理它指出的確切 scope 缺口，不改檢查或繞過保護。更動 owned home 的父模型／effort 後也要重新 prepare、官方 refresh／trust；更換 CLI 版本不代表路由已支援，新版本須另經版本驗證。不要把 Desktop、全域正式 home 或其他 AI 的模型清單支持當作本路徑已接通。
 
-
-[E9R 安裝版證據](e9r-configured-table-proof.md) 已涵蓋離線安裝、實際 CLI 編輯、同檔讀回及寬窄終端呈現。[E8](e8-live-hook-proof.md) 已驗隔離 source 的真實 Hook 子程序控制，但不是你目前已安裝的 Codex。
-
-正式宿主採用、真訂閱分級／子模型、自主 Main 接回和 Goal、Desktop UI 尚未完成。主模型不會因此被切換。畫面中的 unknown／Unavailable 不表示零用量或沒有費用。原生 Mac Terminal 外觀尚未觀測；目前可見證據來自真實 PTY 輸出與 xterm.js。
+本機 source／venv 開發入口、合成 demo 與歷史驗證仍見 README 和 E3／E4G；實際使用以上獨立入口即可。

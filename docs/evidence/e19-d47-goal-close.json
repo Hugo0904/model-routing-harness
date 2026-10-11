@@ -1,0 +1,36 @@
+{
+  "kind": "same_completed_native_goal_public_readback_repair",
+  "thread_id": "01a12c0d-f94f-7a11-93fc-f85fce184ae2",
+  "complete_state": {
+    "id": 2,
+    "result": {
+      "goal": {
+        "threadId": "01a12c0d-f94f-7a11-93fc-f85fce184ae2",
+        "objective": "Complete the bounded hypothetical inventory/payment/shipping design and a subsequent recovery analysis through two explicitly requested fresh delegation turns.",
+        "status": "complete",
+        "tokenBudget": null,
+        "tokensUsed": 23800,
+        "timeUsedSeconds": 69,
+        "createdAt": 1791740476,
+        "updatedAt": 1791740546
+      }
+    }
+  },
+  "clear_response": {
+    "id": 3,
+    "result": {
+      "cleared": true
+    }
+  },
+  "empty_readback": {
+    "id": 4,
+    "result": {
+      "goal": null
+    }
+  },
+  "real_model_calls": 0,
+  "original_goal_identity_unchanged": true,
+  "two_actual_tasks_fulfilled_before_clear": true,
+  "cause": "native marked Goal complete after second fulfilled turn; driver wrongly required active after both turns",
+  "native_process_exit": 0
+}

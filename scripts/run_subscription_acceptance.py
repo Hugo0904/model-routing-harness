@@ -9,12 +9,25 @@ import sqlite3
 import sys
 import time
 
-from verify_host import Rpc
+from verify_host import Rpc, require_goal
 
 PROMPTS = {
  'ordinary':'Delegate exactly one generic subtask, without specifying its model or reasoning effort: sort the literal numbers [3, 1, 2] ascending and return only the sorted array. Wait for that result and report it. If a hook returns the unexecuted subtask to you, do it here without delegating again. Do not use files, commands, web access, or other tasks.',
  'tradeoff':'Delegate exactly one generic subtask, without specifying its model or reasoning effort: design a tiny hypothetical two-service reservation protocol when network partitions can occur and payment confirmation may be delayed. Explain the conflict between avoiding duplicate reservations and maintaining availability, choose a tradeoff, and state one recovery rule. Limit the answer to 150 words. Wait for the result; if a hook returns this unexecuted subtask to you, complete it in this same parent without a replacement child. Use no real data, files, commands, or web access.'
 }
+
+D47_TASKS = (
+ 'Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words.',
+ 'Analyze one new failure in the hypothetical design just completed: payment confirms after lease expiry while the other region reallocates inventory and the shipping acknowledgement is lost. Choose compensation and reconciliation rules and explain what evidence can justify each irreversible action. Limit the answer to 180 words.'
+)
+
+
+def d47_prompt(task):
+    return ('Delegate exactly one generic subtask without specifying its model or reasoning effort. '
+            'Give the child this complete work description: '+task+
+            ' Wait for its result and report it. If a Hook returns the unexecuted subtask, '
+            'complete it in this same parent without another delegation. '
+            'Use no commands, files, web access, real orders or external actions.')
 
 
 def proposal_rows(path):
@@ -50,9 +63,152 @@ def curate(event):
         item=params.get('item',{})
         if item.get('type') in ('agentMessage','collabAgentToolCall','subAgentActivity','codeExecution'):
             return {'method':method,'threadId':params.get('threadId'),'turnId':params.get('turnId'),'item':item}
-    if method in ('turn/completed','hook/started','hook/completed','thread/settings/updated','thread/tokenUsage/updated'):
+    if method in ('turn/completed','hook/started','hook/completed','thread/settings/updated','thread/tokenUsage/updated','thread/goal/updated','error'):
         return {'method':method,'params':params}
     return None
+
+
+def d47_native_turn(rpc, info, pointer, database, parent, prompt):
+    """One new real delegation. No observer, scope facts or inferred answer."""
+    assert current_attempts(database)-info['d47_classifier_baseline']<info.get('d47_classifier_limit',3)
+    baseline=len(proposal_rows(database));before_calls=current_attempts(database);offset=len(rpc.events)
+    result={'task':prompt,'events':[],'child_metadata':[],'remaining':[]}
+    reply=rpc.request('turn/start',{'threadId':parent,'input':[{'type':'text','text':prompt}]})
+    assert 'error' not in reply,'native_turn_start_failed'
+    turn=reply['result']['turn']['id'];result['turn_id']=turn
+    info['d47_native_turns']+=1;pointer.write_text(json.dumps(info,indent=2)+'\n')
+    print(json.dumps({'d47_native_turn_started':turn,'parent':parent}),flush=True)
+    done=False;children=set();early=set();reads={};deadline=time.monotonic()+120
+    def read_active_child(child):
+        if child in early or reads.get(child,0)>=3:return
+        reads[child]=reads.get(child,0)+1
+        metadata=thread_metadata(rpc.request('thread/read',{'threadId':child,'includeTurns':False}))
+        result.setdefault('child_loaded_readbacks',[]).append(metadata)
+        if metadata.get('status',{}).get('type')=='active':
+            early.add(child);result.setdefault('child_while_native_active',[]).append(metadata)
+    try:
+        while time.monotonic()<deadline:
+            finished=next((e for e in rpc.events[offset:] if e.get('method')=='turn/completed' and e.get('params',{}).get('threadId')==parent and e.get('params',{}).get('turn',{}).get('id')==turn),None)
+            if finished is not None:result['parent_completed']=finished;done=True;break
+            try:item=rpc.inbox.get(timeout=.25)
+            except queue.Empty:
+                if rpc.proc.poll() is not None:raise RuntimeError('native_server_exited')
+                for child in sorted(children-early):read_active_child(child)
+                continue
+            rpc.events.append(item);activity=item.get('params',{}).get('item',{})
+            if activity.get('type')=='subAgentActivity' and activity.get('agentThreadId'):
+                child=activity['agentThreadId'];children.add(child)
+                read_active_child(child)
+            if activity.get('type')=='collabAgentToolCall':
+                for child in activity.get('receiverThreadIds',[]):
+                    children.add(child);read_active_child(child)
+            if 'id' in item and 'method' in item:
+                result['remaining'].append('unexpected_native_approval:'+item['method']);break
+            pre=[x for x in rpc.events[offset:] if x.get('method')=='hook/started' and str(x.get('params',{}).get('run',{}).get('eventName')).lower()=='pretooluse']
+            if len(pre)>1:result['remaining'].append('unexpected_extra_delegation');break
+        if not done:
+            result['remaining'].append('parent_not_completed_within_bounded_observation')
+            result['interrupt']=rpc.request('turn/interrupt',{'threadId':parent,'turnId':turn})
+        result['events']=[value for event in rpc.events[offset:] if (value:=curate(event)) is not None]
+        for event in rpc.events[offset:]:
+            params=event.get('params',{});thread=params.get('thread',{});item=params.get('item',{})
+            if event.get('method')=='thread/started' and thread.get('parentThreadId')==parent:children.add(thread['id'])
+            if item.get('type')=='collabAgentToolCall':children.update(item.get('receiverThreadIds',[]))
+            if item.get('type')=='subAgentActivity' and item.get('agentThreadId'):children.add(item['agentThreadId'])
+        for child in sorted(children):
+            result['child_metadata'].append(thread_metadata(rpc.request('thread/read',{'threadId':child,'includeTurns':False})))
+            detail=rpc.request('thread/read',{'threadId':child,'includeTurns':True})
+            if 'error' in detail:result['remaining'].append('child_result_readback_failed')
+            else:result.setdefault('child_turns',{})[child]=detail['result']['thread'].get('turns')
+        result['parent_after']=thread_metadata(rpc.request('thread/read',{'threadId':parent,'includeTurns':False}))
+        detail=rpc.request('thread/read',{'threadId':parent,'includeTurns':True})
+        if 'error' not in detail:result['parent_turns']=detail['result']['thread'].get('turns')
+        result['proposals']=proposal_rows(database)[baseline:]
+        result['classifier_invocations']=current_attempts(database)-before_calls
+        result['native_methods']=sorted({e.get('method') for e in rpc.events[offset:] if e.get('method')})
+        return result
+    except Exception as exc:
+        result['failure']={'type':type(exc).__name__,'reason':str(exc)[:200]}
+        result['remaining'].append('native_turn_incomplete')
+        result['events']=[value for event in rpc.events[offset:] if (value:=curate(event)) is not None]
+        result['proposals']=proposal_rows(database)[baseline:]
+        result['classifier_invocations']=current_attempts(database)-before_calls
+        return result
+    finally:
+        if not done:
+            try:rpc.request('turn/interrupt',{'threadId':parent,'turnId':turn})
+            except Exception:pass
+        info['d47_classifier_calls']=current_attempts(database)-info['d47_classifier_baseline']
+        pointer.write_text(json.dumps(info,indent=2)+'\n')
+
+
+def run_d47(pointer, scenario, output):
+    info=json.loads(pointer.read_text());root=Path(info['root']);work=Path(info['workspace']);database=Path(info['settings']).parent/'events.sqlite3'
+    assert root.stat().st_uid==os.getuid() and (root/'.mrh-e19-owned').read_text().startswith('MRH-001 E19')
+    assert info['auth_status']=='chatgpt' and info['trust']=='reviewed_via_official_cli'
+    assert info['d47_classifier_calls']<info.get('d47_classifier_limit',3) and not info['observer_registered']
+    if info.get('d47_classifier_limit',3)>3:
+        assert scenario=='fixed' and info.get('d47_corrective_readback_reason')=='legacy_child_identity_not_read_while_active'
+    env={'HOME':str(root),'CODEX_HOME':info['home'],'PATH':os.defpath,'TMPDIR':str(root/'tmp'),'LANG':'en_US.UTF-8','NO_COLOR':'1','TERM':'xterm-256color'}
+    class Scope:processes=[]
+    rpc=Rpc(info['binary'],env,work,Scope)
+    result={'kind':'real_subscription_remaining_policy_acceptance','scenario':scenario,'scripted_provider':False,'host_facts_injected':False,'private_rollout_read':False,'turns':[],'remaining':[]}
+    parent=None;goal_identity=None;started=time.monotonic()
+    try:
+        reply=rpc.request('initialize',{'clientInfo':{'name':'mrh-d47-real-acceptance','version':'1'},'capabilities':{'experimentalApi':True}});assert 'error' not in reply
+        rpc.write({'method':'initialized'});result['hooks']=rpc.request('hooks/list',{'cwd':str(work)})
+        hooks=[h for row in result['hooks']['result']['data'] for h in row.get('hooks',[])]
+        assert len(hooks)==2 and all(h.get('pluginId')=='model-routing-harness@model-routing-harness-local' and h.get('trustStatus')=='trusted' for h in hooks)
+        reply=rpc.request('thread/start',{'cwd':str(work)});assert 'error' not in reply
+        parent=reply['result']['thread']['id'];result['parent_id']=parent;result['parent_before']=thread_metadata(reply)
+        expected='gpt-6.1-sol' if scenario=='goal-main' else 'gpt-5.6-luna'
+        assert result['parent_before']['model']==expected and result['parent_before']['reasoningEffort']=='low','configured_parent_mismatch'
+        info.setdefault('d47_thread_refs',[]).append(parent);pointer.write_text(json.dumps(info,indent=2)+'\n')
+        if scenario=='goal-main':
+            before=rpc.request('thread/goal/get',{'threadId':parent});assert 'error' not in before and before['result']['goal'] is None
+            created=rpc.request('thread/goal/set',{'threadId':parent,'objective':'Complete the bounded hypothetical inventory/payment/shipping design and a subsequent recovery analysis through two explicitly requested fresh delegation turns.','status':'active','origin':'user'})
+            goal=require_goal(created,parent,'active');goal_identity={k:goal[k] for k in ('threadId','createdAt','objective')}
+            result['goal']={'identity':goal_identity,'create_response':created,'readbacks':[{'stage':'before','response':before}], 'continuation_initiator':'harness_turn_start','autonomous_scheduling_proven':False}
+            info['d47_goal_thread_id']=parent;info['d47_goal_state']='active';pointer.write_text(json.dumps(info,indent=2)+'\n')
+        tasks=D47_TASKS if scenario=='goal-main' else D47_TASKS[:1]
+        for index,task in enumerate(tasks):
+            if goal_identity:
+                state=rpc.request('thread/goal/get',{'threadId':parent});require_goal(state,parent,'active',goal_identity)
+                result['goal']['readbacks'].append({'stage':'before_turn_'+str(index+1),'response':state})
+            turn=d47_native_turn(rpc,info,pointer,database,parent,d47_prompt(task));result['turns'].append(turn)
+            complete=turn.get('parent_completed',{}).get('params',{}).get('turn',{})
+            answers=[item.get('text','') for item in complete.get('items',[]) if item.get('type')=='agentMessage']
+            turn['parent_substantive_completion']=complete.get('status')=='completed' and any(len(t.split())>=15 for t in answers)
+            if turn['remaining'] or not turn['parent_substantive_completion'] or turn['classifier_invocations']!=1:
+                result['remaining'].append('affected_turn_or_fresh_classification_incomplete');break
+        if goal_identity:
+            after=rpc.request('thread/goal/get',{'threadId':parent})
+            status=after.get('result',{}).get('goal',{}).get('status')
+            assert status in ('active','complete'),'unexpected_goal_terminal_state'
+            require_goal(after,parent,status,goal_identity);result['goal']['readbacks'].append({'stage':'after_turns','response':after})
+            fulfilled=len(result['turns'])==2 and all(t['parent_substantive_completion'] and t['classifier_invocations']==1 and not t['remaining'] for t in result['turns'])
+            if fulfilled:
+                completed=rpc.request('thread/goal/set',{'threadId':parent,'status':'complete','origin':'user'}) if status=='active' else after
+                require_goal(completed,parent,'complete',goal_identity)
+                read=rpc.request('thread/goal/get',{'threadId':parent});require_goal(read,parent,'complete',goal_identity)
+                result['goal']['readbacks'].append({'stage':'complete','response':read})
+                cleared=rpc.request('thread/goal/clear',{'threadId':parent});assert cleared.get('result',{}).get('cleared') is True
+                empty=rpc.request('thread/goal/get',{'threadId':parent});assert 'error' not in empty and empty['result']['goal'] is None
+                result['goal'].update(completed_and_cleared=True,complete_response=completed,clear_response=cleared)
+                result['goal']['readbacks'].append({'stage':'cleared','response':empty});info['d47_goal_state']='cleared'
+            else:result['goal']['completed_and_cleared']=False;info['d47_goal_state']='active'
+        result['parent_after']=thread_metadata(rpc.request('thread/read',{'threadId':parent,'includeTurns':False}))
+    except Exception as exc:
+        result['failure']={'type':type(exc).__name__,'reason':str(exc)[:200]};result['remaining'].append('native_unit_incomplete')
+        if goal_identity:
+            try:result.setdefault('goal',{})['state_on_failure']=rpc.request('thread/goal/get',{'threadId':parent})
+            except Exception:result.setdefault('goal',{})['state_on_failure']='unknown'
+    finally:
+        result['native_process_exit']=rpc.close();info['d47_classifier_calls']=current_attempts(database)-info['d47_classifier_baseline'];pointer.write_text(json.dumps(info,indent=2)+'\n')
+        result.update(elapsed_seconds=round(time.monotonic()-started,3),classifier_calls_d47_total=info['d47_classifier_calls'],all_batches_classifier_calls=info['prior_batch_classifier_calls']+current_attempts(database))
+        output.write_text(json.dumps(result,indent=2)+'\n')
+        print(json.dumps({'scenario':scenario,'classifications':[t.get('proposals') for t in result['turns']],'remaining':result['remaining'],'failure':result.get('failure'),'elapsed_seconds':result['elapsed_seconds']}),flush=True)
+    return result
 
 
 def run(pointer,scenario,output):
@@ -164,5 +320,6 @@ def run(pointer,scenario,output):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--pointer',type=Path,required=True)
-    parser.add_argument('--scenario',choices=tuple(PROMPTS),required=True);parser.add_argument('--output',type=Path,required=True)
-    args=parser.parse_args();run(args.pointer,args.scenario,args.output)
+    parser.add_argument('--scenario',choices=tuple(PROMPTS)+('goal-main','fixed'),required=True);parser.add_argument('--output',type=Path,required=True)
+    args=parser.parse_args()
+    (run_d47 if args.scenario in ('goal-main','fixed') else run)(args.pointer,args.scenario,args.output)
