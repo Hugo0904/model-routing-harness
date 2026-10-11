@@ -1,0 +1,76 @@
+{
+  "kind": "A personally operated actual 24x56 PTY; no native screenshot claim",
+  "source_tip": "5c9432cc762fa4497e41199f8042849f100a7380",
+  "source_manifest_files_verified": 31,
+  "outer_sandbox_first_attempt": {
+    "selector_exit": 2,
+    "visible_reason": "tool_unavailable",
+    "inert_sandbox_exec_exit": 71,
+    "stderr": "sandbox-exec: sandbox_apply: Operation not permitted",
+    "resolution": "approved same selector command; original inner deny-private/deny-network profile retained"
+  },
+  "manual_sessions": [
+    {
+      "tier": "Light",
+      "steps": [
+        "Claude first-use selection",
+        "confirm owned MRH profile",
+        "actual CLI metadata list",
+        "opus[1m]",
+        "low",
+        "Save -> Left -> effort retains low",
+        "Left -> model retains opus[1m]",
+        "Enter model/effort and Save"
+      ],
+      "exit": 0
+    },
+    {
+      "tier": "Light",
+      "steps": [
+        "load same profile",
+        "select haiku",
+        "only inherit and cancel offered for effort",
+        "review opus[1m]/low -> haiku/inherit",
+        "select Cancel"
+      ],
+      "exit": 0
+    }
+  ],
+  "final_settings": {
+    "allowed_workspaces": [],
+    "classifier_model": "jev-1.13.0",
+    "enabled": false,
+    "owner": "org.model-routing-harness.settings.v1",
+    "policy": {
+      "rates": {},
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "opus[1m]"
+        }
+      },
+      "timeout_seconds": 1.0,
+      "top_mode": "Main"
+    },
+    "provider": "typesafe",
+    "revision": 1,
+    "schema_version": 1,
+    "task_export_permitted": false
+  },
+  "cancel_policy_bytes_equal": true,
+  "changed_files_after_cancel": [
+    "bindings/registry.json"
+  ],
+  "expected_registry_refresh": true,
+  "event_database_created": false,
+  "scope": "CLI-advertised metadata and local settings only; no account/provider/delegation or standalone-distribution claim",
+  "owned_root": "/private/tmp/mrh-a-e13-1e_1orc9",
+  "cleanup": {
+    "owned_root_absent": true,
+    "interactive_processes_exited": true,
+    "sdk_preparation_or_install_by_A": false,
+    "new_images": false,
+    "separate_descendant_pid_scan_by_A": false,
+    "backend_cleanup_checks": "runtime _stop completed; reuse B protocol/cleanup evidence"
+  }
+}

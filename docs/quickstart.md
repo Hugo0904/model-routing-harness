@@ -83,7 +83,7 @@ A 已親自驗證 E10R 的 Codex 公開預設清單、方向鍵選擇／返回�
 |---|---|
 | Codex CLI | 工具公開模型／推理清單、鍵盤選擇及保存；帳號權限與正式真模型委派未確認 |
 | Codex Desktop | 可發現內附 CLI；Desktop UI 與正式完整整合未確認 |
-| Claude Code | 清楚顯示尚未支援；可靠模型清單／推理設定／路由接頭仍缺 |
+| Claude Code | macOS 2.1.267 可直接讀 CLI 宣告清單、選模型與來源提供的 effort；不需 SDK。其他版本、帳號可用性與路由接頭仍未驗證，詳見 [E13](e13-claude-catalog.md) |
 | Gemini CLI | 清楚顯示尚未支援；可靠模型清單／推理設定／路由接頭仍缺 |
 
 

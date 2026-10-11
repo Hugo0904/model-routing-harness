@@ -315,7 +315,7 @@ A 已檢查真設定的 120／56 欄 PTY/xterm.js 畫面並接受表格修正。
 R2 續接：使用者已明確要求既有 B 依上述方向實作，D19／E10 已定義下一個工作單元。D18 額度暫停由此指示恢復至下一個自然保存點；未授權正式啟用或真憑證外測，R2 目前仍待實作與驗收。
 
 
-R2／E10R 驗收進度：短指令、Codex 工具宣告清單的鍵盤選擇／保存、返回保留草稿與取消不改設定已由 A 實際操作通過。D25 另逐步驗證隔離公開 Hook 停止、更新設定後同 call 保持停止，以及操作者新 call 才執行；詳見 [A 驗收](docs/evidence/e10r-a-acceptance.json)。這不是正式宿主採用。E11 已查明 Claude SDK 與 Gemini ACP 的公開介面和缺口；可靠清單接頭、帳號可用性及真實下架／執行錯誤觀測仍缺，R2 尚未完成。
+R2 驗收進度：E10R 的 Codex 工具宣告清單鍵盤選擇／保存、返回保留草稿與取消不改設定，及 D25 隔離公開 Hook 停止／同 call 鎖住／新 call 才重執行，已由 A 實際操作通過，詳見 [E10R 驗收](docs/evidence/e10r-a-acceptance.json)。E13 追加 macOS Claude 2.1.267 的無 SDK CLI 宣告清單接頭；A 已操作 Opus 1M／low 保存與兩步返回、Haiku 僅 inherit，以及取消後原設定 bytes 不變，詳見 [E13 驗收](docs/evidence/e13-a-acceptance.json)。這不是正式宿主採用、帳號可用性或 R3 發布證據。Gemini 可靠來源、其他版本／OS、真實下架／執行錯誤觀測與原 R1/R2 其餘義務仍保留。
 
 
 ### R2 停止規則修正（D23，優先於上述 fallback）

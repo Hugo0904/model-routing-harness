@@ -67,7 +67,8 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 | 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
 | TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 Main／Fixed／一般路由缺同次委派事實而未支援，真 API 未驗證 |
 | 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
-| Claude Code、Gemini CLI | 未支援，只有盤點與接頭差異文件 |
+| Claude Code | macOS 2.1.267 的 CLI 宣告模型／推理選單已驗收，無 SDK 使用前提；路由接頭與帳號可用性未驗證，詳見 [E13](docs/e13-claude-catalog.md) |
+| Gemini CLI | 未支援，保留已盤點的介面缺口 |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
 | Jev tokens／估算 | 可保存有效 usage；E3 只有 synthetic；未知保持 null，匹配版本才估算 |
 | child tokens／cost／quota／實測節省 | 不可取得；不從次數或模型名推算 |
