@@ -1,6 +1,6 @@
 # E16：Gemini 公開 CLI 的離線模型選單
 
-本單元實作 Gemini CLI **0.63.0** 的工具預設模型清單，接入原 discovery／refresh／selector／CAS；沒有 Gemini routing adapter、帳戶 availability、真 provider 或正式 Hook 採用宣稱。A 仍負責本人驗收及原 R1／R2／R3 整體義務。
+本單元實作 Gemini CLI **0.63.0** 的工具預設模型清單，接入原 discovery／refresh／selector／CAS；沒有 Gemini routing adapter、帳戶 availability、真 provider 或正式 Hook 採用宣稱。A 已親自驗證清單、保存／返回／取消及來源變動時拒絕保存；[A 驗收](evidence/e16-a-acceptance.json) 發現更新後缺少保留原設定的重新確認入口，已交 E16R 修正，尚未接受完整 R2 更新流程。原 R1／R2／R3 整體義務保留。
 
 ## 實際公開來源
 
