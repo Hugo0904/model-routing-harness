@@ -139,7 +139,7 @@ A 已在 D40 選定同一隔離官方 `app-server --listen stdio://` 收集公�
 
 同一 Rpc 連線持續收事件，依序讀：
 
-1. Parent 的 `item/completed.params.item.type=collabAgentToolCall` 且 `tool=spawnAgent`，取得 `senderThreadId`、`receiverThreadIds[]`、item `id` 與外層 `threadId`／`turnId`。`receiverThreadIds` 對應新建 child；item 自己的 `model`／`reasoningEffort` 明確是 **requested**，不可代替 child 讀回。
+1. E19 的實際 V2 事件另以 `subAgentActivity.agentThreadId` 取得 child UUID，再用 `thread/read.parentThreadId` 確認 parent 關聯；這輪 legacy receiver 清單為空，不能視為沒有 child。以下 legacy 路徑僅在實際存在時使用。Parent 的 `item/completed.params.item.type=collabAgentToolCall` 且 `tool=spawnAgent`，取得 `senderThreadId`、`receiverThreadIds[]`、item `id` 與外層 `threadId`／`turnId`。`receiverThreadIds` 對應新建 child；item 自己的 `model`／`reasoningEffort` 明確是 **requested**，不可代替 child 讀回。
 2. Child ID 出現後、尚未 close/shutdown 時，送下面 metadata read；對上 `result.thread.parentThreadId=原 parent ID`，child `model=gpt-5.6-luna`、`reasoningEffort=low`、`modelProvider=openai`。同時讀 parent，須仍為 Sol6.1/low。有 `thread/started` 事件也可取同一 Thread 欄位作早期快照；沒收到不能假定缺 child。
 3. 收 child 的 `item/completed`（`item.type=agentMessage`，`text` 為結果），及 `turn/completed`（同 child `threadId`、`turn.id`、`turn.status=completed`）。完成後再 metadata read 核設定未變。`thread/settings/updated` 若出現，核對 `params.threadId` 與 `threadSettings.model/effort/modelProvider`；沒有這個事件不當作額外設定證明。未載入後的讀回標為 persisted，不標成 live configured；null 就保留未知。
 4. Parent 的 `collabAgentToolCall` wait 結果提供 `agentsStates[childID].status/message`（message可為null），加 parent 最終 `agentMessage`／`turn/completed`，證明 native child 結果已接回同 parent。結果事件若漏收，可對**這次自有 child／parent**用 `includeTurns=true` 讀 `thread.turns[].items[]` 補讀；此值雖會從宿主歷史載入，但走官方公開 API，不直接讀私有檔案。schema 提醒 full-history hydration 對 paginated threads deprecated；若這次 read 無完整 items，保留缺口，不靠猜測補結果。
