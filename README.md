@@ -1,8 +1,8 @@
 # Model Routing Harness
 
-子代理任務分級器與終端工具，MRH-001 **E15 本機候選 0.3.0**。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。Codex／Claude 的工具宣告清單與保存操作已經 A 驗收；Gemini 清單尚未接入。模型清單支援不等於該 AI 的子代理路由已接通。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
+子代理任務分級器與終端工具，MRH-001 **E16R 本機候選 0.3.0**。Jev 判斷任務等級，你設定各級的模型與推理強度、Top Main／Fixed。`mrh model light` 可用方向鍵與 Enter 選擇工具、模型與推理強度，返回保留草稿，保存前檢查最新清單。Codex／Claude／Gemini 的工具宣告清單與保存操作已經 A 驗收；Gemini 目前只提供 inherit 推理設定。模型清單支援不等於該 AI 的子代理路由已接通。正式宿主採用、真 API／模型及主代理自主接回仍未完成，預設不啟用路由。完整基準與接受紀錄在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。
 
-Mac arm64 可直接使用[自帶執行環境的候選包](docs/e15-standalone-macos-arm64.md)：解壓後在資料夾內執行 `./mrh model`，只需另行準備所選 vendor CLI，不需自行安裝 Python 或 SDK。A 已親自驗證這份封裝；目前仍是本機候選，未公開發布。下面的 Python／venv 指令保留供開發使用。
+Mac arm64 可直接使用[最新候選包與 CLI 更新操作指南](docs/e16r-cli-update.md)，[封裝與安裝方式](docs/e15-standalone-macos-arm64.md)沿用既有設計：解壓後在資料夾內執行 `./mrh model`，只需另行準備所選 vendor CLI，不需自行安裝 Python 或 SDK。CLI 更新後可在同一份設定中重新確認版本與清單，保留設定及歷史。A 已親自驗證這份封裝；目前仍是本機候選，未公開發布。下面的 Python／venv 指令保留供開發使用。
 
 首次使用請看[安裝、設定與確認結果](docs/quickstart.md)。設定檔、CLI 編輯與畫面讀取共用同一來源；設定完成不等於正式 Hook 已啟用。
 
@@ -72,7 +72,7 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 | TypeSafe Jev 接頭與公開設定 | default-off settings→既有真 factory→HTTP 替身驗證；雙 gate／workspace 範圍與自有 disable 可用；正式 Main／Fixed／一般路由缺同次委派事實而未支援，真 API 未驗證 |
 | 後續真 Goal 委派 | 兩個安裝版 app-server 的同一隔離 Goal 跨兩個 harness 發起回合均重新分級；自主 Goal 續跑未驗證 |
 | Claude Code | macOS 2.1.267 的 CLI 宣告模型／推理選單已驗收，無 SDK 使用前提；路由接頭與帳號可用性未驗證，詳見 [E13](docs/e13-claude-catalog.md) |
-| Gemini CLI | 未支援，保留已盤點的介面缺口 |
+| Gemini CLI | macOS 0.63.0 的 CLI 宣告模型清單與 inherit 選單已驗收；支援同一設定的 CLI 更新確認，帳號可用性及路由接頭未驗證，詳見 [E16](docs/e16-gemini-catalog.md)／[E16R](docs/e16r-cli-update.md) |
 | Canopy／Monitor | 選配契約與合成例；未串接、未修改既有專案 |
 | Jev tokens／估算 | 可保存有效 usage；E3 只有 synthetic；未知保持 null，匹配版本才估算 |
 | child tokens／cost／quota／實測節省 | 不可取得；不從次數或模型名推算 |

@@ -1,6 +1,8 @@
 # E16R: confirm an installed CLI update without replacing its profile
 
-This repairs D35's unusable update recovery. The accepted E16 public Gemini transport and offline isolation remain unchanged. It is a local candidate, awaiting A's personal acceptance; it does not establish account access, Gemini routing or formal host adoption.
+This repairs D35's unusable update recovery. The accepted E16 public Gemini transport and offline isolation remain unchanged. A personally accepted this local candidate; it does not establish account access, Gemini routing or formal host adoption.
+
+A independently verified 38 source identities, all 2,059 manifest records and the archive hash, then operated the bundled entry in a fresh 24×56 PTY. A cancelled an update confirmation, confirmed the owned changed installation and then cancelled model edits, and exercised unsupported-version refusal. The same binding/profile, policy/history bytes and stored synthetic stop were retained as required; the original vendor identity remained unchanged and the owned root was removed. [A acceptance evidence](evidence/e16r-a-acceptance.json) separates these direct operations from reused B draft/concurrency/separate-Save evidence.
 
 ## Keyboard operation
 

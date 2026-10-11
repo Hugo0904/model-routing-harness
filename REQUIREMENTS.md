@@ -317,7 +317,7 @@ E15 本機 macOS arm64 候選包已由 A 核對 archive／manifest 與全部來�
 R2 續接：使用者已明確要求既有 B 依上述方向實作，D19／E10 已定義下一個工作單元。D18 額度暫停由此指示恢復至下一個自然保存點；未授權正式啟用或真憑證外測，R2 目前仍待實作與驗收。
 
 
-R2 驗收進度：E10R 的 Codex 工具宣告清單鍵盤選擇／保存、返回保留草稿與取消不改設定，及 D25 隔離公開 Hook 停止／同 call 鎖住／新 call 才重執行，已由 A 實際操作通過，詳見 [E10R 驗收](docs/evidence/e10r-a-acceptance.json)。E13 追加 macOS Claude 2.1.267 的無 SDK CLI 宣告清單接頭；A 已操作 Opus 1M／low 保存與兩步返回、Haiku 僅 inherit，以及取消後原設定 bytes 不變，詳見 [E13 驗收](docs/evidence/e13-a-acceptance.json)。這不是正式宿主採用、帳號可用性或 R3 發布證據。Gemini 可靠來源、其他版本／OS、真實下架／執行錯誤觀測與原 R1/R2 其餘義務仍保留。
+R2 驗收進度：E10R 的 Codex 工具宣告清單鍵盤選擇／保存、返回保留草稿與取消不改設定，及 D25 隔離公開 Hook 停止／同 call 鎖住／新 call 才重執行，已由 A 實際操作通過，詳見 [E10R 驗收](docs/evidence/e10r-a-acceptance.json)。E13 追加 macOS Claude 2.1.267 的無 SDK CLI 宣告清單接頭；A 已操作 Opus 1M／low 保存與兩步返回、Haiku 僅 inherit，以及取消後原設定 bytes 不變，詳見 [E13 驗收](docs/evidence/e13-a-acceptance.json)。E16／E16R 追加 macOS Gemini 0.63.0 的無憑證、無 task／outbound 公開 CLI 模型清單與 inherit 選單，以及同一份設定的 CLI 更新確認；A 已實際操作保存、返回、取消、更新確認及不支援版本拒絕，核對原設定／歷史與停止狀態保留，詳見 [E16](docs/evidence/e16-a-acceptance.json)／[E16R 驗收](docs/evidence/e16r-a-acceptance.json)。這些是工具宣告清單及操作證據，不能當成正式宿主採用、帳號可用性或公開發布。其他版本／OS、真實下架／執行錯誤觀測與原 R1/R2 其餘義務仍保留。
 
 
 ### R2 停止規則修正（D23，優先於上述 fallback）
