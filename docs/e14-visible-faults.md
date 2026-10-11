@@ -1,6 +1,6 @@
 # E14：保留原呼叫，也讓故障可見
 
-E14-B-001 已完成本機修正與受影響驗證；來源 commit 為 `f22e2a82fdeef2cd45ddbb3d204d80226b481ea2`。A 仍負責本人驗收及整體 MRH-001 接受，這份單元報告不代表 R1／R2／R3 已完成。
+E14-B-001 已完成本機修正與受影響驗證；來源 commit 為 `f22e2a82fdeef2cd45ddbb3d204d80226b481ea2`。A 已核對來源與原生證據，親自操作公開 Hook、獨立 launcher 和 24×56 CLI，接受本單元；詳見 [A 驗收](evidence/e14-a-acceptance.json)。整體 MRH-001 與 R1／R2／R3 仍未完成。
 
 ## 行為與資料界線
 

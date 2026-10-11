@@ -4,6 +4,8 @@
 
 首次使用請看[安裝、設定與確認結果](docs/quickstart.md)。設定檔、CLI 編輯與畫面讀取共用同一來源；設定完成不等於正式 Hook 已啟用。
 
+[E14 故障提示](docs/e14-visible-faults.md) 已經 A 驗收：分類器或執行環境故障會顯示固定警告，摘要區分故障、正常保留與停止；重播不重複通知，後續有效路由評估才標示恢復。這只反映已觀測的工作階段，沒有活動不等於已啟用或運作正常。
+
 E8 已完成並經 A 接受的範圍，是 pinned Codex source 的真實 ToolRegistry → 原生 Hook 子程序 → MRH → 同次委派控制；9 次隔離 dispatch 通過，分類服務使用替身，preserve 端使用受控 handler。這不是安裝版 CLI、正式啟用或真模型驗證，詳見 [E8 證據](docs/e8-live-hook-proof.md)。
 
 ## 直接執行視覺 Demo
