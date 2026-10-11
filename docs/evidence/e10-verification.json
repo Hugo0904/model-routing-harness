@@ -79,6 +79,13 @@
       "result": "1 error",
       "cause": "negative-only advertised omission reached option.state when option was None",
       "repair": "guard None; final 25 focused checks passed"
+    },
+    {
+      "stage": "initial staged diff whitespace check",
+      "seconds": null,
+      "result": "raw ANSI prompt trailing spaces flagged; initial local commit already created",
+      "cause": "intentional raw PTY prompt padding was checked using ordinary prose whitespace rules",
+      "repair": "separate normal-path check and invocation-only raw-ANSI eol-space exemption; both passed; source/evidence bytes retained"
     }
   ],
   "cleanup": {
@@ -100,5 +107,11 @@
     "authoritative actual retirement feed and trusted downstream unavailable-error observation",
     "original R1 formal host/real provider/autonomous/Desktop criteria"
   ],
-  "return_boundary": "bounded E10 unit returned to A; no self-assigned follow-on despite quota window change"
+  "return_boundary": "bounded E10 unit returned to A; no self-assigned follow-on despite quota window change",
+  "format_review": {
+    "normal_source_docs_json_txt_diff_check": "passed",
+    "raw_ansi_diff_check": "passed with invocation-only core.whitespace=-blank-at-eol",
+    "raw_pty_prompt_spaces_preserved": true,
+    "global_git_configuration_changed": false
+  }
 }
