@@ -1,0 +1,8 @@
+{
+  "exit": 71,
+  "stdout": "",
+  "stderr": "sandbox-exec: sandbox_apply: Operation not permitted\n",
+  "owned_root": "/private/tmp/mrh-gemini-bv2o9ky6",
+  "owned_pid": 79092,
+  "owned_root_absent": true
+}
