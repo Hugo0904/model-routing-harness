@@ -1,0 +1,32 @@
+{
+  "tier": "Light",
+  "confidence": 0.99,
+  "reason_code": "classified_subscription",
+  "returned": true,
+  "elapsed_seconds": 5.838,
+  "attempts": [
+    {
+      "id": "0",
+      "kind": "codex_subscription",
+      "outcome": "requested",
+      "requested_model": "gpt-6-luna"
+    },
+    {
+      "id": "0",
+      "kind": "codex_subscription",
+      "outcome": "started"
+    },
+    {
+      "id": "0",
+      "kind": "codex_subscription",
+      "outcome": "returned",
+      "input_tokens": 2100,
+      "output_tokens": 21
+    }
+  ],
+  "evidence_kind": "real_official_cli_subscription_classifier",
+  "auth": "chatgpt",
+  "task": "literal_numbers_only",
+  "api_key_used": false,
+  "host_binary_modified": false
+}

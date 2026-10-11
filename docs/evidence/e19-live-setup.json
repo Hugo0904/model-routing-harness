@@ -1,0 +1,41 @@
+{
+  "root": "/private/tmp/mrh-e19-live-4p1wkjl9",
+  "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+  "entry": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh",
+  "home": "/private/tmp/mrh-e19-live-4p1wkjl9/home",
+  "workspace": "/private/tmp/mrh-e19-live-4p1wkjl9/work",
+  "settings": "/private/tmp/mrh-e19-live-4p1wkjl9/state/settings.json",
+  "plugin": "/private/tmp/mrh-e19-live-4p1wkjl9/plugin",
+  "classifier_calls": 0,
+  "test_turns": 0,
+  "auth_storage": "file",
+  "trust": "not_yet_reviewed",
+  "routing_enabled": false,
+  "task_export_permitted": false,
+  "formal_home_changed": false,
+  "configuration_scope": {
+    "contract": "official-0.159.3-local-stdio-config-pinned",
+    "configuration_fingerprint": "53f0b593abc14e3ba715e6859d2b9a9cccde711afb9005a22ed6017add763cec",
+    "workspace": "/private/tmp/mrh-e19-live-4p1wkjl9/work",
+    "assurance": "inspected-configuration",
+    "native_invocation": "unverified until Hook execution"
+  },
+  "commands": [
+    {
+      "operation": "['plugin', 'prepare']",
+      "exit": 0
+    },
+    {
+      "operation": "['settings', 'configure']",
+      "exit": 0
+    },
+    {
+      "operation": "['--no-daemon', 'plugin']",
+      "exit": 0
+    },
+    {
+      "operation": "['--no-daemon', 'plugin']",
+      "exit": 0
+    }
+  ]
+}

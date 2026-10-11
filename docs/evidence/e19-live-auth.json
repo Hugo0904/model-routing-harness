@@ -1,0 +1,9 @@
+{
+  "auth_method": "chatgpt",
+  "public_status_exit": 0,
+  "auth_storage": "file",
+  "owned_root": "/private/tmp/mrh-e19-live-4p1wkjl9",
+  "raw_auth_read": false,
+  "classifier_calls": 0,
+  "test_turns": 0
+}

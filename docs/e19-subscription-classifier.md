@@ -1,6 +1,6 @@
-# E19：Codex 訂閱分級器候選
+# E19：Codex 訂閱分級器與真實驗收
 
-新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，沿用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。分級器已實作；目前這台機器的真實分級仍有下述隔離限制，不能稱已啟用或完成 R1。
+新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，使用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。D44 後已完成三次真實分級與兩個原生子任務；兩次 Hook 分級都低於 0.5，保留原委派，尚未驗到便宜模型改寫。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。這次只驗自有 CLI 環境，已撤回；原正式 home 的全域指令限制與完整 R1 仍保留。
 
 ## 現在可操作的入口
 
@@ -42,9 +42,9 @@ GuardedAttempts 同時管理逾時與本機程序群取消：先封住新啟動�
 
 原版 CLI 的 `CodexHomeUserInstructionsProvider` 另外讀取 `CODEX_HOME/AGENTS.override.md`、`AGENTS.md`，不受 `--ignore-user-config` 或 `project_doc_max_bytes=0` 排除。[官方固定版來源](https://github.com/openai/codex/blob/rust-v0.159.3/codex-rs/codex-home/src/instructions/mod.rs)及[程序證據](evidence/e19-isolation.json)支持這一點：自有全域 canary 進入了 request；移除這個自有 canary 後，同一 invocation 的另一個 request 沒有 home／project／config canary 或 workspace path，工具也為空。
 
-本機目前登入 home 確實有 AGENTS；僅查存在性，沒有讀內容。相同乾淨環境下，官方 public status 確認為 ChatGPT；全新自有 home 的 public status 則是 `Not logged in`。[登入邊界](evidence/e19-auth-boundary.json)。產品因此在任何 auth／模型子程序前，以 `codex_subscription_home_instructions` 保留原委派並請求顯示固定警告。
+原正式登入 home 確實有 AGENTS；僅查存在性，沒有讀內容。D44 前相同乾淨環境下，官方 public status 確認原 home 為 ChatGPT；當時全新自有 home 的 public status 是 `Not logged in`。[登入邊界](evidence/e19-auth-boundary.json)。這個原 home 的產品 guard 仍會在任何 auth／模型子程序前，以 `codex_subscription_home_instructions` 保留原委派並請求顯示固定警告。
 
-本輪沒有刪除、遮蔽或修改正式 AGENTS，沒有複製登入資料，也沒有換 API key 路徑。可供 A 判定的同 Hook 方案是：只對自有驗收 home 走官方 ChatGPT 登入，再沿既有 owned-workspace prepare／register／trust；這需要新登入動作，不能假定原授權已涵蓋，也沒有在本輪執行。不是要求使用者刪除原有保護。
+D44 已由 A 裁決，在同一自有空驗收環境以官方 browser login 使用同帳號；本人完成登入後，public status 確認 ChatGPT。登入／status／parent 明確使用 file store，classifier 沿 pin 的同一預設 file store。沒有刪除、遮蔽或修改正式 AGENTS，沒有複製登入資料，也沒有換 API key 路徑。僅該工作區的 MRH 曾 prepare／register／trust／export／enable，驗收後均已撤回。
 
 ## 證據與剩餘義務
 
@@ -54,6 +54,24 @@ GuardedAttempts 同時管理逾時與本機程序群取消：先封住新啟動�
 
 套件 source commit 為 `eedd8254f5a04f5c6b78b2e3268e10b6acf3221a`；archive SHA256 `7706742578a0297f9f2404fa8cd048e98a5411dc669adccdaa7eeae8805bdaea`，manifest SHA256 `c9894bd595ce30b457e5e347a7c5c7ea351fb49a38d3d12d4fc8add1bba5f53e`。[建置紀錄](evidence/e19-build.json)。沿用原固定 cache／CPython 3.11.17 及 19 項 notices，只建置這一份新 bundle，保留先前已接受候選。
 
-真實分級呼叫 **0**、真實驗收 turns **0**，已授權最多三次的額度未使用。没有正式 global registration／trust／export／enable；E17R 受測 native scope、原參數保留、Main／Fixed／null 和 D23 證據沿用。此輪 loopback 使用腳本回答，不能稱訂閱模型成功。
+上面的 E19 初版 isolation／bundle 證據沒有真實模型呼叫；D44 後的真實證據另列下方。E17R 受測 native scope、原參數保留、Main／Fixed／null 和 D23 證據沿用，沒有重跑舊 gate 或重建未變 bundle。
 
-後續真實步驟沿 [E18 準備](e18-live-acceptance-plan.md)的任務與 public `thread/read` configured-model／child-result 證據，但 **撤回其中 TypeSafe key 輸入、TypeSafe provider 設定和 Jev-only 驗收步驟**，改用本頁的 subscription provider／20 秒新 profile。先有可隔離的官方訂閱登入，再做第一次 literal classification；其後才進支持的 Hook/native child 路徑。V2 的空 legacy receiver list 不能當作沒有子代理。Top Main 只有模型實際給出 confident Top 才驗，不操控分類結果。Top Fixed、Goal、未命中的 Top Main、真子模型與主代理完成及完整 R1 仍保留，沒有用本候選或局部證據結案。
+本次沿 [E18 準備](e18-live-acceptance-plan.md)的任務與 public `thread/read` configured-model／child-result 證據，但 **撤回其中 TypeSafe key 輸入、TypeSafe provider 設定和 Jev-only 驗收步驟**，改用本頁的 subscription provider／20 秒新 profile。先做 literal classification，再進支持的 Hook/native child 路徑。沒有操控分類結果、改 0.5、mock、facts injection 或 provider/model fallback。
+
+## D44 後的真實結果
+
+唯一環境為 `/private/tmp/mrh-e19-live-4p1wkjl9`，新 CODEX_HOME、空 workspace、獨立 MRH state；登入前準備並保持 disabled/export denied，本人登入後才開本次測試權限。正式 home、AGENTS、App 與其他 Hooks 均未改。[準備](evidence/e19-live-setup.json)、[public auth](evidence/e19-live-auth.json)、[官方 MRH trust](evidence/e19-live-trust.json)。
+
+| 操作 | 真實分類 | 路由／結果 | 觀察耗時 |
+|---|---|---|---|
+| standalone literal 排序分級 | Light／0.99 | 分級成功；這次沒有原生委派 | 5.838 秒 |
+| 原生 generic 排序委派 | Mid／0.03 | low_confidence 保留；child、同 parent 都完成 `[1, 2, 3]` | 22.485 秒 |
+| 原生 generic reservation tradeoff 委派 | Mid／0.18 | low_confidence 保留；child、同 parent 都完成假設協定 | 31.336 秒 |
+
+三次分級均透過官方訂閱程序 returned，沒有使用 API key。standalone CLI usage 為 2,100 input／21 output；MRH live stats 的兩次 Hook classifier usage 為 4,689 input／42 output。合計這三個 **classifier** invocations 為 6,789 input／63 output；parent／child 用量與總帳單未保存／未知，不能把這個數字當全部模型費用。CLI invocations 不等於 HTTP request 數，requested `gpt-6-luna` 不等於已證 provider inference identity。[首分級](evidence/e19-live-classification.json)、[live stats](evidence/e19-live-stats.json)。
+
+V2 的公開 `subAgentActivity.agentThreadId` 提供實際 child ID；空 legacy `receiverThreadIds` 並不代表沒有 child。讀回同 parent 關聯、`modelProvider=openai`、有效設定及原生結果。[排序](evidence/e19-live-ordinary.json)的 child `gpt-6.1-sol / low` 只在舊 native process 關閉後讀到 latest persisted；不稱 current loaded。讀取方式已在同一驗收單位修正，沒有重跑該付費任務。[tradeoff](evidence/e19-live-tradeoff.json)在 child active 時透過 public `thread/read` 確認 `gpt-6.1-sol / low`，完成後仍為同設定，對上 child 的實際 agentMessage／completed turn，再對上原 parent 最終答案／completed turn。兩個 parent 前後仍為 Sol6.1/low。MRH Post receipts 仍只是 reported=2、confirmed=0，沒有把外部 native 證據倒灌為 provider-observed model。
+
+兩次 Hook 分級低信心是實際模型自報結果，不是解析或網路失敗；沒有把 standalone 0.99 注入到另一個委派，也沒有降低門檻。故真 subscription classifier、真子代理與同 parent 完成已觀測；**普通便宜模型改寫尚未觀測**。Top Main 未命中，Top Fixed、Goal、原 home／App 正式採用、完整 R1 仍未完成。已達原最多三次 classifier 呼叫上限，沒有新增第四次或隱藏重試；native user turns 使用兩次。
+
+同環境完成 disable、export denied、workspace 清空，官方 plugin／marketplace remove 後 list 讀回均無 MRH；官方明確 file-store logout 後 public status 為 `Not logged in`。自有 native processes 已結束，僅本次有 marker 的 root 已刪除；去敏證據保留，正式登入未清理。[撤回讀回](evidence/e19-live-cleanup.json)。沒有為 closure 重跑 51 項有效檢查、E17R 或重建 bundle。
