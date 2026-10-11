@@ -42,7 +42,7 @@ class AccountingTests(unittest.TestCase):
         path = path or self.path
         settings.update(path, enabled=True, task_export_permitted=True, allowed_workspaces=[event["cwd"]])
 
-    def hook(self, event, path=None, resolver=None, transport=None, production=False):
+    def hook(self, event, path=None, resolver=None, transport=None, production=False, settings_warning=False):
         out, err = io.StringIO(), io.StringIO()
         deps = {"credential_resolver": self.key}
         if not production:
@@ -51,7 +51,13 @@ class AccountingTests(unittest.TestCase):
             code = cli.main(["hook", "--settings", str(path or self.path)], stdin=io.StringIO(json.dumps(event)),
                             stdout=out, stderr=err, runtime_dependencies=deps)
         self.assertEqual(code, 0)
-        self.assertEqual(json.loads(out.getvalue()), {})
+        expected = {"systemMessage": (
+            "MRH: settings could not be loaded; original tool call preserved. "
+            "Use mrh stats --details with this profile's --settings or --db. "
+            "Recording and warning deduplication are unavailable; this fault may be absent from history."
+        )} if settings_warning else {}
+        self.assertEqual(json.loads(out.getvalue()), expected)
+        self.assertNotIn("PRIVATE", out.getvalue())
         self.assertNotIn("PRIVATE", err.getvalue())
 
     def test_saved_native_explicit_pre_post_replay_and_conflict_have_one_fact_no_provider(self):
@@ -137,9 +143,9 @@ class AccountingTests(unittest.TestCase):
         self.hook(pre); self.hook(post)
         db = self.path.parent / "events.sqlite3"; store = Store(db); before = store.stats(True)
         outputs = []
-        for option in ("--json", "--plain"):
+        for options in (("--json",), ("--plain", "--details")):
             out = io.StringIO()
-            self.assertEqual(cli.main(["stats", "--db", str(db), "--synthetic", option], stdout=out, stderr=io.StringIO()), 0)
+            self.assertEqual(cli.main(["stats", "--db", str(db), "--synthetic", *options], stdout=out, stderr=io.StringIO()), 0)
             outputs.append(out.getvalue())
         self.assertEqual(json.loads(outputs[0]), before)
         self.assertIn("explicit_model: 1", outputs[1]); self.assertIn("Simulated children: 1", outputs[1])
@@ -148,7 +154,7 @@ class AccountingTests(unittest.TestCase):
 
     def test_unowned_malformed_and_partition_mismatch_do_not_gain_facts(self):
         pre, _ = saved_events(); self.admit(pre)
-        self.hook(pre, path=self.root / "unowned/settings.json")
+        self.hook(pre, path=self.root / "unowned/settings.json", settings_warning=True)
         self.assertFalse((self.root / "unowned").exists())
         class LiveContext:
             synthetic = False
@@ -156,7 +162,7 @@ class AccountingTests(unittest.TestCase):
         self.hook(pre, resolver=LiveContext(), transport=FakeTransport())
         self.assertFalse((self.path.parent / "events.sqlite3").exists())
         self.path.write_text('{"PRIVATE_SETTINGS_CANARY":"private"}')
-        self.hook(pre)
+        self.hook(pre, settings_warning=True)
         self.assertFalse((self.path.parent / "events.sqlite3").exists())
         self.assertEqual(self.keys, 0)
 

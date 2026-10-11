@@ -103,7 +103,7 @@ class FactsTests(unittest.TestCase):
                       for table in ("proposals", "attempts", "receipts")}
         migrated = Store(path)
         with migrated.connect() as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 3)
             for table, original in before.items():
                 current = [tuple(row)[:len(original[0])] for row in db.execute("SELECT * FROM " + table)]
                 self.assertEqual(current, original)

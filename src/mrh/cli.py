@@ -302,7 +302,16 @@ def _cmd_settings(args, stdin):
     return 2
 
 
+def _hook_failure(event, admitted):
+    if (admitted and isinstance(event, dict) and event.get('hook_event_name') == 'PreToolUse' and
+            event.get('tool_name') == 'spawn_agent' and isinstance(event.get('tool_input'), dict)):
+        from .faults import warning
+        return warning('runtime_error')
+    return {}
+
+
 def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, runtime_dependencies=None) -> int:
+    event, exit_code = None, 0
     if args.settings is not None:
         if args.candidate or args.simulate_tier is not None or args.simulate_confidence is not None or args.db is not None:
             stderr.write("mrh: settings_candidate_conflict\n")
@@ -318,9 +327,15 @@ def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, ru
             encoded = json.dumps(response, separators=(",", ":"), allow_nan=False)
         except Exception:
             stderr.write("mrh: configured_hook_error\n")
-            encoded = "{}"
+            try:
+                encoded = json.dumps(_hook_failure(event, True), separators=(',', ':'))
+            except Exception:
+                # The independent launcher must be able to detect that even
+                # the shared warning module could not load. Never mask it with
+                # a successful empty response or forward an import traceback.
+                encoded, exit_code = '{}', 1
         stdout.write(encoded + "\n")
-        return 0
+        return exit_code
     simulation_requested = args.simulate_tier is not None or args.simulate_confidence is not None
     simulation = None
     if simulation_requested:
@@ -355,9 +370,12 @@ def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, ru
         encoded = json.dumps(response, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     except Exception:
         stderr.write("mrh: hook_error\n")
-        encoded = "{}"
+        try:
+            encoded = json.dumps(_hook_failure(event, args.candidate), separators=(',', ':'))
+        except Exception:
+            encoded, exit_code = '{}', 1
     stdout.write(encoded + "\n")
-    return 0
+    return exit_code
 
 
 def main(

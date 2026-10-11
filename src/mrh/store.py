@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import sqlite3
 from .types import Decision, REASONS, TIERS, safe_id, safe_model_id
+from .faults import CATEGORIES, category
 
 
 def now():
@@ -67,6 +68,14 @@ class Store:
                     CREATE TABLE IF NOT EXISTS operator_stops (
                       proposal_id TEXT PRIMARY KEY REFERENCES proposals(id),
                       decision TEXT NOT NULL, occurred_at TEXT NOT NULL);
+                    CREATE TABLE IF NOT EXISTS notifications (
+                      platform TEXT NOT NULL, surface TEXT NOT NULL, session_id TEXT NOT NULL,
+                      synthetic INTEGER NOT NULL, active INTEGER NOT NULL,
+                      fault_observations INTEGER NOT NULL, warning_claims INTEGER NOT NULL,
+                      recoveries INTEGER NOT NULL, last_reason TEXT NOT NULL,
+                      last_fault_at TEXT NOT NULL, recovery_evaluation_at TEXT,
+                      updated_at TEXT NOT NULL,
+                      PRIMARY KEY(platform,surface,session_id,synthetic));
                 """)
                 columns = {r["name"] for r in db.execute("PRAGMA table_info(proposals)")}
                 if "updated_at" not in columns:
@@ -222,6 +231,54 @@ class Store:
             db.execute('BEGIN IMMEDIATE')
             self._record_stop(db, proposal_id, decision, body)
 
+    def observe_notice(self, proposal, decision):
+        """Atomic profile/session warning claim, independent of route/history.
+
+        Cached successes predating a fault cannot recover it. Cached faults
+        predating a verified recovery cannot reopen it. No activity or settings
+        operation calls this method. A missing canonical fault cannot be claimed
+        recorded and must reach the caller's non-deduplicated warning path.
+        """
+        fault = category(decision) == 'fault_fallback'
+        scope = (proposal.platform, proposal.surface, proposal.session_id, int(proposal.synthetic))
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            canonical = db.execute('SELECT * FROM proposals WHERE id=?', (proposal.identity,)).fetchone()
+            if not canonical or canonical['state'] != 'complete' or not hmac.compare_digest(canonical['fingerprint'], self.fingerprint(proposal)):
+                if fault or decision.action == 'operator_update_required':
+                    raise ValueError('unrecorded_fault')
+                return False
+            stored = Decision.from_dict(json.loads(canonical['decision']))
+            if decision.action == 'operator_update_required':
+                stopped = db.execute('SELECT decision FROM operator_stops WHERE proposal_id=?', (proposal.identity,)).fetchone()
+                if not stopped or Decision.from_dict(json.loads(stopped['decision'])) != decision:
+                    raise ValueError('unrecorded_stop')
+                stored = decision
+            timestamp = canonical['updated_at'] or canonical['occurred_at']
+            row = db.execute('SELECT * FROM notifications WHERE platform=? AND surface=? AND session_id=? AND synthetic=?', scope).fetchone()
+            if fault:
+                if stored != decision:
+                    raise ValueError('unrecorded_fault')
+                moment = now()
+                if row is None:
+                    db.execute('INSERT INTO notifications VALUES (?,?,?,?,1,1,1,0,?,?,NULL,?)',
+                               (*scope, decision.reason, moment, moment))
+                    return True
+                stale = row['recovery_evaluation_at'] is not None and timestamp <= row['recovery_evaluation_at']
+                emit = not row['active'] and not stale
+                db.execute('UPDATE notifications SET fault_observations=fault_observations+1,warning_claims=warning_claims+?,active=?,last_reason=?,last_fault_at=?,updated_at=? WHERE platform=? AND surface=? AND session_id=? AND synthetic=?',
+                           (int(emit), int(bool(row['active']) or emit), decision.reason,
+                            row['last_fault_at'] if stale else moment, moment, *scope))
+                return emit
+            # A returned valid classification (including low-confidence or an
+            # operator stop) establishes evaluation success, not target recovery.
+            returned = db.execute("SELECT 1 FROM attempts WHERE proposal_id=? AND phase='returned'", (proposal.identity,)).fetchone()
+            if (row and row['active'] and stored == decision and decision.tier is not None and
+                    returned and timestamp > row['last_fault_at']):
+                db.execute('UPDATE notifications SET active=0,recoveries=recoveries+1,recovery_evaluation_at=?,updated_at=? WHERE platform=? AND surface=? AND session_id=? AND synthetic=?',
+                           (timestamp, now(), *scope))
+            return False
+
     def record_observation(self, receipt, verifier=None):
         """Only an injected trusted host/provider adapter can verify observations.
 
@@ -284,6 +341,7 @@ class Store:
             attempts = db.execute("SELECT a.* FROM attempts a JOIN proposals p ON p.id=a.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
             receipts = db.execute("SELECT r.* FROM receipts r JOIN proposals p ON p.id=r.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
             stops = db.execute('SELECT s.* FROM operator_stops s JOIN proposals p ON p.id=s.proposal_id WHERE p.synthetic=?', (int(synthetic),)).fetchall()
+            notices = db.execute('SELECT * FROM notifications WHERE synthetic=?', (int(synthetic),)).fetchall()
         stop_by_id = {s['proposal_id']: s for s in stops}
         timestamps = [r["updated_at"] or r["occurred_at"] for r in rows+attempts] + [r["occurred_at"] for r in receipts+stops]
         started = [r for r in attempts if r["phase"] != "requested"]
@@ -293,6 +351,13 @@ class Store:
                "synthetic_attempts": sum(r["kind"] == "synthetic" for r in started),
                "classified_tasks": 0, "low_confidence_tasks": 0, "pending_proposals": 0,
                "operator_stops": 0, "stopped_targets": {},
+               "routing_status": dict.fromkeys(CATEGORIES, 0),
+               "notifications": {"state": "active_fault" if any(n['active'] for n in notices) else "recovered" if notices else "unobserved",
+                                 "active_sessions": sum(n['active'] for n in notices),
+                                 "fault_observations": sum(n['fault_observations'] for n in notices),
+                                 "warning_claims": sum(n['warning_claims'] for n in notices),
+                                 "recoveries": sum(n['recoveries'] for n in notices),
+                                 "updated_at": max((n['updated_at'] for n in notices), default=None)},
                "tiers": dict.fromkeys(TIERS, 0), "outcomes": {}, "requested_models": {},
                "confirmed_children": 0, "simulated_children": 0, "reported_children": 0,
                "actual_models": {}, "unknown_actual_model_children": 0,
@@ -346,7 +411,9 @@ class Store:
                 out["pending_proposals"] += 1
                 continue
             effective = stop_by_id.get(row['id'], row)
-            d = Decision.from_dict(json.loads(effective['decision'])).as_dict()
+            decision = Decision.from_dict(json.loads(effective['decision']))
+            out['routing_status'][category(decision)] += 1
+            d = decision.as_dict()
             reason = d["reason"]
             out["outcomes"][reason] = out["outcomes"].get(reason, 0) + 1
             if d["tier"] is not None:

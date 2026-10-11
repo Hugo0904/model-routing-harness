@@ -31,7 +31,7 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(json.loads(output.getvalue()), expected)
             self.assertNotIn("\x1b", output.getvalue())
         plain = io.StringIO()
-        main(["stats", "--db", str(self.path), "--synthetic", "--plain"], stdout=plain)
+        main(["stats", "--db", str(self.path), "--synthetic", "--plain", "--details"], stdout=plain)
         self.assertIn("Proposals: 5", plain.getvalue())
         self.assertIn("Jev request attempts: 0", plain.getvalue())
         self.assertIn("Top 2", plain.getvalue())

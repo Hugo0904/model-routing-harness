@@ -9,6 +9,7 @@ from .types import safe_id, safe_model_id
 from .facts import CallScope, Fact, HostSnapshot, synthetic_legacy_snapshot
 from .types import Proposal
 from .owned import canonical_path
+from .faults import warning
 
 
 class SupportedHostResolver:
@@ -87,6 +88,10 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
         return handle_event(event, store, True, classifier=classifier, policy=policy, capabilities=caps)
     except SettingsError as exc:
         print("mrh: " + exc.reason, file=sys.stderr)
+        if event["hook_event_name"] == "PreToolUse":
+            return warning("settings_unavailable")
     except Exception:
         print("mrh: configured_hook_error", file=sys.stderr)
+        if event["hook_event_name"] == "PreToolUse":
+            return warning("runtime_error")
     return {}

@@ -108,10 +108,10 @@ def locked(root, kind, allowed=None):
         os.close(fd)
 
 
-def replace_owned(path, data):
+def replace_owned(path, data, *, limit=65536):
     """Caller holds an owned-directory lock; no external-writer CAS claim."""
     if path.exists() or path.is_symlink():
-        read_regular(path)
+        read_regular(path, limit)
     fd, name = tempfile.mkstemp(prefix=".mrh-write-", dir=path.parent)
     try:
         with os.fdopen(fd, "wb") as stream:

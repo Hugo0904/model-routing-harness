@@ -181,6 +181,50 @@ def _share(count: int, total: int) -> str:
     return f"{percentage:.1f}%"
 
 
+def _fault_lines(stats: Mapping[str, Any], width: int, *, details: bool = False) -> list[str]:
+    routing = stats.get("routing_status")
+    routing = routing if isinstance(routing, Mapping) else {}
+    notices = stats.get("notifications")
+    notices = notices if isinstance(notices, Mapping) else {}
+    raw_state = notices.get("state")
+    state = ({"active_fault": "Active fault", "recovered": "Recovered", "unobserved": "Unobserved"}
+             .get(raw_state, "Unobserved") if isinstance(raw_state, str) else "Unobserved")
+    if "state" not in notices:
+        state = "Unavailable"
+
+    if details:
+        entries = [
+            "Routing counts are mutually exclusive completed proposals.",
+            f"Classified child requests: {_value(routing.get('classified_child_request'))}",
+            f"Classified main requests: {_value(routing.get('classified_main_request'))}",
+            f"Normal retention: {_value(routing.get('normal_retention'))}",
+            f"Fault fallback proposals: {_value(routing.get('fault_fallback'))}",
+            f"Operator stops: {_value(routing.get('operator_stop'))}",
+            f"Unavailable readiness: {_value(routing.get('unavailable_readiness'))}",
+            f"Recorded notification state: {state}",
+            f"Active fault sessions: {_value(notices.get('active_sessions'))}",
+            f"Fault observations (includes replays): {_value(notices.get('fault_observations'))}",
+            f"Warning emission claims: {_value(notices.get('warning_claims'))}",
+            f"Recorded recoveries: {_value(notices.get('recoveries'))}",
+            f"Notification update: {_value(notices.get('updated_at'))}",
+            "Fault observations include Hook replays, distinct from classifier attempts and canonical proposals.",
+            "Warning claims request emission; warning display is unverified.",
+            "Recorded history does not prove current activation or recovery.",
+        ]
+    else:
+        entries = [
+            f"Fault fallback proposals {_value(routing.get('fault_fallback'))} / normal retention {_value(routing.get('normal_retention'))}",
+            f"Fault state: {state} / active sessions {_value(notices.get('active_sessions'))}",
+            f"Fault observations {_value(notices.get('fault_observations'))} / warning claims {_value(notices.get('warning_claims'))} / recoveries {_value(notices.get('recoveries'))}",
+            "Recorded history does not prove activation or recovery; warning display unverified.",
+        ]
+    lines: list[str] = []
+    for entry in entries:
+        for wrapped in _wrap(entry, width, "  " if details else ""):
+            lines.extend(_cell_chunks(wrapped, width))
+    return lines
+
+
 def render_details(
     stats: Mapping[str, Any],
     *,
@@ -212,6 +256,7 @@ def render_details(
             [],
         ),
         ("POLICY OUTCOMES", []),
+        ("ROUTING / NOTIFICATIONS", []),
         ("REQUESTED MODELS", []),
         (
             "CHILD EXECUTION",
@@ -266,6 +311,9 @@ def render_details(
             continue
         if heading == "POLICY OUTCOMES":
             lines.extend(_mapping_lines(stats.get("outcomes"), columns))
+            continue
+        if heading == "ROUTING / NOTIFICATIONS":
+            lines.extend(_fault_lines(stats, columns, details=True))
             continue
         if heading == "REQUESTED MODELS":
             lines.extend(_mapping_lines(stats.get("requested_models"), columns))
@@ -560,6 +608,7 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
     if _count(stats.get('operator_stops')):
         for item in _wrap(f"Stopped delegations {_value(stats.get('operator_stops'))}  /  operator update required", inner):
             lines.append(row(ink(item, _LAVENDER)))
+    lines.extend(row(ink(item, _DIM)) for item in _fault_lines(stats, inner))
     lines.append(row(ink("─" * inner, _EDGE)))
     lines.extend(row(ink(item, _DIM)) for item in _wrap(
         "--details  full telemetry     --json  raw data     --plain  no color", inner))

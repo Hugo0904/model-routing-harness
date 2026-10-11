@@ -158,14 +158,23 @@ class SettingsRuntimeTests(unittest.TestCase):
         for call, resolver, fake in [("missing-key", lambda: None, FakeTransport()),
                                      ("failure", self.key, FakeTransport(error=OSError("PRIVATE_ERROR_CANARY")))]:
             event = {**self.event, "tool_use_id": call}
-            self.assertEqual(configured_event(event, self.path, host_resolver=SyntheticHost(), transport=fake,
-                                             credential_resolver=resolver), {})
+            response = configured_event(event, self.path, host_resolver=SyntheticHost(), transport=fake,
+                                        credential_resolver=resolver)
+            if call == 'failure':
+                self.assertEqual(set(response), {'systemMessage'})
+                self.assertIn('original tool call preserved', response['systemMessage'])
+                self.assertNotIn('PRIVATE', json.dumps(response))
+            else:
+                self.assertEqual(response, {})
             self.assertEqual(len(fake.calls), 1 if call == "failure" else 0)
         self.path.write_text('{"PRIVATE_INVALID_CANARY":"private"}')
         fake = FakeTransport(); before = self.resolutions
         with contextlib.redirect_stderr(io.StringIO()) as err:
-            self.assertEqual(configured_event(self.event, self.path, host_resolver=SyntheticHost(), transport=fake,
-                                             credential_resolver=self.key), {})
+            response = configured_event(self.event, self.path, host_resolver=SyntheticHost(), transport=fake,
+                                        credential_resolver=self.key)
+            self.assertEqual(set(response), {'systemMessage'})
+            self.assertIn('settings could not be loaded', response['systemMessage'])
+            self.assertNotIn('PRIVATE', json.dumps(response))
         self.assertNotIn("PRIVATE", err.getvalue())
         self.assertEqual(fake.calls, []); self.assertEqual(self.resolutions, before)
 

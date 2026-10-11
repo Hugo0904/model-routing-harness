@@ -37,20 +37,47 @@ def _runtime_archive():
     return buffer.getvalue()
 
 
-LAUNCHER = b'''"""Installed launcher: fixed binding, isolated Python, no cwd discovery."""
-import hashlib,json,os
+LAUNCHER = b'''"""Independent installed supervisor; never imports the runtime to report its failure."""
+import hashlib,json,os,signal,subprocess,sys,tempfile
 from pathlib import Path
+event=None
+reason="runtime_load"
+def failed():
+    if isinstance(event,dict) and event.get("hook_event_name")=="PreToolUse" and event.get("tool_name")=="spawn_agent" and isinstance(event.get("tool_input"),dict):
+        description="runtime integrity verification failed" if reason=="runtime_integrity" else "the Hook runtime could not be loaded or completed"
+        return {"systemMessage":"MRH: "+description+"; original tool call preserved. Use mrh stats --details with this profile's --settings or --db. Recording and warning deduplication are unavailable; this fault may be absent from history."}
+    return {}
 try:
+    data=sys.stdin.buffer.read(1048577)
+    if len(data)>1048576:raise ValueError()
+    event=json.loads(data)
     root=Path(__file__).resolve().parent
     binding=json.loads((root/"binding.json").read_bytes())
     if set(binding)!={"schema_version","python","settings_path","runtime_sha256"} or binding["schema_version"]!=1:raise ValueError()
     runtime=root/"runtime.pyz"
+    reason="runtime_integrity"
     if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
+    reason="runtime_load"
     python=binding["python"];settings=binding["settings_path"]
     if not Path(python).is_absolute() or not Path(settings).is_absolute():raise ValueError()
-    os.execv(python,[python,"-I",str(runtime),"hook","--settings",settings])
+    # Captured stderr is discarded, including Python import tracebacks. A file
+    # bounds readback without holding arbitrary failed-runtime output in memory.
+    with tempfile.TemporaryFile() as output:
+        process=subprocess.Popen([python,"-I",str(runtime),"hook","--settings",settings],stdin=subprocess.PIPE,stdout=output,stderr=subprocess.DEVNULL,start_new_session=True)
+        try:
+            process.communicate(data,timeout=48)
+        except BaseException:
+            if process.poll() is None and os.getpgid(process.pid)==process.pid:
+                os.killpg(process.pid,signal.SIGKILL)
+            process.wait()
+            raise
+        output.seek(0);raw=output.read(1048577)
+    if process.returncode!=0 or len(raw)>1048576:raise ValueError()
+    result=json.loads(raw)
+    if not isinstance(result,dict) or set(result)-{"systemMessage","hookSpecificOutput"}:raise ValueError()
+    print(json.dumps(result,separators=(",",":")))
 except Exception:
-    print("{}")
+    print(json.dumps(failed(),separators=(",",":")))
 '''
 
 
@@ -113,7 +140,7 @@ def prepare(root, settings_path, python=None):
             "description": "Default-off model routing with explicit workspace export permission",
             "extensions": {"com.openai": {"hooks": "./hooks/hooks.json"}}}),
         prefix + "hooks/hooks.json": _json({"hooks": {event: [{"matcher": "^spawn_agent$", "hooks": [
-            {"type": "command", "command": command, "timeout": 35}]}] for event in ("PreToolUse", "PostToolUse")}}),
+            {"type": "command", "command": command, "timeout": 50}]}] for event in ("PreToolUse", "PostToolUse")}}),
         prefix + "launcher.py": LAUNCHER,
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
@@ -130,7 +157,7 @@ def prepare(root, settings_path, python=None):
             target.parent.mkdir(parents=True, exist_ok=True)
             if target.exists() and owned.read_regular(target, 16_000_000) == data:
                 continue
-            owned.replace_owned(target, data)
+            owned.replace_owned(target, data, limit=16_000_000 if name.endswith('/runtime.pyz') else 65536)
         artifact = {"schema_version": 1, "owner": owned.OWNER, "version": version,
                     "plugin_id": PLUGIN_ID, "python": python, "python_version": check.stdout.strip(),
                     "settings_path": str(settings_path), "files": {name: _hash(data) for name, data in files.items()}}
