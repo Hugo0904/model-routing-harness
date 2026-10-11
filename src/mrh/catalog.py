@@ -96,6 +96,13 @@ def executable_hash(path):
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def installation_hash(tool, path):
+    if tool == 'gemini':
+        from .gemini_catalog import installation
+        return installation(path)['sha256']
+    return executable_hash(path)
+
+
 def discover():
     """Only named tools in installation locations; no workspace traversal."""
     candidates = []
@@ -121,7 +128,7 @@ def discover():
             except (OSError, ValueError, KeyError):
                 continue
         candidates.append({'tool': tool, 'executable': str(p), 'label': tool.title(),
-                           'supported': tool == 'codex' or (tool == 'claude' and sys.platform == 'darwin')})
+                           'supported': tool == 'codex' or (tool in ('claude', 'gemini') and sys.platform == 'darwin')})
     if os.name == 'posix':
         p = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex')
         if p.is_file() and not any(x['executable'] == str(p.resolve()) for x in candidates):
@@ -219,6 +226,9 @@ class CodexCatalog:
 
 
 def describe_tool(candidate):
+    if candidate['tool'] == 'gemini':
+        from .gemini_catalog import GeminiCatalog
+        return GeminiCatalog().describe(candidate)
     if candidate['tool'] == 'claude':
         from .claude_catalog import ClaudeCatalog
         return ClaudeCatalog().describe(candidate)
@@ -237,6 +247,9 @@ def describe_tool(candidate):
 class ToolCatalog:
     """Tool dispatch only; consumers and core do not know provider transports."""
     def refresh(self, binding):
+        if binding['tool'] == 'gemini':
+            from .gemini_catalog import GeminiCatalog
+            return GeminiCatalog().refresh(binding)
         if binding['tool'] == 'codex':
             return CodexCatalog().refresh(binding)
         if binding['tool'] == 'claude':

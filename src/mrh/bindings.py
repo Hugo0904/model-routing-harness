@@ -5,7 +5,7 @@ import time
 import uuid
 
 from . import owned, settings
-from .catalog import Catalog, CatalogError, executable_hash
+from .catalog import Catalog, CatalogError, executable_hash, installation_hash
 from .types import safe_id, safe_model_id
 
 FILES = {'registry.json'}
@@ -144,7 +144,7 @@ class Registry:
                     current['refresh_error'] is not None or current['catalog'] != snapshot.public())):
                 raise BindingError('binding_or_catalog_conflict')
             self.verify_profile(current)
-            if executable_hash(current['executable']) != current['executable_sha256']:
+            if installation_hash(current['tool'], current['executable']) != current['executable_sha256']:
                 raise BindingError('tool_changed_rebind_required')
             return settings.update(current['settings_path'], expected_revision=initial['revision'], policy=policy)
 
