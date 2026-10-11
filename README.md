@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通切換、Fixed 較高 configured child／結果與同 Goal 跨回合重新分級；D48 已觀察 Luna parent 的真 Top Main 拒絕、無 child 與同 parent 完成，待 A 最終驗收。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
+子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通切換、Fixed 較高 configured child／結果與同 Goal 跨回合重新分級；A 也已接受 Luna parent 的真 Top Main 拒絕、無 child 與同 parent 完成。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
 
 Mac arm64 可直接執行：
 
@@ -69,7 +69,7 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 | 項目 | 目前證據 |
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作；E6 每個分支的最小事實及負例經合成 core／公開入口驗證 |
-| Codex Hook／native 控制 | ordinary／Fixed 的 configured child／結果已由 A 驗收；D48 真 Main Top/0.99 native blocked／no-child／同 Luna parent 完成已觀察。E17R 保護證據沿用，Desktop／自主排程未驗證 |
+| Codex Hook／native 控制 | ordinary／Fixed 的 configured child／結果已由 A 驗收；D48 真 Main Top/0.99 native blocked／no-child／同 Luna parent 完成已由 A 驗收。E17R 保護證據沿用，Desktop／自主排程未驗證 |
 | 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
 | 分級來源與公開設定 | 新設定使用 Codex 訂閱；真 ordinary 切換與 Goal fresh classification 已觀察。舊 TypeSafe factory／HTTP 替身及 settings 保留，真 Jev API 未驗證，沒有自動 fallback |
 | 後續真 Goal 委派 | D47 同一官方 Goal 的兩個 harness 回合各有新訂閱分級與完成結果，Goal 完成及 clear 讀回；自主排程未驗證。原 E4G 腳本 lifecycle 證據保留 |
@@ -81,14 +81,18 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 
 政策、收據與 v2 統計見 [資料契約](docs/contracts.md)、[合成設定](examples/synthetic-policy.json)、[合成統計](examples/synthetic-stats.json)、[含 Jev 離線 transport 的合成統計](examples/synthetic-provider-stats.json)。這些統計是 MRH 格式，TypeSafe wire 格式另依官方 API。
 
-## 驗證
+## 開發結構與驗證
+
+程式依責任分成 `routing`、`application`、`adapters`、`infrastructure`、`presentation`，測試與開發腳本也按用途放在子目錄。命令入口仍是 `mrh`／`python -m mrh`；root `mrh.cli:main` 保留，內部 imports 使用新套件路徑。對照見[結構搬移與打包交接](docs/architecture-migration.md)。現有啟用指令仍指已接受的 E19 套件，直到 B 交付整合後的新版本；登入、session 與設定不需重建。
+
+依變更選必要 case；以下是開發工具入口，不代表每次都要跑整個 suite 或重做歷史驗收：
 
 ```sh
-PYTHONPATH=src python3 -m unittest discover -s tests -v
-python3 scripts/verify_package.py --evidence-prefix e3
+PYTHONPATH=src python3 -m unittest discover -s tests -t . -v
+python3 scripts/verification/packaging/verify_package.py --evidence-prefix local-migration-check
 ```
 
-前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。
+前者驗證核心→Hook→SQLite→CLI/JSON、TypeSafe fake transport、deadline/lifecycle/migration 與 fixture 安裝。後者在暫存 venv 離線安裝，驗證兩個 entrypoints、新 telemetry JSON 一致與 80／28 欄輸出後清除 runtime。另選新 evidence prefix，避免覆蓋歷史成果。原結果見 [E3 證據](docs/evidence/e3-verification.json)，[80 欄](docs/evidence/e3-terminal-80.txt)／[28 欄](docs/evidence/e3-terminal-28.txt)。E1 [盤點](docs/capabilities.md) 與 [E2 證據](docs/evidence/e2-verification.json) 保留為歷史證據，不能當真 API／宿主驗收。
 
 後續 [E4 installed-host證據](docs/e4-host-proof.md) 與 [E4G Goal 證據](docs/e4g-goal-and-plugin-proof.md) 區分 shell 與 Desktop-bundled runtime，均沒有正式啟用。[E5](docs/e5-settings-plugin-proof.md) 已補上兩版的隔離 native plugin／installed entry／第三方 Hook 共存證據與 34 項聚焦檢查；設定接線用 true factory＋合成 HTTP/context，正式 host resolution 仍缺契約。沒有重跑既有 Goal、全部核心或真 provider 測試。歷史審查拒絕與完整 R1 接受狀態保留在任務記錄。
 

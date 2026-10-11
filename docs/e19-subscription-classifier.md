@@ -128,4 +128,4 @@ D48 只做一個尚缺的 Luna Main 回合，同 root/auth/pointer/bundle，以�
 
 已停止本次 native process（exit 0）、CAS disable／export-deny，僅把 owned parent model／effort 恢復原 Sol6.1／low；Main policy、其他設定、mappings／rates／history 維持原值。same scope reprepare／official refresh 後 cache integrity 和原兩個 trusted MRH Hook 讀回通過，same-home public status 仍 ChatGPT。沒有 logout／root 重建或刪除／observer／私有驗收 session 讀取／新 Goal／bundle rebuild；原及新 refs、state、home、workspace、model registry 與 pointer 都保留到整體成果驗收。[同目標恢復與保留](evidence/e19-d48-retained-session.json)。
 
-README／[啟用指令](quickstart.md)只更新接受狀態與本回 Main 結果；既有已驗操作指令／command matrix 沿用，不為文字狀態重跑。現在 ordinary／Fixed／Goal 的接受與 Main 的真實證據已齊，交 A 作此 CLI 鏈最後驗收。原未知 Hook input 診斷、Desktop／global／正式採用、自主 Goal 排程和完整 R1 分母／界線不變；本頁不自行把整個任務標完成。
+README／[啟用指令](quickstart.md)只更新接受狀態與本回 Main 結果；既有已驗操作指令／command matrix 沿用，不為文字狀態重跑。A 已於 D50 接受這份 Main 證據，受測的 ordinary／Fixed／Main／Goal CLI 鏈已齊。原未知 Hook input 診斷、Desktop／global／正式採用、自主 Goal 排程和完整 R1 分母／界線不變；本頁不自行把整個任務標完成。

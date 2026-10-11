@@ -252,7 +252,8 @@ def licensing(full_archive, destination, lock, runtime):
 
 def application_archive(path):
     _, _, _, files = mrh_build.metadata()
-    files.update({'mrh/' + p.name: p.read_bytes() for p in (ROOT / 'src/mrh').glob('*.py')})
+    files.update({p.relative_to(ROOT / 'src').as_posix(): p.read_bytes()
+                  for p in (ROOT / 'src/mrh').rglob('*.py')})
     files['__main__.py'] = b'from mrh.cli import main\nraise SystemExit(main())\n'
     path.parent.mkdir()
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
@@ -291,7 +292,7 @@ def build(cache, output, archive, *, download=False):
                     'entry': 'mrh', 'private_interpreter': 'runtime/bin/python3.11',
                     'source_commit': subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip(),
                     'builder_files': {str(p.relative_to(ROOT)): sha256(p) for p in
-                                      (ROOT / 'mrh_bundle.py', ROOT / 'mrh_build.py', ROOT / 'scripts/build_standalone.py', LOCK)},
+                                      (ROOT / 'mrh_bundle.py', ROOT / 'mrh_build.py', ROOT / 'scripts/packaging/build_standalone.py', LOCK)},
                     'files': file_manifest(staged), 'signed_or_notarized_release': False, 'runtime_download_on_use': False}
         (staged / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
         # Relocation changes only container paths; runtime and source bytes stay

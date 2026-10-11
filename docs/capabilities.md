@@ -56,7 +56,7 @@ Codex 有官方記載的 pre-spawn 攔截與參數改寫基礎，兩個安裝版
 
 ## E1 隔離 probe 與界線
 
-[probe_codex_contracts.py](../scripts/probe_codex_contracts.py) 使用每次新建的 `TemporaryDirectory`、官方子程序 `CODEX_HOME` 選擇器、只傳必要環境、不複製 auth。只跑 version、generate-json-schema、app-server `initialize`, `config/read`, `hooks/list`，**沒有 thread/start 或 turn/start**。
+[probe_codex_contracts.py](../scripts/verification/hosts/probe_codex_contracts.py) 使用每次新建的 `TemporaryDirectory`、官方子程序 `CODEX_HOME` 選擇器、只傳必要環境、不複製 auth。只跑 version、generate-json-schema、app-server `initialize`, `config/read`, `hooks/list`，**沒有 thread/start 或 turn/start**。
 
 正式結果：[e1-codex-contracts.json](evidence/e1-codex-contracts.json)，兩版本均成功生成 schema，CLI override、未信任 synthetic Hook 與任意 effort 字串都已讀回；實際執行 **0.933 秒**。JSON 含暫存 source path 以辨識隔離範圍；目錄已清除。
 

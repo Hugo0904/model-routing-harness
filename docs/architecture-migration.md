@@ -1,4 +1,56 @@
-# D49：責任分群與最小搬移地圖
+# 結構搬移與打包交接
+
+D51 的 source、tests、scripts 已實體分層，兩個 zip 收檔器已修正。六個指定的直接消費者檢查通過，既有 case identities 全數保留；沒有重跑真模型或建立新的測試群。Root 只保留 `__init__.py`、`__main__.py` 和 lazily delegating `cli.py`，已知 repository consumers 都改為 canonical imports／patch owners。
+
+中立 `classification_spec` 保留原 pins、ordered rubric 與 instruction bytes；兩家 catalog 共用原封不動的 `isolation_profile`。`ConfigurationScope` 仍在 host adapter，以原 exact-type admission、分類前後與 replay 重核處理；這是 A 在 D51 接受的 narrow dependency exception，不存在待做的 trust redesign。
+
+目前尚待 B 用既有 cache 建置新 bundle，並跑一次既有無模型 packaged subscription entry 檢查。使用者啟用仍指 last-accepted E19，未更新／讀取保留的 authenticated home、plugin、settings、registry、pointer 或 session。歷史證據與 accepted dist 原檔維持不變。
+
+## D51 驗證與 B 接續
+
+| 檢查 | 結果與範圍 |
+|---|---|
+| 非執行 syntax／canonical import target 核對 | 全部 relocated source/scripts/tests 可解析；只 import production definitions，不執行 script main 或 provider |
+| `unittest` discovery（沒有 runner） | 搬移前後同一批 268 個 case，按原 `test_filename.Class.method` 正規化完全相同；沒有 import error、沒有 case 刪除／新增 |
+| `tests.infrastructure.test_bundle.BundleTests.test_application_archive_has_metadata_and_all_mrh_modules_without_sdk_or_build_runtime` | PASS；既有 case 增強為全部 nested source→app zip byte parity |
+| `tests.infrastructure.test_owned_plugin.OwnedPluginTests.test_preparation_repeat_and_updated_code_preserve_settings_and_standalone_default_off` | PASS；既有 case 核全部 nested runtime zip bytes，更新保留設定、無 repository 的 launcher 啟動 |
+| `tests.application.test_codex_subscription.SubscriptionTests.test_runtime_pre_spawn_gates_recursion_disabled_export_explicit_role` | PASS；source runner 替身，非 subscription 模型呼叫 |
+| `tests.application.test_settings_runtime.SettingsRuntimeTests.test_public_hook_uses_real_factory_and_parser_main_fixed_receipt_disable` | PASS；現有 synthetic host／HTTP transport，Main/Fixed/receipt/disable consumer |
+| `tests.adapters.test_codex_scope.ScopeTests.test_configuration_basis_cannot_be_promoted_to_observed_host_snapshot` | PASS；configured facts 沒有升格為 observed |
+| `tests.application.test_fault_notices.InstalledLauncherFaultTests.test_installed_launcher_integrity_and_runtime_load_faults_preserve_safe_call` | PASS；broken nested members 仍實際造成原故障，independent notice 保護不變 |
+| 常數／純函式比較 | 原／新 pins、rubric順序、subscription instruction bytes／controls相同；isolation function AST與產生policy bytes相同；fact exact-type body只變import位置 |
+
+六個 case 同輪 1.669 秒通過；完整 suite／vendor CLI／model／build／native trust／UI沒有執行。Subscription instruction SHA256：`d9768c75eb2855f83f1121ce03841e20a50dcc6bd4b94b02a88909fceb9c1fee`。其他原 native ordinary／Fixed／Main／Goal、parser、cancellation、Terminal、vendor isolation 證據沿用，沒有把其舊 source hash 改成新版。
+
+B 的入口為 `scripts/packaging/build_standalone.py`，以既有 pin/cache、**新的 output/archive 路徑**建立候選；root `mrh_build.py` 仍供 wheel。完成新 application/runtime archive 的 manifest/source identities 後，只跑 `scripts/verification/packaging/verify_subscription_bundle.py --bundle <new-bundle> --binary <same-official-pin> --output <new-evidence>`。該既有 consumer 已更新 canonical imports、nested completeness與 runtime comparison；其 guard/CAS/legacy history使用自有 disposable home，沒有 real classifier calls。不要讓新 runtime hash 去與歷史已接受 runtime 比較成相同；舊 manifest／dist 保留。是否將新套件套用到 retained same-session plugin，仍由 A 的 B 整合指派決定；C 沒有做那個操作。
+
+## 開發舊路徑對照
+
+下方 D49 source 表仍是33個原檔的對照；新增 `routing/classification_spec.py`、`adapters/catalogs/isolation.py` 與各 package markers。不保留 flat internal module aliases。console `mrh`、`python -m mrh`、`mrh.cli:main` 的 flags／signature／exit semantics 保留。
+
+歷史文件／evidence 中的舊命令只適用於其 **source commit**，不要直接用它們重跑並覆蓋歷史證據。当前腳本命令採下表，測試 discovery 使用 `PYTHONPATH=src python3 -m unittest discover -s tests -t .`，需執行哪些 case由變更風險決定，不自動跑全 suite。
+
+| 舊 scripts/*.py（檔名不變） | 新目錄 |
+|---|---|
+| `build_standalone.py` | `scripts/packaging/` |
+| `verify_package.py`, `verify_standalone.py`, `verify_accounting_package.py`, `verify_claude_package.py`, `verify_configured_package.py`, `verify_model_package.py`, `verify_rebind_entry.py`, `verify_scoped_bundle.py`, `verify_subscription_bundle.py` | `scripts/verification/packaging/` |
+| `verify_host.py`, `verify_plugin_host.py`, `verify_scoped_host.py`, `verify_live_hook.py`, `verify_fault_host.py`, `verify_source_export.py`, `run_subscription_acceptance.py`, `probe_codex_contracts.py` | `scripts/verification/hosts/` |
+| `verify_claude_catalog.py`, `verify_claude_cli.py`, `verify_gemini_entry.py`, `verify_gemini_isolation.py`, `probe_gemini_acp.py` | `scripts/verification/catalogs/` |
+| `verify_subscription_isolation.py` | `scripts/verification/providers/` |
+| `verify_settings_editor.py`, `verify_fault_display.py`, `verify_model_navigation.py`, `verify_model_fixtures.py` | `scripts/verification/terminal/` |
+| `model_selector_fixture.py`, `operator_stop_fixture.py`, `e8_hook_bootstrap.py`, `e19_input_observer.py` | `scripts/fixtures/` |
+
+| 舊 tests/test_*.py（class/method不變） | 新目錄 |
+|---|---|
+| `test_core.py`, `test_action_facts.py`, `test_e3_facts.py`, `test_operator_stop.py` | `tests/routing/` |
+| `test_integration.py`, `test_settings_runtime.py`, `test_configured_accounting.py`, `test_codex_subscription.py`, `test_fault_notices.py` | `tests/application/` |
+| `test_codex_scope.py`, `test_codex_host_receipt.py`, `test_claude_catalog.py`, `test_gemini_catalog.py`, `test_typesafe.py`, `test_typesafe_protocol.py`, `test_isolated_host_export.py`, `test_isolated_live_hook.py` | `tests/adapters/` |
+| `test_store.py`, `test_settings_schema.py`, `test_settings_cli.py`, `test_owned_plugin.py`, `test_installer.py`, `test_rebind.py`, `test_bundle.py`, `test_host_goal.py`, `test_host_cleanup.py` | `tests/infrastructure/` |
+| `test_cli.py`, `test_config_table.py`, `test_model_selector.py`, `test_terminal_provider.py`, `test_fault_display.py` | `tests/presentation/` |
+
+## D49 前置盤點（原設計與取捨記錄）
+
+以下記錄當時盤點與曾待決定的項目；A 的 D51 已定案，實作／證據與剩餘整合以上方狀態為準。
 
 目前確有 33 個頂層 Python 檔；可以依五個責任群搬入子套件，保留既有物件、函式與資料契約。最大的直接風險是兩個 zip 打包器只收頂層檔案，以及舊 import／monkeypatch 路徑。這份文件完成搬移前的依賴盤點，尚未搬檔、改行為或執行測試；A 定案後才由 C 施工，再交 B 打包整合。
 
@@ -127,7 +179,7 @@ AST 分別算 module-top-level imports 與包含 function-local imports 的圖�
 
 這些現成check已能覆蓋關鍵搬移故障；只增強既有archiveparity缺口，沒有每filetest或新matrix。若A選scripts/tests物理移動，再增加一次有效discovery/入口解析的直接確認，不能用「沒找到test而空跑」當pass。UI未改則沿既有Terminal證據；若意外改呈現，才重開受影響畫面。
 
-## 交 A 定案的三件事
+## D49 的三件待決事項（已由 D51 定案）
 
 1. 採以上五群與rootCLI薄入口？建議只保留已知命令入口，不留31個implementation/shim平放；已知repoconsumers全部改canonical imports。若A需保留額外Pythonlibrary路徑，明列真正外部契約後再加相容。
 2. 同次是否納入中立scopewrapper、純classification_spec、共用catalogisolation三個最小責任修正？建議納入後兩項；scopewrapper涉及admission/revalidation seam，A需定準確契約，或明示暫留具體lazy依賴例外。核心route不全面拆解、Store/classifier/serviceinterfaces保留。

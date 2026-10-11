@@ -61,8 +61,8 @@ Claude/Gemini 未支援，介面差異見 [盤點](capabilities.md)，不能共�
 `classifier_from_config` 只接受 schema_version=1、enabled／task_export_permitted 布林、model=jev-1.13.0；[factory 範例](../examples/typesafe-disabled.json) 全關閉。兩個開關都明確 true 才評估 injected credential resolver／`TYPESAFE_API_KEY` runtime resolver。E5 `settings`／`hook --settings` 用[完整設定](../examples/settings-disabled.json)共用 strict reader，另要求 operator 的 canonical workspace 範圍與可信 host resolver。Disabled／無 export／out-of-scope／host 未解析／無 key 都是零 transport invocation。程序依賴介面如下；片段本身未啟用或讀 key：
 
 ```python
-from mrh.typesafe import classifier_from_config
-from mrh.service import process
+from mrh.adapters.providers.typesafe import classifier_from_config
+from mrh.application.service import process
 
 classifier = classifier_from_config(config, credential_resolver=runtime_key_resolver)
 decision = process(proposal, vetted_policy, vetted_capabilities, store, classifier,
