@@ -224,6 +224,8 @@ def cached_effect_blocker(proposal, policy, value, decision):
         return None
     if proposal.tool_input.get("model") is not None:
         return "explicit_model"
+    if proposal.tool_input.get('reasoning_effort') is not None:return 'explicit_effort'
+    if proposal.tool_input.get('agent_type') not in (None,'default'):return 'unsupported_role'
     facts, reason = validated_facts(proposal, value)
     if reason:
         return reason
@@ -257,6 +259,10 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     original = proposal.tool_input
     if original.get("model") is not None:
         return preserve("explicit_model")
+    if original.get('reasoning_effort') is not None:
+        return preserve('explicit_effort')
+    if original.get('agent_type') not in (None,'default'):
+        return preserve('unsupported_role')
     facts, blocker = validated_facts(proposal, host_capabilities)
     if blocker:
         return preserve(blocker)
@@ -317,6 +323,8 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     classification = result
     if result.confidence < 0.5:
         return preserve("low_confidence")
+    facts, blocker = validated_facts(proposal, host_capabilities)
+    if blocker:return preserve(blocker)
     unavailable = selected_unavailability(proposal, policy, facts, result.tier)
     if unavailable:
         if not stop_supported(facts):

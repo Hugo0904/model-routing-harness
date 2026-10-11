@@ -1,7 +1,7 @@
 """Public settings -> existing provider factory -> conservative Codex adapter."""
 import sys
 from pathlib import Path
-from .codex import handle_event
+from .codex import handle_event,canonical_event
 from .settings import read, workspace_allowed
 from .settings_schema import SettingsError
 from .typesafe import classifier_from_config
@@ -39,7 +39,8 @@ def partial_hook_snapshot(event, synthetic=False):
     return HostSnapshot(scope, synthetic, parent_model=parent, workspace=workspace)
 
 
-def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None):
+def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None, scope_binding=None):
+    event=canonical_event(event)
     # Settings never come from cwd/tool_input. Invalid identities are neutral
     # before any data creation; preserving a valid admitted call still records
     # its existing canonical facts without executing a classifier.
@@ -62,12 +63,19 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
             injected["credential_resolver"] = credential_resolver
         classifier = classifier_from_config({"schema_version": 1, "model": value["classifier_model"],
                                              "enabled": value["enabled"], "task_export_permitted": value["task_export_permitted"]}, **injected)
-        if bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
+        if not (scope_binding is not None and host_resolver is None) and bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
             return {}
         caps = partial_hook_snapshot(event, classifier.synthetic)
-        if event["hook_event_name"] == "PreToolUse" and original.get("model") is None:
+        if (event["hook_event_name"] == "PreToolUse" and original.get("model") is None
+                and original.get('reasoning_effort') is None and original.get('agent_type') in (None,'default')):
             try:
-                observed = resolver.resolve(event)
+                if scope_binding is not None and host_resolver is None:
+                    import json
+                    from .codex_scope import check
+                    from .owned import read_regular
+                    descriptor=json.loads(read_regular(scope_binding))['codex_scope']
+                    observed=check(descriptor,event,synthetic=classifier.synthetic)
+                else:observed = resolver.resolve(event)
                 if type(observed) is HostSnapshot:
                     caps = observed
                 elif classifier.synthetic and isinstance(observed, dict):
@@ -75,10 +83,13 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
                     caps = synthetic_legacy_snapshot(proposal, observed)
                 elif observed is not None:
                     caps = observed  # core rejects generic production assertions
-            except Exception:
+            except Exception as exc:
                 # A bounded unavailable state reaches the same core/facts path;
                 # no guessed capabilities or raw resolver exception is stored.
-                pass
+                if scope_binding is not None:
+                    from .codex_scope import rejected, ScopeError
+                    reason=str(exc) if isinstance(exc,ScopeError) else 'scope_changed'
+                    caps=rejected(event,reason,classifier.synthetic)
         # Explicit Pre wins in core before resolution/classification. Post uses
         # proposal correlation, independent of any fresh host-capability query.
         from .store import Store

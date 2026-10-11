@@ -173,7 +173,7 @@ class Rpc:
                 raise TimeoutError("child_completion_timeout")
 
 
-def trust_fixture(binary, env, work, scope):
+def trust_fixture(binary, env, work, scope, completion=None):
     """Use the actual CLI startup trust review, never edit its trust state."""
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 30, 100, 0, 0))
@@ -218,7 +218,7 @@ def trust_fixture(binary, env, work, scope):
         os.write(master, b"\x1b[B")
         time.sleep(.15)
         os.write(master, b"\r")
-        if not read_until((b"To get started", b"MRH synthetic parent", b"mrh-synthetic-parent"), 5):
+        if not read_until(completion or (b"To get started", b"MRH synthetic parent", b"mrh-synthetic-parent"), 5):
             plain = re.sub(rb"\x1b\[[0-?]*[ -/]*[@-~]", b"", transcript)
             raise ValueError("trust_review_completion_unverified:" + plain.decode(errors="replace")[-1800:])
         return {"method": "official CLI startup review Trust all and continue", "bypass_flag": False,

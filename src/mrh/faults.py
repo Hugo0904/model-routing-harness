@@ -5,6 +5,9 @@ All public notices are fixed text; caller data and exception text stay out.
 """
 
 FAULTS = {
+    'scope_unsupported': 'the installed configuration is outside the supported routing scope',
+    'scope_changed': 'the routing scope configuration changed; re-prepare this plugin',
+    'scope_host_unverified': 'the native invocation is outside the supported local mode',
     "classifier_unavailable": "the classifier was unavailable",
     "classifier_timeout": "the classifier timed out",
     "classifier_error": "the classifier failed",
@@ -24,7 +27,7 @@ FAULTS = {
     "typesafe_oversized_response": "the classifier response exceeded its limit",
     "typesafe_redirect_rejected": "the classifier returned a disallowed redirect",
 }
-NORMAL = {"unrelated_event", "explicit_model", "fixed_role_model", "fixed_role_effort",
+NORMAL = {"unrelated_event", "explicit_model", "explicit_effort", "unsupported_role", "fixed_role_model", "fixed_role_effort",
           "low_confidence", "cost_unknown"}
 CATEGORIES = ("classified_child_request", "classified_main_request", "normal_retention",
               "fault_fallback", "operator_stop", "unavailable_readiness")

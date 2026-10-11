@@ -104,6 +104,8 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--root", required=True, type=Path, help="fresh or verified MRH-owned bundle root")
     prepare.add_argument("--settings", required=True, type=Path, help="separate absolute MRH settings.json path")
     prepare.add_argument("--python", type=Path, help="installed Python 3.11+ interpreter")
+    prepare.add_argument('--scope-workspace',type=Path,help='inspect a finite official CLI generic-routing scope; preserves default-off')
+    prepare.add_argument('--codex-binary',type=Path,help='optional exact official native CLI; default uses installed discovery')
     show = plugin_actions.add_parser("show")
     show.add_argument("--root", required=True, type=Path)
 
@@ -115,6 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
+    hook.add_argument('--scope-binding',type=Path,help=argparse.SUPPRESS)
     hook.add_argument("--db", type=Path, default=None, help="event database path")
     hook.add_argument("--candidate", action="store_true", help="enable the isolated candidate adapter")
     hook.add_argument(
@@ -304,7 +307,7 @@ def _cmd_settings(args, stdin):
 
 def _hook_failure(event, admitted):
     if (admitted and isinstance(event, dict) and event.get('hook_event_name') == 'PreToolUse' and
-            event.get('tool_name') == 'spawn_agent' and isinstance(event.get('tool_input'), dict)):
+            event.get('tool_name') in ('spawn_agent','collaborationspawn_agent') and isinstance(event.get('tool_input'), dict)):
         from .faults import warning
         return warning('runtime_error')
     return {}
@@ -323,7 +326,9 @@ def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, ru
                 raise ValueError()
             event = json.loads(payload)
             from .runtime import configured_event
-            response = configured_event(event, args.settings, **(runtime_dependencies or {}))
+            dependencies=dict(runtime_dependencies or {})
+            if args.scope_binding is not None:dependencies['scope_binding']=args.scope_binding
+            response = configured_event(event, args.settings, **dependencies)
             encoded = json.dumps(response, separators=(",", ":"), allow_nan=False)
         except Exception:
             stderr.write("mrh: configured_hook_error\n")
@@ -423,11 +428,13 @@ def main(
         if args.command == "plugin":
             from . import plugin
             from .owned import OwnedError
+            from .codex_scope import ScopeError
             try:
-                _write_json(plugin.prepare(args.root, args.settings, args.python) if args.plugin_action == "prepare" else plugin.show(args.root))
+                _write_json(plugin.prepare(args.root, args.settings, args.python,scope_workspace=args.scope_workspace,
+                                         codex_binary=args.codex_binary) if args.plugin_action == "prepare" else plugin.show(args.root))
                 return 0
-            except OwnedError as exc:
-                stderr.write("mrh: " + exc.reason + "\n")
+            except (OwnedError,ScopeError) as exc:
+                stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")
                 return 2
         if args.command == "demo":
             return _cmd_demo(args)

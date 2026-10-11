@@ -8,6 +8,16 @@ from .types import Proposal, safe_id
 from .facts import CallScope, HostSnapshot
 from .faults import notice_for, warning, category
 
+SPAWN_NAMES = ('spawn_agent','collaborationspawn_agent')
+
+
+def canonical_event(event):
+    # Exact canonical V2 name observed on official 0.159.3. This changes only
+    # internal matching, never the original replacement argument object.
+    if isinstance(event,dict) and event.get('tool_name') in SPAWN_NAMES:
+        return {**event,'tool_name':'spawn_agent'}
+    return event
+
 
 def serialize(decision, original, call_id, notice=None):
     if decision.action == "preserve":
@@ -17,13 +27,14 @@ def serialize(decision, original, call_id, notice=None):
                 'permissionDecisionReason': f'MRH stopped delegation: {decision.tier} target {decision.target_model} is unavailable ({decision.reason}). Update this tier with mrh model {decision.tier.lower()}, then explicitly rerun the task as a new proposal. This call will not resume automatically.'}}
     if decision.action == "return_to_main":
         return {**(notice or {}), "hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                "permissionDecisionReason": f"MRH Top Main requested for existing subtask {call_id}; main continuation remains unverified."}}
+                "permissionDecisionReason": f"MRH Top Main: delegation {call_id} was not executed. Continue its original unexecuted subtask in this same parent; do not create a replacement child. The selected main model remains unchanged."}}
     rewritten = copy.deepcopy(original)
     rewritten.update(decision.patch)
     return {**(notice or {}), "hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow", "updatedInput": rewritten}}
 
 
 def handle_event(event, store=None, candidate=False, simulation=None, *, classifier=None, policy=None, capabilities=None, optional_context=None):
+    event=canonical_event(event)
     if not candidate:
         return {}
     if not isinstance(event, dict) or event.get("tool_name") != "spawn_agent":
@@ -55,6 +66,11 @@ def handle_event(event, store=None, candidate=False, simulation=None, *, classif
             except (ValueError, UnicodeError):
                 response = None
         agent_id = response.get("agent_id") if isinstance(response, dict) else None
+        task_reference = response.get('task_name') if isinstance(response,dict) else None
+        source_ref='codex-hook-candidate'
+        if agent_id is None and safe_id(task_reference):
+            agent_id=task_reference
+            source_ref='codex-native-v2-task-reference'
         if not safe_id(agent_id):
             print("mrh: child_receipt_unavailable", file=sys.stderr)
             return {}
@@ -62,7 +78,7 @@ def handle_event(event, store=None, candidate=False, simulation=None, *, classif
                    "platform": proposal.platform, "surface": proposal.surface,
                    "session_id": proposal.session_id, "turn_id": proposal.turn_id,
                    "tool_call_id": proposal.tool_call_id, "agent_id": agent_id,
-                   "evidence_kind": "synthetic" if synthetic else "reported", "source_ref": "codex-hook-candidate"}
+                   "evidence_kind": "synthetic" if synthetic else "reported", "source_ref": source_ref}
         try:
             store.record_observation(receipt)
         except Exception:

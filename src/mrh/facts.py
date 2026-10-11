@@ -33,13 +33,18 @@ class Fact:
     value: object = None
     source: str = "unavailable"
     scope: CallScope | None = None
+    basis: str = 'observed'
 
     @classmethod
     def observed(cls, scope, value, source):
         return cls(True, value, source, scope)
 
+    @classmethod
+    def configured(cls, scope, value, source):
+        return cls(True, value, source, scope, 'configuration')
+
     def valid(self, scope, predicate):
-        if type(self.known) is not bool or not safe_id(self.source):
+        if type(self.known) is not bool or not safe_id(self.source) or self.basis not in ('observed','configuration'):
             return False
         if not self.known:
             return self.value is None and (self.scope is None or self.scope == scope)
@@ -67,7 +72,7 @@ class HostSnapshot:
     original_effort: Fact = field(default_factory=Fact)
     targets: tuple = ()
 
-    def validation_reason(self, proposal):
+    def validation_reason(self, proposal, *, configuration=False):
         if type(self.scope) is not CallScope or not self.scope.valid() or self.scope != CallScope.for_proposal(proposal):
             return "host_fact_scope_mismatch"
         if type(self.synthetic) is not bool or type(proposal.synthetic) is not bool or self.synthetic != proposal.synthetic:
@@ -80,6 +85,8 @@ class HostSnapshot:
                       "original_model": safe_model_id, "original_effort": optional_effort}
         for name, predicate in predicates.items():
             value = getattr(self, name)
+            if type(value) is Fact and value.basis == 'configuration' and not configuration:
+                return 'invalid_host_facts'
             if type(value) is Fact and value.known and type(value.scope) is CallScope and value.scope != self.scope:
                 return "host_fact_scope_mismatch"
             if type(value) is not Fact or not value.valid(self.scope, predicate):
@@ -94,6 +101,8 @@ class HostSnapshot:
             tests = [(target.available, lambda x: type(x) is bool),
                      (target.efforts, lambda x: type(x) is tuple and len(x) <= 32 and all(optional_effort(v) for v in x) and len(set(x)) == len(x)),
                      (target.inherited_effort, optional_effort)]
+            if not configuration and any(type(value) is Fact and value.basis == 'configuration' for value,_ in tests):
+                return 'invalid_host_facts'
             if any(type(value) is Fact and value.known and type(value.scope) is CallScope and value.scope != self.scope for value, _ in tests):
                 return "host_fact_scope_mismatch"
             if any(type(value) is not Fact or not value.valid(self.scope, test) for value, test in tests):
@@ -145,6 +154,9 @@ def synthetic_legacy_snapshot(proposal, value):
 
 
 def snapshot_for(proposal, value):
+    from .codex_scope import ConfigurationScope
+    if type(value) is ConfigurationScope:
+        return value
     if type(value) is HostSnapshot:
         return value
     if proposal.synthetic is True and isinstance(value, dict):

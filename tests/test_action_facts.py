@@ -54,8 +54,8 @@ class ActionFactTests(unittest.TestCase):
         result, calls, _, _ = self.decide(facts, policy)
         self.assertEqual(result.patch, {"model": "target", "reasoning_effort": "high"}); self.assertEqual(calls, 1)
         explicit = self.proposal(original={"message": "fixture", "reasoning_effort": "low"})
-        result, _, _, _ = self.decide(facts, policy, proposal=explicit)
-        self.assertEqual(result.patch["reasoning_effort"], "low")
+        result, calls, _, _ = self.decide(facts, policy, proposal=explicit)
+        self.assertEqual((result.reason,result.patch,calls), ('explicit_effort',{},0))
         inherited_policy = {"top_mode": "Fixed", "fixed": {"model": "target"}}
         result, calls, contexts, _ = self.decide(facts, inherited_policy)
         self.assertEqual(result.reason, "missing_effective_effort"); self.assertEqual((calls, contexts), (0, 0))
@@ -132,7 +132,8 @@ class ActionFactTests(unittest.TestCase):
                      patch("mrh.typesafe.HttpTransport.request", side_effect=AssertionError("network")):
                     self.assertEqual(cli.main(["hook", "--settings", str(path)], stdin=io.StringIO(json.dumps(pre)), stdout=out), 0)
                 self.assertEqual(json.loads(out.getvalue()), {})
-                self.assertEqual(Store(path.parent/"events.sqlite3").stats()["outcomes"], {"missing_role_protection": 1})
+                expected='explicit_effort' if pre['tool_input'].get('reasoning_effort') is not None else 'missing_role_protection'
+                self.assertEqual(Store(path.parent/"events.sqlite3").stats()["outcomes"], {expected: 1})
 
     def test_public_runtime_minimal_action_facts_and_foreign_replay(self):
         p = self.proposal()

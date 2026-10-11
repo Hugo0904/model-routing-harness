@@ -152,7 +152,7 @@ class SettingsRuntimeTests(unittest.TestCase):
                                                  credential_resolver=self.key), {}, name)
             self.assertEqual(fake.calls, [], name); self.assertEqual(self.resolutions, before, name)
         observed = Store(self.path.parent / "events.sqlite3").stats(True)
-        self.assertEqual(observed["outcomes"].get("fixed_role_model"), 1)
+        self.assertEqual(observed["outcomes"].get("unsupported_role"), 1)
         self.assertEqual(observed["outcomes"].get("explicit_model"), 1)
         self.assertEqual(observed["synthetic_attempts"], 0)
         for call, resolver, fake in [("missing-key", lambda: None, FakeTransport()),
