@@ -1,0 +1,35 @@
+# E10R keyboard navigation and operator stop
+
+E10R implements A's D22/D23/D24 correction in the local source candidate. The normal selector remains `mrh model light` (also `small`, `mid`, `top`) or `mrh model`. Back returns one step and retains the current profile's unsaved choices; Escape/Ctrl-C/Cancel leaves policy unchanged. Model-list refresh failure offers Retry/Back/Cancel and cannot confirm a new selection. A owns final personal operation and acceptance.
+
+After a valid classification selects a configured target, confirmed same-call model/required-effort unavailability or permitted authoritative retirement requests `operator_update_required`. It has a tier, confidence, bounded target/reason and empty rewrite patch. The Codex candidate emits native `permissionDecision: deny`, names the tier/target and gives `mrh model <tier>`. It requests operator update and a distinct new proposal. There is no automatic fallback, Main conversion, replacement, paid retry or resume.
+
+A legal stop is a possible effect for the preclassification eligibility gate even when rewrite/cost prerequisites cannot produce a child. Explicit model, protected role, low confidence, classifier failure, unknown availability, invalid/foreign facts and disabled/export/workspace controls retain their prior guards. Advertised omission, transport failure and unknown account access do not establish retirement. A host without verified deny reports `operator_stop_unavailable` and remains unaccepted for stopping; stderr is not proof that dispatch halted.
+
+The existing store gains a keyed immutable stop latch alongside its immutable historical decision. A cached child that becomes confirmed unusable stops without another classifier. The latch survives settings changes and process restarts; a fresh operator-initiated proposal can classify corrected settings. Historical decisions remain readable. SQLite schema migration is additive (`user_version=3`); no second policy store is introduced. A determined stop remains a deny if completion/latch writes fail, with a fixed safe diagnostic. Failed storage cannot prove a durable latch across later processes; repair persistence before relying on replay. Existing claim/attempt failures without a determined stop retain their prior fail-open behavior.
+
+Statistics distinguish stopped delegations/targets from requested children and Main handbacks. A correlated child receipt after stop is retained as factual evidence plus `operator_stop_anomalies`; it never proves cancellation or Main takeover. Earlier receipts are immutable. Current downstream receipts carry only a child agent ID: no trustworthy model-error observer is available. This correction cannot detect an unavailable-model response that never reaches MRH.
+
+## Focused evidence
+
+- [Public CLI Hook readback](evidence/e10r-operator-stop.json): real settings reader/factory/parser, with each step in a separate process with synthetic scoped host facts and synthetic HTTP, allow → deny → deny after settings update → allow for a new explicit call; two synthetic classifier attempts, zero actual provider calls, stop receipt distinguished, owned root removed. Six separate process steps measured 0.6093 seconds (including cleanup). The earlier in-process flow measured 0.048 seconds; only the separate-process readback is the final evidence.
+- `tests/test_operator_stop.py`: nine grouped cases covering model/effort/catalog negatives, all selected tiers, unknown/control/protection/low-confidence guards, same-call latch, legacy reading, completion/latch faults and receipt statistics.
+- Existing affected action-fact/core/store/configuration/telemetry/gating checks: 40 cases initially passed in 0.684 seconds. The final cached-no-deny correction and direct replays passed 11 checks in 1.604 seconds; together with still-valid results this covers 41 distinct core/consumer cases. A stale Store test expected classifier unavailability for a production caller with a synthetic dictionary; the committed HEAD core reproduced the same failure (one case, 0.007 seconds). Its assertion now retains the established invalid-host-facts guard and unchanged receipt guarantees.
+- D22 terminal navigation/screen-state evidence is supplied separately. E10 package-layout/public-catalog evidence and E8 native deny transport evidence are reused. No E10R wheel reinstall, full suite, host build/replay, formal activation or real provider test is claimed.
+
+## A's explicit operator acceptance
+
+Use a new canonical private root, such as `/private/tmp/mrh-a-e10r-stop-<unique>`. Each step is a separate public CLI Hook invocation with synthetic facts. The fixture uses enabled/export-permitted settings **only inside that root**, never a real profile. It refuses an existing unowned root. Run from the repository:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step prepare-allow
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step stop
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step after-update
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step rerun
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step receipt
+PYTHONDONTWRITEBYTECODE=1 python3.11 scripts/operator_stop_fixture.py --root /private/tmp/mrh-a-e10r-stop-<unique> --step cleanup
+```
+
+Inspect each returned `hook_output`, policy and statistics. The first step allows `selected-target`; stop denies and says `mrh model top`. After-update stores `replacement-target`, yet the original call remains denied with its original target guidance and zero new classifier requests. Only rerun uses a distinct call ID and requests the replacement. Receipt adds an unexpected synthetic child fact plus a stop anomaly. Cleanup removes only the marked fixture. `--step status` is readback. The automated selector and this fixture do not substitute for A's personal keyboard/visible acceptance.
+
+Codex's real installed public default catalog is supported by E10 evidence. Account access, production same-call role/control/compatibility and actual model execution remain unconfirmed. Claude/Gemini catalogs and adapters remain unsupported and required R2 gaps; source investigation is deferred by D23. Original R1/R2 are not complete. No changes to installed Codex, global Hook, login/PATH, other projects, native Goal or remote Git were made.

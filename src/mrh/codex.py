@@ -11,6 +11,9 @@ from .facts import CallScope, HostSnapshot
 def serialize(decision, original, call_id):
     if decision.action == "preserve":
         return {}
+    if decision.action == 'operator_update_required':
+        return {'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny',
+                'permissionDecisionReason': f'MRH stopped delegation: {decision.tier} target {decision.target_model} is unavailable ({decision.reason}). Update this tier with mrh model {decision.tier.lower()}, then explicitly rerun the task as a new proposal. This call will not resume automatically.'}}
     if decision.action == "return_to_main":
         return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                 "permissionDecisionReason": f"MRH Top Main requested for existing subtask {call_id}; main continuation remains unverified."}}
@@ -77,4 +80,6 @@ def handle_event(event, store=None, candidate=False, simulation=None, *, classif
         caps = simulation.get("capabilities", caps)
         classifier = ScriptedClassifier([Classification(simulation.get("tier"), simulation.get("confidence", 0.9))])
     decision = process(proposal, policy, caps, store, classifier, optional_context)
+    if decision.reason == 'operator_stop_unavailable':
+        print('mrh: operator_stop_unavailable; host has no verified deny control; delegation is not confirmed stopped', file=sys.stderr)
     return serialize(decision, original, proposal.tool_call_id)

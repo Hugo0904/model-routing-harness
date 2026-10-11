@@ -64,6 +64,9 @@ class Store:
                       agent_id TEXT NOT NULL, evidence_kind TEXT NOT NULL, source_ref TEXT NOT NULL,
                       actual_model TEXT, verified INTEGER NOT NULL, body TEXT NOT NULL,
                       occurred_at TEXT NOT NULL);
+                    CREATE TABLE IF NOT EXISTS operator_stops (
+                      proposal_id TEXT PRIMARY KEY REFERENCES proposals(id),
+                      decision TEXT NOT NULL, occurred_at TEXT NOT NULL);
                 """)
                 columns = {r["name"] for r in db.execute("PRAGMA table_info(proposals)")}
                 if "updated_at" not in columns:
@@ -77,7 +80,7 @@ class Store:
                 receipt_columns = {r["name"] for r in db.execute("PRAGMA table_info(receipts)")}
                 if "anomaly" not in receipt_columns:
                     db.execute("ALTER TABLE receipts ADD COLUMN anomaly INTEGER NOT NULL DEFAULT 0")
-                db.execute("PRAGMA user_version=2")
+                db.execute("PRAGMA user_version=3")
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
             os.close(lock)
@@ -106,6 +109,9 @@ class Store:
             if row:
                 if not hmac.compare_digest(row["fingerprint"], digest):
                     return "conflict", None
+                stopped = db.execute('SELECT decision FROM operator_stops WHERE proposal_id=?', (identity,)).fetchone()
+                if stopped:
+                    return 'cached', Decision.from_dict(json.loads(stopped['decision']))
                 if row["state"] == "pending":
                     return "pending", None
                 return "cached", Decision.from_dict(json.loads(row["decision"]))
@@ -186,6 +192,35 @@ class Store:
                 raise ValueError("conflicting_completion")
             if row["state"] == "pending":
                 db.execute("UPDATE proposals SET state='complete',decision=?,updated_at=? WHERE id=?", (body, now(), proposal_id))
+            if decision.action == 'operator_update_required':
+                self._record_stop(db, proposal_id, decision, body)
+
+    def _record_stop(self, db, proposal_id, decision, body):
+        parent = db.execute('SELECT state,synthetic,decision FROM proposals WHERE id=?', (proposal_id,)).fetchone()
+        if not parent or parent['state'] != 'complete' or bool(parent['synthetic']) != decision.synthetic:
+            raise ValueError('invalid_completion')
+        original = Decision.from_dict(json.loads(parent['decision']))
+        if original.action == 'operator_update_required':
+            if original != decision:
+                raise ValueError('conflicting_completion')
+        elif (original.action != 'request_child' or original.tier != decision.tier or
+              original.confidence != decision.confidence or original.patch['model'] != decision.target_model):
+            raise ValueError('invalid_completion')
+        old = db.execute('SELECT decision FROM operator_stops WHERE proposal_id=?', (proposal_id,)).fetchone()
+        if old and old['decision'] != body:
+            raise ValueError('conflicting_completion')
+        if not old:
+            db.execute('INSERT INTO operator_stops VALUES (?,?,?)', (proposal_id, body, now()))
+
+    def record_stop(self, proposal_id, decision):
+        """Latch a later stop without overwriting the historical classification."""
+        if not isinstance(decision, Decision) or decision.action != 'operator_update_required':
+            raise ValueError('invalid_decision')
+        decision.validate()
+        body = json.dumps(decision.as_dict(), sort_keys=True, separators=(',', ':'), allow_nan=False)
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            self._record_stop(db, proposal_id, decision, body)
 
     def record_observation(self, receipt, verifier=None):
         """Only an injected trusted host/provider adapter can verify observations.
@@ -226,7 +261,9 @@ class Store:
                 raise ValueError("uncorrelated_receipt")
             if bool(parent["synthetic"]) != (kind == "synthetic"):
                 raise ValueError("evidence_partition_mismatch")
-            anomaly = int(bool(parent["decision"] and json.loads(parent["decision"])["action"] == "return_to_main"))
+            stopped = db.execute('SELECT 1 FROM operator_stops WHERE proposal_id=?', (receipt['proposal_id'],)).fetchone()
+            action = json.loads(parent['decision'])['action']
+            anomaly = 2 if stopped or action == 'operator_update_required' else int(action == 'return_to_main')
             old = db.execute("SELECT body FROM receipts WHERE id=?", (receipt["event_id"],)).fetchone()
             if old and old["body"] != body:
                 raise ValueError("conflicting_receipt")
@@ -246,13 +283,16 @@ class Store:
             rows = db.execute("SELECT * FROM proposals WHERE synthetic=?", (int(synthetic),)).fetchall()
             attempts = db.execute("SELECT a.* FROM attempts a JOIN proposals p ON p.id=a.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
             receipts = db.execute("SELECT r.* FROM receipts r JOIN proposals p ON p.id=r.proposal_id WHERE p.synthetic=?", (int(synthetic),)).fetchall()
-        timestamps = [r["updated_at"] or r["occurred_at"] for r in rows+attempts] + [r["occurred_at"] for r in receipts]
+            stops = db.execute('SELECT s.* FROM operator_stops s JOIN proposals p ON p.id=s.proposal_id WHERE p.synthetic=?', (int(synthetic),)).fetchall()
+        stop_by_id = {s['proposal_id']: s for s in stops}
+        timestamps = [r["updated_at"] or r["occurred_at"] for r in rows+attempts] + [r["occurred_at"] for r in receipts+stops]
         started = [r for r in attempts if r["phase"] != "requested"]
         out = {"schema_version": 2, "updated_at": max(timestamps, default=None),
                "partition": "synthetic" if synthetic else "live", "proposals": len(rows),
                "jev_attempts": sum(r["kind"] == "jev" for r in started),
                "synthetic_attempts": sum(r["kind"] == "synthetic" for r in started),
                "classified_tasks": 0, "low_confidence_tasks": 0, "pending_proposals": 0,
+               "operator_stops": 0, "stopped_targets": {},
                "tiers": dict.fromkeys(TIERS, 0), "outcomes": {}, "requested_models": {},
                "confirmed_children": 0, "simulated_children": 0, "reported_children": 0,
                "actual_models": {}, "unknown_actual_model_children": 0,
@@ -295,21 +335,28 @@ class Store:
                         "currency": "USD", "kind": "estimate", "model": "jev-1.13.0", "unit": "per-million-input-tokens",
                         "price_source": "https://docs.typesafe.ai/models", "price_date": "2026-10-10"}
         out["jev"] = telemetry
-        out["handback_anomalies"] = sum(r["anomaly"] for r in receipts)
-        out["handback_anomaly_evidence"] = {"confirmed": sum(r["anomaly"] for r in receipts if r["verified"]),
-                                           "reported": sum(r["anomaly"] for r in receipts if r["evidence_kind"] == "reported"),
-                                           "synthetic": sum(r["anomaly"] for r in receipts if r["evidence_kind"] == "synthetic")}
+        for value, name in ((1, 'handback'), (2, 'operator_stop')):
+            out[name+'_anomalies'] = sum(r['anomaly'] == value for r in receipts)
+            out[name+'_anomaly_evidence'] = {
+                'confirmed': sum(r['anomaly'] == value for r in receipts if r['verified']),
+                'reported': sum(r['anomaly'] == value for r in receipts if r['evidence_kind'] == 'reported'),
+                'synthetic': sum(r['anomaly'] == value for r in receipts if r['evidence_kind'] == 'synthetic')}
         for row in rows:
             if row["state"] == "pending":
                 out["pending_proposals"] += 1
                 continue
-            d = Decision.from_dict(json.loads(row["decision"])).as_dict()
+            effective = stop_by_id.get(row['id'], row)
+            d = Decision.from_dict(json.loads(effective['decision'])).as_dict()
             reason = d["reason"]
             out["outcomes"][reason] = out["outcomes"].get(reason, 0) + 1
             if d["tier"] is not None:
                 out["classified_tasks"] += 1
                 out["tiers"][d["tier"]] += 1
             out["low_confidence_tasks"] += reason == "low_confidence"
+            if d['action'] == 'operator_update_required':
+                out['operator_stops'] += 1
+                model = d['target_model']
+                out['stopped_targets'][model] = out['stopped_targets'].get(model, 0) + 1
             if d["action"] == "request_child":
                 model = d["patch"]["model"]
                 out["requested_models"][model] = out["requested_models"].get(model, 0) + 1

@@ -22,6 +22,8 @@ REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_
                 "missing_target_model", "missing_target_effort", "missing_effective_effort", "missing_original_baseline",
                 "cached_effect_mismatch"})
 REASONS.update({'catalog_model_unavailable', 'catalog_model_retired'})
+REASONS.add('operator_stop_unavailable')
+UNAVAILABLE_REASONS = {'unsupported_model', 'unsupported_effort', 'catalog_model_unavailable', 'catalog_model_retired'}
 
 
 def safe_id(value, limit=128):
@@ -61,9 +63,10 @@ class Decision:
     patch: dict = field(default_factory=dict)
     synthetic: bool = False
     context_status: str = "absent"
+    target_model: str | None = None
 
     def validate(self):
-        if self.action not in ("preserve", "request_child", "return_to_main") or self.reason not in REASONS or type(self.synthetic) is not bool:
+        if self.action not in ("preserve", "request_child", "return_to_main", "operator_update_required") or self.reason not in REASONS or type(self.synthetic) is not bool:
             raise ValueError("invalid_decision")
         if self.context_status not in ("absent", "export_denied", "oversized", "sensitive", "permitted", "timeout", "error"):
             raise ValueError("invalid_decision")
@@ -83,12 +86,20 @@ class Decision:
             raise ValueError("invalid_decision")
         if self.action == "return_to_main" and (self.tier != "Top" or self.confidence < 0.5 or self.reason != "top_main_requested"):
             raise ValueError("invalid_decision")
+        if self.action == "operator_update_required":
+            if self.tier is None or self.confidence < 0.5 or not safe_id(self.target_model) or self.reason not in UNAVAILABLE_REASONS:
+                raise ValueError("invalid_decision")
+        elif self.target_model is not None:
+            raise ValueError("invalid_decision")
         return self
 
     def as_dict(self):
-        return {"schema_version": 1, "action": self.action, "reason": self.reason,
+        value = {"schema_version": 1, "action": self.action, "reason": self.reason,
                 "tier": self.tier, "confidence": self.confidence, "patch": self.patch,
                 "synthetic": self.synthetic, "context_status": self.context_status}
+        if self.target_model is not None:
+            value['target_model'] = self.target_model
+        return value
 
     @classmethod
     def from_dict(cls, value):

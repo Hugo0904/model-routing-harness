@@ -188,7 +188,9 @@ class ActionFactTests(unittest.TestCase):
                     if reason == "top_main_requested":
                         invalid.append((replace(snapshot, deny_supported=Fact()), "missing_deny_capability"))
                     else:
-                        invalid.append((replace(snapshot, targets=(replace(self.target(p), efforts=self.known(p, ("low",))),)), "unsupported_effort"))
+                        # D23: confirmed unavailable effort with no verified
+                        # deny must identify the unsupported stop guarantee.
+                        invalid.append((replace(snapshot, targets=(replace(self.target(p), efforts=self.known(p, ("low",))),)), "operator_stop_unavailable"))
                     for replay_facts, blocker in invalid:
                         out, err = io.StringIO(), io.StringIO()
                         with contextlib.redirect_stderr(err):

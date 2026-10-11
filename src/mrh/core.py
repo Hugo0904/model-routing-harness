@@ -109,6 +109,9 @@ def action_eligibility(proposal, policy, facts, tier):
         if not facts.deny_supported.known:
             return "missing_deny_capability", None
         return (None, {}) if facts.deny_supported.value else ("unsupported_deny_capability", None)
+    unavailable = selected_unavailability(proposal, policy, facts, tier)
+    if unavailable:
+        return unavailable[1], None
     control = facts.rewrite_supported
     if not control.known:
         return "missing_rewrite_capability", None
@@ -156,6 +159,65 @@ def action_eligibility(proposal, policy, facts, tier):
     return None, patch
 
 
+def selected_unavailability(proposal, policy, facts, tier):
+    """Only confirmed negative facts about the selected target permit a stop."""
+    if tier == 'Top' and policy.get('top_mode', 'Main') == 'Main':
+        return None
+    tiers = policy.get('tiers', {})
+    mapping = policy.get('fixed') if tier == 'Top' else tiers.get(tier) if isinstance(tiers, dict) else None
+    if not isinstance(mapping, dict) or not safe_id(mapping.get('model')):
+        return None
+    model = mapping['model']
+    vetoes = policy.get('_target_veto', {})
+    veto = vetoes.get(model) if isinstance(vetoes, dict) else None
+    if veto in ('catalog_model_unavailable', 'catalog_model_retired'):
+        return model, veto
+    target = facts.target(model)
+    if target is None or not target.available.known:
+        return None
+    if not target.available.value:
+        return model, 'unsupported_model'
+    effort = proposal.tool_input.get('reasoning_effort', mapping.get('effort'))
+    if effort is None:
+        effort = target.inherited_effort.value if target.inherited_effort.known else None
+    known_effort = safe_id(effort) or (effort is None and target.inherited_effort.known)
+    if known_effort and target.efforts.known and effort not in target.efforts.value:
+        return model, 'unsupported_effort'
+    return None
+
+
+def stop_supported(facts):
+    return facts.deny_supported.known and facts.deny_supported.value is True
+
+
+def operator_stop(decision, target):
+    return Decision('operator_update_required', target[1], decision.tier, decision.confidence,
+                    synthetic=decision.synthetic, context_status=decision.context_status, target_model=target[0])
+
+
+def cached_target_unavailability(proposal, policy, facts, decision):
+    saved_policy = dict(policy, top_mode='Fixed')
+    mapping = {'model': decision.patch['model'], 'effort': decision.patch.get('reasoning_effort')}
+    if decision.tier == 'Top':
+        saved_policy['fixed'] = mapping
+    else:
+        saved_policy['tiers'] = {decision.tier: mapping}
+    return selected_unavailability(proposal, saved_policy, facts, decision.tier)
+
+
+def cached_operator_stop(proposal, policy, value, decision):
+    """Keep the historical selected model; a settings edit cannot resume this call."""
+    if decision.action not in ('request_child', 'operator_update_required') or proposal.tool_input.get('model') is not None:
+        return None
+    facts, reason = validated_facts(proposal, value)
+    if reason or not isinstance(policy, dict):
+        return None
+    if decision.action == 'operator_update_required':
+        return decision if stop_supported(facts) else None
+    target = cached_target_unavailability(proposal, policy, facts, decision)
+    return operator_stop(decision, target) if target and stop_supported(facts) else None
+
+
 def cached_effect_blocker(proposal, policy, value, decision):
     """Revalidate an effect without classification or changing saved facts."""
     if decision.action == "preserve":
@@ -165,8 +227,12 @@ def cached_effect_blocker(proposal, policy, value, decision):
     facts, reason = validated_facts(proposal, value)
     if reason:
         return reason
+    if decision.action == 'operator_update_required':
+        return None if stop_supported(facts) else 'operator_stop_unavailable'
     if not isinstance(policy, dict) or policy.get("top_mode", "Main") not in ("Main", "Fixed"):
         return "invalid_policy"
+    if decision.action == 'request_child' and cached_target_unavailability(proposal, policy, facts, decision) and not stop_supported(facts):
+        return 'operator_stop_unavailable'
     reason, patch = action_eligibility(proposal, policy, facts, decision.tier)
     if reason:
         return reason
@@ -204,7 +270,10 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
         return preserve("evidence_partition_mismatch")
     configured = ["Top"] + [tier for tier in TIERS[:-1] if isinstance(policy.get("tiers"), dict) and tier in policy["tiers"]]
     eligibility = {tier: action_eligibility(proposal, policy, facts, tier) for tier in configured}
-    if not any(reason is None for reason, _ in eligibility.values()):
+    possible_stop = any(selected_unavailability(proposal, policy, facts, tier) for tier in configured)
+    if not any(reason is None for reason, _ in eligibility.values()) and not (possible_stop and stop_supported(facts)):
+        if possible_stop:
+            return preserve('operator_stop_unavailable')
         return preserve(eligibility["Top"][0])
     # Only a legally possible effect permits context/Jev/key/HTTP work.
     context = None
@@ -248,6 +317,11 @@ def route(proposal, policy, host_capabilities, classifier=None, optional_context
     classification = result
     if result.confidence < 0.5:
         return preserve("low_confidence")
+    unavailable = selected_unavailability(proposal, policy, facts, result.tier)
+    if unavailable:
+        if not stop_supported(facts):
+            return preserve('operator_stop_unavailable')
+        return operator_stop(preserve(unavailable[1]), unavailable)
     reason, patch = action_eligibility(proposal, policy, facts, result.tier)
     if reason is not None:
         return preserve(reason)

@@ -1,6 +1,6 @@
-"""Idempotent dispatch boundary. Persistence faults fail open with safe diagnostics."""
+"""Idempotent dispatch boundary; a determined operator stop survives write faults."""
 import sys
-from .core import route, cached_effect_blocker
+from .core import route, cached_effect_blocker, cached_operator_stop
 from .types import Decision
 
 
@@ -18,6 +18,14 @@ def process(proposal, policy, capabilities, store=None, classifier=None, optiona
             return failure("claim")
         if state == "cached":
             try:
+                stopped = cached_operator_stop(proposal, policy, capabilities, cached)
+                if stopped:
+                    if cached.action != 'operator_update_required':
+                        try:
+                            store.record_stop(proposal.identity, stopped)
+                        except Exception:
+                            print('mrh: store_error stage=operator_stop; delegation remains denied', file=sys.stderr)
+                    return stopped
                 blocker = cached_effect_blocker(proposal, policy, capabilities, cached)
             except Exception:
                 blocker = "invalid_host_facts"
@@ -50,5 +58,8 @@ def process(proposal, policy, capabilities, store=None, classifier=None, optiona
         try:
             store.complete(proposal.identity, decision)
         except Exception:
+            if decision.action == 'operator_update_required':
+                print('mrh: store_error stage=complete; delegation remains denied', file=sys.stderr)
+                return decision
             return failure("complete")
     return decision

@@ -159,10 +159,11 @@ class StoreTests(unittest.TestCase):
             Store(self.path)
         self.assertFalse(key.exists())
 
-    def test_live_unavailable_and_reported_receipt_unknown_model(self):
+    def test_live_invalid_facts_and_reported_receipt_unknown_model(self):
         p = self.proposal(synthetic=False)
         d = process(p, demo_policy(), demo_capabilities(), self.store, UnavailableClassifier())
-        self.assertEqual(d.reason, "classifier_unavailable")
+        # Synthetic legacy dictionaries are not trusted production facts.
+        self.assertEqual((d.action, d.reason), ("preserve", "invalid_host_facts"))
         r = self.receipt(p, evidence_kind="reported")
         self.store.record_observation(r)
         s = self.store.stats()

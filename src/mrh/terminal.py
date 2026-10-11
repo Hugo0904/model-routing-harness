@@ -226,6 +226,10 @@ def render_details(
         ("JEV TELEMETRY", []),
         ("HANDBACK ANOMALIES", [f"Recorded anomaly count: {_value(stats.get('handback_anomalies'))}",
                                f"Evidence: {_value(stats.get('handback_anomaly_evidence'))}"]),
+        ('STOPPED DELEGATIONS', [f"Operator updates required: {_value(stats.get('operator_stops'))}",
+                                f"Targets: {_value(stats.get('stopped_targets'))}",
+                                f"Unexpected child receipts: {_value(stats.get('operator_stop_anomalies'))}",
+                                f"Evidence: {_value(stats.get('operator_stop_anomaly_evidence'))}"]),
         (
             "COST / USAGE",
             [
@@ -553,6 +557,9 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
                 f"Low confidence {_value(stats.get('low_confidence_tasks'))}")
     for item in _wrap(activity, inner):
         lines.append(row(ink(item, _DIM)))
+    if _count(stats.get('operator_stops')):
+        for item in _wrap(f"Stopped delegations {_value(stats.get('operator_stops'))}  /  operator update required", inner):
+            lines.append(row(ink(item, _LAVENDER)))
     lines.append(row(ink("─" * inner, _EDGE)))
     lines.extend(row(ink(item, _DIM)) for item in _wrap(
         "--details  full telemetry     --json  raw data     --plain  no color", inner))
