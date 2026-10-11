@@ -1,5 +1,13 @@
 # E18-C-001：真 Jev／真模型驗收準備
 
+## A 整合決定 D42
+
+A 已接受 E17R 修正版（D41）與 C 的 exact public schema 查證（`a8a1a7b`），採用本文件的隔離官方 app-server、真 Jev、原生 child 有效設定與結果讀回方案。實際 candidate 是 `/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e17r-macos-arm64`；archive SHA256 `cdd8371c7d0dc91bd3658caad32f6f513cf48808be90bb37436d929c16aab60e`，manifest SHA256 `377b9bd2d679c782791ac14d2f34e40becf3a511b67f946543a68d54ba677b63`，prepared runtime SHA256 `b4cbe888b80b94512f6d97f243abe6cf4b4e06eed871794fe879393b252ce3ce`。後文 bundle placeholder 指此確定路徑；interactive argv 為 `codex --no-daemon --no-alt-screen -C <owned-workspace>`，收證據使用已接受的 `codex app-server --listen stdio://`。
+
+一項依現有 native 證據的操作修正：E17R 使用 V2 `collaborationspawn_agent`，`receiverThreadIds` extractor 得到空集合，但原生事件實際包含不同於 parent 的 child `turn/completed.params.threadId`。因此後文 legacy `collabAgentToolCall/receiverThreadIds` 只在實際出現時使用，不是唯一 ID 來源，也不能從其缺席推論沒有 child。同一自有 RPC 連線收到 `thread/started` 或非 parent 的 `item/turn` 事件時，立即對該 ID 走公開 `thread/read`，核 `parentThreadId` 與原 parent 對應才納入；若 child 已完成但仍載入，讀回與 native 結果仍可相互核對。結果接回使用當前實際 V2 工具結果／訊息及同 parent 最後答案，不能要求一個未實際出現的 legacy wait item。Top Main 以真 MRH deny、完整本 turn 原生工具事件與無 replacement 委派、同 parent 實際完成交叉驗證，不以空 ID extractor 當零子任務證據。這是已知事件形狀的採證修正，沒有新增產品或重跑 scripted checks。
+
+本輪最多三個測試回合，主要取得普通分級改寫及真 Top Main 的首次證據；Top 命中不保證，未命中如實保留。Top Fixed、同 Goal 後續委派等其餘原義務不因此取消或宣称全部 R1 完成。啟動需人類一次授權本文件的隔離安裝／信任／啟用、登入、公開測試文字外送與真帳戶用量，及提供遮罩輸入的 TypeSafe key。收到授權後由原 B 執行既定操作、A 驗收；C 準備單位至此接受，不再加查證。現在仍無真外部呼叫、登入或正式 Hook 啟用。
+
 這份文件只完成 D39 的前置查證。沒有呼叫 Jev／模型、讀取秘密、安裝或啟用 Hook，也沒有執行產品測試。R1 仍待 A 驗收。B 保有 E17R runtime、fixture、封裝與整合所有權。
 
 ## 身分、授權與待置換資料
