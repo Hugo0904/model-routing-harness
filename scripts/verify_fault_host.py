@@ -29,6 +29,14 @@ from verify_host import CATALOG_HASHES, OwnedScratch, Fixture, Rpc, trust_fixtur
 from verify_plugin_host import BOOTSTRAP
 
 
+def normalized_transcript(text):
+    # Remove terminal control sequences and display padding, preserving the
+    # actual captured text and order. This is not a reconstructed screenshot.
+    text = re.sub(r'\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)', '', text)
+    text = re.sub(r'\x1b[ -/]*[@-~]', '', text)
+    return '\n'.join(line.rstrip() for line in text.splitlines()).rstrip() + '\n'
+
+
 def native_terminal(binary, env, work, scope, fixture):
     """Capture actual 30x100 PTY output, never substitute event logs for UI."""
     fixture.scenario = 'failure'; fixture.step = 0
@@ -211,7 +219,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--transcript', type=Path, required=True)
     args = parser.parse_args(); result = inspect(args.binary)
-    args.transcript.write_text(result.pop('terminal_transcript'))
+    args.transcript.write_text(normalized_transcript(result.pop('terminal_transcript')))
     result['terminal_transcript_sha256'] = hashlib.sha256(args.transcript.read_bytes()).hexdigest()
     args.output.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({'version': result['version'], 'cases': [c['scenario'] for c in result['cases']],
