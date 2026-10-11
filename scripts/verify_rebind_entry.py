@@ -19,7 +19,7 @@ import termios
 import time
 
 
-def inspect(bundle):
+def inspect(bundle, failure_output=None):
     started=time.monotonic();commands=[];pids=[];captures={};readbacks=[]
     with tempfile.TemporaryDirectory(prefix='mrh-e16r-entry-',dir='/private/tmp') as tmp:
         root=Path(tmp).resolve();home=root/'home';home.mkdir();work=root/'work';work.mkdir();tools=root/'bin';tools.mkdir()
@@ -60,6 +60,9 @@ def inspect(bundle):
                         raise
                     if not chunk:break
                     data.extend(chunk)
+                    if (index<len(answers) and answers[index][0]=='Light MODEL'
+                            and b'LIST UNAVAILABLE' in data[cursor:]):
+                        raise RuntimeError('unexpected_unavailable_before_model')
                     if index<len(answers):
                         heading,keys,*callback=answers[index];pos=data.find(heading.encode(),cursor)
                         if pos>=0:
@@ -70,6 +73,10 @@ def inspect(bundle):
                 assert os.waitstatus_to_exitcode(status)==0,(status,data[-1000:]);assert index==len(answers),(index,data[-1000:])
             finally:
                 if not waited:
+                    if failure_output is not None:
+                        failure_output.write_text(json.dumps({'stage':index,'waiting_for':answers[index][0] if index<len(answers) else None,
+                            'owned_root':str(root),'owned_pid':pid,'argv':list(map(str,args)),
+                            'stdout':data.decode(errors='replace')},indent=2)+'\n')
                     try:
                         if os.getpgid(pid)==pid:os.killpg(pid,signal.SIGKILL)
                     except ProcessLookupError:pass
@@ -151,7 +158,7 @@ def inspect(bundle):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--bundle',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
-    result=inspect(args.bundle.resolve())
+    result=inspect(args.bundle.resolve(),args.output.with_suffix('.failure.json'))
     for name,text in result.pop('captures').items():(args.output.parent/('e16r-'+name+'.txt')).write_text(text)
     args.output.write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({'bundled_rebind':True,'same_profile':True,'keyboard_only':True,'cancel_save_unsupported':True,
