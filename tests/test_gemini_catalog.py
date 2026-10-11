@@ -93,7 +93,7 @@ class GeminiCatalogTests(unittest.TestCase):
         binding = registry.associate(candidate, expected_revision=0); path = Path(binding['settings_path'])
         snapshot = Catalog(binding['id'], 'gemini', binding['executable_sha256'], binding['version'],
                            'synthetic:gemini-fixture', time.time(), (Model('auto', 'Auto', ()),), assurance='synthetic')
-        registry.record_refresh(binding, snapshot); current = registry.read()['bindings'][0]
+        registry.record_refresh(binding, snapshot,expected_revision=registry.read()['revision']); current = registry.read()['bindings'][0]
         initial = settings.read(path); before = path.read_bytes(); self.chunk.write_text('// update\n')
         with self.assertRaisesRegex(BindingError, 'tool_changed_rebind_required'):
             registry.save(current, initial, initial['policy'], snapshot, 'auto')

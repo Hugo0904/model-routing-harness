@@ -104,15 +104,19 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
             if answer and any(v == answer for _,v in items):return accept(answer)
             note('Choose one of the listed numbers; model names are not entered here.')
 
+    refresh_revision = None
+
     def refresh(binding):
+        nonlocal refresh_revision
+        expected_revision = registry.read()['revision']
         try:
             snapshot = provider.refresh(binding)
             if type(snapshot) is not Catalog:raise CatalogError('catalog_invalid')
-            registry.record_refresh(binding, snapshot)
+            refresh_revision = registry.record_refresh(binding, snapshot, expected_revision=expected_revision)
             return snapshot
         except CatalogError as exc:
             reason = str(exc) if str(exc).replace('_','').isalnum() else 'catalog_refresh_failed'
-            registry.record_refresh(binding, error=reason)
+            refresh_revision = registry.record_refresh(binding, error=reason, expected_revision=expected_revision)
             note('Model list unavailable: '+reason+'. No model is marked retired by this failure.')
             last = next(b for b in registry.read()['bindings'] if b['id'] == binding['id'])['catalog']
             if last is not None:
@@ -124,6 +128,9 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
             return None
 
     drafts = {}
+    binding_update_accepted = False
+    resume_snapshot = None
+    rebind_review = None
 
     def draft_for(binding):
         draft = drafts.get(binding['id'])
@@ -165,7 +172,7 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
             if step == 'candidate':
                 if candidates is None:candidates = discovery()
                 if not candidates:
-                    note('No supported installed tool found. No binding created. Codex model/list and tested Claude CLI metadata are supported; Gemini catalog is unsupported.')
+                    note('No supported installed tool found. No binding created. Codex model/list and tested Claude/Gemini CLI metadata are supported; install a supported CLI in a recognized location.')
                     return 2
                 try:
                     index = choose('FIRST USE  /  choose an installed tool', [
@@ -261,7 +268,8 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                 if not working['configuration_shown']:
                     stdout.write(render_configuration(draft['initial'], width=width, color=color))
                     working['configuration_shown'] = True
-                snapshot = refresh(binding)
+                snapshot = resume_snapshot or refresh(binding)
+                resume_snapshot = None
                 if snapshot is None:
                     step = 'unavailable'
                     continue
@@ -274,6 +282,8 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                 if current.get('model') and (old is None or old.state != 'available'):
                     unavailable_state = 'confirmed retired: '+old.retirement_ref if old and old.state == 'retired' else 'unavailable in this list/scope; global retirement is unconfirmed'
                     note('Saved model '+current['model']+' is '+unavailable_state+'. Old settings/history remain; choose a replacement explicitly.')
+                elif old is not None and current.get('effort') and current['effort'] not in old.efforts:
+                    note('Draft/saved reasoning effort '+current['effort']+' is unavailable in the new list. Choose a model and effort explicitly, or cancel; nothing is automatically saved.')
                 options = [(m.label+' ('+m.id+')'+
                             (' [resolved: '+m.resolved_model+']' if m.resolved_model and m.resolved_model != m.id else ''),m.id)
                            for m in snapshot.models if m.state == 'available']
@@ -299,14 +309,70 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
             if step == 'unavailable' or step == 'no_model':
                 title = 'LIST UNAVAILABLE' if step == 'unavailable' else 'NO SELECTABLE MODEL'
                 try:
-                    action = choose(title, [('Retry refresh','retry'),('Back','back'),('Cancel; keep policy','cancel')])
+                    items = [('Retry refresh','retry'),('Back','back')]
+                    if step == 'unavailable':items.append(('Inspect updated installed CLI','inspect'))
+                    items.append(('Cancel; keep policy','cancel'))
+                    action = choose(title, items)
                 except Back:
                     action = 'back'
                 if action == 'back':
                     note('Back. Draft retained; nothing has been saved.')
                     step = 'top_mode' if selected_tier == 'Top' else 'tier'
+                elif action == 'inspect':
+                    step = 'rebind_candidate'
                 else:
                     step = 'model'
+                continue
+
+            if step == 'rebind_candidate':
+                baseline = registry.read()
+                found = [c for c in discovery() if c['tool'] == binding['tool'] and c['supported']]
+                if not found:
+                    note('No supported installed '+binding['tool']+' CLI found. Original binding and policy retained.')
+                    step = 'unavailable'
+                    continue
+                try:
+                    index = choose('INSPECT UPDATED CLI', [(c['label']+' / '+c['executable'], str(i))
+                                   for i,c in enumerate(found)],
+                                   next((str(i) for i,c in enumerate(found) if c['executable'] == binding['executable']), None))
+                    updated = describe(found[int(index)])
+                    proposed = registry.candidate_binding(binding, updated)
+                    snapshot = provider.refresh(proposed)
+                    if type(snapshot) is not Catalog:raise CatalogError('catalog_invalid')
+                    registry._check_catalog(proposed, snapshot)
+                except Back:
+                    step = 'unavailable'
+                    continue
+                except (CatalogError, BindingError) as exc:
+                    note('CLI update cannot be confirmed: '+str(exc)+'. Original binding, policy and history retained. Unsupported versions require a supported CLI; Retry cannot make them supported.')
+                    step = 'unavailable'
+                    continue
+                rebind_review = (baseline['revision'], updated, snapshot)
+                step = 'rebind_review'
+                continue
+
+            if step == 'rebind_review':
+                expected_revision, updated, snapshot = rebind_review
+                note('Old CLI: '+binding['label']+' / '+binding['version']+' / '+binding['executable'])
+                note('Old identity: '+binding['executable_sha256'])
+                note('New CLI: '+updated['label']+' / '+updated['version']+' / '+updated['executable'])
+                note('New identity: '+updated['executable_sha256'])
+                note('Fresh catalog: '+snapshot.source+' / '+str(len(snapshot.models))+' models. Tool defaults only; account access is unconfirmed.')
+                note('Confirm updates only this binding and catalog. Same profile, policy and history remain. Model edits still need Save; cancelling them later keeps this confirmed CLI update. Stored stops are not cleared.')
+                try:
+                    choose('CONFIRM CLI UPDATE', [('Confirm CLI update; policy still needs Save','confirm'),
+                                                ('Cancel; keep old binding and policy','cancel')])
+                except Back:
+                    step = 'rebind_candidate'
+                    continue
+                binding = registry.rebind(binding, updated, snapshot, expected_revision=expected_revision)
+                refresh_revision = expected_revision+1
+                binding_update_accepted = True
+                resume_snapshot = snapshot
+                working['snapshot'] = None
+                note('CLI update confirmed. Same profile and draft retained; no policy changes saved. Existing stops remain.')
+                step = ('top_mode' if selected_tier == 'Top' and draft['policy'].get('top_mode', 'Main') == 'Main'
+                        else 'model')
                 continue
 
             if step == 'effort':
@@ -372,17 +438,24 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                         draft['last_tier'] = invalid
                         working = {'snapshot': None, 'model': None, 'effort': 'inherit',
                                    'configuration_shown': working['configuration_shown']}
-                        step = ('top_mode' if invalid == 'Top' and policy.get('top_mode', 'Main') == 'Main'
-                                else 'model')
+                        step = ('unavailable' if checked is None else
+                                'top_mode' if invalid == 'Top' and policy.get('top_mode', 'Main') == 'Main' else 'model')
                         continue
                     snapshot = checked
-                saved = registry.save(binding, initial, copy.deepcopy(policy), snapshot, model,
-                                      None if effort == 'inherit' else effort)
+                try:
+                    saved = registry.save(binding, initial, copy.deepcopy(policy), snapshot, model,
+                                          None if effort == 'inherit' else effort, expected_revision=refresh_revision)
+                except (BindingError, CatalogError) as exc:
+                    if str(exc) != 'tool_changed_rebind_required':raise
+                    refresh(binding)
+                    step = 'unavailable'
+                    continue
                 note('Saved.' if saved != initial else 'Unchanged. No settings rewrite.')
                 stdout.write(render_configuration(saved, width=width, color=color))
                 return 0
     except (Cancelled, KeyboardInterrupt, Back):
-        note('Cancelled. No policy changes saved.')
+        note('Cancelled model edits. Confirmed CLI update retained; no policy changes saved.' if binding_update_accepted
+             else 'Cancelled. No policy changes saved.')
         return 0
     except (BindingError, CatalogError, SettingsError) as exc:
         note('Cannot save: '+str(exc)+'. Existing policy is retained; reopen the selector.')

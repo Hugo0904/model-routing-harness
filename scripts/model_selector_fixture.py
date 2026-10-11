@@ -35,7 +35,7 @@ def main():
         state=settings.read(b['settings_path']);policy=state['policy']
         policy['tiers']['Light']={'model':'fixture-old-id','effort':'high'}
         settings.update(b['settings_path'],expected_revision=state['revision'],policy=policy)
-        registry.record_refresh(b,snapshot(b,(Model('fixture-old-id','Old fixture model',('high',)),*rows)))
+        registry.record_refresh(b,snapshot(b,(Model('fixture-old-id','Old fixture model',('high',)),*rows)),expected_revision=registry.read()['revision'])
     elif len(bindings)==1 and bindings[0]['version']=='synthetic-E10-fixture' and bindings[0]['label']=='SYNTHETIC E10 fixture':
         b=bindings[0];registry.verify_profile(b)
     else:raise SystemExit('Refusing non-fixture or multiple bindings; use a fresh private fixture root.')

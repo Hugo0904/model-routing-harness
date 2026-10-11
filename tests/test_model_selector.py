@@ -243,7 +243,7 @@ class ModelSelectorTests(unittest.TestCase):
 
     def test_failed_partial_stale_and_scope_change_caches_do_not_authorize_selection(self):
         b=self.bind();settings.update(b['settings_path'],policy={'tiers':{'Light':{'model':'missing'}}})
-        snap=self.provider.snapshot(b);self.registry.record_refresh(b,snap)
+        snap=self.provider.snapshot(b);self.registry.record_refresh(b,snap,expected_revision=self.registry.read()['revision'])
         saved=Path(b['settings_path']).read_bytes();cached=self.registry.read()['bindings'][0]['catalog']
         for result in ('catalog_refresh_failed','catalog_unauthenticated','partial'):
             self.provider.effect=(lambda b,n:self.provider.snapshot(b,complete=False)) if result=='partial' else (
@@ -253,10 +253,10 @@ class ModelSelectorTests(unittest.TestCase):
             self.assertEqual(Path(b['settings_path']).read_bytes(),saved)
             self.assertEqual(self.registry.read()['bindings'][0]['catalog'],cached)
             self.assertEqual(target_veto(b['settings_path'],synthetic=True),{})
-        self.registry.record_refresh(b,snap)
+        self.registry.record_refresh(b,snap,expected_revision=self.registry.read()['revision'])
         self.assertEqual(target_veto(b['settings_path'],now=snap.fetched_at+301,synthetic=True),{})
         other=self.bind('Other');self.assertIsNone(other['catalog'])
-        with self.assertRaises(BindingError):self.registry.record_refresh(other,snap)
+        with self.assertRaises(BindingError):self.registry.record_refresh(other,snap,expected_revision=self.registry.read()['revision'])
 
     def test_save_rechecks_removed_model_effort_and_concurrent_settings(self):
         b=self.bind();path=Path(b['settings_path']);before=path.read_bytes()
@@ -279,8 +279,8 @@ class ModelSelectorTests(unittest.TestCase):
 
     def test_binding_and_catalog_conflicts_preserve_profile_and_owned_paths(self):
         b=self.bind();initial=settings.read(b['settings_path']);snap=self.provider.snapshot(b)
-        self.registry.record_refresh(b,snap)
-        self.registry.record_refresh(b,self.provider.snapshot(b))
+        self.registry.record_refresh(b,snap,expected_revision=self.registry.read()['revision'])
+        self.registry.record_refresh(b,self.provider.snapshot(b),expected_revision=self.registry.read()['revision'])
         with self.assertRaises(BindingError):self.registry.save(b,initial,initial['policy'],snap,'canonical-small')
         unowned=self.root.parent/'unowned';unowned.mkdir();(unowned/'registry.json').write_text('{}')
         with self.assertRaises(BindingError):Registry(unowned).read()
@@ -313,7 +313,7 @@ class ModelSelectorTests(unittest.TestCase):
         b=self.bind();settings.update(b['settings_path'],policy={'tiers':{'Light':{'model':'outside-default-list'}}})
         advertised=self.provider.snapshot(b)
         advertised=Catalog(**{**advertised.__dict__,'assurance':'tool-advertised'})
-        self.registry.record_refresh(b,advertised)
+        self.registry.record_refresh(b,advertised,expected_revision=self.registry.read()['revision'])
         self.assertEqual(target_veto(b['settings_path']),{})
 
     def test_catalog_ids_efforts_scope_and_explicit_retirement_validation(self):
@@ -323,7 +323,7 @@ class ModelSelectorTests(unittest.TestCase):
             with self.assertRaises(CatalogError):self.provider.snapshot(b,rows).validate()
         with self.assertRaises(BindingError):
             s=self.provider.snapshot(b)
-            self.registry.record_refresh(b,Catalog(**{**s.__dict__,'assurance':'account-confirmed'}))
+            self.registry.record_refresh(b,Catalog(**{**s.__dict__,'assurance':'account-confirmed'}),expected_revision=self.registry.read()['revision'])
         with self.assertRaises(SystemExit), patch('sys.stderr',new=io.StringIO()) as err:
             cli.build_parser().parse_args(['model','ligth'])
         self.assertIn('light',err.getvalue());self.assertIn('top',err.getvalue())

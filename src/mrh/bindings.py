@@ -111,7 +111,7 @@ class Registry:
         except (OSError, ValueError):
             raise BindingError('profile_binding_mismatch') from None
 
-    def record_refresh(self, binding, snapshot=None, error=None):
+    def record_refresh(self, binding, snapshot=None, error=None, *, expected_revision):
         if snapshot is not None:
             self._check_catalog(binding, snapshot)
         if error is not None and not safe_id(error):
@@ -119,19 +119,63 @@ class Registry:
         with owned.locked(self.root, 'model-bindings', FILES):
             value = self.read()
             current = next((b for b in value['bindings'] if b['id'] == binding['id']), None)
-            if current is None or self.identity(current) != self.identity(binding):
+            if type(expected_revision) is not int or value['revision'] != expected_revision or current is None or self.identity(current) != self.identity(binding):
                 raise BindingError('binding_conflict')
             if snapshot is not None:
                 current['catalog'] = snapshot.public()
             current['refresh_error'] = error
             value['revision'] += 1
             owned.replace_owned(self.root/'registry.json', _encode(value))
+            return value['revision']
+
+    @staticmethod
+    def candidate_binding(binding, candidate):
+        """Preview an explicitly selected same-kind installation; no writes."""
+        if candidate.get('tool') != binding['tool'] or candidate.get('supported') is not True:
+            raise BindingError('rebind_tool_mismatch')
+        try:
+            proposed = dict(binding, **{k: candidate[k] for k in (
+                'tool', 'label', 'executable', 'executable_sha256', 'version')})
+            if (not isinstance(proposed['label'], str) or len(proposed['label']) > 128
+                    or not isinstance(proposed['version'], str) or not 0 < len(proposed['version']) <= 128
+                    or not safe_id(proposed['executable_sha256'], 256)):
+                raise ValueError()
+            if str(owned.canonical_path(proposed['executable'])) != proposed['executable']:
+                raise ValueError()
+            return proposed
+        except (KeyError, TypeError, ValueError, OSError):
+            raise BindingError('rebind_candidate_invalid') from None
+
+    def rebind(self, binding, candidate, snapshot, *, expected_revision):
+        """Confirm identity and its fresh catalog in one registry-only CAS.
+
+        Acquisition and explicit review precede this operation. Policy, profile
+        association, history and stored stops are never rewritten here.
+        """
+        proposed = self.candidate_binding(binding, candidate)
+        self._check_catalog(proposed, snapshot)
+        with owned.locked(self.root, 'model-bindings', FILES):
+            value = self.read()
+            index = next((i for i, b in enumerate(value['bindings']) if b['id'] == binding['id']), None)
+            if (type(expected_revision) is not int or value['revision'] != expected_revision or index is None
+                    or self.identity(value['bindings'][index]) != self.identity(binding)):
+                raise BindingError('binding_conflict')
+            self.verify_profile(value['bindings'][index])
+            if installation_hash(proposed['tool'], proposed['executable']) != proposed['executable_sha256']:
+                raise BindingError('tool_changed_rebind_required')
+            if not 0 <= time.time()-snapshot.fetched_at <= 300:
+                raise BindingError('rebind_catalog_stale')
+            proposed.update(catalog=snapshot.public(), refresh_error=None)
+            value['bindings'][index] = proposed
+            value['revision'] += 1
+            owned.replace_owned(self.root/'registry.json', _encode(value))
+            return proposed
 
     @staticmethod
     def identity(binding):
         return {k: v for k,v in binding.items() if k not in ('catalog','refresh_error')}
 
-    def save(self, binding, initial, policy, snapshot, model=None, effort=None):
+    def save(self, binding, initial, policy, snapshot, model=None, effort=None, *, expected_revision=None):
         """Revalidated snapshot plus binding CAS plus the existing policy writer."""
         if snapshot is not None:
             self._check_catalog(binding, snapshot)
@@ -140,7 +184,7 @@ class Registry:
         with owned.locked(self.root, 'model-bindings', FILES):
             value = self.read()
             current = next((b for b in value['bindings'] if b['id'] == binding['id']), None)
-            if current is None or self.identity(current) != self.identity(binding) or (snapshot is not None and (
+            if (expected_revision is not None and (type(expected_revision) is not int or value['revision'] != expected_revision)) or current is None or self.identity(current) != self.identity(binding) or (snapshot is not None and (
                     current['refresh_error'] is not None or current['catalog'] != snapshot.public())):
                 raise BindingError('binding_or_catalog_conflict')
             self.verify_profile(current)
