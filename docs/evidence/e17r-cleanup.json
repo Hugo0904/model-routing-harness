@@ -1,0 +1,34 @@
+{
+  "roots_absent": [
+    "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-u_uh1e40",
+    "/private/tmp/mrh-e17-bundle-yt4deay9"
+  ],
+  "groups_absent": [
+    {
+      "pgid": 46457,
+      "absent": true
+    },
+    {
+      "pgid": 46473,
+      "absent": true
+    },
+    {
+      "pgid": 46478,
+      "absent": true
+    }
+  ],
+  "official_binary_sha256_unchanged": "4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878",
+  "original_stock_catalog_sha256": "fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b",
+  "native_remove_readback": {
+    "installed": [],
+    "available": []
+  },
+  "public_parser_roots_removed": true,
+  "accepted_old_artifacts_retained": [
+    "e15",
+    "e16",
+    "e16r",
+    "e17-final"
+  ],
+  "no_formal_hook_key_provider_otherproject_monitor_writes": true
+}

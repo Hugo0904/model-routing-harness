@@ -1,0 +1,54 @@
+{
+  "unit": "E17R-B-001",
+  "A_blueprint": "D38 dd1e319",
+  "executing_profile": {
+    "turn_id": "01a12b40-9cb6-7a62-9da4-5ec2d6a2917d",
+    "recorded_at": "2026-10-11T13:56:57.257Z",
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "source": "own recorded executing-turn settings"
+  },
+  "focused": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_codex_scope test_action_facts test_operator_stop",
+    "passed": 29,
+    "seconds": 1.395
+  },
+  "parser": "e17r-parser-help.json and e17r-parser-forms.json; help-only owned process, 13 accepted forms plus one unsupported provider form",
+  "native": {
+    "evidence": "e17r-native-chain.json",
+    "cases": 7,
+    "seconds": 11.087,
+    "light_null_model_and_effort_verified": true,
+    "original_params_preserved_except_model_effort": true,
+    "child_request": "gpt-5.6-luna / low",
+    "scripted_jev_and_responses": true,
+    "real_host_scope_inspection": true
+  },
+  "bundle": {
+    "directory": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e17r-macos-arm64",
+    "archive": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e17r-macos-arm64.tar.gz",
+    "archive_sha256": "cdd8371c7d0dc91bd3658caad32f6f513cf48808be90bb37436d929c16aab60e",
+    "archive_bytes": 26807943,
+    "manifest_sha256": "377b9bd2d679c782791ac14d2f34e40becf3a511b67f946543a68d54ba677b63",
+    "runtime_version": "3.11.17",
+    "runtime_asset_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10",
+    "notices": 19,
+    "runtime_files": 2059
+  },
+  "entry": "e17r-bundle-entry.json",
+  "immutable_after_entry_records": 2059,
+  "identity": "e17r-source-identity.json",
+  "cleanup": "e17r-cleanup.json",
+  "reuse": "unaffected accepted E17 role/privacy/permission/failure/lifecycle and D23 contract; no old full suite/matrix/research",
+  "remaining": [
+    "A personal acceptance",
+    "formal registration/trust/task-export/enable in intended human workspace not performed",
+    "real TypeSafe key/Jev/provider not performed",
+    "real sourced rates ordinary-tier prerequisite; fixture rates are not live prices",
+    "default daemon/Desktop/remote/resume/unobserved overrides outside supported contract",
+    "autonomous parent completion not established by scripted proof"
+  ],
+  "git_push": false,
+  "goal_created": false,
+  "quota_remaining_percent": 59
+}

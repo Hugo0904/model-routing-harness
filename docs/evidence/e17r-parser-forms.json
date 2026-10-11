@@ -1,0 +1,121 @@
+{
+  "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+  "rows": [
+    {
+      "argv": [
+        "--config",
+        "agents.default_subagent_reasoning_effort=\"high\""
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--config=agents.default_subagent_reasoning_effort=\"high\""
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "-cagents.default_subagent_reasoning_effort=\"high\""
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--profile=owned"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "-powned"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--model=gpt-6.1-sol"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "-mgpt-6.1-sol"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--enable=multi_agent"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--disable=multi_agent"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--oss"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--local-provider=ollama"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--remote=ws://127.0.0.1:9"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--remote-auth-token-env=OWN_UNUSED"
+      ],
+      "exit": 0,
+      "accepted_by_public_parser": true,
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--model-provider=owned"
+      ],
+      "exit": 2,
+      "accepted_by_public_parser": false,
+      "stderr": "error: unexpected argument '--model-provider' found\n\n  tip: a similar argument exists: '--local-provider'\n\nUsage: codex [OPTIONS] [PROMPT]\n       codex [OPTIONS] <COMMAND> [ARGS]\n\nFor more information, try '--help'.\n"
+    }
+  ],
+  "method": "public --help only; no native session/model/auth/provider",
+  "own_root": "/private/tmp/mrh-e17r-parser-5qp_xevf",
+  "cleanup": true
+}
