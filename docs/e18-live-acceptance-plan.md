@@ -35,7 +35,7 @@ export CODEX_HOME="$MRH_E18_ROOT/home"
 
 正式登入／mode status 尚未操作，帳戶對目標模型的可用性亦未知。本機 pin 為 `codex-cli 0.159.3`、binary SHA256 `4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878`。若已安裝檔更新，不更換或降級正式 Codex；報 A 決定這個先決條件。
 
-A 在隔離 home 建立最小 config，parent 採本次已接受 native evidence 的 `gpt-6.1-sol / low`，只在這個新驗收 session 選定，不改既有主視窗。使用官方 OpenAI provider，無 custom URL、profile、default role、自訂 catalog、session／turn model-effort override。新 config 的必要 multi-agent/code-mode、Hook 與 Standard speed 狀態須從 pin 的正式介面確認後，再 prepare；不能套用 fixture 的 loopback provider、`approval_policy=never` 或 auth bypass。未證明 Standard 計價適用時，普通級成本前提保留未知。
+A 在隔離 home 建立最小 config，parent 採本次已接受 native evidence 的 `gpt-6.1-sol / low`，只在這個新驗收 session 選定，不改既有主視窗。使用官方 OpenAI provider，無 custom URL、profile、default role、自訂 catalog、session／turn model-effort override。新 config 的必要 multi-agent/code-mode、Hook 與 speed 狀態須從 pin 的正式介面確認後，再 prepare；不能套用 fixture 的 loopback provider、`approval_policy=never` 或 auth bypass。本次以公開 Standard credit 向量作明示的模型配置比較基準；記錄實際 speed/provider 差異，不把向量當成實際帳單。
 
 ## 金鑰與實際外送內容
 
@@ -83,7 +83,7 @@ A 建立 `policy.json`（位置在 state 之外），內容見下一節；不是
 
 ## 普通級價格資料與既有欄位
 
-2026-10-11 讀取的官方 [Codex Pricing](https://developers.openai.com/codex/pricing) 已有 Standard credit rates。這是 credit 計價配置比較，**不是 API 美元價、包含用量的總帳單，或帳戶一定可用的證明**。相同 Standard 計價服務下，三項每百萬 tokens 向量：GPT-6.1 Sol `50 / 2.5 / 250`、GPT-5.6 Luna `5 / 0.5 / 30`（input／cached input／output）。Fast／Ultrafast 與 included subscription multipliers 另有條件；本次不把不同 speed／服務的單價混成同一比較。
+2026-10-11 讀取的官方 [Codex Pricing](https://developers.openai.com/codex/pricing) 已有 Standard credit rates。A 在 D40 選定這組公開向量作本次模型配置比較基準，**不是 API 美元價、包含用量的總帳單，或帳戶一定可用的證明**。三項每百萬 tokens 向量：GPT-6.1 Sol `50 / 2.5 / 250`、GPT-5.6 Luna `5 / 0.5 / 30`（input／cached input／output）。不需先購買 credits 或新增 API key 才能採用公開比較值。Fast／Ultrafast、其他 provider 與 included subscription multipliers 另有條件；實際差異要揭露，不能宣稱 Standard 向量已驗證實際帳单。
 
 可以直接填 `policy.rates` 的既有 `currency/unit/service/source_ref/components`；`source_ref` 只能用 safe ID，URL 與日期留本文件，不加 schema。普通級 gate 是每項不高於 baseline 且至少一項低於，並非 token 總量預估。建議第一轮 Light/Small/Mid 都暫用同一便宜、已通過 native request 語法的 Luna/low，確保真 Jev 命中任一普通級都能驗改寫；不是宣稱三個級別的最佳產品預設。Top 維持 Main。
 
@@ -111,7 +111,7 @@ A 建立 `policy.json`（位置在 state 之外），內容見下一節；不是
 }
 ```
 
-5 秒是這輪建議 Jev deadline，在既有 `0 < timeout <= 30` 內，不是成功保證。若真帳戶是 API 或無法確認上列 credit 比較適用，不填不相符 rates；具體缺口是「該實際服務與 speed 的 baseline／target 三項一致單價」，由 A 決定是否先只驗 Main。不能把 ordinary preserve 算普通改寫完成。
+5 秒是這輪建議 Jev deadline，在既有 `0 < timeout <= 30` 內，不是成功保證。`service=codex-standard-credit` 表示上述明示的配置比較基準，沒有宣稱使用者已購買 credits 或採該帳單服務。真用量／費用仍未知；若實測出現 speed/provider 差異，保留其觀察與比較限制，不更換數值冒充該服務價格。不能把 ordinary preserve 算普通改寫完成。
 
 ## 最小任務、證據與停點
 
@@ -123,7 +123,28 @@ A 建立 `policy.json`（位置在 state 之外），內容見下一節；不是
 
 以上只提高普通／Top 出現的可能，**不保證 tier 或 confidence**。真 Jev 不是受控 fixture；低信心、ordinary、Top 與失敗都如實記錄。第三輪仍未命中必要分支就保留未知，不改 Jev 回傳、不無限試題。
 
-推薦 A 選擇同一隔離官方 `app-server --listen stdio://` 收集公開 protocol stream，沿已有 Rpc／native evidence 的方法使用官方 `initialize` → `initialized` → `thread/start` → `turn/start`，不傳 model/effort/config override。這不是新產品 dispatcher；若 A 先用 TUI，依官方 agent／status 畫面讀回。不要以 TUI 文案、自報模型或 MRH requested count 取代原生證據。官方 [App server](https://developers.openai.com/codex/app-server) 支持 thread/read 與 item/turn notifications；pin 的精確回應欄位仍須由執行者核 public schema，不從私有 rollout 取得。
+A 已在 D40 選定同一隔離官方 `app-server --listen stdio://` 收集公開 protocol stream，沿已有 Rpc／native evidence 的方法使用官方 `initialize` → `initialized` → `thread/start` → `turn/start`，不傳 model/effort/config override。這不是新產品 dispatcher。以下已從精確 pin 的公開 schema 核清讀回方法，不使用 TUI 文案、自報模型、MRH requested count 或私有 rollout 取代原生證據。
+
+### D40 公開證據結論：thread/read 足以讀宿主有效設定
+
+官方 [App server](https://developers.openai.com/codex/app-server) 的 `thread/read` 是唯讀讀回，沒有 resume、建立 turn 或改設定。精確 0.159.3 schema 的 `ThreadReadResponse.thread` 提供 `id`、`parentThreadId`、`modelProvider`、`model`、`reasoningEffort`、`status`。`model`／`reasoningEffort` 明定：thread 載入時是 **current configured**；未載入時是 latest persisted；可能為 null，**不是 per-turn execution telemetry**。因此可证明原生 child session 有效模型／effort與已完成結果，不要求攔 TLS 或證明 provider 内部 inference identity。
+
+同一 Rpc 連線持續收事件，依序讀：
+
+1. Parent 的 `item/completed.params.item.type=collabAgentToolCall` 且 `tool=spawnAgent`，取得 `senderThreadId`、`receiverThreadIds[]`、item `id` 與外層 `threadId`／`turnId`。`receiverThreadIds` 對應新建 child；item 自己的 `model`／`reasoningEffort` 明確是 **requested**，不可代替 child 讀回。
+2. Child ID 出現後、尚未 close/shutdown 時，送下面 metadata read；對上 `result.thread.parentThreadId=原 parent ID`，child `model=gpt-5.6-luna`、`reasoningEffort=low`、`modelProvider=openai`。同時讀 parent，須仍為 Sol6.1/low。有 `thread/started` 事件也可取同一 Thread 欄位作早期快照；沒收到不能假定缺 child。
+3. 收 child 的 `item/completed`（`item.type=agentMessage`，`text` 為結果），及 `turn/completed`（同 child `threadId`、`turn.id`、`turn.status=completed`）。完成後再 metadata read 核設定未變。`thread/settings/updated` 若出現，核對 `params.threadId` 與 `threadSettings.model/effort/modelProvider`；沒有這個事件不當作額外設定證明。未載入後的讀回標為 persisted，不標成 live configured；null 就保留未知。
+4. Parent 的 `collabAgentToolCall` wait 結果提供 `agentsStates[childID].status/message`（message可為null），加 parent 最終 `agentMessage`／`turn/completed`，證明 native child 結果已接回同 parent。結果事件若漏收，可對**這次自有 child／parent**用 `includeTurns=true` 讀 `thread.turns[].items[]` 補讀；此值雖會從宿主歷史載入，但走官方公開 API，不直接讀私有檔案。schema 提醒 full-history hydration 對 paginated threads deprecated；若這次 read 無完整 items，保留缺口，不靠猜測補結果。
+
+```json
+{"id":101,"method":"thread/read","params":{"threadId":"<childID>","includeTurns":false}}
+{"id":102,"method":"thread/read","params":{"threadId":"<parentID>","includeTurns":false}}
+{"id":103,"method":"thread/read","params":{"threadId":"<childID>","includeTurns":true}}
+```
+
+Top Main 則對上 parent 原生 denied delegation/error item、MRH `top_main_requested`、沒有新的 receiver/child/thread-start、同 parent 後續實際 `agentMessage` 與 completed turn；parent metadata 前後仍為原模型／effort。不要只因少一個 child notification 就判 zero child，須核同 parent 整個 turn 的 delegate items／receivers；也不能把 denied tool item 的完成當作 parent 答案完成。全鏈沒有額外 `thread/resume`、`turn/start` 或模型覆寫讀回。
+
+來源為未改官方 binary，SHA256 `4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878`，在 C 自有臨時 home 用 documented `codex --no-daemon app-server generate-json-schema --out <owned-scratch>/schema` 產生。查證檔案／SHA256：`v2/ThreadReadParams.json` `dfe040c6ac71d30795b8be3f3ff232e66f362a37f883b491e5d1ea367f470db4`；`v2/ThreadReadResponse.json` `3a0aaf9cff80796d07130b85723ca825f9203796d15c878f452083cf9f9a6f0a`（含 Thread、ThreadItem、CollabAgentState）；`v2/ThreadSettingsUpdatedNotification.json` `1decdf57238a1573ffbbf0bf695acba50888c1580e44670471dd88bfc2bd540f`。`ClientRequest.json` 列 `thread/read`，`ServerNotification.json` 列 `thread/settings/updated`。本輪只生成及讀 schema，沒有 server session／provider call；scratch 查證後移除，未把大 schema 帶入 repo。這是公開契約準備，不是已取得真 child runtime 證據。
 
 每次以 MRH live stats 前後差及同一個 native parent/session/turn/tool reference 對上：
 
@@ -155,7 +176,7 @@ PY
 必要證據分開判定：
 
 1. **真 Jev**：live partition、`jev_attempts` 增加、`actual_provider_transport`、returned `jev-1.13.0`、實際 tier/confidence 判定與 usage（若 provider 未給則未知）。保留 error/timeout；不記 raw header/body/key。
-2. **普通改寫及原生結果**：同一 native generic proposal、MRH routed reason/target；原生 delegate item、子 thread/reference、子完成 result，父收到該 result。原生 scope/config/readback 若提供模型／effort，就記該來源。PostToolUse 在 `src/mrh/codex.py` 只產生 reported child，不能單独證明實際 model。既有 E17 的 upstream request capture 是 scripted provider；真實 OpenAI 這輪不得攔截 Authorization、TLS 或加 proxy。若 pin 的公開介面不能提供 child effective model/effort 或 provider-confirmed model，精確標示「原生 child 完成、requested target 已記錄；實際模型仍未驗證」，回 A 決定可接受證據，不冒充完成。
+2. **普通改寫及原生結果**：同一 native generic proposal、MRH routed reason/target；依 D40 上述 `thread/read` 核原生 child configured model/effort、parent關聯，再對 child完成與parent收到結果。PostToolUse 在 `src/mrh/codex.py` 只產生 reported child，不能單独證明有效 model。真 runtime 若欄位為null／只有persisted／缺結果，就精確記錄該缺口；正常取得有效session設定與原生結果即滿足這輪證據方案。Provider-confirmed inference identity仍未取得，不把它包進此主張，也不攔截 Authorization、TLS 或加 proxy。
 3. **Top Main**：只有真 Top 且 confidence >= 0.5 才評這項。native deny reason 指回同 parent，未建立 child；同一 parent 在 deny 後產生實際答案，模型設定仍為原 parent，沒有 replacement spawn。`parent received`、`zero child`、`parent completed` 各有對應事件；缺任一项不算 Main 自主完成。命中其他級別則此項未覆蓋。
 
 建議操作上限為 3 個 eligible Jev proposals、最多 3 children、3 個 user turns，每 turn 最長觀察 120 秒；遇到額外委派、provider失敗、scope失效、停止政策或不足額度立即原生 interrupt 並停用。這是執行者監看停點，**不是產品已有硬性外送次數／美元上限**；提示詞不能保證模型不多呼叫一次。Jev 本身單 proposal 無自動重試；Codex provider streaming/request 次數、reasoning tokens 無法從三個 user turns 給硬上限。A 必須在付費前確認這個限制；要求硬貨幣上限但 provider 沒有適用控制時，就保持未授權，不新增成本框架。
@@ -181,7 +202,7 @@ unset TYPESAFE_API_KEY
 
 > 建議用現有官方 Codex CLI，在新的隔離 home／空白工作區驗收，保留你原本的 App、登入與 Hook。是否同意我們在這個隔離環境完成官方登入、僅安裝／信任／啟用 MRH，讓最多 3 個上述公開子任務送往 TypeSafe 並由你的 Codex 帳戶執行真模型，遇到額外委派或失敗就停，完成後停用及撤回？你只需在我們準備好的遮罩終端輸入 TypeSafe key，必要時完成官方登入／MFA，不需把 key 貼給我。Jev 3 次的條件最高量級約 US$0.0081；Codex 會消耗你帳戶用量，token／金額沒有現成硬上限，不能承諾固定費用。請一併確認你接受這個受次數與時間監看的用量範圍，並有可用的 TypeSafe key；若需硬金額上限，我們先停在此，不自行加購或擴建。
 
-提問前 A 須先接受 E17R 修正版、決定公開模型證據是否足夠，以及確認 credit-rate applicability。若仍有具體差異，把差異加入同一次問題，不讓人類代跑我們能操作的命令。這輪不涵蓋正式 home 長期啟用、Top Fixed／Goal 全 R1 覆蓋、其他平台或發布。
+提問前 A 須先接受 E17R 修正版並整合上述公開證據方案；Standard credit 向量已依 D40 選為配置比較基準，不再要求購買 credits 或證明最終帳單。若仍有具體差異，把差異加入同一次問題，不讓人類代跑我們能操作的命令。這輪不涵蓋正式 home 長期啟用、Top Fixed／Goal 全 R1 覆蓋、其他平台或發布。
 
 ## 來源範圍
 
