@@ -26,6 +26,9 @@ def inspect(bundle,binary):
         for name,digest in manifest['application_files'].items():
             assert hashlib.sha256(archive.read(name)).hexdigest()==digest
         modules=[name for name in archive.namelist() if name.startswith('mrh/') and name.endswith('.py')]
+        source_modules={'mrh/'+path.relative_to(source/'src/mrh').as_posix()
+                        for path in (source/'src/mrh').rglob('*.py')}
+        assert set(modules)==source_modules, 'source_archive_module_paths_mismatch'
         for name in modules:assert archive.read(name)==(source/'src'/name).read_bytes()
     before=file_manifest(bundle)
     with tempfile.TemporaryDirectory(prefix='mrh-e19-bundle-',dir='/private/tmp') as temp:
@@ -82,7 +85,8 @@ def inspect(bundle,binary):
         result={'kind':'actual_shipped_entry_and_private_runtime_with_owned_scope_no_provider',
             'source_commit':manifest['source_commit'],'application_source_records':len(manifest['application_files']),
             'python_modules':len(modules),'verified_manifest_records':len(manifest['files']),
-            'archive_source_identity_verified':True,'commands':commands,'prepared':prepared,
+            'archive_source_identity_verified':True,'source_archive_module_paths_equal':True,
+            'commands':commands,'prepared':prepared,
             'subscription_guard':guard,'provider_switch_preserves_policy_permissions_and_legacy_history':True,
             'disabled_hook_zero_database':True,'recursion_launcher_zero_database_changes':True,
             'prepared_runtime_matches_current_source':expected,'real_classifier_calls':0,'real_test_turns':0,
