@@ -1,0 +1,57 @@
+{
+  "actual_probe_started": false,
+  "all_required_canaries_passed": true,
+  "cleanup": {
+    "outside_canary_never_created": true,
+    "owned_root": "/private/tmp/mrh-e12-g9kj7i80",
+    "root_absent": true
+  },
+  "cli_sha256": "a681f3008f0050029aeebcab3af51bb6a55ddeb625a3af3141a4416d43cd2558",
+  "cli_version": "2.1.267",
+  "environment_keys": [
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_TELEMETRY",
+    "HOME",
+    "MRH_CLI",
+    "MRH_OUTSIDE_CANARY",
+    "MRH_PRIVATE_CANARY",
+    "NO_COLOR",
+    "OPENSSL_CONF",
+    "PATH",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME"
+  ],
+  "inert": {
+    "ended_utc": "2026-10-11T06:49:13.676352+00:00",
+    "exit": 0,
+    "process_group": 10585,
+    "seconds": 1.205,
+    "started_utc": "2026-10-11T06:49:12.471307+00:00",
+    "stderr": "MRH_INERT_STARTED\n",
+    "stdio": "owned-root files; stdin /dev/null",
+    "stdout": "{\"ownWrite\":true,\"privateReadDenied\":true,\"outsideWriteDenied\":true,\"keychainHelperDenied\":true,\"networkDenied\":true}\n",
+    "timed_out": false
+  },
+  "model_request_attempts": "not instrumented; probe has no user-message return path",
+  "node": "/opt/homebrew/Cellar/node/24.1.0/bin/node",
+  "openssl_config": {
+    "scope": "owned empty temporary file",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "profile": "(version 1)\n(deny default)\n(allow process*)\n(allow sysctl-read)\n(allow signal)\n(allow file-read-data (literal \"/\"))\n(allow file-read-metadata (literal \"/\") (literal \"/System\") (literal \"/dev\") (literal \"/opt\") (literal \"/opt/homebrew\") (literal \"/opt/homebrew/Caskroom\") (literal \"/opt/homebrew/Caskroom/claude-code\") (literal \"/private\") (literal \"/private/tmp\") (literal \"/private/tmp/mrh-e12-g9kj7i80\"))\n(allow file-read* (subpath \"/private/tmp/mrh-e12-g9kj7i80/runtime\") (subpath \"/System/Library\") (subpath \"/System/Applications\") (subpath \"/System/DriverKit\") (subpath \"/usr\") (subpath \"/bin\") (subpath \"/sbin\") (subpath \"/opt/homebrew/Cellar\") (subpath \"/opt/homebrew/opt\") (subpath \"/opt/homebrew/Caskroom/claude-code/2.1.267\") (subpath \"/dev/null\") (subpath \"/dev/urandom\"))\n(allow file-write* (subpath \"/private/tmp/mrh-e12-g9kj7i80/runtime\") (literal \"/dev/null\"))\n(deny file-read* (subpath \"/Users\") (subpath \"/System/Volumes/Data/Users\"))\n(deny file-read* (subpath \"/private/tmp/mrh-e12-g9kj7i80/runtime/private-canary\"))\n(deny process-exec (literal \"/usr/bin/security\"))\n(deny mach-lookup)\n(deny network*)\n",
+  "profile_sha256": "5fb7be3ebb8aea9923abb8c2621cfcfb90bd2671122b4aac84a4abff99e487b6",
+  "required_canaries": [
+    "keychainHelperDenied",
+    "networkDenied",
+    "outsideWriteDenied",
+    "ownWrite",
+    "privateReadDenied"
+  ],
+  "sdk_sha256": "e966be99b6f047d56165e2ec03822f17a49beebd48ac8efb91dab1e48bcf69a7",
+  "sdk_version": "0.3.296",
+  "source_sha256": "d6bd0e01df478db82f5514478d7aeba9f8f028d4447f62a2ec842e680a906abf",
+  "status": "inert_passed",
+  "successful_provider_calls": "not observed; inner runtime outbound denied"
+}

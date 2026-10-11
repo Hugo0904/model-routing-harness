@@ -1,0 +1,55 @@
+{
+  "actual_probe_started": false,
+  "cleanup": {
+    "outside_canary_never_created": true,
+    "owned_root": "/private/tmp/mrh-e12-bsxegsp6",
+    "root_absent": true
+  },
+  "cli_sha256": "a681f3008f0050029aeebcab3af51bb6a55ddeb625a3af3141a4416d43cd2558",
+  "cli_version": "2.1.267",
+  "control": {
+    "ended_utc": "2026-10-11T06:47:16.620094+00:00",
+    "exit": 0,
+    "process_group": 6902,
+    "seconds": 0.2374,
+    "started_utc": "2026-10-11T06:47:16.382723+00:00",
+    "stderr": "",
+    "stdio": "owned-root files; stdin /dev/null",
+    "stdout": "MRH_NODE_STARTUP\n",
+    "timed_out": false
+  },
+  "environment_keys": [
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_TELEMETRY",
+    "HOME",
+    "MRH_CLI",
+    "MRH_OUTSIDE_CANARY",
+    "MRH_PRIVATE_CANARY",
+    "NO_COLOR",
+    "PATH",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME"
+  ],
+  "model_request_attempts": "SDK/CLI not started; literal marker only",
+  "node": "/opt/homebrew/Cellar/node/24.1.0/bin/node",
+  "profile": "(version 1)\n(deny default)\n(allow process*)\n(allow sysctl-read)\n(allow signal)\n(allow file-read-data (literal \"/\"))\n(allow file-read* (subpath \"/private/tmp/mrh-e12-bsxegsp6/runtime\") (subpath \"/System/Library\") (subpath \"/System/Applications\") (subpath \"/System/DriverKit\") (subpath \"/usr\") (subpath \"/bin\") (subpath \"/sbin\") (subpath \"/opt/homebrew/Cellar\") (subpath \"/opt/homebrew/opt\") (subpath \"/opt/homebrew/Caskroom/claude-code/2.1.267\") (subpath \"/dev/null\") (subpath \"/dev/urandom\"))\n(allow file-write* (subpath \"/private/tmp/mrh-e12-bsxegsp6/runtime\") (literal \"/dev/null\"))\n(deny file-read* (subpath \"/Users\") (subpath \"/System/Volumes/Data/Users\"))\n(deny file-read* (subpath \"/private/tmp/mrh-e12-bsxegsp6/runtime/private-canary\"))\n(deny process-exec (literal \"/usr/bin/security\"))\n(deny mach-lookup)\n(deny network*)\n",
+  "profile_sha256": "6500e69cafb6e6db0e93223f3ca4c24bd573579f5b8661af380b2c097564b170",
+  "restricted": {
+    "ended_utc": "2026-10-11T06:47:16.692331+00:00",
+    "exit": 1,
+    "process_group": 6903,
+    "seconds": 0.0722,
+    "started_utc": "2026-10-11T06:47:16.620149+00:00",
+    "stderr": "/opt/homebrew/Cellar/node/24.1.0/bin/node: OpenSSL configuration error:\n803FB2FF01000000:error:80000001:system library:BIO_new_file:Operation not permitted:crypto/bio/bss_file.c:67:calling fopen(/opt/homebrew/etc/openssl@3/openssl.cnf, rb)\n\n\n",
+    "stdio": "owned-root files; stdin /dev/null",
+    "stdout": "",
+    "timed_out": false
+  },
+  "sdk_sha256": "e966be99b6f047d56165e2ec03822f17a49beebd48ac8efb91dab1e48bcf69a7",
+  "sdk_version": "0.3.296",
+  "source_sha256": "0d2e79c784684061b1bdbf363ffdad42d91e482c3ed26407afab3063378e68b4",
+  "status": "startup_comparison_recorded",
+  "successful_provider_calls": "SDK/CLI not started; literal marker only"
+}
