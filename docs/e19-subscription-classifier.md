@@ -28,6 +28,8 @@ MRH_E19_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness
 
 使用未修改的 `codex-cli 0.159.3`，binary SHA256 `4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878`。先沿用既有 CLI 發現或已核驗 scope binding 的 binary，再檢查相同 pin／version；不替換安裝、更新 Codex 或切換模型。程序在自有空目錄執行，使用 stdin 任務 JSON、固定 `mrh-tier-v1` rubric、`--json --output-schema --ephemeral --ignore-user-config --sandbox read-only`。schema 只准 `tier` 與有限的 0..1 `confidence`。
 
+官方 [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode)說明 exec 的 JSON、schema、ephemeral 和沿用登入；[Authentication](https://learn.chatgpt.com/docs/auth)區分 ChatGPT 訂閱與 API key。固定版 `exec --help` 另明示忽略 user config 後 auth 仍使用 `CODEX_HOME`。
+
 環境採白名單：只給登入所需的原 `CODEX_HOME`、自有空 `HOME`、基本 PATH／語系和自有暫存／SQLite 位置；不傳入 API key、parent thread、proxy／provider endpoint 或其他宿主環境。MRH 不讀 auth.json、keychain 或私人 session；登入／token refresh 由官方 CLI 負責。模型呼叫前使用同一環境的公開 `codex --no-daemon login status`，只接受 ChatGPT 狀態，另以 `forced_login_method="chatgpt"` 拒用 API 登入。PATH alias 的固定警告不改變登入判斷；其他未知狀態拒用。
 
 套件控制會停用 hooks、plugins、apps、shell、multi-agent、code-mode、browser、computer-use、view-image、image-generation、memories、goals、sleep、tool-suggest 和 workspace-dependencies；停用 project instructions、skills 注入、plan／request-input 和 web search。沒有 `--ignore-rules`、approval／sandbox／trust bypass 或修改管理員限制。這些控制在本輪的原版官方程序中，搭配未修改的公開 pin catalog 及自有 loopback 回答，實際產生 `tools=[]`；不是只靠 prompt 要求不用工具。實際帳戶／remote catalog 的行為仍未做真模型驗收。
@@ -47,6 +49,10 @@ GuardedAttempts 同時管理逾時與本機程序群取消：先封住新啟動�
 ## 證據與剩餘義務
 
 聚焦證據涵蓋 settings/provider 切換與 CAS、舊 TypeSafe 設定、嚴格解析、self-reported confidence／0.5 guard、程序輸出上限與取消、recursion、API／未知 auth 拒用、PreToolUse 的明示／null 與失敗保留、統計隔離和新版 bundle 入口。訂閱 attempts、官方 CLI 已知 usage、configured model 分開統計；未取得 provider-confirmed model identity，不填 response model、Jev 美元價或訂閱成本。既有 JSON 欄位保留；synthetic 與 live 分區保留。
+
+[51 項不同聚焦檢查](evidence/e19-focused.json)通過；兩個 scripted Responses 的原版程序隔離檢查耗時 0.749 秒。獨立入口檢查耗時 5.607 秒，核對 37 個 application source records、33 個 Python modules 與全部 2,059 個 manifest records；驗證 provider 切換保留舊歷史／政策／權限、disabled Hook 零 DB、recursion 中立及實際 bundled adapter 的全域指令 guard。入口執行後 manifest 未變，自有暫存 root 已刪除。[入口證據](evidence/e19-bundle-entry.json)。
+
+套件 source commit 為 `eedd8254f5a04f5c6b78b2e3268e10b6acf3221a`；archive SHA256 `7706742578a0297f9f2404fa8cd048e98a5411dc669adccdaa7eeae8805bdaea`，manifest SHA256 `c9894bd595ce30b457e5e347a7c5c7ea351fb49a38d3d12d4fc8add1bba5f53e`。[建置紀錄](evidence/e19-build.json)。沿用原固定 cache／CPython 3.11.17 及 19 項 notices，只建置這一份新 bundle，保留先前已接受候選。
 
 真實分級呼叫 **0**、真實驗收 turns **0**，已授權最多三次的額度未使用。没有正式 global registration／trust／export／enable；E17R 受測 native scope、原參數保留、Main／Fixed／null 和 D23 證據沿用。此輪 loopback 使用腳本回答，不能稱訂閱模型成功。
 
