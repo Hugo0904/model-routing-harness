@@ -5,7 +5,7 @@ import textwrap
 from . import settings
 from .settings_schema import SettingsError, validate_settings
 from .terminal import policy_rows, render_configuration, render_policy_review, sanitize_text
-from .types import safe_id
+from .types import safe_id, safe_model_id
 
 
 class Cancelled(Exception):
@@ -37,9 +37,9 @@ def edit(path, *, stdin, stdout, width, color):
             if not model and current is None:
                 return None
             model = model or current["model"]
-            if safe_id(model):
+            if safe_model_id(model):
                 break
-            note("Use a model identifier (letters, digits, . _ : / -).")
+            note("Use a model identifier; a balanced [context] suffix is allowed.")
         result = {**(current or {}), "model": model}
         while True:
             effort = ask(label + " effort [Enter keep / inherit]")

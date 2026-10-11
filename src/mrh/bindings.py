@@ -6,7 +6,7 @@ import uuid
 
 from . import owned, settings
 from .catalog import Catalog, CatalogError, executable_hash
-from .types import safe_id
+from .types import safe_id, safe_model_id
 
 FILES = {'registry.json'}
 META = 'model-profile.json'
@@ -175,7 +175,7 @@ def target_veto(settings_path, now=None, *, synthetic=False):
         mappings = list(policy.get('tiers', {}).values())+[policy.get('fixed', {})]
         for m in mappings:
             model = m.get('model')
-            if not safe_id(model):continue
+            if not safe_model_id(model):continue
             option = next((x for x in c.models if x.id == model), None)
             if (option is None or option.state == 'unavailable') and c.assurance == 'synthetic' and synthetic:
                 result[model] = 'catalog_model_unavailable'

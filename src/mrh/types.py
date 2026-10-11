@@ -30,6 +30,13 @@ def safe_id(value, limit=128):
     return isinstance(value, str) and 0 < len(value) <= limit and bool(re.fullmatch(r"[A-Za-z0-9_.:/-]+", value)) and not value.lower().startswith(("sk-", "bearer", "password", "secret"))
 
 
+def safe_model_id(value, limit=128):
+    """Model request IDs may carry a balanced context suffix; identities may not."""
+    return (isinstance(value, str) and 0 < len(value) <= limit and
+            bool(re.fullmatch(r"[A-Za-z0-9_.:/-]+(?:\[[A-Za-z0-9_.:-]+\])?", value)) and
+            not value.lower().startswith(("sk-", "bearer", "password", "secret")))
+
+
 @dataclass(frozen=True)
 class Proposal:
     platform: str
@@ -78,7 +85,7 @@ class Decision:
         if not isinstance(self.patch, dict) or set(self.patch) - {"model", "reasoning_effort"}:
             raise ValueError("invalid_decision")
         if self.action == "request_child":
-            if not safe_id(self.patch.get("model")) or ("reasoning_effort" in self.patch and not safe_id(self.patch["reasoning_effort"])):
+            if not safe_model_id(self.patch.get("model")) or ("reasoning_effort" in self.patch and not safe_id(self.patch["reasoning_effort"])):
                 raise ValueError("invalid_decision")
             if self.tier is None or self.confidence < 0.5:
                 raise ValueError("invalid_decision")
@@ -87,7 +94,7 @@ class Decision:
         if self.action == "return_to_main" and (self.tier != "Top" or self.confidence < 0.5 or self.reason != "top_main_requested"):
             raise ValueError("invalid_decision")
         if self.action == "operator_update_required":
-            if self.tier is None or self.confidence < 0.5 or not safe_id(self.target_model) or self.reason not in UNAVAILABLE_REASONS:
+            if self.tier is None or self.confidence < 0.5 or not safe_model_id(self.target_model) or self.reason not in UNAVAILABLE_REASONS:
                 raise ValueError("invalid_decision")
         elif self.target_model is not None:
             raise ValueError("invalid_decision")

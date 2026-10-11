@@ -2,7 +2,7 @@
 import math
 import queue
 import threading
-from .types import Classification, ContextSummary, Decision, REASONS, TIERS, safe_id
+from .types import Classification, ContextSummary, Decision, REASONS, TIERS, safe_id, safe_model_id
 from .attempts import GuardedAttempts
 from .facts import snapshot_for
 
@@ -119,7 +119,7 @@ def action_eligibility(proposal, policy, facts, tier):
         return "unsupported_role", None
     tiers = policy.get("tiers", {})
     mapping = policy.get("fixed") if tier == "Top" else tiers.get(tier) if isinstance(tiers, dict) else None
-    if not isinstance(mapping, dict) or not safe_id(mapping.get("model")):
+    if not isinstance(mapping, dict) or not safe_model_id(mapping.get("model")):
         return "invalid_policy", None
     model = mapping["model"]
     veto = policy.get('_target_veto', {}).get(model)
@@ -165,7 +165,7 @@ def selected_unavailability(proposal, policy, facts, tier):
         return None
     tiers = policy.get('tiers', {})
     mapping = policy.get('fixed') if tier == 'Top' else tiers.get(tier) if isinstance(tiers, dict) else None
-    if not isinstance(mapping, dict) or not safe_id(mapping.get('model')):
+    if not isinstance(mapping, dict) or not safe_model_id(mapping.get('model')):
         return None
     model = mapping['model']
     vetoes = policy.get('_target_veto', {})

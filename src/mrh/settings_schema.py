@@ -8,7 +8,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from .types import safe_id
+from .types import safe_id, safe_model_id
 from .typesafe_protocol import PINNED_MODEL
 
 
@@ -65,7 +65,7 @@ def _validate_mapping(value: Any) -> dict:
     if type(value) is not dict:
         _invalid()
     _require_exact_keys(value, {"model"}, {"effort"})
-    if not safe_id(value.get("model")):
+    if not safe_model_id(value.get("model")):
         _invalid()
     if "effort" in value and not safe_id(value["effort"]):
         _invalid()
@@ -77,7 +77,7 @@ def _validate_rates(value: Any) -> dict:
         _invalid()
     result = {}
     for model, rate in value.items():
-        if not safe_id(model) or type(rate) is not dict:
+        if not safe_model_id(model) or type(rate) is not dict:
             _invalid()
         _require_exact_keys(rate, _RATE_KEYS)
         for field in ("currency", "unit", "service"):

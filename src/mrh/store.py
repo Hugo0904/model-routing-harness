@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
-from .types import Decision, REASONS, TIERS, safe_id
+from .types import Decision, REASONS, TIERS, safe_id, safe_model_id
 
 
 def now():
@@ -247,7 +247,7 @@ class Store:
         verified = kind in ("host_observed", "provider_observed")
         if verified and (verifier is None or verifier(dict(receipt)) is not True):
             raise ValueError("unverified_source")
-        if actual is not None and (not safe_id(actual) or kind != "provider_observed" or receipt.get("model_evidence") != "provider_observed"):
+        if actual is not None and (not safe_model_id(actual) or kind != "provider_observed" or receipt.get("model_evidence") != "provider_observed"):
             raise ValueError("unverified_actual_model")
         body = json.dumps(receipt, sort_keys=True, separators=(",", ":"), allow_nan=False)
         with self.connect() as db:

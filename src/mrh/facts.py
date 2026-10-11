@@ -5,7 +5,7 @@ snapshots. This is not a public host wire schema or an operator settings format.
 """
 from dataclasses import dataclass, field
 from pathlib import Path
-from .types import safe_id
+from .types import safe_id, safe_model_id
 
 
 @dataclass(frozen=True)
@@ -74,10 +74,10 @@ class HostSnapshot:
             return "evidence_partition_mismatch"
         optional_effort = lambda x: x is None or safe_id(x)
         canonical_workspace = lambda x: isinstance(x, str) and Path(x).is_absolute() and str(Path(x)) == x and ".." not in Path(x).parts and not any(ord(c) < 32 for c in x)
-        predicates = {"parent_model": safe_id, "workspace": canonical_workspace,
+        predicates = {"parent_model": safe_model_id, "workspace": canonical_workspace,
                       "role_protection": lambda x: x in ("unprotected", "model", "effort", "model_effort") and type(x) is str,
                       "deny_supported": lambda x: type(x) is bool, "rewrite_supported": lambda x: type(x) is bool,
-                      "original_model": safe_id, "original_effort": optional_effort}
+                      "original_model": safe_model_id, "original_effort": optional_effort}
         for name, predicate in predicates.items():
             value = getattr(self, name)
             if type(value) is Fact and value.known and type(value.scope) is CallScope and value.scope != self.scope:
@@ -88,7 +88,7 @@ class HostSnapshot:
             return "invalid_host_facts"
         names = []
         for target in self.targets:
-            if type(target) is not TargetFacts or not safe_id(target.model):
+            if type(target) is not TargetFacts or not safe_model_id(target.model):
                 return "invalid_host_facts"
             names.append(target.model)
             tests = [(target.available, lambda x: type(x) is bool),
@@ -135,11 +135,11 @@ def synthetic_legacy_snapshot(proposal, value):
         targets.append(TargetFacts(name, availability, efforts, inherited))
     baseline = value.get("original_resolution_known") is True
     return HostSnapshot(scope, True,
-        parent_model=known(value["main_model"]) if safe_id(value.get("main_model")) else Fact(),
+        parent_model=known(value["main_model"]) if safe_model_id(value.get("main_model")) else Fact(),
         role_protection=protected,
         deny_supported=known(value["deny_supported"]) if type(value.get("deny_supported")) is bool else Fact(),
         rewrite_supported=rewrite,
-        original_model=known(value["original_model"]) if baseline and safe_id(value.get("original_model")) else Fact(),
+        original_model=known(value["original_model"]) if baseline and safe_model_id(value.get("original_model")) else Fact(),
         original_effort=known(value["original_effort"]) if baseline and "original_effort" in value else Fact(),
         targets=tuple(targets))
 

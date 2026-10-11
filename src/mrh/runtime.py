@@ -5,7 +5,7 @@ from .codex import handle_event
 from .settings import read, workspace_allowed
 from .settings_schema import SettingsError
 from .typesafe import classifier_from_config
-from .types import safe_id
+from .types import safe_id, safe_model_id
 from .facts import CallScope, Fact, HostSnapshot, synthetic_legacy_snapshot
 from .types import Proposal
 from .owned import canonical_path
@@ -26,7 +26,7 @@ class SupportedHostResolver:
 
 def partial_hook_snapshot(event, synthetic=False):
     scope = CallScope.for_hook(event)
-    parent = Fact.observed(scope, event["model"], "canonical-hook-model") if safe_id(event.get("model")) else Fact()
+    parent = Fact.observed(scope, event["model"], "canonical-hook-model") if safe_model_id(event.get("model")) else Fact()
     workspace = Fact()
     try:
         if isinstance(event.get("cwd"), str):

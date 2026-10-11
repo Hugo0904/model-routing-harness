@@ -25,7 +25,7 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
     if not getattr(stdin, 'isatty', lambda: False)():
         stdout.write('Model selection needs an interactive terminal. No changes saved.\n')
         return 2
-    provider = provider or catalog.CodexCatalog()
+    provider = provider or catalog.ToolCatalog()
     discovery = discovery or catalog.discover
     describe = describe or catalog.describe_tool
     registry = Registry(root)
@@ -165,7 +165,7 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
             if step == 'candidate':
                 if candidates is None:candidates = discovery()
                 if not candidates:
-                    note('No supported installed tool found. No binding created. Codex public model/list is required; Claude/Gemini catalogs are unsupported.')
+                    note('No supported installed tool found. No binding created. Codex model/list and tested Claude CLI metadata are supported; Gemini catalog is unsupported.')
                     return 2
                 try:
                     index = choose('FIRST USE  /  choose an installed tool', [
@@ -274,7 +274,9 @@ def select(root, tier, *, stdin, stdout, width, color, bind=False, associate=Non
                 if current.get('model') and (old is None or old.state != 'available'):
                     unavailable_state = 'confirmed retired: '+old.retirement_ref if old and old.state == 'retired' else 'unavailable in this list/scope; global retirement is unconfirmed'
                     note('Saved model '+current['model']+' is '+unavailable_state+'. Old settings/history remain; choose a replacement explicitly.')
-                options = [(m.label+' ('+m.id+')',m.id) for m in snapshot.models if m.state == 'available']
+                options = [(m.label+' ('+m.id+')'+
+                            (' [resolved: '+m.resolved_model+']' if m.resolved_model and m.resolved_model != m.id else ''),m.id)
+                           for m in snapshot.models if m.state == 'available']
                 if not options:
                     note('No selectable model. Existing policy is preserved; no automatic replacement.')
                     step = 'no_model'

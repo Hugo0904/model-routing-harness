@@ -39,6 +39,23 @@ class OperatorStopTests(unittest.TestCase):
         self.assertNotIn('updatedInput',out)
         self.assertEqual(classifier.calls,1)
 
+    def test_context_suffix_target_retains_stop_and_immutable_history(self):
+        """A real CLI request-ID syntax does not weaken the same-call stop."""
+        with tempfile.TemporaryDirectory(prefix='mrh-context-stop-') as root:
+            store=Store(Path(root)/'events.sqlite');event=self.event()
+            target='opus[1m]';facts=self.facts(event)
+            facts=replace(facts,targets=(replace(facts.targets[0],model=target),))
+            policy=dict(self.policy(),fixed={'model':target,'effort':'high'})
+            classifier=ScriptedClassifier([Classification('Top',.9)])
+            first=handle_event(event,store,candidate=True,classifier=classifier,policy=policy,capabilities=facts)
+            self.assertEqual(first['hookSpecificOutput']['permissionDecision'],'deny')
+            self.assertIn(target,first['hookSpecificOutput']['permissionDecisionReason'])
+            restored=replace(facts,targets=(replace(facts.targets[0],available=Fact.observed(facts.scope,True,'synthetic-stop-facts')),))
+            second=handle_event(event,store,candidate=True,classifier=classifier,policy=policy,capabilities=restored)
+            self.assertEqual(second['hookSpecificOutput']['permissionDecision'],'deny')
+            self.assertEqual(classifier.calls,1)
+            self.assertEqual(store.stats(synthetic=True)['stopped_targets'],{target:1})
+
     def test_cached_child_stop_is_latched_without_reclassifying_or_rewriting_history(self):
         with tempfile.TemporaryDirectory(prefix='mrh-stop-') as root:
             store=Store(Path(root)/'events.sqlite')

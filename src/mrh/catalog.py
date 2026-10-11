@@ -13,11 +13,12 @@ import queue
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 
-from .types import safe_id
+from .types import safe_id, safe_model_id
 
 
 class CatalogError(ValueError):
@@ -31,6 +32,7 @@ class Model:
     efforts: tuple = ()
     state: str = "available"
     retirement_ref: str | None = None
+    resolved_model: str | None = None
 
 
 @dataclass(frozen=True)
@@ -58,7 +60,9 @@ class Catalog:
             raise CatalogError("catalog_invalid")
         names = set()
         for m in self.models:
-            if type(m) is not Model or not safe_id(m.id) or m.id in names or not isinstance(m.label, str) or len(m.label) > 256:
+            if type(m) is not Model or not safe_model_id(m.id) or m.id in names or not isinstance(m.label, str) or len(m.label) > 256:
+                raise CatalogError("catalog_invalid")
+            if m.resolved_model is not None and not safe_model_id(m.resolved_model):
                 raise CatalogError("catalog_invalid")
             names.add(m.id)
             if type(m.efforts) is not tuple or len(m.efforts) > 32 or len(set(m.efforts)) != len(m.efforts) or not all(safe_id(e) for e in m.efforts):
@@ -117,7 +121,7 @@ def discover():
             except (OSError, ValueError, KeyError):
                 continue
         candidates.append({'tool': tool, 'executable': str(p), 'label': tool.title(),
-                           'supported': tool == 'codex'})
+                           'supported': tool == 'codex' or (tool == 'claude' and sys.platform == 'darwin')})
     if os.name == 'posix':
         p = Path('/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex')
         if p.is_file() and not any(x['executable'] == str(p.resolve()) for x in candidates):
@@ -215,6 +219,11 @@ class CodexCatalog:
 
 
 def describe_tool(candidate):
+    if candidate['tool'] == 'claude':
+        from .claude_catalog import ClaudeCatalog
+        return ClaudeCatalog().describe(candidate)
+    if candidate['tool'] != 'codex':
+        raise CatalogError('tool_catalog_unsupported')
     digest = executable_hash(candidate['executable'])
     with tempfile.TemporaryDirectory(prefix='mrh-tool-version-') as tmp:
         env = {'PATH': os.defpath, 'HOME': tmp, 'CODEX_HOME': tmp, 'TMPDIR': tmp, 'LANG': 'en_US.UTF-8'}
@@ -223,3 +232,14 @@ def describe_tool(candidate):
     if result.returncode or not result.stdout.strip().startswith('codex-cli '):
         raise CatalogError('tool_unavailable')
     return {**candidate, 'version': result.stdout.strip(), 'executable_sha256': digest}
+
+
+class ToolCatalog:
+    """Tool dispatch only; consumers and core do not know provider transports."""
+    def refresh(self, binding):
+        if binding['tool'] == 'codex':
+            return CodexCatalog().refresh(binding)
+        if binding['tool'] == 'claude':
+            from .claude_catalog import ClaudeCatalog
+            return ClaudeCatalog().refresh(binding)
+        raise CatalogError('tool_catalog_unsupported')
