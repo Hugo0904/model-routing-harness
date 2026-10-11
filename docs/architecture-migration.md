@@ -4,7 +4,7 @@ D51 的 source、tests、scripts 已實體分層，兩個 zip 收檔器已修正
 
 中立 `classification_spec` 保留原 pins、ordered rubric 與 instruction bytes；兩家 catalog 共用原封不動的 `isolation_profile`。`ConfigurationScope` 仍在 host adapter，以原 exact-type admission、分類前後與 replay 重核處理；這是 A 在 D51 接受的 narrow dependency exception，不存在待做的 trust redesign。
 
-目前尚待 B 用既有 cache 建置新 bundle，並跑一次既有無模型 packaged subscription entry 檢查。使用者啟用仍指 last-accepted E19，未更新／讀取保留的 authenticated home、plugin、settings、registry、pointer 或 session。歷史證據與 accepted dist 原檔維持不變。
+B 已完成 D52 的 E20封裝與同session安裝讀回：既有cache、source/archive集合equality、44 modules／48 records及2,059 manifest records通過指定無模型consumer；原兩個Hook在新E20 Python命令下經官方trust。原settings／revision／registry／DB bytes及登入、home/state/refs保留，installed disabled launcher中立且DB不變，pointer成功後才改entry。使用者啟用入口現為E20，歷史E19/evidence保留。詳見 [E20 consumer](evidence/e20-bundle-entry.json)和[同目標安裝](evidence/e20-retained-install.json)；A最後接受待本次交付，不把source／package完成算全R1。
 
 ## D51 驗證與 B 接續
 
@@ -22,7 +22,7 @@ D51 的 source、tests、scripts 已實體分層，兩個 zip 收檔器已修正
 
 六個 case 同輪 1.669 秒通過；完整 suite／vendor CLI／model／build／native trust／UI沒有執行。Subscription instruction SHA256：`d9768c75eb2855f83f1121ce03841e20a50dcc6bd4b94b02a88909fceb9c1fee`。其他原 native ordinary／Fixed／Main／Goal、parser、cancellation、Terminal、vendor isolation 證據沿用，沒有把其舊 source hash 改成新版。
 
-B 的入口為 `scripts/packaging/build_standalone.py`，以既有 pin/cache、**新的 output/archive 路徑**建立候選；root `mrh_build.py` 仍供 wheel。完成新 application/runtime archive 的 manifest/source identities 後，只跑 `scripts/verification/packaging/verify_subscription_bundle.py --bundle <new-bundle> --binary <same-official-pin> --output <new-evidence>`。該既有 consumer 已更新 canonical imports、nested completeness與 runtime comparison；其 guard/CAS/legacy history使用自有 disposable home，沒有 real classifier calls。不要讓新 runtime hash 去與歷史已接受 runtime 比較成相同；舊 manifest／dist 保留。是否將新套件套用到 retained same-session plugin，仍由 A 的 B 整合指派決定；C 沒有做那個操作。
+B 的入口為 `scripts/packaging/build_standalone.py`，以既有 pin/cache、**新的 output/archive 路徑**建立候選；root `mrh_build.py` 仍供 wheel。完成新 application/runtime archive 的 manifest/source identities 後，只跑 `scripts/verification/packaging/verify_subscription_bundle.py --bundle <new-bundle> --binary <same-official-pin> --output <new-evidence>`。該既有 consumer 已更新 canonical imports、nested completeness與 runtime comparison；其 guard/CAS/legacy history使用自有 disposable home，沒有 real classifier calls。不要讓新 runtime hash 去與歷史已接受 runtime 比較成相同；舊 manifest／dist 保留。C 沒有操作 live環境；後續 B 已按 A D52 指派完成E20／same-session plugin整合。上方現況為準，這段是C交接時的範圍。
 
 ## 開發舊路徑對照
 

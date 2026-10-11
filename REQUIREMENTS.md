@@ -1,6 +1,12 @@
 # 開發目標：獨立、多 CLI 相容的子代理分級器
 目標 ID：MRH-001
 
+## 目前交付狀態（2026-10-12）
+
+現有本機入口為 E20／0.3.0：source／tests／scripts按責任分層，舊native ordinary／Fixed／Main／same-Goal fresh分類證據已由A接受。新版以固定cache建置、指定無模型packaged consumer及同一已登入home的實際安裝／trust／保存讀回已完成，操作見 [quickstart](docs/quickstart.md)。MRH目前停用／外送禁止，登入和歷史保留；沒有新model call或改原保護。
+
+下方E9R等分數／接受表是各source當時的歷史快照，不代表當前全目標完成。Desktop／原global採用、自主Goal排程、其他宿主及原R1/R2未接受義務保持原條件／分母，沒有宣稱100%。
+
 ## 一、任務與合作方式
 
 你是本目標的實作代理，負責環境盤點、開發、測試與本機 Git 版控。

@@ -1,14 +1,14 @@
 # Model Routing Harness
 
-子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通切換、Fixed 較高 configured child／結果與同 Goal 跨回合重新分級；A 也已接受 Luna parent 的真 Top Main 拒絕、無 child 與同 parent 完成。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
+子代理任務分級器與終端工具，現有獨立套件為 **E20／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通切換、Fixed 較高 configured child／結果與同 Goal 跨回合重新分級；A 也已接受 Luna parent 的真 Top Main 拒絕、無 child 與同 parent 完成。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
 
 Mac arm64 可直接執行：
 
 ```sh
-/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh --help
+/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e20-macos-arm64/mrh --help
 ```
 
-[啟用與停用的精確指令](docs/quickstart.md)使用已登入保留的 `/private/tmp/mrh-e19-d45-mrc5zw54` home、同一 `state/settings.json` 與 model registry。套件自帶 Python，不需安裝 SDK。MRH 目前 disabled／外送 denied；普通模型、Top Main／Fixed 可用方向鍵與 Enter 設定，保存前核對最新清單，取消保留舊政策。設定保存不會自動啟用路由。
+[啟用與停用的精確指令](docs/quickstart.md)使用已登入保留的 `/private/tmp/mrh-e19-d45-mrc5zw54` home、同一 `state/settings.json` 與 model registry。source／tests／scripts 已按責任分層，E20 已用現有 cache 封裝並在同一安裝讀回；套件自帶 Python，不需安裝 SDK。MRH 目前 disabled／外送 denied；普通模型、Top Main／Fixed 可用方向鍵與 Enter 設定，保存前核對最新清單，取消保留舊政策。設定保存不會自動啟用路由。
 
 [本次真實證據與限制](docs/e19-subscription-classifier.md)分清 CLI usage、configured model、provider identity、Main／Fixed／Goal 與剩餘義務。模型清單支援不等於 Claude／Gemini 路由已接通。完整需求與 A 接受紀錄維持在 [REQUIREMENTS.md](REQUIREMENTS.md)、[docs/MRH-001.md](docs/MRH-001.md)。以下開發與歷史證據保留其原本來源，不視為新版真實驗收。
 

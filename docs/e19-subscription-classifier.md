@@ -4,14 +4,14 @@
 
 ## 現在可操作的入口
 
-獨立候選位於 `dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh`；內含既有 pin 的私人 Python，不需另外安裝 SDK、Python 或橋接服務。
+目前入口位於 `dist/model-routing-harness-0.3.0-e20-macos-arm64/mrh`；內含既有 pin 的私人 Python，不需另外安裝 SDK、Python 或橋接服務。
 
 ```sh
-MRH_E19_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/mrh
-"$MRH_E19_ENTRY" --help
-"$MRH_E19_ENTRY" model light
-"$MRH_E19_ENTRY" settings show --path /absolute/owned-profile/settings.json
-"$MRH_E19_ENTRY" stats --settings /absolute/owned-profile/settings.json --details
+MRH_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e20-macos-arm64/mrh
+"$MRH_ENTRY" --help
+"$MRH_ENTRY" model light
+"$MRH_ENTRY" settings show --path /absolute/owned-profile/settings.json
+"$MRH_ENTRY" stats --settings /absolute/owned-profile/settings.json --details
 ```
 
 選 AI、子模型、推理強度到 Save 的入口仍是 `model`。以上 `/absolute/owned-profile` 須換成同一選單綁定的實際 profile；不能另外建立設定後誤認為同一份。新建 profile 仍 disabled、task 外送 denied、工作區清單空白，分級逾時預設 20 秒；舊 profile 的 provider、逾時、映射、權限及歷史均不自動轉換。
@@ -19,7 +19,7 @@ MRH_E19_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness
 若操作者明確要把既有 profile 改用訂閱，原 CAS 介面會一起保存 provider 與其固定分級器模型，不更動其他欄位，也不啟用 Hook：
 
 ```sh
-"$MRH_E19_ENTRY" settings configure --path /absolute/owned-profile/settings.json --provider codex_subscription --expected-revision <current_revision>
+"$MRH_ENTRY" settings configure --path /absolute/owned-profile/settings.json --provider codex_subscription --expected-revision <current_revision>
 ```
 
 保留 `--provider typesafe` 給原來明確使用 TypeSafe 的 profile；沒有 provider fallback。畫面會分別標示分級來源／分級器模型與四級子代理設定。
@@ -129,3 +129,20 @@ D48 只做一個尚缺的 Luna Main 回合，同 root/auth/pointer/bundle，以�
 已停止本次 native process（exit 0）、CAS disable／export-deny，僅把 owned parent model／effort 恢復原 Sol6.1／low；Main policy、其他設定、mappings／rates／history 維持原值。same scope reprepare／official refresh 後 cache integrity 和原兩個 trusted MRH Hook 讀回通過，same-home public status 仍 ChatGPT。沒有 logout／root 重建或刪除／observer／私有驗收 session 讀取／新 Goal／bundle rebuild；原及新 refs、state、home、workspace、model registry 與 pointer 都保留到整體成果驗收。[同目標恢復與保留](evidence/e19-d48-retained-session.json)。
 
 README／[啟用指令](quickstart.md)只更新接受狀態與本回 Main 結果；既有已驗操作指令／command matrix 沿用，不為文字狀態重跑。A 已於 D50 接受這份 Main 證據，受測的 ordinary／Fixed／Main／Goal CLI 鏈已齊。原未知 Hook input 診斷、Desktop／global／正式採用、自主 Goal 排程和完整 R1 分母／界線不變；本頁不自行把整個任務標完成。
+
+
+## E20／D52：責任分層的新套件與同 session 安裝
+
+C 的 `2ec1f6fd668b74e4a41c470deb674e043e63c313` 完成 routing、application、adapters、infrastructure、presentation 分層及 scripts/tests 按用途分類；A 已接受六項必要 checks、268 個 discovery identities 與未變的 classifier／scope／catalog 契約。B 只補 existing packaged checker 的 source→archive module-path 集合 equality，先提交 `efbbf664a1d679c1f618d51966542c6a48e912ca`，再以原固定 cache 建新 E20／0.3.0，沒有下載、覆蓋 E19 或改 pins。[建置](evidence/e20-build.json)。
+
+E20 archive SHA256 `9b7d51d1047b00074f7914377df31b57689b8221667bc02273c6f98f22a4a44e`，26,819,275 bytes；manifest SHA256 `3e503b112aa28ce1069aa5535662e6706e27eff9efd6ba31e3dba10d2f52ddbd`。shipped source identity 為 `efbbf664a1d679c1f618d51966542c6a48e912ca`，44 Python modules／48 application records、2,059 manifest records，CPython 3.11.17／19 notices 沿原 pins。
+
+只執行一次指定無模型 packaged consumer，source／archive 路徑集合及所有 bytes、完整 manifest、shipped entry／private runtime、recursive importlib resources、disabled／recursion guard、home instructions 在 attempts 前拒用、provider/CAS/policy/permission 保存與 synthetic 舊歷史都通過。耗時 6.340 秒，temporary root 已移除，entry 後 manifest 不變，**0 real classifier calls／0 real test turns**。未重跑 C 六checks、原native模型或UI矩陣。[套件 consumer](evidence/e20-bundle-entry.json)。
+
+same retained root 的新 `binding.python` 已指向 E20 私有 Python，prepared／actual installed runtime SHA256 為 `e7e159c98942089cf2a3bc22a8ce6865a16778a8a6f0dcf6d36eb96a296c13a7`；這是新版 nested runtime，沒有冒稱舊 E19 hash。官方 plugin refresh 後只剩原兩個 MRH Hook，新命令原為 modified，透過官方 trust UI 重新 review，最後公開讀回均 trusted。[refresh 前讀回](evidence/e20-upgrade-pretrust.json)、[官方 trust](evidence/e20-trust.json)。
+
+同目標 settings bytes／revision、registry／profile metadata、MRH DB bytes／history counts完全不變。Sol6.1／low／Main、disabled／export denied保持原值，scope check通過；public login status仍 ChatGPT，原及新session/native refs／counters／home／workspace／state均保留。真正 installed launcher用一次良性 disabled envelope回 `{}`，DB hash不變；這是disabled consumer，沒有假裝native模型驗收。所有 owned readback／trust程序結束，pointer在成功後**只**把entry改為E20。[同 session 安裝與保留](evidence/e20-retained-install.json)。
+
+分開記錄時間：consumer 6.340 秒；安裝／官方 trust／讀回窗口 105.034 秒。完整 build elapsed未於程序開始記錄，不為計時重建；檔案系統 staged-bundle birth 至 archive完成窗口為15.285秒，排除cache核對／最後hash，不能當完整build耗時。
+
+目前實際使用指令以 [quickstart](quickstart.md) 的 E20入口／同 settings及registry為準。ordinary／Fixed／Main／同Goal後續分級的受測pinned CLI證據由A接受，移動source沒有再花模型額度。原未知Hook input、Desktop/global正式採用、自主Goal排程、其他未支持宿主和wholeR1保持界線；這次是本機新版封裝／同session讀回，不宣稱100%或公開發布。
