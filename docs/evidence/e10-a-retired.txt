@@ -1,0 +1,138 @@
+SYNTHETIC acceptance fixture. No actual outage/retirement/account is asserted.
+Owned settings readback: /private/tmp/mrh-a-e10-H0Pn7w/mrh-profile-e5eaa51107474ebbbb8b65ccfaab8ddd/settings.json
+  Loaded bound tool: SYNTHETIC E10 fixture
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 1
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: fixture-old-id
+    Effort: high
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: synthetic:E10:retired /
+  synthetic-E10-fixture / synthetic
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Saved model fixture-old-id is confirmed retired:
+  synthetic:retirement-notice. Old settings/history
+  remain; choose a replacement explicitly.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+  > 1. Fixture Light (fixture-light-id)
+    2. Fixture Top (fixture-top-id)
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+  > 1. inherit (resolved effort remains unconfirmed) [
+  current]
+    2. low
+    3. high
+
+  >
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed) [
+  current]
+  > 2. low
+    3. high
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Light: fixture-old-id / high -> fixture-light-id /
+  low
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+  Saved.
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 2
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: fixture-light-id
+    Effort: low
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+

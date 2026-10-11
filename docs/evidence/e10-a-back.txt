@@ -1,0 +1,86 @@
+  Loaded bound tool: Codex
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 1
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: gpt-6-luna
+    Effort: low
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: codex:model-list:isolated-defaults /
+  codex-cli 0.159.3 / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. GPT-6.1-Sol (gpt-6.1-sol)
+    2. GPT-6-Astra (gpt-6-astra)
+    3. GPT-6-Sol (gpt-6-sol)
+  > 4. GPT-6-Luna (gpt-6-luna) [current]
+    5. GPT-5.6-Sol (gpt-5.6-sol)
+    6. GPT-5.6-Terra (gpt-5.6-terra)
+    7. GPT-5.6-Luna (gpt-5.6-luna)
+    8. GPT-5.5 (gpt-5.5)
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed)
+  > 2. low [current]
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+
+  >
+  Back. No policy changes saved.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  TIER
+
+  > 1. Light
+    2. Small
+    3. Mid
+    4. Top
+
+  >
+  Cancelled. No policy changes saved.
