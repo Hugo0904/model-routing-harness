@@ -1,6 +1,6 @@
 # 啟用已驗證的本機 CLI 路徑
 
-使用現有 E19 獨立套件與已登入、保留的同一 home，不需 Python、SDK 或 API key。普通便宜模型切換已由 A 驗收。D47 另觀察同一 Goal 的兩回 fresh classification，以及 Top Fixed 的較高模型 child／結果；Main 的真 Top deny 尚未命中，Fixed 的 active 目標讀回仍有缺口。完整 R1、Desktop／原全域 home 與自主 Goal 續跑尚未完成，見 [E19 實際證據](e19-subscription-classifier.md)。目前 MRH disabled／task 外送 denied，啟用要由以下明確指令進行。
+使用現有 E19 獨立套件與已登入、保留的同一 home，不需 Python、SDK 或 API key。普通便宜模型切換、同 Goal 的兩回 fresh classification／lifecycle，以及 Top Fixed 的較高 configured child／結果已由 A 驗收。D48 已觀察 Top/0.99、native Main blocked、沒有 child 與同一 Luna parent 完成，最後證據已交 A。完整 R1、Desktop／原全域 home 與自主 Goal 續跑尚未完成，見 [E19 實際證據](e19-subscription-classifier.md)。目前 MRH disabled／task 外送 denied，啟用要由以下明確指令進行。
 
 ## 在終端貼上這組入口
 

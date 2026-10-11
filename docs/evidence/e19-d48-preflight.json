@@ -1,0 +1,38 @@
+{
+  "kind": "D48_same_scope_single_luna_main_setup",
+  "same_retained_root": "/private/tmp/mrh-e19-d45-mrc5zw54",
+  "public_chatgpt_status": true,
+  "new_login": false,
+  "executor_metadata": {
+    "thread_id": "01a12265-1821-76b3-be93-acf74e1485c9",
+    "turn_id": "01a12c42-614e-7c81-9719-5aae53b47904",
+    "model": "gpt-6.1-sol",
+    "thinking": "xhigh",
+    "source": "latest_recorded_turn via approved metadata-only read_settings.py"
+  },
+  "public_task_source": {
+    "file": "docs/evidence/e19-d47-fixed.json",
+    "call_id": "exec-8b1b088b-e1ec-41e2-b344-e80e791d5094",
+    "field": "collabAgentToolCall.prompt",
+    "message": "Design a bounded hypothetical protocol for two regions sharing limited inventory, an asynchronous payment service and a shipping service. Messages may duplicate, reorder and arrive after a network partition. Strict no-oversell, accepting reservations in both isolated regions, and immediate irreversible shipping conflict. State an invariant, which requirement must be relaxed, ownership and commit rules, and recovery. Limit the answer to 220 words. Wait for its result and report it. Use no commands, files, web access, real orders or external actions."
+  },
+  "source_not_reconstructed": true,
+  "task_tier_confidence_instructions_absent": true,
+  "parent_model": "gpt-5.6-luna",
+  "parent_effort": "low",
+  "top_mode": "Main",
+  "same_scope_refreshed": {
+    "contract": "official-0.159.3-local-stdio-config-pinned",
+    "configuration_fingerprint": "f9387c4ebad27d598d4e56f6090f5d4a4bcadb1367bc1d103e2c90d830ffff6c",
+    "workspace": "/private/tmp/mrh-e19-d45-mrc5zw54/work",
+    "assurance": "inspected-configuration",
+    "native_invocation": "unverified until Hook execution"
+  },
+  "same_installed_binding_runtime_verified": true,
+  "original_config_other_keys_preserved": true,
+  "single_new_invocation_limit": 1,
+  "actual_prior_invocations": 8,
+  "private_test_rollout_read": false,
+  "observer_reinstalled": false,
+  "product_changed": false
+}

@@ -1,0 +1,137 @@
+{
+  "kind": "D48_same_target_restored_and_retained",
+  "root": "/private/tmp/mrh-e19-d45-mrc5zw54",
+  "original_model_effort_restored": [
+    "gpt-6.1-sol",
+    "low"
+  ],
+  "original_policy_unchanged": true,
+  "unrelated_config_keys_preserved": true,
+  "settings": {
+    "schema_version": 1,
+    "owner": "org.model-routing-harness.settings.v1",
+    "revision": 25,
+    "enabled": false,
+    "task_export_permitted": false,
+    "allowed_workspaces": [
+      "/private/tmp/mrh-e19-d45-mrc5zw54/work"
+    ],
+    "provider": "codex_subscription",
+    "classifier_model": "gpt-6-luna",
+    "policy": {
+      "top_mode": "Main",
+      "timeout_seconds": 20,
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "gpt-5.6-luna"
+        },
+        "Mid": {
+          "effort": "low",
+          "model": "gpt-5.6-luna"
+        },
+        "Small": {
+          "effort": "low",
+          "model": "gpt-5.6-luna"
+        }
+      },
+      "rates": {
+        "gpt-5.6-luna": {
+          "currency": "credits",
+          "unit": "per-million-tokens",
+          "service": "codex-standard-credit",
+          "source_ref": "openai-codex-pricing-2026-10-11",
+          "components": {
+            "cached_input": 0.5,
+            "input": 5,
+            "output": 30
+          }
+        },
+        "gpt-6.1-sol": {
+          "currency": "credits",
+          "unit": "per-million-tokens",
+          "service": "codex-standard-credit",
+          "source_ref": "openai-codex-pricing-2026-10-11",
+          "components": {
+            "cached_input": 2.5,
+            "input": 50,
+            "output": 250
+          }
+        }
+      }
+    }
+  },
+  "configuration_scope": {
+    "contract": "official-0.159.3-local-stdio-config-pinned",
+    "configuration_fingerprint": "53f0b593abc14e3ba715e6859d2b9a9cccde711afb9005a22ed6017add763cec",
+    "workspace": "/private/tmp/mrh-e19-d45-mrc5zw54/work",
+    "assurance": "inspected-configuration",
+    "native_invocation": "unverified until Hook execution"
+  },
+  "installed_runtime_binding_integrity_verified": true,
+  "original_two_hooks_trusted": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/tmp/mrh-e19-d45-mrc5zw54/work",
+          "hooks": [
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/runtime/bin/python3.11 -I -B \"/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:e1f6c96f0eb874537fb47a2156e7eaca655b6bfc0937cc9420d3914cc7c744ac",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e19-macos-arm64/runtime/bin/python3.11 -I -B \"/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-e19-d45-mrc5zw54/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9c15b8b56b93b590b017175c9b2db7fa7477b2982e0f1733c003c5e29d7705a6",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "native_readback_process_exit": 0,
+  "public_same_home_chatgpt_status": true,
+  "logout": false,
+  "root_recreated_or_removed": false,
+  "home_workspace_state_old_and_new_session_refs_retained": true,
+  "no_new_goal": true,
+  "d48_classifier_invocations": 1,
+  "d48_native_turns": 1,
+  "all_batches_classifier_invocations": 9,
+  "private_test_rollout_read": false,
+  "observer_reinstalled": false,
+  "bundle_rebuilt": false,
+  "new_images": 0
+}

@@ -1,6 +1,6 @@
 # Model Routing Harness
 
-子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通模型切換；D47 已觀察同 Goal 跨回合重新分級及 Top Fixed 的較高模型 child／結果，Main 真 Top deny 與 Fixed active 目標讀回仍未完成。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
+子代理任務分級器與終端工具，現有獨立套件為 **E19／0.3.0**。使用 Codex ChatGPT 訂閱分級，不要求 API key；舊 TypeSafe profile 保留。A 已驗收原生普通切換、Fixed 較高 configured child／結果與同 Goal 跨回合重新分級；D48 已觀察 Luna parent 的真 Top Main 拒絕、無 child 與同 parent 完成，待 A 最終驗收。完整 R1、Desktop／正式全域採用與自主 Goal 續跑保持未驗證。
 
 Mac arm64 可直接執行：
 
@@ -69,7 +69,7 @@ mrh config --home /absolute/explicit-codex-home --command /absolute/path/to/mrh 
 | 項目 | 目前證據 |
 |---|---|
 | 共用核心、信心度／顯式模型／Top 政策、冪等紀錄、CLI/JSON | 已實作；E6 每個分支的最小事實及負例經合成 core／公開入口驗證 |
-| Codex Hook／native 控制 | D46 真普通切換已驗收；D47 真 Fixed 較高 configured child／結果已觀察，active 目標讀回缺口保留；Main 尚未命中真 Top deny。E17R 腳本保護證據沿用，Desktop／自主接回未驗證 |
+| Codex Hook／native 控制 | ordinary／Fixed 的 configured child／結果已由 A 驗收；D48 真 Main Top/0.99 native blocked／no-child／同 Luna parent 完成已觀察。E17R 保護證據沿用，Desktop／自主排程未驗證 |
 | 安裝與停用 | 舊共享 hooks.json apply／disable 維持拒寫；新自有 bundle 可準備，兩版 stable native CLI 安裝／trust／移除僅在隔離 home 驗證；正式 home 未修改 |
 | 分級來源與公開設定 | 新設定使用 Codex 訂閱；真 ordinary 切換與 Goal fresh classification 已觀察。舊 TypeSafe factory／HTTP 替身及 settings 保留，真 Jev API 未驗證，沒有自動 fallback |
 | 後續真 Goal 委派 | D47 同一官方 Goal 的兩個 harness 回合各有新訂閱分級與完成結果，Goal 完成及 clear 讀回；自主排程未驗證。原 E4G 腳本 lifecycle 證據保留 |

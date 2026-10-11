@@ -1,6 +1,6 @@
 # E19：Codex 訂閱分級器與真實驗收
 
-新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，使用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。D44 的三次分級與兩個子任務之後，D45 已在第一回 ordinary native turn 實際切換到 gpt-5.6-luna／low，child 與原 parent 都完成排序；公開原生鏈由 A 獨立確認。Hook 原始 message 的診斷捕捉仍缺失。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。這次只驗自有 CLI 環境；MRH 已 disabled／export denied，臨時 observer 已撤回，同一登入／home／workspace／state／parent-child sessions／pointer 保留到 A 驗收整體成果。原正式 home 的全域指令限制與完整 R1 仍保留。
+新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，使用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。D44 的三次分級與兩個子任務之後，D45 已在第一回 ordinary native turn 實際切換到 gpt-5.6-luna／low，child 與原 parent 都完成排序；公開原生鏈由 A 獨立確認。D48 另完成 Luna parent 的真 Top Main blocked／no-child／同 parent 答案。Hook 原始 message 的舊診斷捕捉仍缺失。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。這次只驗自有 CLI 環境；MRH 已 disabled／export denied，臨時 observer 已撤回，同一登入／home／workspace／state／parent-child sessions／pointer 保留到 A 驗收整體成果。原正式 home 的全域指令限制與完整 R1 仍保留。
 
 ## 現在可操作的入口
 
@@ -114,3 +114,18 @@ Fixed 首回的 proposal call ID 與公開 legacy collabAgentToolCall ID／recei
 實際操作見 [啟用與停用指令](quickstart.md)：獨立入口、明確同 profile、模型選單、export／enable、官方 `--no-daemon -C` 互動啟動、disable／deny-export／status／stats，以及另選 workspace 的 scope reprepare 說明。shipped parser 的 11 個指令、真 profile reader、startup allowlist、文件 shell 定義與實際 readonly settings／public auth consumer 已核對，沒有再呼叫模型或替其他 workspace 啟用。archive／manifest／application hash 不變。[操作指令驗證](evidence/e19-d47-operator-commands.json)。
 
 這是 pinned local CLI 的已觀察與可操作範圍；原未知 Hook input、Main、Fixed active 目標讀回、Desktop／正式 global adoption、自主 Goal 排程與完整 R1 維持原分母／未完成，不把此單位稱整個任務完成。
+
+
+## D48：Fixed／Goal 接受與 Luna Main 完成
+
+A 的 D48／`b937dc0` 正式接受 D47 的 Goal fresh classification／fulfilled lifecycle、同環境恢復與操作指令，以及 **第一回** Fixed 的同 call configured Sol6.1／low child／結果。公開 started／completed collabAgentToolCall 明列 model／effort，對上真 Top/0.98 proposal／receiver child，再對上同仍運行 process 的 loaded-idle metadata、child/wait 答案和原 Luna parent 完成；原 configured-model/result 要求已滿足。A 撤回其額外的 active-only 時間點要求。歷史 idle、修正 run Mid/0.99 與第四次呼叫照實保留，不改舊 evidence、不拼接不同回合或升格 provider-confirmed。
+
+D48 只做一個尚缺的 Luna Main 回合，同 root/auth/pointer/bundle，以首次 Fixed 的公開 prompt 為來源，請 parent 逐字一次 generic 委派，沒有模型／effort／tier／confidence 注入，也沒有新 Goal。executor metadata-only helper 核得這次 B 的 exact turn `01a12c42-614e-7c81-9719-5aae53b47904` 為 `gpt-6.1-sol/xhigh`；這只確認 executor 設定，不代替原生驗收證據。[準備與公開 task 來源](evidence/e19-d48-preflight.json)。
+
+真分級為 **Top／0.99**，proposal action `return_to_main`、reason `top_main_requested`。public PreToolUse completed 的同 call `exec-f79f60c2-231a-4178-a4de-a2970596196b` 明確為 **blocked**，feedback 指明該委派未執行、應在同 parent 完成且不得另派。沒有 child、沒有替代委派，parent `01a12c4d-8d0e-76a3-b93d-e44f58200b76` completed 實質 inventory/payment/shipping 設計答案；前後仍是 `gpt-5.6-luna／low`。因此也觀察到 Luna 作為 Main 時，Top 工作直接回到該 Luna parent，不偷偷切換主模型。[公開原生鏈](evidence/e19-d48-main-luna.json)、[同 call 收整](evidence/e19-d48-result.json)。
+
+本回觀察 15.682 秒，唯一一個 classifier CLI invocation／native turn；全批次累計 **9** 個 classifier invocations，沒有重跑已接受 ordinary／Fixed／Goal／UI／isolation。classifier CLI usage 為 2,180 input／21 output；public parent final total 為 68,284 input／571 output（reasoning output 89 已含 output）。backend inference identity、實際費用／節省保持未知。[統計](evidence/e19-d48-stats.json)。
+
+已停止本次 native process（exit 0）、CAS disable／export-deny，僅把 owned parent model／effort 恢復原 Sol6.1／low；Main policy、其他設定、mappings／rates／history 維持原值。same scope reprepare／official refresh 後 cache integrity 和原兩個 trusted MRH Hook 讀回通過，same-home public status 仍 ChatGPT。沒有 logout／root 重建或刪除／observer／私有驗收 session 讀取／新 Goal／bundle rebuild；原及新 refs、state、home、workspace、model registry 與 pointer 都保留到整體成果驗收。[同目標恢復與保留](evidence/e19-d48-retained-session.json)。
+
+README／[啟用指令](quickstart.md)只更新接受狀態與本回 Main 結果；既有已驗操作指令／command matrix 沿用，不為文字狀態重跑。現在 ordinary／Fixed／Goal 的接受與 Main 的真實證據已齊，交 A 作此 CLI 鏈最後驗收。原未知 Hook input 診斷、Desktop／global／正式採用、自主 Goal 排程和完整 R1 分母／界線不變；本頁不自行把整個任務標完成。

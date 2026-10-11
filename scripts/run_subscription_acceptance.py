@@ -68,15 +68,15 @@ def curate(event):
     return None
 
 
-def d47_native_turn(rpc, info, pointer, database, parent, prompt):
+def d47_native_turn(rpc, info, pointer, database, parent, prompt, unit='d47'):
     """One new real delegation. No observer, scope facts or inferred answer."""
-    assert current_attempts(database)-info['d47_classifier_baseline']<info.get('d47_classifier_limit',3)
+    assert current_attempts(database)-info[unit+'_classifier_baseline']<info.get(unit+'_classifier_limit',3)
     baseline=len(proposal_rows(database));before_calls=current_attempts(database);offset=len(rpc.events)
     result={'task':prompt,'events':[],'child_metadata':[],'remaining':[]}
     reply=rpc.request('turn/start',{'threadId':parent,'input':[{'type':'text','text':prompt}]})
     assert 'error' not in reply,'native_turn_start_failed'
     turn=reply['result']['turn']['id'];result['turn_id']=turn
-    info['d47_native_turns']+=1;pointer.write_text(json.dumps(info,indent=2)+'\n')
+    info[unit+'_native_turns']+=1;pointer.write_text(json.dumps(info,indent=2)+'\n')
     print(json.dumps({'d47_native_turn_started':turn,'parent':parent}),flush=True)
     done=False;children=set();early=set();reads={};deadline=time.monotonic()+120
     def read_active_child(child):
@@ -138,16 +138,17 @@ def d47_native_turn(rpc, info, pointer, database, parent, prompt):
         if not done:
             try:rpc.request('turn/interrupt',{'threadId':parent,'turnId':turn})
             except Exception:pass
-        info['d47_classifier_calls']=current_attempts(database)-info['d47_classifier_baseline']
+        info[unit+'_classifier_calls']=current_attempts(database)-info[unit+'_classifier_baseline']
         pointer.write_text(json.dumps(info,indent=2)+'\n')
 
 
 def run_d47(pointer, scenario, output):
     info=json.loads(pointer.read_text());root=Path(info['root']);work=Path(info['workspace']);database=Path(info['settings']).parent/'events.sqlite3'
+    unit='d48' if scenario=='main-luna' else 'd47'
     assert root.stat().st_uid==os.getuid() and (root/'.mrh-e19-owned').read_text().startswith('MRH-001 E19')
     assert info['auth_status']=='chatgpt' and info['trust']=='reviewed_via_official_cli'
-    assert info['d47_classifier_calls']<info.get('d47_classifier_limit',3) and not info['observer_registered']
-    if info.get('d47_classifier_limit',3)>3:
+    assert info[unit+'_classifier_calls']<info.get(unit+'_classifier_limit',3) and not info['observer_registered']
+    if unit=='d47' and info.get('d47_classifier_limit',3)>3:
         assert scenario=='fixed' and info.get('d47_corrective_readback_reason')=='legacy_child_identity_not_read_while_active'
     env={'HOME':str(root),'CODEX_HOME':info['home'],'PATH':os.defpath,'TMPDIR':str(root/'tmp'),'LANG':'en_US.UTF-8','NO_COLOR':'1','TERM':'xterm-256color'}
     class Scope:processes=[]
@@ -163,19 +164,20 @@ def run_d47(pointer, scenario, output):
         parent=reply['result']['thread']['id'];result['parent_id']=parent;result['parent_before']=thread_metadata(reply)
         expected='gpt-6.1-sol' if scenario=='goal-main' else 'gpt-5.6-luna'
         assert result['parent_before']['model']==expected and result['parent_before']['reasoningEffort']=='low','configured_parent_mismatch'
-        info.setdefault('d47_thread_refs',[]).append(parent);pointer.write_text(json.dumps(info,indent=2)+'\n')
+        info.setdefault(unit+'_thread_refs',[]).append(parent);pointer.write_text(json.dumps(info,indent=2)+'\n')
         if scenario=='goal-main':
             before=rpc.request('thread/goal/get',{'threadId':parent});assert 'error' not in before and before['result']['goal'] is None
             created=rpc.request('thread/goal/set',{'threadId':parent,'objective':'Complete the bounded hypothetical inventory/payment/shipping design and a subsequent recovery analysis through two explicitly requested fresh delegation turns.','status':'active','origin':'user'})
             goal=require_goal(created,parent,'active');goal_identity={k:goal[k] for k in ('threadId','createdAt','objective')}
             result['goal']={'identity':goal_identity,'create_response':created,'readbacks':[{'stage':'before','response':before}], 'continuation_initiator':'harness_turn_start','autonomous_scheduling_proven':False}
             info['d47_goal_thread_id']=parent;info['d47_goal_state']='active';pointer.write_text(json.dumps(info,indent=2)+'\n')
-        tasks=D47_TASKS if scenario=='goal-main' else D47_TASKS[:1]
+        tasks=(info['d48_public_fixed_prompt'],) if scenario=='main-luna' else D47_TASKS if scenario=='goal-main' else D47_TASKS[:1]
         for index,task in enumerate(tasks):
             if goal_identity:
                 state=rpc.request('thread/goal/get',{'threadId':parent});require_goal(state,parent,'active',goal_identity)
                 result['goal']['readbacks'].append({'stage':'before_turn_'+str(index+1),'response':state})
-            turn=d47_native_turn(rpc,info,pointer,database,parent,d47_prompt(task));result['turns'].append(turn)
+            prompt=('Delegate the following message verbatim exactly once to a generic child, without specifying its model or reasoning effort. If the Hook returns the unexecuted task, complete it in this same parent without any replacement delegation. Otherwise wait for the result and report it. Use no commands, files, web or external actions. Verbatim message:\n'+task) if scenario=='main-luna' else d47_prompt(task)
+            turn=d47_native_turn(rpc,info,pointer,database,parent,prompt,unit=unit);result['turns'].append(turn)
             complete=turn.get('parent_completed',{}).get('params',{}).get('turn',{})
             answers=[item.get('text','') for item in complete.get('items',[]) if item.get('type')=='agentMessage']
             turn['parent_substantive_completion']=complete.get('status')=='completed' and any(len(t.split())>=15 for t in answers)
@@ -204,8 +206,8 @@ def run_d47(pointer, scenario, output):
             try:result.setdefault('goal',{})['state_on_failure']=rpc.request('thread/goal/get',{'threadId':parent})
             except Exception:result.setdefault('goal',{})['state_on_failure']='unknown'
     finally:
-        result['native_process_exit']=rpc.close();info['d47_classifier_calls']=current_attempts(database)-info['d47_classifier_baseline'];pointer.write_text(json.dumps(info,indent=2)+'\n')
-        result.update(elapsed_seconds=round(time.monotonic()-started,3),classifier_calls_d47_total=info['d47_classifier_calls'],all_batches_classifier_calls=info['prior_batch_classifier_calls']+current_attempts(database))
+        result['native_process_exit']=rpc.close();info[unit+'_classifier_calls']=current_attempts(database)-info[unit+'_classifier_baseline'];pointer.write_text(json.dumps(info,indent=2)+'\n')
+        result.update(elapsed_seconds=round(time.monotonic()-started,3),all_batches_classifier_calls=info['prior_batch_classifier_calls']+current_attempts(database));result['classifier_calls_'+unit+'_total']=info[unit+'_classifier_calls']
         output.write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps({'scenario':scenario,'classifications':[t.get('proposals') for t in result['turns']],'remaining':result['remaining'],'failure':result.get('failure'),'elapsed_seconds':result['elapsed_seconds']}),flush=True)
     return result
@@ -320,6 +322,6 @@ def run(pointer,scenario,output):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--pointer',type=Path,required=True)
-    parser.add_argument('--scenario',choices=tuple(PROMPTS)+('goal-main','fixed'),required=True);parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--scenario',choices=tuple(PROMPTS)+('goal-main','fixed','main-luna'),required=True);parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
-    (run_d47 if args.scenario in ('goal-main','fixed') else run)(args.pointer,args.scenario,args.output)
+    (run_d47 if args.scenario in ('goal-main','fixed','main-luna') else run)(args.pointer,args.scenario,args.output)
