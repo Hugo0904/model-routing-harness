@@ -162,6 +162,7 @@ raise SystemExit(cli.main(['model','small','--root',sys.argv[1],'--width','56','
     (PROJECT/'docs/evidence/e13-package.json').write_text(json.dumps(evidence,indent=2)+'\n')
     for name,capture in captures.items():
         text=re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]','',capture)
+        text='\n'.join(line.rstrip() for line in text.splitlines()).rstrip()+'\n'
         (PROJECT/('docs/evidence/e13-'+name+'.txt')).write_text(text)
     print(json.dumps({'seconds':evidence['seconds'],'cleanup_removed':True,'wheel_sha256':evidence['wheel_sha256']}))
 
