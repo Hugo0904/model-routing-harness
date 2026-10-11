@@ -64,7 +64,7 @@ try:
     # Captured stderr is discarded, including Python import tracebacks. A file
     # bounds readback without holding arbitrary failed-runtime output in memory.
     with tempfile.TemporaryFile() as output:
-        args=[python,"-I",str(runtime),"hook","--settings",settings]
+        args=[python,"-I","-B",str(runtime),"hook","--settings",settings]
         if "codex_scope" in binding:args += ["--scope-binding",str(root/"binding.json")]
         process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=output,stderr=subprocess.DEVNULL,start_new_session=True)
         try:
@@ -133,7 +133,7 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         from .codex_scope import check
         check(scope)
     python = str(Path(python or sys.executable).resolve())
-    check = subprocess.run([python, "-I", "-c", "import sys; print('%d.%d'%sys.version_info[:2])"],
+    check = subprocess.run([python, "-I", "-B", "-c", "import sys; print('%d.%d'%sys.version_info[:2])"],
                            env={"PATH": os.defpath}, capture_output=True, text=True, timeout=5, check=True)
     if tuple(map(int, check.stdout.strip().split("."))) < (3, 11):
         raise owned.OwnedError("unsupported_python")
@@ -145,7 +145,7 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         version = "0.3.0"
     runtime = _runtime_archive()
     prefix = "plugins/" + NAME + "/"
-    command = shlex.quote(python) + ' -I "${PLUGIN_ROOT}/launcher.py"'
+    command = shlex.quote(python) + ' -I -B "${PLUGIN_ROOT}/launcher.py"'
     files = {
         ".agents/plugins/marketplace.json": _json({"name": MARKETPLACE, "plugins": [{"name": NAME,
             "source": {"source": "local", "path": "./plugins/" + NAME},

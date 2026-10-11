@@ -115,7 +115,7 @@ def inspect(binary,catalog_path,failure_path=None):
         source=Path(__file__).resolve().parents[1]
         state=root/'state/settings.json';bundle=root/'plugin'
         code="import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.plugin import prepare;print(json.dumps(prepare(sys.argv[2],sys.argv[3],scope_workspace=sys.argv[4],codex_binary=sys.argv[5])))"
-        prepared=command([sys.executable,'-I','-c',code,source/'src',bundle,state,work,binary]);result['prepared']=prepared
+        prepared=command([sys.executable,'-I','-B','-c',code,source/'src',bundle,state,work,binary]);result['prepared']=prepared
         plugin_id='model-routing-harness@model-routing-harness-local'
         command([binary,'--no-daemon','plugin','marketplace','add',bundle,'--json'])
         installed=command([binary,'--no-daemon','plugin','add',plugin_id,'--json']);installed_path=Path(installed['installedPath'])
@@ -126,7 +126,7 @@ def inspect(binary,catalog_path,failure_path=None):
         result['initial_trust']=trust_fixture(binary,env,work,scope,completion=completion)
         bootstrap=root/'scripted-jev.py';bootstrap.write_text(BOOTSTRAP);control=root/'scenario';control.write_text('light');log=root/'events.jsonl'
         hooks=installed_path/'hooks/hooks.json';definition=json.loads(hooks.read_text())
-        command_line=shlex.join([prepared['artifact']['python'],'-I',str(bootstrap),str(runtime),str(state),str(binding),str(control),str(log)])
+        command_line=shlex.join([prepared['artifact']['python'],'-I','-B',str(bootstrap),str(runtime),str(state),str(binding),str(control),str(log)])
         for rows in definition['hooks'].values():
             rows[0]['hooks'][0]['command']=command_line
         hooks.write_text(json.dumps(definition));result['scripted_transport_trust']=trust_fixture(binary,env,work,scope,completion=completion)
@@ -134,7 +134,7 @@ def inspect(binary,catalog_path,failure_path=None):
         policy={'top_mode':'Main','timeout_seconds':1,'fixed':{'model':'gpt-5.6-luna','effort':'low'},
                 'tiers':{'Light':{'model':'gpt-5.6-luna','effort':'low'}},'rates':{'gpt-6.1-sol':rate(2),'gpt-5.6-luna':rate(1)}}
         configure="import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.settings import update;print(json.dumps(update(sys.argv[2],enabled=True,task_export_permitted=True,allowed_workspaces=[sys.argv[3]],policy=json.loads(sys.argv[4]))))"
-        command([sys.executable,'-I','-c',configure,source/'src',state,work,json.dumps(policy)])
+        command([sys.executable,'-I','-B','-c',configure,source/'src',state,work,json.dumps(policy)])
         rpc=Rpc(binary,env,work,scope)
         try:
             rpc.request('initialize',{'clientInfo':{'name':'mrh-e17','version':'1'},'capabilities':{'experimentalApi':True}});rpc.write({'method':'initialized'})
