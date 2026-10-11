@@ -75,3 +75,14 @@ V2 的公開 `subAgentActivity.agentThreadId` 提供實際 child ID；空 legacy
 兩次 Hook 分級低信心是實際模型自報結果，不是解析或網路失敗；沒有把 standalone 0.99 注入到另一個委派，也沒有降低門檻。故真 subscription classifier、真子代理與同 parent 完成已觀測；**普通便宜模型改寫尚未觀測**。Top Main 未命中，Top Fixed、Goal、原 home／App 正式採用、完整 R1 仍未完成。已達原最多三次 classifier 呼叫上限，沒有新增第四次或隱藏重試；native user turns 使用兩次。
 
 同環境完成 disable、export denied、workspace 清空，官方 plugin／marketplace remove 後 list 讀回均無 MRH；官方明確 file-store logout 後 public status 為 `Not logged in`。自有 native processes 已結束，僅本次有 marker 的 root 已刪除；去敏證據保留，正式登入未清理。[撤回讀回](evidence/e19-live-cleanup.json)。沒有為 closure 重跑 51 項有效檢查、E17R 或重建 bundle。
+
+
+## D45 補正的續接環境
+
+D45 另准最多兩次額外的 ordinary native turn／classifier invocation；原三次不歸零。已建立自有 root `/private/tmp/mrh-e19-d45-mrc5zw54`，沿用未變的 E19 bundle、官方 0.159.3 與原 public comparator。MRH disabled、export denied；原正式 home 未改。新的 file-auth home 尚未登入，官方 Chrome 頁面停在選擇帳戶；登入完成前不做模型呼叫。目前本批 classifier／native turn 均為 0。[準備](evidence/e19-d45-setup.json)、[同目標核對](evidence/e19-d45-preflight.json)、[登入續接點](evidence/e19-d45-login-pending.json)。
+
+診斷 observer 是自有 home 中另外安裝的臨時官方 PreToolUse plugin；原 MRH launcher、runtime、binding 逐檔保持原 hash。它只保存指定空白 workspace／session 的 literal 排序 message、call identity、model／effort 的明示與 null 語意，回傳 `{}`，不呼叫模型或網路。五個 inert 案例驗證捕捉範圍及失敗仍中立。[中立檢查](evidence/e19-d45-observer-inert.json)。固定版官方 handlers 並行執行，因此它是觀察點，不提供「先捕捉再准許推論」的排序或 deny gate；不能宣稱阻止另一個 Hook 已開始的推論。
+
+續接使用 ignored pointer `/Users/shawn/Code/model-routing-harness/build/e19-d45-pointer.json`，不讀 auth 檔。本人登入後先以同一環境的 official `login status` 驗證 ChatGPT，再沿既有 `verify_host.trust_fixture` 在這個自有 home 審核兩個已核對的 Hook、限定此 workspace 的 export／enable，執行 `scripts/run_subscription_acceptance.py --pointer build/e19-d45-pointer.json --scenario ordinary --output docs/evidence/e19-d45-ordinary-1.json`。driver 的本批上限為 2、prior batch 為 3；只計 MRH 的 PreToolUse，observer 不算額外委派。保留 actual original input 與 MRH proposal identity 的匹配，以及公開 child loaded metadata、結果、同 parent 完成；public token usage 若實際存在則保留。
+
+第一回使用原 adapter。只有 D45 指定的實際轉換缺陷或完整 benign input 下的 confidence 語意缺口，才能進入同單位的必要修正／一次重建／第二回；這些尚未執行。成功普通路由即停止抽樣；第二回仍失敗也停止。完成單位後才移除診斷 observer、停用 MRH 與程序並核對同目標，保留私人登入 home 待 A 驗收。原未完成 Main／Fixed／Goal／正式採用／完整 R1 義務仍保留。

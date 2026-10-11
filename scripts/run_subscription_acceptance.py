@@ -50,7 +50,7 @@ def curate(event):
         item=params.get('item',{})
         if item.get('type') in ('agentMessage','collabAgentToolCall','subAgentActivity','codeExecution'):
             return {'method':method,'threadId':params.get('threadId'),'turnId':params.get('turnId'),'item':item}
-    if method in ('turn/completed','hook/started','hook/completed','thread/settings/updated'):
+    if method in ('turn/completed','hook/started','hook/completed','thread/settings/updated','thread/tokenUsage/updated'):
         return {'method':method,'params':params}
     return None
 
@@ -59,7 +59,8 @@ def run(pointer,scenario,output):
     info=json.loads(pointer.read_text());root=Path(info['root']);work=Path(info['workspace']);database=Path(info['settings']).parent/'events.sqlite3'
     assert root.stat().st_uid==os.getuid() and (root/'.mrh-e19-owned').read_text().startswith('MRH-001 E19')
     assert info['auth_status']=='chatgpt' and info['trust']=='reviewed_via_official_cli'
-    assert info['test_turns']<3 and 1+current_attempts(database)<3
+    base=info.get('classifier_base_calls',1);limit=info.get('classifier_call_limit',3)
+    assert info['test_turns']<info.get('native_turn_limit',3) and base+current_attempts(database)<limit
     env={'HOME':str(root),'CODEX_HOME':info['home'],'PATH':os.defpath,'TMPDIR':str(root/'tmp'),
          'LANG':'en_US.UTF-8','NO_COLOR':'1','TERM':'xterm-256color'}
     class Scope:processes=[]
@@ -77,6 +78,9 @@ def run(pointer,scenario,output):
         reply=rpc.request('thread/start',{'cwd':str(work)});assert 'error' not in reply,reply
         parent=reply['result']['thread']['id'];result['parent_before']=thread_metadata(reply)
         assert result['parent_before']['model']=='gpt-6.1-sol' and result['parent_before']['reasoningEffort']=='low'
+        if info.get('observer_control'):
+            control=Path(info['observer_control'])
+            control.write_text(json.dumps({'workspace':str(work),'session_id':parent})+'\n');os.chmod(control,0o600)
         baseline=len(proposal_rows(database));offset=len(rpc.events)
         info['test_turns']+=1;pointer.write_text(json.dumps(info,indent=2)+'\n')
         reply=rpc.request('turn/start',{'threadId':parent,'input':[{'type':'text','text':PROMPTS[scenario]}]})
@@ -104,7 +108,7 @@ def run(pointer,scenario,output):
                 break
             if item.get('method')=='turn/completed' and item.get('params',{}).get('threadId')==parent:
                 result['parent_completed']=item;done=True;break
-            if item.get('method')=='hook/started' and len([x for x in rpc.events[offset:] if x.get('method')=='hook/started' and str(x.get('params',{}).get('run',{}).get('eventName')).lower()=='pretooluse'])>1:
+            if item.get('method')=='hook/started' and len([x for x in rpc.events[offset:] if x.get('method')=='hook/started' and str(x.get('params',{}).get('run',{}).get('eventName')).lower()=='pretooluse' and '/model-routing-harness/' in str(x.get('params',{}).get('run',{}).get('sourcePath',''))])>1:
                 result['remaining'].append('unexpected_extra_delegation');break
         if not done:
             result['remaining'].append('parent_not_completed_within_bounded_observation')
@@ -125,6 +129,15 @@ def run(pointer,scenario,output):
         detail=rpc.request('thread/read',{'threadId':parent,'includeTurns':True})
         if 'error' not in detail:result['parent_turns']=detail['result']['thread'].get('turns')
         result['proposals']=proposal_rows(database)[baseline:]
+        if info.get('observer_capture'):
+            capture=Path(info['observer_capture'])
+            rows=[json.loads(line) for line in capture.read_text().splitlines()] if capture.exists() else []
+            result['observed_native_inputs']=[r for r in rows if r['session_id']==parent and r['turn_id']==turn]
+            result['input_identity_matches']=[{'proposal_id':p['id'],'matched':sum(
+                r['session_id']==p['session_id'] and r['turn_id']==p['turn_id'] and r['tool_use_id']==p['tool_call_id']
+                for r in result['observed_native_inputs'])==1} for p in result['proposals']]
+            if not result['observed_native_inputs'] or not all(m['matched'] for m in result['input_identity_matches']):
+                result['remaining'].append('bounded_original_input_not_verified')
         if not children and any(p.get('action')=='request_child' for p in result['proposals']):
             result['remaining'].append('v2_child_identity_missing_from_receiver_and_thread_started_events')
         result['event_methods']=sorted({e.get('method') for e in rpc.events[offset:] if e.get('method')})
@@ -138,9 +151,11 @@ def run(pointer,scenario,output):
         result['proposals']=proposal_rows(database)
     finally:
         result['native_process_exit']=rpc.close()
-        info=json.loads(pointer.read_text());info['classifier_calls']=1+current_attempts(database)
+        info=json.loads(pointer.read_text());info['classifier_calls']=base+current_attempts(database)
         pointer.write_text(json.dumps(info,indent=2)+'\n')
-        result.update(elapsed_seconds=round(time.monotonic()-started,3),classifier_calls_total=info['classifier_calls'],test_turns_total=info['test_turns'])
+        result.update(elapsed_seconds=round(time.monotonic()-started,3),classifier_calls_total=info['classifier_calls'],test_turns_total=info['test_turns'],
+                      prior_batch_classifier_calls=info.get('prior_batch_classifier_calls',0),
+                      all_batches_classifier_calls=info.get('prior_batch_classifier_calls',0)+info['classifier_calls'])
         output.write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps({'scenario':scenario,'proposals':result.get('proposals'),'child_metadata':result['child_metadata'],
                           'remaining':result['remaining'],'failure':result.get('failure'),'elapsed_seconds':result['elapsed_seconds']}),flush=True)

@@ -1,0 +1,10 @@
+{
+  "auth_method": "not_logged_in",
+  "public_status_exit": 1,
+  "auth_storage": "file",
+  "owned_root": "/private/tmp/mrh-e19-d45-mrc5zw54",
+  "raw_auth_read": false,
+  "classifier_calls": 0,
+  "test_turns": 0,
+  "formal_home_changed": false
+}

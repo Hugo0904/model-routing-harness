@@ -1,0 +1,51 @@
+{
+  "kind": "inert_neutral_task_private_observer",
+  "model_calls": 0,
+  "network_calls": 0,
+  "cases": [
+    {
+      "case": "benign",
+      "neutral_output": true,
+      "status": {
+        "observation": "captured"
+      },
+      "bounded_allowed_capture_only": true
+    },
+    {
+      "case": "wrong-session",
+      "neutral_output": true,
+      "status": {
+        "observation": "out_of_scope"
+      },
+      "bounded_allowed_capture_only": true
+    },
+    {
+      "case": "oversized",
+      "neutral_output": true,
+      "status": {
+        "observation": "out_of_scope"
+      },
+      "bounded_allowed_capture_only": true
+    },
+    {
+      "case": "foreign-task",
+      "neutral_output": true,
+      "status": {
+        "observation": "out_of_scope"
+      },
+      "bounded_allowed_capture_only": true
+    },
+    {
+      "case": "status-write-failure",
+      "neutral_output": true
+    }
+  ],
+  "script_sha256": "6fdd4ed50bfa79ec5b1144f83e3fbce7aee8b25409bda7decc763a202bc6b194",
+  "official_sources": {
+    "build/e19-d45-public/dispatcher.rs": "47db17f4eaab89841947d9e7887fbefa6bc40fb41d08e70caab10fd4c1fd0e42",
+    "build/e19-d45-public/engine.rs": "fbee148f9c3287798ecdd641066d56a69d8b4263be727c62615843244c4a6791"
+  },
+  "official_handlers_parallel": true,
+  "observer_is_not_ordering_or_deny_gate": true,
+  "inert_root_removed": true
+}
