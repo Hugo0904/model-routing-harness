@@ -1,0 +1,2493 @@
+{
+  "evidence_kind": "official_installed_hook_real_config_inspection_scripted_jev_and_responses",
+  "real_jev_or_provider": false,
+  "formal_global_changes": false,
+  "host_binary_modified": false,
+  "commands": [
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-I",
+        "-c",
+        "import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.plugin import prepare;print(json.dumps(prepare(sys.argv[2],sys.argv[3],scope_workspace=sys.argv[4],codex_binary=sys.argv[5])))",
+        "/Users/shawn/Code/model-routing-harness/src",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/plugin",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex"
+      ],
+      "exit": 0,
+      "stdout": "{\"status\": \"prepared\", \"native_registration\": \"unverified\", \"hook_trust\": \"unverified\", \"live_routing_ready\": false, \"readiness_reason\": \"native_trust_and_activation_unverified\", \"artifact\": {\"codex_scope\": {\"binary\": \"/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex\", \"binary_sha256\": \"4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878\", \"catalog_sha256\": \"fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b\", \"codex_home\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home\", \"configuration\": {\"agents\": {\"default_subagent_model\": null, \"default_subagent_reasoning_effort\": null}, \"features\": {\"code_mode\": true, \"codex_hooks\": null, \"hooks\": null, \"multi_agent\": true}, \"model\": \"gpt-6.1-sol\", \"model_catalog_json\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/models.json\", \"model_provider\": \"mrh_fixture\", \"model_reasoning_effort\": \"low\", \"provider_fingerprint\": \"00a8e67d0c211947c3420a4f83034f042268a4cc72e952e722219929a3493b94\"}, \"configuration_fingerprint\": \"6012adf065e4e62778627161d824bbd916975330da98a0d438803a8f21686158\", \"contract\": \"official-0.159.3-local-stdio-config-pinned\", \"excluded_overrides\": \"session/turn model-effort-config and dynamic role overrides; not observed by Hook\", \"mode\": \"local-cli-or-app-server-stdio\", \"models\": {\"codex-auto-review\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-5.5\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\"]}, \"gpt-5.6-luna\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-5.6-sol\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-5.6-terra\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6-astra\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6-luna\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-6-sol\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6.1-sol\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-daybreak-blue-latest\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-daybreak-red-latest\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}}, \"version\": \"codex-cli 0.159.3\", \"workspace\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace\"}, \"files\": {\".agents/plugins/marketplace.json\": \"c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6\", \"plugins/model-routing-harness/binding.json\": \"4245470ff7068d1d1b7f382a0683b3acc37f869af888447ad7bc163f6e898fbe\", \"plugins/model-routing-harness/hooks/hooks.json\": \"c5cd7f5cc8dfe412075647ae693ab2c45781ca8c631e1948b1fd21e8d6d33a4a\", \"plugins/model-routing-harness/launcher.py\": \"4cd2f29756559aa8175a94288493268e46e79e8fbcd2fbd25dd16b16a6c3f298\", \"plugins/model-routing-harness/plugin.json\": \"a5a17cf286939c3d7dacf5cf47382d9ed21766c6d1b3ab3ab26906aeeefdec70\", \"plugins/model-routing-harness/runtime.pyz\": \"f5161ec35e519caab3f4d7f7ee083935f481a977c79b886c7a03f79592ed6c7a\"}, \"owner\": \"org.model-routing-harness\", \"plugin_id\": \"model-routing-harness@model-routing-harness-local\", \"python\": \"/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11\", \"python_version\": \"3.11\", \"schema_version\": 1, \"settings_path\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json\", \"version\": \"0.3.0\"}, \"native_commands\": [[\"codex\", \"plugin\", \"marketplace\", \"add\", \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/plugin\", \"--json\"], [\"codex\", \"plugin\", \"add\", \"model-routing-harness@model-routing-harness-local\", \"--json\"], [\"codex\", \"plugin\", \"list\", \"--json\"], [\"codex\", \"plugin\", \"remove\", \"model-routing-harness@model-routing-harness-local\", \"--json\"]], \"next_trust_step\": \"Review the current definitions in the native /hooks UI\", \"removal_state_policy\": \"Native uninstall preserves separate MRH settings and telemetry; no automatic deletion\", \"configuration_scope\": {\"contract\": \"official-0.159.3-local-stdio-config-pinned\", \"configuration_fingerprint\": \"6012adf065e4e62778627161d824bbd916975330da98a0d438803a8f21686158\", \"workspace\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace\", \"assurance\": \"inspected-configuration\", \"native_invocation\": \"unverified until Hook execution\"}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/plugin",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"installedRoot\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/plugin\",\n  \"alreadyAdded\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-I",
+        "-c",
+        "import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.settings import update;print(json.dumps(update(sys.argv[2],enabled=True,task_export_permitted=True,allowed_workspaces=[sys.argv[3]],policy=json.loads(sys.argv[4]))))",
+        "/Users/shawn/Code/model-routing-harness/src",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+        "{\"top_mode\": \"Main\", \"timeout_seconds\": 1, \"fixed\": {\"model\": \"gpt-5.6-luna\", \"effort\": \"low\"}, \"tiers\": {\"Light\": {\"model\": \"gpt-5.6-luna\", \"effort\": \"low\"}}, \"rates\": {\"gpt-6.1-sol\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 2, \"output\": 2}}, \"gpt-5.6-luna\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 1, \"output\": 1}}}}"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema_version\": 1, \"owner\": \"org.model-routing-harness.settings.v1\", \"revision\": 1, \"enabled\": true, \"task_export_permitted\": true, \"allowed_workspaces\": [\"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace\"], \"provider\": \"typesafe\", \"classifier_model\": \"jev-1.13.0\", \"policy\": {\"top_mode\": \"Main\", \"timeout_seconds\": 1, \"tiers\": {\"Light\": {\"effort\": \"low\", \"model\": \"gpt-5.6-luna\"}}, \"fixed\": {\"effort\": \"low\", \"model\": \"gpt-5.6-luna\"}, \"rates\": {\"gpt-5.6-luna\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 1, \"output\": 1}}, \"gpt-6.1-sol\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 2, \"output\": 2}}}}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "remove",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"installed\": [],\n  \"available\": []\n}\n",
+      "stderr": ""
+    }
+  ],
+  "cases": [
+    {
+      "scenario": "light",
+      "parent_id": "01a12b25-2b97-7423-9427-098e9ad892a5",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turn": {
+            "id": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725218,
+            "completedAt": 1791725219,
+            "durationMs": 758
+          }
+        },
+        "emittedAtMs": 1791725219493
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-5.6-luna",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-2e9c-70d3-96f2-30fe614ea388",
+              "call_id": "call-owned-1",
+              "output": "{\"task_name\":\"/root/owned_light\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-2b97-7423-9427-098e9ad892a5",
+            "turn_id": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-26-58-01a12b25-2b97-7423-9427-098e9ad892a5.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_light",
+              "task_name": "owned_light",
+              "fork_turns": "none"
+            },
+            "tool_use_id": "call-owned-1"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "allow",
+              "updatedInput": {
+                "message": "MRH_CHILD_light",
+                "task_name": "owned_light",
+                "fork_turns": "none",
+                "model": "gpt-5.6-luna",
+                "reasoning_effort": "low"
+              }
+            }
+          },
+          "scripted_jev_calls": 1,
+          "key_resolutions": 1,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-2b97-7423-9427-098e9ad892a5",
+            "turn_id": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-26-58-01a12b25-2b97-7423-9427-098e9ad892a5.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_light",
+              "task_name": "owned_light",
+              "fork_turns": "none",
+              "model": "gpt-5.6-luna",
+              "reasoning_effort": "low"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_light\"}",
+            "tool_use_id": "call-owned-1"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turnId": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turnId": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 576,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turnId": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-2e0a-7102-8517-967a6b7d0514",
+          "turn": {
+            "id": "01a12b25-2e26-73f0-9e21-c09ce7ab53e7",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725219,
+            "completedAt": 1791725219,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turnId": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 115,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-2b97-7423-9427-098e9ad892a5",
+          "turn": {
+            "id": "01a12b25-2bac-7b93-8782-7f36fe2fc8c4",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725218,
+            "completedAt": 1791725219,
+            "durationMs": 758
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "main",
+      "parent_id": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+          "turn": {
+            "id": "01a12b25-2ec5-7291-b9ad-85866b5e1e04",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725219,
+            "completedAt": 1791725220,
+            "durationMs": 553
+          }
+        },
+        "emittedAtMs": 1791725220080
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-30e8-7310-906f-23c443e921c2",
+              "call_id": "call-owned-4",
+              "output": "Tool call blocked by PreToolUse hook: MRH Top Main: delegation call-owned-4 was not executed. Continue its original unexecuted subtask in this same parent; do not create a replacement child. The selected main model remains unchanged.. Tool: collaborationspawn_agent"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+            "turn_id": "01a12b25-2ec5-7291-b9ad-85866b5e1e04",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-26-59-01a12b25-2ea8-7c12-bc54-d76f65ee478e.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_main",
+              "task_name": "owned_main",
+              "fork_turns": "none"
+            },
+            "tool_use_id": "call-owned-4"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "deny",
+              "permissionDecisionReason": "MRH Top Main: delegation call-owned-4 was not executed. Continue its original unexecuted subtask in this same parent; do not create a replacement child. The selected main model remains unchanged."
+            }
+          },
+          "scripted_jev_calls": 1,
+          "key_resolutions": 1,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+          "turnId": "01a12b25-2ec5-7291-b9ad-85866b5e1e04",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-4",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+          "turnId": "01a12b25-2ec5-7291-b9ad-85866b5e1e04",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-4",
+            "eventName": "preToolUse",
+            "status": "blocked",
+            "durationMs": 530,
+            "entries": [
+              {
+                "kind": "feedback",
+                "text": "MRH Top Main: delegation call-owned-4 was not executed. Continue its original unexecuted subtask in this same parent; do not create a replacement child. The selected main model remains unchanged."
+              }
+            ]
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-2ea8-7c12-bc54-d76f65ee478e",
+          "turn": {
+            "id": "01a12b25-2ec5-7291-b9ad-85866b5e1e04",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725219,
+            "completedAt": 1791725220,
+            "durationMs": 553
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "explicit-model",
+      "parent_id": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turn": {
+            "id": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 287
+          }
+        },
+        "emittedAtMs": 1791725220400
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-3227-7ed1-bed7-c1f33f21d483",
+              "call_id": "call-owned-6",
+              "output": "{\"task_name\":\"/root/owned_explicit_model\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+            "turn_id": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-30f3-7a03-a6b3-888e4363373c.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit-model",
+              "task_name": "owned_explicit_model",
+              "fork_turns": "none",
+              "model": "gpt-6.1-sol"
+            },
+            "tool_use_id": "call-owned-6"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+            "turn_id": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-30f3-7a03-a6b3-888e4363373c.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit-model",
+              "task_name": "owned_explicit_model",
+              "fork_turns": "none",
+              "model": "gpt-6.1-sol"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_explicit_model\"}",
+            "tool_use_id": "call-owned-6"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turnId": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-6",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turnId": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-6",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 118,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turnId": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-6",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3197-7fd0-b8f0-7227c0dfa649",
+          "turn": {
+            "id": "01a12b25-31b1-78d0-a4e2-f3211f9e9f77",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turnId": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-6",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 116,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-30f3-7a03-a6b3-888e4363373c",
+          "turn": {
+            "id": "01a12b25-310f-7810-bbb9-c7e46ee848a7",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 287
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "explicit-effort",
+      "parent_id": "01a12b25-3232-70a0-9709-6304767b63d0",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turn": {
+            "id": "01a12b25-324e-7532-be21-bf8958f45a39",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 290
+          }
+        },
+        "emittedAtMs": 1791725220722
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "high",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-3369-7bd1-b6ab-5177a535338e",
+              "call_id": "call-owned-9",
+              "output": "{\"task_name\":\"/root/owned_explicit_effort\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-3232-70a0-9709-6304767b63d0",
+            "turn_id": "01a12b25-324e-7532-be21-bf8958f45a39",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-3232-70a0-9709-6304767b63d0.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit-effort",
+              "task_name": "owned_explicit_effort",
+              "fork_turns": "none",
+              "reasoning_effort": "high"
+            },
+            "tool_use_id": "call-owned-9"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-3232-70a0-9709-6304767b63d0",
+            "turn_id": "01a12b25-324e-7532-be21-bf8958f45a39",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-3232-70a0-9709-6304767b63d0.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit-effort",
+              "task_name": "owned_explicit_effort",
+              "fork_turns": "none",
+              "reasoning_effort": "high"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_explicit_effort\"}",
+            "tool_use_id": "call-owned-9"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turnId": "01a12b25-324e-7532-be21-bf8958f45a39",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-9",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turnId": "01a12b25-324e-7532-be21-bf8958f45a39",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-9",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 119,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turnId": "01a12b25-324e-7532-be21-bf8958f45a39",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-9",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-32d6-7382-a693-f546e7005421",
+          "turn": {
+            "id": "01a12b25-32f1-76c3-a94d-e66cff1b1989",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turnId": "01a12b25-324e-7532-be21-bf8958f45a39",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-9",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 117,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3232-70a0-9709-6304767b63d0",
+          "turn": {
+            "id": "01a12b25-324e-7532-be21-bf8958f45a39",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 290
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "special-role",
+      "parent_id": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turn": {
+            "id": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725221,
+            "durationMs": 285
+          }
+        },
+        "emittedAtMs": 1791725221040
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-34a7-7312-9800-d630b940f8ba",
+              "call_id": "call-owned-12",
+              "output": "{\"task_name\":\"/root/owned_special_role\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+            "turn_id": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-3375-7ce3-b348-20f79e3e9d02.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_special-role",
+              "task_name": "owned_special_role",
+              "fork_turns": "none",
+              "agent_type": "explorer"
+            },
+            "tool_use_id": "call-owned-12"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+            "turn_id": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-00-01a12b25-3375-7ce3-b348-20f79e3e9d02.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_special-role",
+              "task_name": "owned_special_role",
+              "fork_turns": "none",
+              "agent_type": "explorer"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_special_role\"}",
+            "tool_use_id": "call-owned-12"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turnId": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-12",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turnId": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-12",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 116,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turnId": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-12",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3417-78b0-8b24-9b0d3225fec6",
+          "turn": {
+            "id": "01a12b25-3432-7ec2-8a9c-7a15d21faecb",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725220,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turnId": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-12",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 114,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3375-7ce3-b348-20f79e3e9d02",
+          "turn": {
+            "id": "01a12b25-3391-7ce3-87e0-a1fd148f971f",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725220,
+            "completedAt": 1791725221,
+            "durationMs": 285
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "failure",
+      "parent_id": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turn": {
+            "id": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725221,
+            "completedAt": 1791725221,
+            "durationMs": 609
+          }
+        },
+        "emittedAtMs": 1791725221682
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-3728-7630-8e89-38eb9a83afce",
+              "call_id": "call-owned-15",
+              "output": "{\"task_name\":\"/root/owned_failure\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+            "turn_id": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-01-01a12b25-34b3-7b20-b244-3b63dbdfde1d.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "task_name": "owned_failure",
+              "fork_turns": "none"
+            },
+            "tool_use_id": "call-owned-15"
+          },
+          "output": {
+            "systemMessage": "MRH: the classifier connection failed; original tool call preserved. Use mrh stats --details with this profile's --settings or --db."
+          },
+          "scripted_jev_calls": 1,
+          "key_resolutions": 1,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+            "turn_id": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-01-01a12b25-34b3-7b20-b244-3b63dbdfde1d.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "task_name": "owned_failure",
+              "fork_turns": "none"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_failure\"}",
+            "tool_use_id": "call-owned-15"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turnId": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-15",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turnId": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-15",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 432,
+            "entries": [
+              {
+                "kind": "warning",
+                "text": "MRH: the classifier connection failed; original tool call preserved. Use mrh stats --details with this profile's --settings or --db."
+              }
+            ]
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turnId": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-15",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3691-7e20-a3be-b1f67e7b5101",
+          "turn": {
+            "id": "01a12b25-36ac-7480-add1-714269e831ce",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725221,
+            "completedAt": 1791725221,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turnId": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-15",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 122,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-34b3-7b20-b244-3b63dbdfde1d",
+          "turn": {
+            "id": "01a12b25-34cf-78b0-824e-566c2b08d61b",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725221,
+            "completedAt": 1791725221,
+            "durationMs": 609
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "invalidated",
+      "parent_id": "01a12b25-3734-7983-8a29-57110ef86c71",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turn": {
+            "id": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725221,
+            "completedAt": 1791725222,
+            "durationMs": 500
+          }
+        },
+        "emittedAtMs": 1791725222214
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "high",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b25-393b-7e42-85b4-7e9c099fe2c1",
+              "call_id": "call-owned-18",
+              "output": "{\"task_name\":\"/root/owned_invalidated\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b25-3734-7983-8a29-57110ef86c71",
+            "turn_id": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-01-01a12b25-3734-7983-8a29-57110ef86c71.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_invalidated",
+              "task_name": "owned_invalidated",
+              "fork_turns": "none"
+            },
+            "tool_use_id": "call-owned-18"
+          },
+          "output": {
+            "systemMessage": "MRH: the routing scope configuration changed; re-prepare this plugin; original tool call preserved. Use mrh stats --details with this profile's --settings or --db."
+          },
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        },
+        {
+          "event": {
+            "session_id": "01a12b25-3734-7983-8a29-57110ef86c71",
+            "turn_id": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/sessions/2026/10/11/rollout-2026-10-11T21-27-01-01a12b25-3734-7983-8a29-57110ef86c71.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_invalidated",
+              "task_name": "owned_invalidated",
+              "fork_turns": "none"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_invalidated\"}",
+            "tool_use_id": "call-owned-18"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": "",
+          "owned_process_ancestry": [
+            {
+              "pid": 84722,
+              "exit": 0,
+              "row": "84457 /Users/shawn/.nv /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex app-server --listen stdio://",
+              "error": ""
+            },
+            {
+              "pid": 84457,
+              "exit": 0,
+              "row": "84314 /Library/Framewo /Library/Frameworks/Python.framework/Versions/3.11/Resources/Python.app/Contents/MacOS/Python scripts/verify_scoped_host.py --binary /Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex --catalog build/e17-public/models.json --output docs/evidence/e17-native-chain.json",
+              "error": ""
+            },
+            {
+              "pid": 84314,
+              "exit": 0,
+              "row": "83921 /Applications/Ch /Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex -c features.code_mode_host=true app-server --analytics-default-enabled -c plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true -c plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true",
+              "error": ""
+            },
+            {
+              "pid": 83921,
+              "exit": 0,
+              "row": "1 /Applications/Ch /Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+              "error": ""
+            }
+          ]
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turnId": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-18",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turnId": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-18",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 320,
+            "entries": [
+              {
+                "kind": "warning",
+                "text": "MRH: the routing scope configuration changed; re-prepare this plugin; original tool call preserved. Use mrh stats --details with this profile's --settings or --db."
+              }
+            ]
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turnId": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-18",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-38a5-72f1-9625-1d479e3ae419",
+          "turn": {
+            "id": "01a12b25-38bf-7ac3-9760-ac6cb0f90212",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725222,
+            "completedAt": 1791725222,
+            "durationMs": 14
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turnId": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-18",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 122,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b25-3734-7983-8a29-57110ef86c71",
+          "turn": {
+            "id": "01a12b25-3750-7c10-a6a6-bb33eae148e3",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791725221,
+            "completedAt": 1791725222,
+            "durationMs": 500
+          }
+        }
+      ]
+    }
+  ],
+  "owned_root": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088",
+  "prepared": {
+    "status": "prepared",
+    "native_registration": "unverified",
+    "hook_trust": "unverified",
+    "live_routing_ready": false,
+    "readiness_reason": "native_trust_and_activation_unverified",
+    "artifact": {
+      "codex_scope": {
+        "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "binary_sha256": "4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878",
+        "catalog_sha256": "fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b",
+        "codex_home": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home",
+        "configuration": {
+          "agents": {
+            "default_subagent_model": null,
+            "default_subagent_reasoning_effort": null
+          },
+          "features": {
+            "code_mode": true,
+            "codex_hooks": null,
+            "hooks": null,
+            "multi_agent": true
+          },
+          "model": "gpt-6.1-sol",
+          "model_catalog_json": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/models.json",
+          "model_provider": "mrh_fixture",
+          "model_reasoning_effort": "low",
+          "provider_fingerprint": "00a8e67d0c211947c3420a4f83034f042268a4cc72e952e722219929a3493b94"
+        },
+        "configuration_fingerprint": "6012adf065e4e62778627161d824bbd916975330da98a0d438803a8f21686158",
+        "contract": "official-0.159.3-local-stdio-config-pinned",
+        "excluded_overrides": "session/turn model-effort-config and dynamic role overrides; not observed by Hook",
+        "mode": "local-cli-or-app-server-stdio",
+        "models": {
+          "codex-auto-review": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-5.5": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ]
+          },
+          "gpt-5.6-luna": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-5.6-sol": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-5.6-terra": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6-astra": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6-luna": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-6-sol": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6.1-sol": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-daybreak-blue-latest": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-daybreak-red-latest": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          }
+        },
+        "version": "codex-cli 0.159.3",
+        "workspace": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace"
+      },
+      "files": {
+        ".agents/plugins/marketplace.json": "c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6",
+        "plugins/model-routing-harness/binding.json": "4245470ff7068d1d1b7f382a0683b3acc37f869af888447ad7bc163f6e898fbe",
+        "plugins/model-routing-harness/hooks/hooks.json": "c5cd7f5cc8dfe412075647ae693ab2c45781ca8c631e1948b1fd21e8d6d33a4a",
+        "plugins/model-routing-harness/launcher.py": "4cd2f29756559aa8175a94288493268e46e79e8fbcd2fbd25dd16b16a6c3f298",
+        "plugins/model-routing-harness/plugin.json": "a5a17cf286939c3d7dacf5cf47382d9ed21766c6d1b3ab3ab26906aeeefdec70",
+        "plugins/model-routing-harness/runtime.pyz": "f5161ec35e519caab3f4d7f7ee083935f481a977c79b886c7a03f79592ed6c7a"
+      },
+      "owner": "org.model-routing-harness",
+      "plugin_id": "model-routing-harness@model-routing-harness-local",
+      "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+      "python_version": "3.11",
+      "schema_version": 1,
+      "settings_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json",
+      "version": "0.3.0"
+    },
+    "native_commands": [
+      [
+        "codex",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/plugin",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "remove",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ]
+    ],
+    "next_trust_step": "Review the current definitions in the native /hooks UI",
+    "removal_state_policy": "Native uninstall preserves separate MRH settings and telemetry; no automatic deletion",
+    "configuration_scope": {
+      "contract": "official-0.159.3-local-stdio-config-pinned",
+      "configuration_fingerprint": "6012adf065e4e62778627161d824bbd916975330da98a0d438803a8f21686158",
+      "workspace": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+      "assurance": "inspected-configuration",
+      "native_invocation": "unverified until Hook execution"
+    }
+  },
+  "installed_runtime_sha256": "f5161ec35e519caab3f4d7f7ee083935f481a977c79b886c7a03f79592ed6c7a",
+  "initial_trust": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": true
+  },
+  "scripted_transport_trust": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": false
+  },
+  "trusted_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/workspace",
+          "hooks": [
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/scripted-jev.py /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/binding.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/scenario /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/events.jsonl",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:ea3573bbb5bf85fe0c75442bb6bee3346bca119c51b4135e196be299ebb37fbd",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/scripted-jev.py /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/state/settings.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/binding.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/scenario /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/events.jsonl",
+              "async": false,
+              "matcher": "^(spawn_agent|collaborationspawn_agent)$",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-wn104088/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:701cf3c539d127d3e9fd7ea7f0f45f729ae44a1073a4ad520183c77b56b5d921",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "native_remove": {
+    "installed": [],
+    "available": []
+  },
+  "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+  "binary_sha256": "4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878",
+  "catalog_sha256": "fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b",
+  "owned_pids": [
+    84465,
+    84604,
+    84722
+  ],
+  "host_dependency_injected": false,
+  "stock_model_metadata_unchanged": true,
+  "session_turn_overrides": false,
+  "cleanup": true,
+  "seconds": 7.335
+}

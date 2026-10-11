@@ -1,0 +1,692 @@
+{
+  "evidence_kind": "official_installed_hook_real_config_inspection_scripted_jev_and_responses",
+  "real_jev_or_provider": false,
+  "formal_global_changes": false,
+  "host_binary_modified": false,
+  "commands": [
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-I",
+        "-c",
+        "import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.plugin import prepare;print(json.dumps(prepare(sys.argv[2],sys.argv[3],scope_workspace=sys.argv[4],codex_binary=sys.argv[5])))",
+        "/Users/shawn/Code/model-routing-harness/src",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/plugin",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex"
+      ],
+      "exit": 0,
+      "stdout": "{\"status\": \"prepared\", \"native_registration\": \"unverified\", \"hook_trust\": \"unverified\", \"live_routing_ready\": false, \"readiness_reason\": \"native_trust_and_activation_unverified\", \"artifact\": {\"codex_scope\": {\"binary\": \"/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex\", \"binary_sha256\": \"4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878\", \"catalog_sha256\": \"fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b\", \"codex_home\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home\", \"configuration\": {\"agents\": {\"default_subagent_model\": null, \"default_subagent_reasoning_effort\": null}, \"features\": {\"code_mode\": true, \"codex_hooks\": null, \"hooks\": null, \"multi_agent\": true}, \"model\": \"gpt-6.1-sol\", \"model_catalog_json\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/models.json\", \"model_provider\": \"mrh_fixture\", \"model_reasoning_effort\": \"low\", \"provider_fingerprint\": \"85673d9e5094393afc81f730b2c8618f7aeef8a3012b8ce8e465e5d597f6e92c\"}, \"configuration_fingerprint\": \"3b4934db3e39bb034dee829a285d9f7469bdb6ee3fe2adc59252f73de4e17bee\", \"contract\": \"official-0.159.3-local-stdio-config-pinned\", \"excluded_overrides\": \"session/turn model-effort-config and dynamic role overrides; not observed by Hook\", \"mode\": \"local-cli-or-app-server-stdio\", \"models\": {\"codex-auto-review\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-5.5\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\"]}, \"gpt-5.6-luna\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-5.6-sol\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-5.6-terra\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6-astra\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6-luna\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\"]}, \"gpt-6-sol\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-6.1-sol\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-daybreak-blue-latest\": {\"default_effort\": \"low\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}, \"gpt-daybreak-red-latest\": {\"default_effort\": \"medium\", \"efforts\": [\"low\", \"medium\", \"high\", \"xhigh\", \"max\", \"ultra\"]}}, \"version\": \"codex-cli 0.159.3\", \"workspace\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace\"}, \"files\": {\".agents/plugins/marketplace.json\": \"c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6\", \"plugins/model-routing-harness/binding.json\": \"75cff05e7301fb986ac382fc7e5459254fdf0e77dd5072d45eb4644390dbe2b2\", \"plugins/model-routing-harness/hooks/hooks.json\": \"c44527169fdc5382cd1837f4730e471997e57c35c8fc21a77ab9da2381820bd5\", \"plugins/model-routing-harness/launcher.py\": \"6624b421563a7e15c1758b826841fba8800672fbbc414249a416375b3c54af53\", \"plugins/model-routing-harness/plugin.json\": \"a5a17cf286939c3d7dacf5cf47382d9ed21766c6d1b3ab3ab26906aeeefdec70\", \"plugins/model-routing-harness/runtime.pyz\": \"6eb0ba91784abe59115f4c9baca565464a1688fe7e51c2ddc1b4d06a8ec8a766\"}, \"owner\": \"org.model-routing-harness\", \"plugin_id\": \"model-routing-harness@model-routing-harness-local\", \"python\": \"/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11\", \"python_version\": \"3.11\", \"schema_version\": 1, \"settings_path\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json\", \"version\": \"0.3.0\"}, \"native_commands\": [[\"codex\", \"plugin\", \"marketplace\", \"add\", \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/plugin\", \"--json\"], [\"codex\", \"plugin\", \"add\", \"model-routing-harness@model-routing-harness-local\", \"--json\"], [\"codex\", \"plugin\", \"list\", \"--json\"], [\"codex\", \"plugin\", \"remove\", \"model-routing-harness@model-routing-harness-local\", \"--json\"]], \"next_trust_step\": \"Review the current definitions in the native /hooks UI\", \"removal_state_policy\": \"Native uninstall preserves separate MRH settings and telemetry; no automatic deletion\", \"configuration_scope\": {\"contract\": \"official-0.159.3-local-stdio-config-pinned\", \"configuration_fingerprint\": \"3b4934db3e39bb034dee829a285d9f7469bdb6ee3fe2adc59252f73de4e17bee\", \"workspace\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace\", \"assurance\": \"inspected-configuration\", \"native_invocation\": \"unverified until Hook execution\"}}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/plugin",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"installedRoot\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/plugin\",\n  \"alreadyAdded\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-I",
+        "-c",
+        "import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.settings import update;print(json.dumps(update(sys.argv[2],enabled=True,task_export_permitted=True,allowed_workspaces=[sys.argv[3]],policy=json.loads(sys.argv[4]))))",
+        "/Users/shawn/Code/model-routing-harness/src",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+        "{\"top_mode\": \"Main\", \"timeout_seconds\": 1, \"fixed\": {\"model\": \"gpt-5.6-luna\", \"effort\": \"low\"}, \"tiers\": {\"Light\": {\"model\": \"gpt-5.6-luna\", \"effort\": \"low\"}}, \"rates\": {\"gpt-6.1-sol\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 2, \"output\": 2}}, \"gpt-5.6-luna\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 1, \"output\": 1}}}}"
+      ],
+      "exit": 0,
+      "stdout": "{\"schema_version\": 1, \"owner\": \"org.model-routing-harness.settings.v1\", \"revision\": 1, \"enabled\": true, \"task_export_permitted\": true, \"allowed_workspaces\": [\"/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace\"], \"provider\": \"typesafe\", \"classifier_model\": \"jev-1.13.0\", \"policy\": {\"top_mode\": \"Main\", \"timeout_seconds\": 1, \"tiers\": {\"Light\": {\"effort\": \"low\", \"model\": \"gpt-5.6-luna\"}}, \"fixed\": {\"effort\": \"low\", \"model\": \"gpt-5.6-luna\"}, \"rates\": {\"gpt-5.6-luna\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 1, \"output\": 1}}, \"gpt-6.1-sol\": {\"currency\": \"test-unit\", \"unit\": \"token\", \"service\": \"owned-scripted-provider\", \"source_ref\": \"scripted-config-cost\", \"components\": {\"input\": 2, \"output\": 2}}}}}\n",
+      "stderr": ""
+    }
+  ],
+  "cases": [
+    {
+      "scenario": "light",
+      "parent_id": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+      "parent_completed": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turn": {
+            "id": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791724649,
+            "completedAt": 1791724649,
+            "durationMs": 304
+          }
+        },
+        "emittedAtMs": 1791724649457
+      },
+      "child_ids": [],
+      "requests": [
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": false,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": []
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "reasoning": {
+            "effort": "low",
+            "context": "all_turns"
+          },
+          "is_parent": true,
+          "native_namespace_tools": {},
+          "request_keys": [
+            "model",
+            "input",
+            "tool_choice",
+            "parallel_tool_calls",
+            "reasoning",
+            "store",
+            "stream",
+            "include",
+            "prompt_cache_key",
+            "text",
+            "client_metadata"
+          ],
+          "tool_types": [],
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_01a12b1c-7be6-7091-94aa-bb9716631f28",
+              "call_id": "call-owned-1",
+              "output": "{\"task_name\":\"/root/owned_light\"}"
+            }
+          ]
+        }
+      ],
+      "installed_runtime_events": [
+        {
+          "event": {
+            "session_id": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+            "turn_id": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/sessions/2026/10/11/rollout-2026-10-11T21-17-29-01a12b1c-7aab-7ff0-a9bd-187294b9148c.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+            "hook_event_name": "PreToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_light",
+              "task_name": "owned_light",
+              "fork_turns": "none"
+            },
+            "tool_use_id": "call-owned-1"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "session_id": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+            "turn_id": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+            "transcript_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/sessions/2026/10/11/rollout-2026-10-11T21-17-29-01a12b1c-7aab-7ff0-a9bd-187294b9148c.jsonl",
+            "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+            "hook_event_name": "PostToolUse",
+            "model": "gpt-6.1-sol",
+            "permission_mode": "bypassPermissions",
+            "tool_name": "collaborationspawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_light",
+              "task_name": "owned_light",
+              "fork_turns": "none"
+            },
+            "tool_response": "{\"task_name\":\"/root/owned_light\"}",
+            "tool_use_id": "call-owned-1"
+          },
+          "output": {},
+          "scripted_jev_calls": 0,
+          "key_resolutions": 0,
+          "host_dependency_injected": false,
+          "diagnostic": ""
+        }
+      ],
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turnId": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turnId": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+          "run": {
+            "id": "pre-tool-use:0:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 124,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turnId": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b1c-7b59-7242-bddc-409a10e27aa1",
+          "turn": {
+            "id": "01a12b1c-7b75-74c0-8fdd-f8a1c21c4610",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791724649,
+            "completedAt": 1791724649,
+            "durationMs": 20
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turnId": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+          "run": {
+            "id": "post-tool-use:1:/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-owned-1",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 109,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "01a12b1c-7aab-7ff0-a9bd-187294b9148c",
+          "turn": {
+            "id": "01a12b1c-7abe-7c30-b8f1-7e4f29a71da4",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-owned",
+                "text": "MRH scripted parent/child complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791724649,
+            "completedAt": 1791724649,
+            "durationMs": 304
+          }
+        }
+      ]
+    }
+  ],
+  "owned_root": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr",
+  "prepared": {
+    "status": "prepared",
+    "native_registration": "unverified",
+    "hook_trust": "unverified",
+    "live_routing_ready": false,
+    "readiness_reason": "native_trust_and_activation_unverified",
+    "artifact": {
+      "codex_scope": {
+        "binary": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "binary_sha256": "4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878",
+        "catalog_sha256": "fd219bd9f061278275f528939f82f54d2eb97df4b25c23b022adbe48813d920b",
+        "codex_home": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home",
+        "configuration": {
+          "agents": {
+            "default_subagent_model": null,
+            "default_subagent_reasoning_effort": null
+          },
+          "features": {
+            "code_mode": true,
+            "codex_hooks": null,
+            "hooks": null,
+            "multi_agent": true
+          },
+          "model": "gpt-6.1-sol",
+          "model_catalog_json": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/models.json",
+          "model_provider": "mrh_fixture",
+          "model_reasoning_effort": "low",
+          "provider_fingerprint": "85673d9e5094393afc81f730b2c8618f7aeef8a3012b8ce8e465e5d597f6e92c"
+        },
+        "configuration_fingerprint": "3b4934db3e39bb034dee829a285d9f7469bdb6ee3fe2adc59252f73de4e17bee",
+        "contract": "official-0.159.3-local-stdio-config-pinned",
+        "excluded_overrides": "session/turn model-effort-config and dynamic role overrides; not observed by Hook",
+        "mode": "local-cli-or-app-server-stdio",
+        "models": {
+          "codex-auto-review": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-5.5": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ]
+          },
+          "gpt-5.6-luna": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-5.6-sol": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-5.6-terra": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6-astra": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6-luna": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          "gpt-6-sol": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-6.1-sol": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-daybreak-blue-latest": {
+            "default_effort": "low",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          },
+          "gpt-daybreak-red-latest": {
+            "default_effort": "medium",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ]
+          }
+        },
+        "version": "codex-cli 0.159.3",
+        "workspace": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace"
+      },
+      "files": {
+        ".agents/plugins/marketplace.json": "c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6",
+        "plugins/model-routing-harness/binding.json": "75cff05e7301fb986ac382fc7e5459254fdf0e77dd5072d45eb4644390dbe2b2",
+        "plugins/model-routing-harness/hooks/hooks.json": "c44527169fdc5382cd1837f4730e471997e57c35c8fc21a77ab9da2381820bd5",
+        "plugins/model-routing-harness/launcher.py": "6624b421563a7e15c1758b826841fba8800672fbbc414249a416375b3c54af53",
+        "plugins/model-routing-harness/plugin.json": "a5a17cf286939c3d7dacf5cf47382d9ed21766c6d1b3ab3ab26906aeeefdec70",
+        "plugins/model-routing-harness/runtime.pyz": "6eb0ba91784abe59115f4c9baca565464a1688fe7e51c2ddc1b4d06a8ec8a766"
+      },
+      "owner": "org.model-routing-harness",
+      "plugin_id": "model-routing-harness@model-routing-harness-local",
+      "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+      "python_version": "3.11",
+      "schema_version": 1,
+      "settings_path": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json",
+      "version": "0.3.0"
+    },
+    "native_commands": [
+      [
+        "codex",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/plugin",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      [
+        "codex",
+        "plugin",
+        "remove",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ]
+    ],
+    "next_trust_step": "Review the current definitions in the native /hooks UI",
+    "removal_state_policy": "Native uninstall preserves separate MRH settings and telemetry; no automatic deletion",
+    "configuration_scope": {
+      "contract": "official-0.159.3-local-stdio-config-pinned",
+      "configuration_fingerprint": "3b4934db3e39bb034dee829a285d9f7469bdb6ee3fe2adc59252f73de4e17bee",
+      "workspace": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+      "assurance": "inspected-configuration",
+      "native_invocation": "unverified until Hook execution"
+    }
+  },
+  "installed_runtime_sha256": "6eb0ba91784abe59115f4c9baca565464a1688fe7e51c2ddc1b4d06a8ec8a766",
+  "initial_trust": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": true
+  },
+  "scripted_transport_trust": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": false
+  },
+  "trusted_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/workspace",
+          "hooks": [
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/scripted-jev.py /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/binding.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/scenario /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/events.jsonl",
+              "async": false,
+              "matcher": ".*",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:b9ade113c6f5f4ed6a2f67bfa907af89639833698a1381e54af8671ea3773adf",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/scripted-jev.py /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/state/settings.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/binding.json /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/scenario /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/events.jsonl",
+              "async": false,
+              "matcher": ".*",
+              "timeoutSec": 50,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/mrh-e4-xtgkg0hr/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:fdf148a3fdbcd680aa21f067c99ad2ec1fb34c59487fb9883bd8bb7bc39430b0",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "failure_type": "KeyError",
+  "failure": "'hookSpecificOutput'",
+  "owned_pids": [
+    75816,
+    75832,
+    75837
+  ],
+  "captured_requests": [
+    {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "context": "all_turns"
+      },
+      "is_parent": true,
+      "native_namespace_tools": {},
+      "request_keys": [
+        "model",
+        "input",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "stream",
+        "include",
+        "prompt_cache_key",
+        "text",
+        "client_metadata"
+      ],
+      "tool_types": [],
+      "function_outputs": []
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "context": "all_turns"
+      },
+      "is_parent": false,
+      "native_namespace_tools": {},
+      "request_keys": [
+        "model",
+        "input",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "stream",
+        "include",
+        "prompt_cache_key",
+        "text",
+        "client_metadata"
+      ],
+      "tool_types": [],
+      "function_outputs": []
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "reasoning": {
+        "effort": "low",
+        "context": "all_turns"
+      },
+      "is_parent": true,
+      "native_namespace_tools": {},
+      "request_keys": [
+        "model",
+        "input",
+        "tool_choice",
+        "parallel_tool_calls",
+        "reasoning",
+        "store",
+        "stream",
+        "include",
+        "prompt_cache_key",
+        "text",
+        "client_metadata"
+      ],
+      "tool_types": [],
+      "function_outputs": [
+        {
+          "type": "function_call_output",
+          "id": "fco_01a12b1c-7be6-7091-94aa-bb9716631f28",
+          "call_id": "call-owned-1",
+          "output": "{\"task_name\":\"/root/owned_light\"}"
+        }
+      ]
+    }
+  ]
+}
