@@ -10,6 +10,17 @@ class GuardedAttempts:
         self._lock = threading.RLock()
         self._closed = False
         self._attempts = {}
+        self._cleanups = []
+
+    def add_cleanup(self, callback):
+        """Register owned local-process cancellation; never a remote retry."""
+        with self._lock:
+            expired = self._closed or self.remaining() <= 0
+            if not expired:
+                self._cleanups.append(callback)
+        if expired:
+            callback()
+            raise TimeoutError()
 
     def remaining(self):
         return max(0.0, self.deadline - time.monotonic())
@@ -80,7 +91,11 @@ class GuardedAttempts:
     def cancel(self):
         with self._lock:
             self._closed = True
+            cleanups, self._cleanups = self._cleanups, []
             for attempt_id, attempt in self._attempts.items():
                 if attempt["phase"] == "started":
                     self.emit(attempt_id, attempt["kind"], "unknown")
                     attempt["phase"] = "unknown"
+        # Outside the recorder lock: process startup checks the same gate.
+        for cleanup in cleanups:
+            cleanup()

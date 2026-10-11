@@ -24,6 +24,10 @@ REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_
                 "cached_effect_mismatch"})
 REASONS.update({'catalog_model_unavailable', 'catalog_model_retired'})
 REASONS.add('operator_stop_unavailable')
+REASONS.update({'codex_subscription_'+reason for reason in (
+    'disabled','export_denied','recursion','invalid_task','malformed_response',
+    'oversized_response','tool_activity','process_failed','timeout',
+    'chatgpt_login_required','home_instructions','isolation_unsupported','unverified_process')})
 UNAVAILABLE_REASONS = {'unsupported_model', 'unsupported_effort', 'catalog_model_unavailable', 'catalog_model_retired'}
 
 

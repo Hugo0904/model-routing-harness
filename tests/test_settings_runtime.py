@@ -14,6 +14,7 @@ from mrh.settings_schema import SettingsError
 from mrh.simulation import demo_capabilities
 from mrh.store import Store
 from mrh.typesafe import classifier_from_config, TypesafeClassifier
+from mrh.classifier import classifier_from_config as provider_factory
 from test_typesafe import FakeTransport
 
 
@@ -32,6 +33,7 @@ class SettingsRuntimeTests(unittest.TestCase):
         self.workspace.mkdir()
         self.path = self.root / "state" / "settings.json"
         settings.init(self.path)
+        settings.update(self.path,provider='typesafe',classifier_model='jev-1.13.0')  # Explicit legacy fixture.
         self.resolutions = 0
         self.event = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": "session",
                       "turn_id": "turn", "tool_use_id": "call", "cwd": str(self.workspace),
@@ -107,7 +109,7 @@ class SettingsRuntimeTests(unittest.TestCase):
     def test_public_hook_uses_real_factory_and_parser_main_fixed_receipt_disable(self):
         self.admit()
         fake = FakeTransport()
-        with patch("mrh.runtime.classifier_from_config", wraps=classifier_from_config) as factory:
+        with patch("mrh.runtime.classifier_from_config", wraps=provider_factory) as factory:
             code, text, _ = self.cli(["hook", "--settings", str(self.path)],
                 {"host_resolver": SyntheticHost(), "transport": fake, "credential_resolver": self.key})
             self.assertEqual(code, 0)
@@ -238,10 +240,11 @@ class SettingsRuntimeTests(unittest.TestCase):
     def test_cooperating_writers_serialize_and_stale_revision_cannot_overwrite(self):
         barrier = threading.Barrier(3)
         results = []
+        baseline_revision=settings.read(self.path)['revision']
         def change(value):
             barrier.wait()
             try:
-                settings.update(self.path, expected_revision=0, enabled=value, task_export_permitted=not value)
+                settings.update(self.path, expected_revision=baseline_revision, enabled=value, task_export_permitted=not value)
                 results.append("written")
             except SettingsError as exc:
                 results.append(exc.reason)
@@ -252,7 +255,7 @@ class SettingsRuntimeTests(unittest.TestCase):
         self.assertTrue(all(not worker.is_alive() for worker in workers))
         self.assertCountEqual(results, ["written", "settings_conflict"])
         value = settings.read(self.path)
-        self.assertEqual(value["revision"], 1)
+        self.assertEqual(value["revision"], baseline_revision+1)
         self.assertNotEqual(value["enabled"], value["task_export_permitted"])
 
 

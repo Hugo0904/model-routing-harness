@@ -131,7 +131,7 @@ class Store:
             return "new", None
 
     def attempt(self, proposal_id, attempt_id, kind, outcome, **metadata):
-        if kind not in ("synthetic", "jev") or outcome not in ("requested", "started", "returned", "error", "unknown", "late_returned", "late_error") or not safe_id(attempt_id):
+        if kind not in ("synthetic", "jev", "codex_subscription") or outcome not in ("requested", "started", "returned", "error", "unknown", "late_returned", "late_error") or not safe_id(attempt_id):
             raise ValueError("invalid_attempt")
         allowed = {"requested_model", "response_model", "input_tokens", "output_tokens", "error_reason"}
         if set(metadata) - allowed:
@@ -348,6 +348,7 @@ class Store:
         out = {"schema_version": 2, "updated_at": max(timestamps, default=None),
                "partition": "synthetic" if synthetic else "live", "proposals": len(rows),
                "jev_attempts": sum(r["kind"] == "jev" for r in started),
+               "codex_subscription_attempts": sum(r["kind"] == "codex_subscription" for r in started),
                "synthetic_attempts": sum(r["kind"] == "synthetic" for r in started),
                "classified_tasks": 0, "low_confidence_tasks": 0, "pending_proposals": 0,
                "operator_stops": 0, "stopped_targets": {},
@@ -373,7 +374,9 @@ class Store:
                             "attempts": sorted(r["id"] for r in attempts)[:100],
                             "receipts": sorted(r["id"] for r in receipts)[:100]}
         out["event_ids_truncated"] = any(len(r) > 100 for r in (rows, attempts, receipts))
-        provider = [r for r in started if r["requested_model"] is not None]
+        # The legacy Jev JSON field must never include subscription attempts.
+        provider = [r for r in started if r["requested_model"] is not None and
+                    (r['kind']=='jev' or r['kind']=='synthetic' and r['requested_model']=='jev-1.13.0')]
         telemetry = {"source": ("explicit_synthetic_offline_transport" if synthetic else "actual_provider_transport") if provider else "unavailable",
                      "attempt_states": {}, "requested_models": {}, "response_models": {},
                      "input_tokens": None, "output_tokens": None, "known_input_tokens": 0,
@@ -400,6 +403,27 @@ class Store:
                         "currency": "USD", "kind": "estimate", "model": "jev-1.13.0", "unit": "per-million-input-tokens",
                         "price_source": "https://docs.typesafe.ai/models", "price_date": "2026-10-10"}
         out["jev"] = telemetry
+        subscription=[r for r in started if r['kind']=='codex_subscription' or
+                      r['kind']=='synthetic' and r['requested_model']=='gpt-6-luna']
+        breakdown={'source':'explicit_synthetic_process' if synthetic and subscription else
+                   'official_cli_json_events' if subscription else 'unavailable',
+                   'attempt_unit':'CLI invocations; internal provider retries are unknown',
+                   'confidence_basis':'model_self_report_not_calibrated',
+                   'attempt_states':{},'requested_models':{},'response_models':{},
+                   'known_input_tokens':0,'known_output_tokens':0,'usage_unavailable_attempts':0,
+                   'input_tokens':None,'output_tokens':None,'estimated_cost':None}
+        for r in subscription:
+            phase=r['phase'];breakdown['attempt_states'][phase]=breakdown['attempt_states'].get(phase,0)+1
+            model=r['requested_model']
+            if model is not None:breakdown['requested_models'][model]=breakdown['requested_models'].get(model,0)+1
+            if r['late_outcome']:
+                phase='late_'+r['late_outcome'];breakdown['attempt_states'][phase]=breakdown['attempt_states'].get(phase,0)+1
+            if r['input_tokens'] is None or r['output_tokens'] is None:breakdown['usage_unavailable_attempts']+=1
+            else:
+                breakdown['known_input_tokens']+=r['input_tokens'];breakdown['known_output_tokens']+=r['output_tokens']
+        if subscription and not breakdown['usage_unavailable_attempts']:
+            breakdown['input_tokens']=breakdown['known_input_tokens'];breakdown['output_tokens']=breakdown['known_output_tokens']
+        out['codex_subscription']=breakdown
         for value, name in ((1, 'handback'), (2, 'operator_stop')):
             out[name+'_anomalies'] = sum(r['anomaly'] == value for r in receipts)
             out[name+'_anomaly_evidence'] = {

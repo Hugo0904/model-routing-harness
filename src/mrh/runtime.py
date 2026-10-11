@@ -1,10 +1,12 @@
 """Public settings -> existing provider factory -> conservative Codex adapter."""
 import sys
+import os
 from pathlib import Path
 from .codex import handle_event,canonical_event
 from .settings import read, workspace_allowed
 from .settings_schema import SettingsError
-from .typesafe import classifier_from_config
+from .classifier import classifier_from_config
+from .codex_subscription import SENTINEL
 from .types import safe_id, safe_model_id
 from .facts import CallScope, Fact, HostSnapshot, synthetic_legacy_snapshot
 from .types import Proposal
@@ -39,7 +41,9 @@ def partial_hook_snapshot(event, synthetic=False):
     return HostSnapshot(scope, synthetic, parent_model=parent, workspace=workspace)
 
 
-def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None, scope_binding=None):
+def configured_event(event, settings_path, *, host_resolver=None, transport=None, credential_resolver=None, scope_binding=None, subscription_runner=None):
+    if os.environ.get(SENTINEL):
+        return {}  # Before settings, DB, auth, host inspection or model work.
     event=canonical_event(event)
     # Settings never come from cwd/tool_input. Invalid identities are neutral
     # before any data creation; preserving a valid admitted call still records
@@ -61,7 +65,11 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
             injected["transport"] = transport
         if credential_resolver is not None:
             injected["credential_resolver"] = credential_resolver
-        classifier = classifier_from_config({"schema_version": 1, "model": value["classifier_model"],
+        if subscription_runner is not None:
+            injected['subscription_runner'] = subscription_runner
+        if value['provider']=='codex_subscription' and scope_binding is not None:
+            injected['subscription_binding']=scope_binding
+        classifier = classifier_from_config({"provider":value['provider'], "schema_version": 1, "model": value["classifier_model"],
                                              "enabled": value["enabled"], "task_export_permitted": value["task_export_permitted"]}, **injected)
         if not (scope_binding is not None and host_resolver is None) and bool(getattr(resolver, "synthetic", False)) != classifier.synthetic:
             return {}

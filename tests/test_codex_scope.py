@@ -92,7 +92,8 @@ class ScopeTests(unittest.TestCase):
         from test_typesafe import FakeTransport
         descriptor=self.descriptor();binding=self.root/'binding.json';binding.write_text(json.dumps({'codex_scope':descriptor}))
         path=self.root/'state/settings.json';settings.init(path)
-        settings.update(path,enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.work)],policy=self.policy)
+        settings.update(path,provider='typesafe',classifier_model='jev-1.13.0',enabled=True,
+                        task_export_permitted=True,allowed_workspaces=[str(self.work)],policy=self.policy)
         transport=FakeTransport();keys=[]
         def native(scope):
             if not codex_scope.supported_startup(['codex','--no-daemon','--config=agents.default_subagent_model="protected"']):

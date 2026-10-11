@@ -27,6 +27,18 @@ FAULTS = {
     "typesafe_oversized_response": "the classifier response exceeded its limit",
     "typesafe_redirect_rejected": "the classifier returned a disallowed redirect",
 }
+FAULTS.update({'codex_subscription_'+reason:description for reason,description in {
+    'malformed_response':'the subscription classifier returned an invalid result',
+    'oversized_response':'the subscription classifier output exceeded its limit',
+    'tool_activity':'the subscription classifier attempted tool activity',
+    'process_failed':'the subscription classifier process failed',
+    'timeout':'the subscription classifier timed out',
+    'chatgpt_login_required':'an existing official ChatGPT subscription login is required',
+    'home_instructions':'the saved-login home has global instructions that this CLI cannot exclude',
+    'isolation_unsupported':'the subscription classifier isolation is unsupported',
+    'unverified_process':'the subscription classifier process is unverified',
+    'invalid_task':'the subscription classifier input is invalid',
+}.items()})
 NORMAL = {"unrelated_event", "explicit_model", "explicit_effort", "unsupported_role", "fixed_role_model", "fixed_role_effort",
           "low_confidence", "cost_unknown"}
 CATEGORIES = ("classified_child_request", "classified_main_request", "normal_retention",

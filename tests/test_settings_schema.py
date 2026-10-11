@@ -20,7 +20,7 @@ class SettingsSchemaTests(unittest.TestCase):
         self.assertFalse(first["enabled"])
         self.assertFalse(first["task_export_permitted"])
         self.assertEqual(first["policy"], {
-            "top_mode": "Main", "timeout_seconds": 1.0, "tiers": {}, "rates": {},
+            "top_mode": "Main", "timeout_seconds": 20.0, "tiers": {}, "rates": {},
         })
 
         value = default_settings()
@@ -73,7 +73,8 @@ class SettingsSchemaTests(unittest.TestCase):
         self.assertEqual(raised.exception.reason, "settings_invalid")
 
         nonfinite = default_settings()
-        serialized = json.dumps(nonfinite).replace(b'"timeout_seconds": 1.0'.decode(), '"timeout_seconds": NaN')
+        nonfinite['policy']['timeout_seconds']=float('nan')
+        serialized = json.dumps(nonfinite)
         with self.assertRaises(SettingsError) as raised:
             parse_settings(serialized.encode("utf-8"))
         self.assertEqual(raised.exception.reason, "settings_invalid")

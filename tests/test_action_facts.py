@@ -158,7 +158,8 @@ class ActionFactTests(unittest.TestCase):
             with self.subTest(reason=reason), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp).resolve(); path = root/"state/settings.json"
                 settings.init(path)
-                settings.update(path, enabled=True, task_export_permitted=True, allowed_workspaces=[str(root)], policy=policy)
+                settings.update(path,provider='typesafe',classifier_model='jev-1.13.0', enabled=True,
+                                task_export_permitted=True, allowed_workspaces=[str(root)], policy=policy)
                 event = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": p.session_id,
                          "turn_id": p.turn_id, "tool_use_id": p.tool_call_id, "cwd": str(root), "tool_input": p.tool_input}
                 keys = []; http = FakeTransport()

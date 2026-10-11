@@ -134,7 +134,7 @@ def inspect(binary,catalog_path,failure_path=None):
         rate=lambda n:{'currency':'test-unit','unit':'token','service':'owned-scripted-provider','source_ref':'scripted-config-cost','components':{'input':n,'output':n}}
         policy={'top_mode':'Main','timeout_seconds':1,'fixed':{'model':'gpt-5.6-luna','effort':'low'},
                 'tiers':{'Light':{'model':'gpt-5.6-luna','effort':'low'}},'rates':{'gpt-6.1-sol':rate(2),'gpt-5.6-luna':rate(1)}}
-        configure="import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.settings import update;print(json.dumps(update(sys.argv[2],enabled=True,task_export_permitted=True,allowed_workspaces=[sys.argv[3]],policy=json.loads(sys.argv[4]))))"
+        configure="import sys,json;sys.path.insert(0,sys.argv[1]);from mrh.settings import update;print(json.dumps(update(sys.argv[2],provider='typesafe',classifier_model='jev-1.13.0',enabled=True,task_export_permitted=True,allowed_workspaces=[sys.argv[3]],policy=json.loads(sys.argv[4]))))"
         command([sys.executable,'-I','-B','-c',configure,source/'src',state,work,json.dumps(policy)])
         rpc=Rpc(binary,env,work,scope)
         try:

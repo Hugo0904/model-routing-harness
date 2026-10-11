@@ -40,7 +40,8 @@ class AccountingTests(unittest.TestCase):
 
     def admit(self, event, path=None):
         path = path or self.path
-        settings.update(path, enabled=True, task_export_permitted=True, allowed_workspaces=[event["cwd"]])
+        settings.update(path, provider='typesafe',classifier_model='jev-1.13.0',
+                        enabled=True, task_export_permitted=True, allowed_workspaces=[event["cwd"]])
 
     def hook(self, event, path=None, resolver=None, transport=None, production=False, settings_warning=False):
         out, err = io.StringIO(), io.StringIO()
@@ -111,6 +112,7 @@ class AccountingTests(unittest.TestCase):
         for event in (pre, post):
             event["tool_use_id"] += "-production-unknown"
             event["tool_input"].pop("model")
+            event['tool_input'].pop('reasoning_effort',None)
         self.admit(pre)
         with patch("mrh.typesafe.HttpTransport.request", side_effect=AssertionError("HTTP ran")), \
              patch("mrh.typesafe.TypesafeClassifier.classify", side_effect=AssertionError("classifier ran")):

@@ -1,0 +1,83 @@
+{
+  "verification_scope": "affected settings -> official isolated process -> parsing/cancellation -> Hook/stats",
+  "unique_passing_tests": 51,
+  "checks": [
+    "test_codex_scope.ScopeTests.test_visible_startup_override_stops_before_key_or_jev",
+    "test_codex_subscription.SubscriptionTests.test_auth_api_unknown_and_failure_no_model_process_or_attempt",
+    "test_codex_subscription.SubscriptionTests.test_cancellation_removes_spawned_descendant_not_only_cli_parent",
+    "test_codex_subscription.SubscriptionTests.test_defaults_factory_and_legacy_document",
+    "test_codex_subscription.SubscriptionTests.test_home_instruction_fault_before_any_process_or_attempt",
+    "test_codex_subscription.SubscriptionTests.test_invocation_supported_controls_without_bypasses",
+    "test_codex_subscription.SubscriptionTests.test_live_subscription_stats_not_jev_prices_or_confirmed_identity",
+    "test_codex_subscription.SubscriptionTests.test_low_confidence_and_null_hook_use_same_core_and_statistics",
+    "test_codex_subscription.SubscriptionTests.test_process_output_bound_and_cancel_before_start",
+    "test_codex_subscription.SubscriptionTests.test_process_timeout_and_cancel_kill_own_group_before_return",
+    "test_codex_subscription.SubscriptionTests.test_provider_switch_preserves_permissions_policy_history_and_cas",
+    "test_codex_subscription.SubscriptionTests.test_public_auth_status_shape_accepts_only_chatgpt",
+    "test_codex_subscription.SubscriptionTests.test_runtime_pre_spawn_gates_recursion_disabled_export_explicit_role",
+    "test_codex_subscription.SubscriptionTests.test_sanitized_environment_and_home_instruction_metadata_guard",
+    "test_codex_subscription.SubscriptionTests.test_strict_final_answer_and_official_usage",
+    "test_codex_subscription.SubscriptionTests.test_tool_events_rejected",
+    "test_configured_accounting.AccountingTests.test_cli_json_and_human_read_same_corrected_stats_without_increment",
+    "test_configured_accounting.AccountingTests.test_default_production_unknown_records_reported_child_without_http_or_key",
+    "test_configured_accounting.AccountingTests.test_denied_disabled_scope_and_invalid_ids_create_no_facts",
+    "test_configured_accounting.AccountingTests.test_saved_native_explicit_pre_post_replay_and_conflict_have_one_fact_no_provider",
+    "test_configured_accounting.AccountingTests.test_unknown_exception_is_durable_and_post_needs_no_new_resolution",
+    "test_configured_accounting.AccountingTests.test_unowned_malformed_and_partition_mismatch_do_not_gain_facts",
+    "test_settings_cli.SettingsCliTests.test_cancel_eof_and_ctrl_c_before_save_have_zero_writes",
+    "test_settings_cli.SettingsCliTests.test_invalid_input_recovers_and_fixed_requires_model",
+    "test_settings_cli.SettingsCliTests.test_invalid_unowned_and_conflicting_sources_refuse_before_store",
+    "test_settings_cli.SettingsCliTests.test_narrow_color_no_color_and_history_separation",
+    "test_settings_cli.SettingsCliTests.test_save_readback_preserves_other_fields_and_json_dashboard_shape",
+    "test_settings_cli.SettingsCliTests.test_stale_revision_preserves_concurrent_actor_bytes",
+    "test_settings_cli.SettingsCliTests.test_unset_inherit_main_and_no_change_save",
+    "test_settings_runtime.SettingsRuntimeTests.test_cooperating_writers_serialize_and_stale_revision_cannot_overwrite",
+    "test_settings_runtime.SettingsRuntimeTests.test_disable_is_neutral_for_new_invocations_without_promising_inflight_cancellation",
+    "test_settings_runtime.SettingsRuntimeTests.test_each_export_gate_combination_has_zero_key_and_transport_until_all_true",
+    "test_settings_runtime.SettingsRuntimeTests.test_nonowned_symlink_and_foreign_file_are_preserved",
+    "test_settings_runtime.SettingsRuntimeTests.test_oversized_serialized_settings_refuse_before_replacement",
+    "test_settings_runtime.SettingsRuntimeTests.test_public_configuration_and_enable_are_independent_idempotent_and_read_only_show",
+    "test_settings_runtime.SettingsRuntimeTests.test_public_hook_uses_real_factory_and_parser_main_fixed_receipt_disable",
+    "test_settings_runtime.SettingsRuntimeTests.test_unknown_host_explicit_fixed_role_unrelated_and_failures_preserve",
+    "test_settings_runtime.SettingsRuntimeTests.test_wrong_uid_empty_target_is_refused_without_ownership_marker",
+    "test_settings_schema.SettingsSchemaTests.test_defaults_are_fresh_and_validated_values_are_deep_copies",
+    "test_settings_schema.SettingsSchemaTests.test_policy_contract_and_optional_fields",
+    "test_settings_schema.SettingsSchemaTests.test_rejects_duplicate_keys_nonfinite_json_and_oversized_input",
+    "test_settings_schema.SettingsSchemaTests.test_rejects_noncanonical_or_duplicate_workspace_paths",
+    "test_settings_schema.SettingsSchemaTests.test_rejects_unknown_secret_and_capability_fields",
+    "test_settings_schema.SettingsSchemaTests.test_rejects_wrong_top_level_types_and_revision_values",
+    "test_terminal_provider.ProviderTelemetryRenderTests.test_jev_telemetry_is_separate_from_child_actual_models",
+    "test_terminal_provider.ProviderTelemetryRenderTests.test_narrow_composition_and_sections_fit_width_28",
+    "test_terminal_provider.ProviderTelemetryRenderTests.test_old_e2_statistics_show_new_fields_as_unavailable",
+    "test_terminal_provider.ProviderTelemetryRenderTests.test_plain_composition_bar_is_segmented_and_shows_counts_and_shares",
+    "test_typesafe.TypesafeTests.test_cancellation_in_gap_before_transport_entry_does_not_start_attempt",
+    "test_typesafe.TypesafeTests.test_inflight_timeout_late_response_keeps_unknown_and_frozen_decision",
+    "test_typesafe.TypesafeTests.test_late_callback_cannot_admit_request_after_routing_timeout"
+  ],
+  "executions": {
+    "e19-adapter-final.log": {
+      "tests": 14,
+      "seconds": 0.645
+    },
+    "e19-subscription-final.log": {
+      "tests": 30,
+      "seconds": 0.842
+    },
+    "e19-repair.log": {
+      "tests": 16,
+      "seconds": 0.404
+    },
+    "e19-legacy-cancel.log": {
+      "tests": 3,
+      "seconds": 0.042
+    },
+    "e19-descendant.log": {
+      "tests": 1,
+      "seconds": 0.039
+    }
+  },
+  "real_classifier_calls": 0,
+  "real_test_turns": 0,
+  "accepted_e17r_native_chain_reused": true,
+  "full_suite_rerun": false
+}

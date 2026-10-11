@@ -246,6 +246,7 @@ def render_details(
             [
                 f"Proposals: {_value(stats.get('proposals'))}",
                 f"Jev request attempts: {_value(stats.get('jev_attempts'))}",
+                f"Subscription classifier CLI attempts: {_value(stats.get('codex_subscription_attempts'))}",
                 f"Synthetic attempts: {_value(stats.get('synthetic_attempts'))}",
                 f"Classified tasks: {_value(stats.get('classified_tasks'))}",
                 f"Low-confidence tasks: {_value(stats.get('low_confidence_tasks'))}",
@@ -269,6 +270,7 @@ def render_details(
         ),
         ("ACTUAL MODELS", []),
         ("JEV TELEMETRY", []),
+        ("SUBSCRIPTION CLASSIFIER", []),
         ("HANDBACK ANOMALIES", [f"Recorded anomaly count: {_value(stats.get('handback_anomalies'))}",
                                f"Evidence: {_value(stats.get('handback_anomaly_evidence'))}"]),
         ('STOPPED DELEGATIONS', [f"Operator updates required: {_value(stats.get('operator_stops'))}",
@@ -323,6 +325,15 @@ def render_details(
             continue
         if heading == "JEV TELEMETRY":
             lines.extend(_jev_telemetry_lines(stats.get("jev"), columns))
+            continue
+        if heading == "SUBSCRIPTION CLASSIFIER":
+            telemetry=stats.get('codex_subscription',{})
+            lines.extend(_wrap('  Source: '+_value(telemetry.get('source')),columns))
+            lines.extend(_mapping_field('CLI attempt states',telemetry.get('attempt_states'),columns))
+            lines.extend(_mapping_field('Requested classifier models',telemetry.get('requested_models'),columns))
+            for field,label in (('input_tokens','Input tokens'),('output_tokens','Output tokens')):
+                lines.extend(_wrap('  '+label+': '+_value(telemetry.get(field)),columns))
+            lines.extend(_wrap('  Confidence: model self-report, not calibrated. Cost: Unavailable.',columns))
             continue
         if heading == "CAPABILITIES":
             lines.extend(_mapping_lines(stats.get("capabilities"), columns))
@@ -420,7 +431,9 @@ def _cell_chunks(value: Any, width: int) -> list[str]:
 
 
 def _configuration_lines(configuration: Mapping[str, Any], width: int, color: bool = False) -> list[str]:
-    lines = _wrap("Jev chooses the tier. You choose the model and effort.", width)
+    source = "Codex subscription" if configuration.get('provider')=='codex_subscription' else "TypeSafe Jev"
+    lines = _wrap(source + " classifies the tier. You choose the child model and effort.", width)
+    lines += _wrap("Classifier model: " + str(configuration.get('classifier_model','Unavailable')), width)
     lines += [""]
     rows = _policy_cells(configuration["policy"])
     def tone(text, code):
@@ -528,7 +541,9 @@ def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
              row(ink(_fit("Updated: " + _value(stats.get("updated_at")), inner), _DIM)), row()]
     lines.append(row(ink(_fit("01  HOW A DELEGATION IS ROUTED", inner), _LAVENDER)))
     lines.append(row())
-    stages = [("Orchestrator", "Writes the task brief"), ("Jev", "Classifies complexity"),
+    classifier_name=('Subscription' if configuration is not None and configuration.get('provider')=='codex_subscription'
+                     else 'TypeSafe Jev' if configuration is not None else 'Classifier')
+    stages = [("Orchestrator", "Writes the task brief"), (classifier_name, "Classifies complexity"),
               ("Tier", "Light Small Mid Top"), ("Model", "Selected by policy")]
     if inner >= 96:
         size = (inner - 9) // 4

@@ -10,6 +10,7 @@ from typing import Any
 
 from .types import safe_id, safe_model_id
 from .typesafe_protocol import PINNED_MODEL
+from .codex_subscription import MODEL as SUBSCRIPTION_MODEL
 
 
 _MAX_SETTINGS_BYTES = 65_536
@@ -25,7 +26,8 @@ _TOP_LEVEL_KEYS = {
     "policy",
 }
 _OWNER = "org.model-routing-harness.settings.v1"
-_PROVIDER = "typesafe"
+_PROVIDER = "codex_subscription"
+_PROVIDERS = {"codex_subscription": SUBSCRIPTION_MODEL, "typesafe": PINNED_MODEL}
 _POLICY_KEYS = {"top_mode", "timeout_seconds", "tiers", "fixed", "rates"}
 _RATE_KEYS = {"currency", "unit", "service", "source_ref", "components"}
 _TIERS = {"Light", "Small", "Mid", "Top"}
@@ -164,9 +166,9 @@ def validate_settings(value: dict) -> dict:
     copied_workspaces = [_validate_workspace_path(path) for path in workspaces]
     if len(copied_workspaces) != len(set(copied_workspaces)):
         _invalid()
-    if type(value["provider"]) is not str or value["provider"] != _PROVIDER:
+    if type(value["provider"]) is not str or value["provider"] not in _PROVIDERS:
         _invalid()
-    if type(value["classifier_model"]) is not str or value["classifier_model"] != PINNED_MODEL:
+    if type(value["classifier_model"]) is not str or value["classifier_model"] != _PROVIDERS[value["provider"]]:
         _invalid()
 
     return {
@@ -176,8 +178,8 @@ def validate_settings(value: dict) -> dict:
         "enabled": value["enabled"],
         "task_export_permitted": value["task_export_permitted"],
         "allowed_workspaces": copied_workspaces,
-        "provider": _PROVIDER,
-        "classifier_model": PINNED_MODEL,
+        "provider": value["provider"],
+        "classifier_model": value["classifier_model"],
         "policy": _validate_policy(value["policy"]),
     }
 
@@ -192,8 +194,8 @@ def default_settings() -> dict:
         "task_export_permitted": False,
         "allowed_workspaces": [],
         "provider": _PROVIDER,
-        "classifier_model": PINNED_MODEL,
-        "policy": {"top_mode": "Main", "timeout_seconds": 1.0, "tiers": {}, "rates": {}},
+        "classifier_model": SUBSCRIPTION_MODEL,
+        "policy": {"top_mode": "Main", "timeout_seconds": 20.0, "tiers": {}, "rates": {}},
     }
 
 

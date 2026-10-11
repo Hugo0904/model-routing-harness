@@ -90,7 +90,8 @@ def build_parser() -> argparse.ArgumentParser:
         elif action not in ("init", "show"):
             item.add_argument("--expected-revision", type=int)
         if action == "configure":
-            item.add_argument("--provider", choices=("typesafe",))
+            item.add_argument("--provider", choices=("codex_subscription", "typesafe"),
+                              help="classifier source; separate from routed child models")
             item.add_argument("--policy", type=Path, help="explicit policy JSON file; does not enable routing/export")
             item.add_argument("--allow-workspace", action="append", default=None)
             item.add_argument("--clear-workspaces", action="store_true")
@@ -175,7 +176,8 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         "MRH  /  local capability check",
         {
             "Live classification": [
-                "TypeSafe Jev adapter: default-disabled; real provider unverified",
+                "Codex subscription classifier: default-disabled; existing ChatGPT login, no API key; isolation required",
+                "TypeSafe Jev adapter: retained for explicitly selected legacy profiles",
                 "Credentials and network: not probed",
             ],
             "Codex": [
@@ -282,6 +284,8 @@ def _cmd_settings(args, stdin):
             else:
                 if args.provider is not None:
                     changes["provider"] = args.provider
+                    from .classifier import PROVIDERS
+                    changes['classifier_model'] = PROVIDERS[args.provider]
                 if args.export_permission is not None:
                     changes["task_export_permitted"] = args.export_permission
                 if args.clear_workspaces and args.allow_workspace is not None:
