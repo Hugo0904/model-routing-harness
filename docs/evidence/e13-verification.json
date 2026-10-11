@@ -1,0 +1,23 @@
+{
+  "initial_affected_scope": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_model_selector test_settings_schema test_settings_cli test_settings_runtime test_core test_e3_facts test_action_facts test_operator_stop test_store test_configured_accounting",
+    "count": 89,
+    "passed": 87,
+    "failed": 2,
+    "seconds": 1.516,
+    "failures": "two reproduced baseline stale checks; no E13 regression"
+  },
+  "after_transport_error_fix": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:tests python3.11 -m unittest test_claude_catalog test_operator_stop",
+    "count": 26,
+    "passed": 26,
+    "seconds": 0.386,
+    "new_protocol_tests": 16,
+    "operator_tests_repeated": 10
+  },
+  "distinct_passed": 103,
+  "known_baseline_failures": 2,
+  "baseline_evidence": "e13-baseline-failures.json",
+  "whole_suite_pass_claimed": false,
+  "a_acceptance_pending": true
+}

@@ -1,0 +1,8 @@
+{
+  "baseline_revision": "3f577924aaf0bcbdf1f795ee6f77e1adb096af8c",
+  "exit": 1,
+  "same_schema_expectation_failure": true,
+  "same_default_details_expectation_failure": false,
+  "owned_root": "/private/tmp/mrh-e13-baseline-51pc23yy",
+  "root_absent": true
+}

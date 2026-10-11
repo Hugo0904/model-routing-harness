@@ -1,0 +1,147 @@
+{
+  "sdk_runtime_used": false,
+  "node_runtime_used": false,
+  "request_source": "SDK0.3.296 published initialize envelope",
+  "cli_sha256": "a681f3008f0050029aeebcab3af51bb6a55ddeb625a3af3141a4416d43cd2558",
+  "profile": "(version 1)\n(deny default)\n(allow process*)\n(allow sysctl-read)\n(allow signal)\n(allow file-read-data (literal \"/\"))\n(allow file-read-metadata (literal \"/\") (literal \"/System\") (literal \"/dev\") (literal \"/opt\") (literal \"/opt/homebrew\") (literal \"/opt/homebrew/Caskroom\") (literal \"/opt/homebrew/Caskroom/claude-code\") (literal \"/private\") (literal \"/private/tmp\") (literal \"/private/tmp/mrh-e13-cli-cafgaqvf\"))\n(allow file-read* (subpath \"/private/tmp/mrh-e13-cli-cafgaqvf/runtime\") (subpath \"/System/Library\") (subpath \"/System/Applications\") (subpath \"/System/DriverKit\") (subpath \"/usr\") (subpath \"/bin\") (subpath \"/sbin\") (subpath \"/opt/homebrew/Cellar\") (subpath \"/opt/homebrew/opt\") (subpath \"/opt/homebrew/Caskroom/claude-code/2.1.267\") (subpath \"/dev/null\") (subpath \"/dev/urandom\"))\n(allow file-write* (subpath \"/private/tmp/mrh-e13-cli-cafgaqvf/runtime\") (literal \"/dev/null\"))\n(deny file-read* (subpath \"/Users\") (subpath \"/System/Volumes/Data/Users\"))\n(deny file-read* (subpath \"/private/tmp/mrh-e13-cli-cafgaqvf/runtime/private-canary\"))\n(deny process-exec (literal \"/usr/bin/security\"))\n(deny mach-lookup)\n(deny network*)\n",
+  "profile_sha256": "bed6227b89f259f8f9abeffbf0c31c6bd1ac384e0b5f3d7fcceaa5ce83c8f61b",
+  "owned_root": "/private/tmp/mrh-e13-cli-cafgaqvf",
+  "environment_keys": [
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CODE_TMPDIR",
+    "CLAUDE_CONFIG_DIR",
+    "DISABLE_TELEMETRY",
+    "HOME",
+    "NO_COLOR",
+    "OPENSSL_CONF",
+    "PATH",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME"
+  ],
+  "arguments": [
+    "/opt/homebrew/Caskroom/claude-code/2.1.267/claude",
+    "-p",
+    "--bare",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--input-format",
+    "stream-json",
+    "--setting-sources",
+    "",
+    "--settings",
+    "/private/tmp/mrh-e13-cli-cafgaqvf/runtime/config/settings.json",
+    "--tools",
+    "",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "/private/tmp/mrh-e13-cli-cafgaqvf/runtime/config/mcp.json",
+    "--permission-mode",
+    "dontAsk",
+    "--disable-slash-commands",
+    "--no-session-persistence"
+  ],
+  "writes": [
+    {
+      "type": "control_request",
+      "request_id": "mrh_a3164076e7644ee7a8a14fb8beaaf20d",
+      "request": {
+        "subtype": "initialize",
+        "hooks": {},
+        "sdkMcpServers": [],
+        "agents": {},
+        "plugins": []
+      }
+    }
+  ],
+  "frame_types": [
+    "control_response"
+  ],
+  "status": "metadata",
+  "cleanup_errors": [],
+  "process_group": 41461,
+  "started_at": 1791702686.658939,
+  "control_subtype": "success",
+  "models": [
+    {
+      "value": "default",
+      "resolvedModel": "claude-opus-5[1m]",
+      "displayName": "Default (recommended)",
+      "description": "Use the default model (currently Opus 5 (1M context)) \u00b7 $5/$25 per Mtok",
+      "supportsEffort": true,
+      "supportedEffortLevels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supportsAdaptiveThinking": true,
+      "supportsFastMode": true,
+      "supportsAutoMode": true
+    },
+    {
+      "value": "opus[1m]",
+      "resolvedModel": "claude-opus-5[1m]",
+      "displayName": "Opus (1M context)",
+      "description": "Opus 5 with 1M context \u00b7 Best for everyday, complex tasks \u00b7 $5/$25 per Mtok",
+      "supportsEffort": true,
+      "supportedEffortLevels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supportsAdaptiveThinking": true,
+      "supportsFastMode": true,
+      "supportsAutoMode": true
+    },
+    {
+      "value": "sonnet",
+      "resolvedModel": "claude-sonnet-5",
+      "displayName": "Sonnet",
+      "description": "Sonnet 5 \u00b7 Efficient for routine tasks \u00b7 $2/$10 per Mtok",
+      "supportsEffort": true,
+      "supportedEffortLevels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "supportsAdaptiveThinking": true,
+      "supportsAutoMode": true
+    },
+    {
+      "value": "haiku",
+      "resolvedModel": "claude-haiku-4-5-20251001",
+      "displayName": "Haiku",
+      "description": "Haiku 4.5 \u00b7 Fastest for quick answers \u00b7 $1/$5 per Mtok"
+    }
+  ],
+  "payload_keys": [
+    "account",
+    "agents",
+    "analytics_disabled",
+    "available_output_styles",
+    "commands",
+    "current_permission_mode",
+    "fast_mode_disabled_reason",
+    "fast_mode_state",
+    "hooks_applied",
+    "ide_rc_auto_enable_gate",
+    "models",
+    "output_style",
+    "pid",
+    "remote_control_auto_enable",
+    "remote_control_auto_on_by_default",
+    "remote_control_available",
+    "session_state"
+  ],
+  "exit_after_cleanup": 0,
+  "stderr": "",
+  "seconds": 0.2128,
+  "root_absent": true
+}

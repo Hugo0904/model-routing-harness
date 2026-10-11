@@ -1,0 +1,410 @@
+{
+  "kind": "E13 SDK-free installed Python entry and actual Claude PTY",
+  "source_sha256": {
+    "src/mrh/__init__.py": "13d029d3be7f480ffffbd2e9a273e64ef1e5b4fd2d7b24811ca8899d6671ff0c",
+    "src/mrh/__main__.py": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7",
+    "src/mrh/attempts.py": "308cdd780dfabfecf5fb7531ed708da7fa259d7fd47320ab61ca2d3edba52441",
+    "src/mrh/bindings.py": "8121f6dd024b72b37606525d642026b87d9264e385453923bb8520261bc2afa2",
+    "src/mrh/catalog.py": "b311a333757f6381d9b4f87b7e7e4ba36e011b279f4e93ea86137f588cda3143",
+    "src/mrh/claude_catalog.py": "66396d22848bb173226ae529c9fd7890ca6ff90308741af1c8af11eb2e321f3f",
+    "src/mrh/cli.py": "0f0d912562ed2e653b45be87d5ff85140a7e30f642f9a968cca6d0f73bf55501",
+    "src/mrh/codex.py": "aa32231767827087bcdc5db788dc71f9f50e4c1532bdeb58a5b0f6cc8978828b",
+    "src/mrh/core.py": "dc0b430f1590c337f77e44a8cd1aa8afbab8c87d0ceca8a5f22805cda0699c76",
+    "src/mrh/facts.py": "758378f8fa9e9566463bf004e551b56d5f53b40dd05d5ac74309b0652fa94d49",
+    "src/mrh/installer.py": "158a089d7d1c78b44f1e6042e44f4ec9f4cd70604b81148f25c2528a78578264",
+    "src/mrh/isolated_host_export.py": "96bd4d03a2190896a47c4180844e031478f5b1bff8fe204894b65854e78dc1d1",
+    "src/mrh/isolated_live_hook.py": "ad065042b218306de5626fd5efb305459c9720bf76ed9e90f746bcf2a13a9956",
+    "src/mrh/model_selector.py": "fe24d7670b793230eec59e1a847204dd8ca10a75bfa4bd4c242a79cc5048dabd",
+    "src/mrh/owned.py": "56cc22e01b52d16fec382e5bb32fc46d675a7247a4fabbd40b42009bba8f5eb9",
+    "src/mrh/plugin.py": "044b0fff605cf2534b605e25f8e67ee8fe584807dba5a1a902f2dff73f7c9b40",
+    "src/mrh/runtime.py": "820cf699b412c6d39c8070deb4cbe5a42001ecb14aa5b4e79b77da4e6588199d",
+    "src/mrh/service.py": "d832c9873d579cc48aeb6f368fdf5d2b9e6df2b7f1666297300a08a670df5fdc",
+    "src/mrh/settings.py": "612517f3f08e4bd8014c378daf42cc81f666bca64d2d8f065defb33751f233cb",
+    "src/mrh/settings_editor.py": "6db3960ee8d43654c49c1fbcb7306c8b3f72dd53fe952102302e5598cb3f6227",
+    "src/mrh/settings_schema.py": "f4b8a7b13e2ebe910986f4464610333af9b50fab873563346e4748c5f160bb5f",
+    "src/mrh/simulation.py": "7b9b2a6e6ce10b10f329cc1b86c2e7c0eb53f7ee21b12666254b80c7d93db4d5",
+    "src/mrh/store.py": "d4e769c3d54c27f1599eee266667511d125f84ef439288dc45a0f7384c7b686d",
+    "src/mrh/terminal.py": "df405e17940d6a808e011a2aabfa45cee4d30ce3ea6b394429f22bee73666c60",
+    "src/mrh/types.py": "71df7c68013084b6ad07ea63d40751d333684c560341e7b571c22a783171fa2d",
+    "src/mrh/typesafe.py": "ba9b8ea0e450621e3186831b263076fcb6ce6f02a0740a3117840f9ac55c51f7",
+    "src/mrh/typesafe_protocol.py": "a0dd156e74c67517062cb5e0505878f9618ad8964eb25567958c55d9cd34b612"
+  },
+  "wheel_sha256": "5fffad270e0a86f1af72fec02a2abbea87aa3a37e6c7f4ce2dc8f45089c28ff3",
+  "installed_identity": {
+    "module": "/private/tmp/mrh-e13-installed-fdomafr5/venv/lib/python3.11/site-packages/mrh/__init__.py",
+    "claude": "/private/tmp/mrh-e13-installed-fdomafr5/venv/lib/python3.11/site-packages/mrh/claude_catalog.py",
+    "cwd": "/private/tmp/mrh-e13-installed-fdomafr5/work"
+  },
+  "all_installed_bytes_match_source": true,
+  "wheel_runtime_dependencies": [],
+  "contains_sdk_or_js_runtime_files": false,
+  "no_pythonpath": true,
+  "outside_source_cwd": true,
+  "discovered_tools": [
+    {
+      "tool": "claude",
+      "executable": "/opt/homebrew/Caskroom/claude-code/2.1.267/claude",
+      "label": "Claude",
+      "supported": true
+    },
+    {
+      "tool": "codex",
+      "executable": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+      "label": "Codex Desktop bundled CLI",
+      "supported": true
+    }
+  ],
+  "actual_claude_catalog": {
+    "assurance": "tool-advertised",
+    "binding_id": "e242f476e8ef49ac9c71e1777ff2b36b",
+    "complete": true,
+    "fetched_at": 1791703779.0919511,
+    "models": [
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "id": "default",
+        "label": "Default (recommended)",
+        "resolved_model": "claude-opus-5[1m]",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "id": "opus[1m]",
+        "label": "Opus (1M context)",
+        "resolved_model": "claude-opus-5[1m]",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "id": "sonnet",
+        "label": "Sonnet",
+        "resolved_model": "claude-sonnet-5",
+        "retirement_ref": null,
+        "state": "available"
+      },
+      {
+        "efforts": [],
+        "id": "haiku",
+        "label": "Haiku",
+        "resolved_model": "claude-haiku-4-5-20251001",
+        "retirement_ref": null,
+        "state": "available"
+      }
+    ],
+    "scope": "a681f3008f0050029aeebcab3af51bb6a55ddeb625a3af3141a4416d43cd2558",
+    "source": "claude:stream-json-initialize:isolated-defaults",
+    "tool": "claude",
+    "version": "2.1.267 (Claude Code)"
+  },
+  "first_saved_profile": {
+    "allowed_workspaces": [],
+    "classifier_model": "jev-1.13.0",
+    "enabled": false,
+    "owner": "org.model-routing-harness.settings.v1",
+    "policy": {
+      "rates": {},
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "opus[1m]"
+        }
+      },
+      "timeout_seconds": 1.0,
+      "top_mode": "Main"
+    },
+    "provider": "typesafe",
+    "revision": 1,
+    "schema_version": 1,
+    "task_export_permitted": false
+  },
+  "final_profile": {
+    "allowed_workspaces": [],
+    "classifier_model": "jev-1.13.0",
+    "enabled": false,
+    "owner": "org.model-routing-harness.settings.v1",
+    "policy": {
+      "rates": {},
+      "tiers": {
+        "Light": {
+          "effort": "low",
+          "model": "opus[1m]"
+        },
+        "Small": {
+          "model": "haiku"
+        }
+      },
+      "timeout_seconds": 1.0,
+      "top_mode": "Main"
+    },
+    "provider": "typesafe",
+    "revision": 2,
+    "schema_version": 1,
+    "task_export_permitted": false
+  },
+  "cancel_policy_and_history_unchanged": true,
+  "save_failure_is_synthetic": true,
+  "cancel_existing_event_files": [
+    "events.sqlite3",
+    "events.sqlite3.key",
+    "events.sqlite3.lock"
+  ],
+  "failed_save_policy_unchanged": true,
+  "commands": [
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-m",
+        "venv",
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv"
+      ],
+      "exit": 0,
+      "seconds": 1.7458
+    },
+    {
+      "argv": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+        "-c",
+        "import sys;sys.path.insert(0,sys.argv[1]);import mrh_build;print(mrh_build.build_wheel(sys.argv[2]))",
+        "/Users/shawn/Code/model-routing-harness",
+        "/private/tmp/mrh-e13-installed-fdomafr5/wheel"
+      ],
+      "exit": 0,
+      "seconds": 0.0456
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/python",
+        "-m",
+        "pip",
+        "--isolated",
+        "--no-cache-dir",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-build-isolation",
+        "/private/tmp/mrh-e13-installed-fdomafr5/wheel/model_routing_harness-0.3.0-py3-none-any.whl"
+      ],
+      "exit": 0,
+      "seconds": 0.2343
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/python",
+        "-I",
+        "-c",
+        "import json,mrh,mrh.claude_catalog,os;print(json.dumps({'module':mrh.__file__,'claude':mrh.claude_catalog.__file__,'cwd':os.getcwd()}))"
+      ],
+      "exit": 0,
+      "seconds": 0.0431
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/python",
+        "-I",
+        "-c",
+        "import json;from mrh.catalog import discover;print(json.dumps(discover()))"
+      ],
+      "exit": 0,
+      "seconds": 0.0408
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/mrh",
+        "model",
+        "light",
+        "--root",
+        "/private/tmp/mrh-e13-installed-fdomafr5/bindings",
+        "--width",
+        "56",
+        "--plain"
+      ],
+      "exit": 0,
+      "pty_rows": 24,
+      "pty_columns": 56,
+      "keys": [
+        "\n",
+        "\n",
+        "\u001b[B\n",
+        "\u001b[B\n",
+        "\u001b[D",
+        "\u001b[D",
+        "\u001b[B\u001b[A\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/mrh",
+        "stats",
+        "--settings",
+        "/private/tmp/mrh-e13-installed-fdomafr5/mrh-profile-e242f476e8ef49ac9c71e1777ff2b36b/settings.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.0611
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/mrh",
+        "model",
+        "light",
+        "--root",
+        "/private/tmp/mrh-e13-installed-fdomafr5/bindings",
+        "--width",
+        "56",
+        "--plain"
+      ],
+      "exit": 0,
+      "pty_rows": 24,
+      "pty_columns": 56,
+      "keys": [
+        "\u001b[B\n",
+        "\u001b[B\n",
+        "\u001b[B\u001b[B\n"
+      ]
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/mrh",
+        "model",
+        "small",
+        "--root",
+        "/private/tmp/mrh-e13-installed-fdomafr5/bindings",
+        "--width",
+        "56",
+        "--plain"
+      ],
+      "exit": 0,
+      "pty_rows": 24,
+      "pty_columns": 56,
+      "keys": [
+        "\u001b[B\u001b[B\u001b[B\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/python",
+        "-I",
+        "-c",
+        "import sys,time\nfrom mrh import cli\nfrom mrh.bindings import Registry\nfrom mrh.catalog import Catalog,CatalogError\nclass Provider:\n def __init__(self):self.calls=0\n def refresh(self,b):\n  self.calls+=1\n  if self.calls>1:raise CatalogError('claude_catalog_timeout')\n  c=Catalog.from_dict(Registry(sys.argv[1]).read()['bindings'][0]['catalog'])\n  return Catalog(**{**c.__dict__,'fetched_at':time.time(),'source':'synthetic:claude-save-refresh-failure','assurance':'synthetic'})\nraise SystemExit(cli.main(['model','small','--root',sys.argv[1],'--width','56','--plain'],model_dependencies={'provider':Provider()}))\n",
+        "/private/tmp/mrh-e13-installed-fdomafr5/bindings"
+      ],
+      "exit": 0,
+      "pty_rows": 24,
+      "pty_columns": 56,
+      "keys": [
+        "\n",
+        "\n",
+        "\n",
+        "\u001b[B\u001b[B\n"
+      ]
+    },
+    {
+      "argv": [
+        "/private/tmp/mrh-e13-installed-fdomafr5/venv/bin/mrh",
+        "stats",
+        "--settings",
+        "/private/tmp/mrh-e13-installed-fdomafr5/mrh-profile-e242f476e8ef49ac9c71e1777ff2b36b/settings.json",
+        "--json"
+      ],
+      "exit": 0,
+      "seconds": 0.0515
+    }
+  ],
+  "stats": {
+    "schema_version": 2,
+    "updated_at": null,
+    "partition": "live",
+    "proposals": 0,
+    "jev_attempts": 0,
+    "synthetic_attempts": 0,
+    "classified_tasks": 0,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "operator_stops": 0,
+    "stopped_targets": {},
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 0
+    },
+    "outcomes": {},
+    "requested_models": {},
+    "confirmed_children": 0,
+    "simulated_children": 0,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [],
+    "event_ids": {
+      "proposals": [],
+      "attempts": [],
+      "receipts": []
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "unavailable",
+      "attempt_states": {},
+      "requested_models": {},
+      "response_models": {},
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "usage_unavailable_attempts": 0,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    },
+    "operator_stop_anomalies": 0,
+    "operator_stop_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "owned_root": "/private/tmp/mrh-e13-installed-fdomafr5",
+  "no_global_install": true,
+  "account_confirmation": false,
+  "keyboard_inputs": "Only directional keys and Enter; no model/effort/path/confirmation text",
+  "r3_standalone_distribution_verified": false,
+  "cleanup_removed": true,
+  "seconds": 6.3558
+}

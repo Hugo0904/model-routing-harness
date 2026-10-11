@@ -1,0 +1,146 @@
+  Loaded bound tool: Claude
+
+  MRH  /  MODEL POLICY
+
+  CURRENT CONFIGURATION
+
+  Revision 1
+
+  Jev chooses the tier. You choose the model and
+  effort.
+
+  Light / Model
+    Model: opus[1m]
+    Effort: low
+
+  Small / Preserve
+    Model: Unset
+    Effort: —
+
+  Mid / Preserve
+    Model: Unset
+    Effort: —
+
+  Top / Main
+    Model: Current main agent
+    Effort: —
+
+
+  Routing requested: Off / Task export: Blocked
+  inherit uses the host's effort. Unset keeps the
+  original delegation.
+
+  Configured requests do not confirm model
+  availability or execution.
+
+  Source: claude:stream-json-initialize:isolated-
+  defaults / 2.1.267 (Claude Code) / tool-advertised
+  Scope: installed tool defaults. Account access and
+  same-call compatibility are unconfirmed.
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. Default (recommended) (default) [resolved: clau
+  de-opus-5[1m]]
+  > 2. Opus (1M context) (opus[1m]) [resolved: claude-
+  opus-5[1m]] [current]
+    3. Sonnet (sonnet) [resolved: claude-sonnet-5]
+    4. Haiku (haiku) [resolved: claude-haiku-4-5-20251
+  001]
+    5. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  Light MODEL
+
+    1. Default (recommended) (default) [resolved: clau
+  de-opus-5[1m]]
+    2. Opus (1M context) (opus[1m]) [resolved: claude-
+  opus-5[1m]] [current]
+  > 3. Sonnet (sonnet) [resolved: claude-sonnet-5]
+    4. Haiku (haiku) [resolved: claude-haiku-4-5-20251
+  001]
+    5. Cancel; keep policy and exit
+
+  >
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed)
+  > 2. low [current]
+    3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REASONING EFFORT
+
+    1. inherit (resolved effort remains unconfirmed)
+    2. low [current]
+  > 3. medium
+    4. high
+    5. xhigh
+    6. max
+    7. Cancel; keep policy and exit
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  REVIEW POLICY CHANGES
+
+  BEFORE -> AFTER
+
+  Light: opus[1m] / low -> sonnet / medium
+
+  Routing and task-sharing permissions stay as they
+  are.
+
+  Up/Down: select. Enter: confirm. Left: back. Esc:
+  cancel. Numbers are optional.
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+  > 1. Save this policy
+    2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+    1. Save this policy
+  > 2. Back; keep editing
+    3. Cancel; keep policy
+
+  >
+
+  MRH  /  MODEL POLICY
+
+  SAVE POLICY?
+
+    1. Save this policy
+    2. Back; keep editing
+  > 3. Cancel; keep policy
+
+  >
+  Cancelled. No policy changes saved.
