@@ -12,6 +12,7 @@ import re
 import select
 import shutil
 import signal
+import struct
 import subprocess
 import sys
 import tempfile
@@ -42,9 +43,10 @@ def inspect(bundle):
         def terminal(args,answers):
             pid,fd=pty.fork()
             if pid==0:os.chdir(work);os.execve(str(args[0]),list(map(str,args)),env)
-            pids.append(pid);fcntl.ioctl(fd,termios.TIOCSWINSZ,struct.pack('HHHH',24,56,0,0))
+            pids.append(pid)
             data=bytearray();cursor=0;index=0;deadline=time.monotonic()+45;waited=False
             try:
+                fcntl.ioctl(fd,termios.TIOCSWINSZ,struct.pack('HHHH',24,56,0,0))
                 while True:
                     if time.monotonic()>deadline:raise TimeoutError('gemini_keyboard_deadline')
                     if not select.select([fd],[],[],.2)[0]:continue
