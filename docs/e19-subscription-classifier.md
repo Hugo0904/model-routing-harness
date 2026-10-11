@@ -1,6 +1,6 @@
 # E19：Codex 訂閱分級器與真實驗收
 
-新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，使用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。D44 後已完成三次真實分級與兩個原生子任務；兩次 Hook 分級都低於 0.5，保留原委派，尚未驗到便宜模型改寫。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。這次只驗自有 CLI 環境，已撤回；原正式 home 的全域指令限制與完整 R1 仍保留。
+新 profile 的分級來源是 `codex_subscription`，固定使用 `gpt-6-luna / low`，使用官方 CLI 的 ChatGPT 訂閱登入，不要求 API key。D44 的三次分級與兩個子任務之後，D45 已在第一回 ordinary native turn 實際切換到 gpt-5.6-luna／low，child 與原 parent 都完成排序；公開原生鏈由 A 獨立確認。Hook 原始 message 的診斷捕捉仍缺失。子代理的四級模型、推理強度、Main／Fixed 選單沿用已接受的 E17R 設計。這次只驗自有 CLI 環境；MRH 已 disabled／export denied，臨時 observer 已撤回，同一登入／home／workspace／state／parent-child sessions／pointer 保留到 A 驗收整體成果。原正式 home 的全域指令限制與完整 R1 仍保留。
 
 ## 現在可操作的入口
 
@@ -77,12 +77,16 @@ V2 的公開 `subAgentActivity.agentThreadId` 提供實際 child ID；空 legacy
 同環境完成 disable、export denied、workspace 清空，官方 plugin／marketplace remove 後 list 讀回均無 MRH；官方明確 file-store logout 後 public status 為 `Not logged in`。自有 native processes 已結束，僅本次有 marker 的 root 已刪除；去敏證據保留，正式登入未清理。[撤回讀回](evidence/e19-live-cleanup.json)。沒有為 closure 重跑 51 項有效檢查、E17R 或重建 bundle。
 
 
-## D45 補正的續接環境
+## D45 的實際普通切換與保留環境
 
-D45 另准最多兩次額外的 ordinary native turn／classifier invocation；原三次不歸零。已建立自有 root `/private/tmp/mrh-e19-d45-mrc5zw54`，沿用未變的 E19 bundle、官方 0.159.3 與原 public comparator。MRH disabled、export denied；原正式 home 未改。新的 file-auth home 尚未登入，官方 Chrome 頁面停在選擇帳戶；登入完成前不做模型呼叫。目前本批 classifier／native turn 均為 0。[準備](evidence/e19-d45-setup.json)、[同目標核對](evidence/e19-d45-preflight.json)、[登入續接點](evidence/e19-d45-login-pending.json)。
+同一 root `/private/tmp/mrh-e19-d45-mrc5zw54` 沿用未改的 E19 bundle／adapter、官方 0.159.3 與原 public comparator。逾時登入只在該 home 重開一次；本人完成後 official public status 為 ChatGPT／exit 0，未重建 root、複製憑證或改正式登入。[準備](evidence/e19-d45-setup.json)、[public auth](evidence/e19-d45-auth.json)、[官方 trust](evidence/e19-d45-trust.json)。先前 login-pending 檔為歷史 snapshot，現況以 auth／retained-session 為準。
 
-診斷 observer 是自有 home 中另外安裝的臨時官方 PreToolUse plugin；原 MRH launcher、runtime、binding 逐檔保持原 hash。它只保存指定空白 workspace／session 的 literal 排序 message、call identity、model／effort 的明示與 null 語意，回傳 `{}`，不呼叫模型或網路。五個 inert 案例驗證捕捉範圍及失敗仍中立。[中立檢查](evidence/e19-d45-observer-inert.json)。固定版官方 handlers 並行執行，因此它是觀察點，不提供「先捕捉再准許推論」的排序或 deny gate；不能宣稱阻止另一個 Hook 已開始的推論。
+第一回 ordinary native turn 的分類是 **Small／0.99**，MRH 請求 `gpt-5.6-luna／low`。公開 PreToolUse call ID 與 V2 `subAgentActivity.id` 相同，再對上 `agentThreadId`、child 的 `parentThreadId`。在 child **active** 時 public `thread/read` 核得 `gpt-5.6-luna／low／openai`；child 與同一 parent 都 completed 並回 `[1, 2, 3]`。parent 前後保持 `gpt-6.1-sol／low`。這證明該次 configured model 切換及執行結果，不證明 provider 後端 inference identity 或一般分級可靠度。[原生鏈](evidence/e19-d45-ordinary-1.json)、[結果](evidence/e19-d45-result.json)。A 已獨立確認這條公開鏈足以驗收本次普通切換，不需要第二回。
 
-續接使用 ignored pointer `/Users/shawn/Code/model-routing-harness/build/e19-d45-pointer.json`，不讀 auth 檔。本人登入後先以同一環境的 official `login status` 驗證 ChatGPT，再沿既有 `verify_host.trust_fixture` 在這個自有 home 審核兩個已核對的 Hook、限定此 workspace 的 export／enable，執行 `scripts/run_subscription_acceptance.py --pointer build/e19-d45-pointer.json --scenario ordinary --output docs/evidence/e19-d45-ordinary-1.json`。driver 的本批上限為 2、prior batch 為 3；只計 MRH 的 PreToolUse，observer 不算額外委派。保留 actual original input 與 MRH proposal identity 的匹配，以及公開 child loaded metadata、結果、同 parent 完成；public token usage 若實際存在則保留。
+本批只用了 **1 次 classifier CLI invocation／1 次 native user turn**，保留前批 3 次，共 4 次；未做第二回、未改模型／prompt／0.5 或其他保護，也未重建 bundle／重跑有效檢查。classifier public CLI usage 為 2,229 input／21 output；parent public final total 為 45,342 input／85 output，child 為 17,239 input／27 output（其中 reasoning output 12，已含在 output 中）。本回已知三者合計 64,943 tokens；費用與實際節省仍未知，CLI invocation 不等於 HTTP request 數。[統計](evidence/e19-d45-stats.json)。
 
-第一回使用原 adapter。只有 D45 指定的實際轉換缺陷或完整 benign input 下的 confidence 語意缺口，才能進入同單位的必要修正／一次重建／第二回；這些尚未執行。成功普通路由即停止抽樣；第二回仍失敗也停止。完成單位後才移除診斷 observer、停用 MRH 與程序並核對同目標，保留私人登入 home 待 A 驗收。原未完成 Main／Fixed／Goal／正式採用／完整 R1 義務仍保留。
+臨時 observer 的五個 inert 案例保持 `{}`、零模型／網路，原 MRH launcher／runtime／binding hash 不變；固定版官方 handlers 並行，因此 observer 不是 pre-inference barrier／deny gate。本回 observer 實際回報 `out_of_scope`，未保存原始 message；native run 的 `bounded_original_input_not_verified` 保留，不以 parent prompt 或 child 答案重建文字。[中立檢查](evidence/e19-d45-observer-inert.json)。曾補讀自有私有 rollout 做 metadata 診斷，這不符合本次指定公開來源；已停止，不列為公開輸入或切換驗收證據，只保存已發生的來源事實。[來源紀錄](evidence/e19-d45-observer-gap.json)。Hook 原始輸入缺口仍未知。
+
+已以官方介面移除 observer plugin／marketplace，`hooks/list` 讀回只剩原兩個 MRH Hook。相同 settings 已 disabled／export denied，仍只綁原 owned workspace；native 驗收與讀回程序均 exit 0。public login status 仍為 ChatGPT，沒有 logout／home 刪除。保留 home、workspace、state、原 parent／child sessions 與 ignored pointer `/Users/shawn/Code/model-routing-harness/build/e19-d45-pointer.json`，直到整體使用者成果由 A 驗收；回報或單批完成都不觸發登入清理。[同目標讀回及保留](evidence/e19-d45-retained-session.json)。
+
+本次普通切換完成；Top Main／Fixed、Goal、正式採用與完整 R1 保留為原剩餘義務，沒有被本次結果豁免。原始輸入診斷另列，未拿未授權來源填補，也未為此再消耗呼叫。A 負責整體验收與原範圍後續安排。

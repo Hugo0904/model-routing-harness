@@ -1,0 +1,119 @@
+{
+  "kind": "public_native_ordinary_route_result",
+  "public_evidence_file": "docs/evidence/e19-d45-ordinary-1.json",
+  "proposal": {
+    "id": "3e2022cf134bfb20d46558d62ec2b565337348dacf875009b4db70f7493cdba0",
+    "session_id": "01a12beb-75c0-7571-ba3c-53be8ff36baf",
+    "turn_id": "01a12beb-7639-7372-8c05-3d3b15afd372",
+    "tool_call_id": "call_27fcdd4c350643a0b7d214d91a6d8a31",
+    "state": "complete",
+    "action": "request_child",
+    "reason": "cheaper_child_requested",
+    "tier": "Small",
+    "confidence": 0.99,
+    "requested_model": "gpt-5.6-luna",
+    "requested_effort": "low"
+  },
+  "v2_call_to_child": {
+    "type": "subAgentActivity",
+    "id": "call_27fcdd4c350643a0b7d214d91a6d8a31",
+    "kind": "started",
+    "agentThreadId": "01a12beb-9f7c-79b2-9950-0c6667696389",
+    "agentPath": "/root/sort_numbers"
+  },
+  "loaded_child_while_active": {
+    "id": "01a12beb-9f7c-79b2-9950-0c6667696389",
+    "parentThreadId": "01a12beb-75c0-7571-ba3c-53be8ff36baf",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "low",
+    "modelProvider": "openai",
+    "status": {
+      "type": "active",
+      "activeFlags": []
+    }
+  },
+  "parent_before": {
+    "id": "01a12beb-75c0-7571-ba3c-53be8ff36baf",
+    "parentThreadId": null,
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "low",
+    "modelProvider": "openai",
+    "status": {
+      "type": "idle"
+    }
+  },
+  "parent_after": {
+    "id": "01a12beb-75c0-7571-ba3c-53be8ff36baf",
+    "parentThreadId": null,
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "low",
+    "modelProvider": "openai",
+    "status": {
+      "type": "idle"
+    }
+  },
+  "child_and_parent_result": "[1, 2, 3]",
+  "child_turn_status": "completed",
+  "parent_turn_status": "completed",
+  "configured_model_switch_observed": true,
+  "provider_backend_model_identity": "unknown",
+  "hook_original_message_capture": "missing: observer out_of_scope",
+  "private_rollout_diagnostic_is_not_accepted_public_evidence": true,
+  "classifier_usage": {
+    "source": "official_cli_json_events",
+    "attempt_unit": "CLI invocations; internal provider retries are unknown",
+    "confidence_basis": "model_self_report_not_calibrated",
+    "attempt_states": {
+      "returned": 1
+    },
+    "requested_models": {
+      "gpt-6-luna": 1
+    },
+    "response_models": {},
+    "known_input_tokens": 2229,
+    "known_output_tokens": 21,
+    "usage_unavailable_attempts": 0,
+    "input_tokens": 2229,
+    "output_tokens": 21,
+    "estimated_cost": null
+  },
+  "public_parent_child_usage_final_totals": {
+    "01a12beb-75c0-7571-ba3c-53be8ff36baf": {
+      "totalTokens": 45427,
+      "inputTokens": 45342,
+      "cachedInputTokens": 39424,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 85,
+      "reasoningOutputTokens": 0
+    },
+    "01a12beb-9f7c-79b2-9950-0c6667696389": {
+      "totalTokens": 17266,
+      "inputTokens": 17239,
+      "cachedInputTokens": 5888,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 27,
+      "reasoningOutputTokens": 12
+    }
+  },
+  "this_run_known_total_tokens": 64943,
+  "cost_or_savings": null,
+  "elapsed_seconds": 16.584,
+  "classifier_calls_this_batch": 1,
+  "native_turns_this_batch": 1,
+  "prior_batch_classifier_calls": 3,
+  "all_batches_classifier_calls": 4,
+  "second_call_executed": false,
+  "runtime_prompt_or_package_changed": false,
+  "unaffected_51_focused_and_E17R_reused": true,
+  "session_retained": true,
+  "observer_removed": true,
+  "mrh_disabled_and_export_denied": true,
+  "remaining_whole_task_obligations": [
+    "Hook original-input diagnostic",
+    "Top Main",
+    "Top Fixed",
+    "Goal",
+    "formal adoption",
+    "full R1"
+  ]
+}

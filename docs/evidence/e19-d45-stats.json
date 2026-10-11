@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-10-11T17:03:44.853822+00:00",
+  "partition": "live",
+  "proposals": 1,
+  "jev_attempts": 0,
+  "codex_subscription_attempts": 1,
+  "synthetic_attempts": 0,
+  "classified_tasks": 1,
+  "low_confidence_tasks": 0,
+  "pending_proposals": 0,
+  "operator_stops": 0,
+  "stopped_targets": {},
+  "routing_status": {
+    "classified_child_request": 1,
+    "classified_main_request": 0,
+    "normal_retention": 0,
+    "fault_fallback": 0,
+    "operator_stop": 0,
+    "unavailable_readiness": 0
+  },
+  "notifications": {
+    "state": "unobserved",
+    "active_sessions": 0,
+    "fault_observations": 0,
+    "warning_claims": 0,
+    "recoveries": 0,
+    "updated_at": null
+  },
+  "tiers": {
+    "Light": 0,
+    "Small": 1,
+    "Mid": 0,
+    "Top": 0
+  },
+  "outcomes": {
+    "cheaper_child_requested": 1
+  },
+  "requested_models": {
+    "gpt-5.6-luna": 1
+  },
+  "confirmed_children": 0,
+  "simulated_children": 0,
+  "reported_children": 1,
+  "actual_models": {},
+  "unknown_actual_model_children": 0,
+  "cost": null,
+  "tokens": null,
+  "quota": null,
+  "capabilities": {
+    "jev": "unavailable",
+    "codex": "candidate_unverified",
+    "claude": "unsupported",
+    "gemini": "unsupported"
+  },
+  "platforms": [
+    {
+      "platform": "codex",
+      "surface": "unknown",
+      "proposals": 1
+    }
+  ],
+  "event_ids": {
+    "proposals": [
+      "3e2022cf134bfb20d46558d62ec2b565337348dacf875009b4db70f7493cdba0"
+    ],
+    "attempts": [
+      "3e2022cf134bfb20d46558d62ec2b565337348dacf875009b4db70f7493cdba0:attempt:0"
+    ],
+    "receipts": [
+      "3e2022cf134bfb20d46558d62ec2b565337348dacf875009b4db70f7493cdba0:child:/root/sort_numbers"
+    ]
+  },
+  "event_ids_truncated": false,
+  "jev": {
+    "source": "unavailable",
+    "attempt_states": {},
+    "requested_models": {},
+    "response_models": {},
+    "input_tokens": null,
+    "output_tokens": null,
+    "known_input_tokens": 0,
+    "known_output_tokens": 0,
+    "usage_unavailable_attempts": 0,
+    "estimated_cost": null
+  },
+  "codex_subscription": {
+    "source": "official_cli_json_events",
+    "attempt_unit": "CLI invocations; internal provider retries are unknown",
+    "confidence_basis": "model_self_report_not_calibrated",
+    "attempt_states": {
+      "returned": 1
+    },
+    "requested_models": {
+      "gpt-6-luna": 1
+    },
+    "response_models": {},
+    "known_input_tokens": 2229,
+    "known_output_tokens": 21,
+    "usage_unavailable_attempts": 0,
+    "input_tokens": 2229,
+    "output_tokens": 21,
+    "estimated_cost": null
+  },
+  "handback_anomalies": 0,
+  "handback_anomaly_evidence": {
+    "confirmed": 0,
+    "reported": 0,
+    "synthetic": 0
+  },
+  "operator_stop_anomalies": 0,
+  "operator_stop_anomaly_evidence": {
+    "confirmed": 0,
+    "reported": 0,
+    "synthetic": 0
+  }
+}

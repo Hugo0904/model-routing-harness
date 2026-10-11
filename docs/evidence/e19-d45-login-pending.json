@@ -20,5 +20,7 @@
   "formal_home_changed": false,
   "private_home_retained_for_same_unit": true,
   "monitor_tracking": "current_host_turn_unavailable; no task identity fabricated",
-  "account_or_credentials_in_evidence": false
+  "account_or_credentials_in_evidence": false,
+  "historical_snapshot": true,
+  "superseded_by": "docs/evidence/e19-d45-auth.json"
 }
