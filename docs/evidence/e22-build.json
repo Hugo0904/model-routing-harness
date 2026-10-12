@@ -1,0 +1,11 @@
+{
+  "directory": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e22-macos-arm64",
+  "archive": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e22-macos-arm64.tar.gz",
+  "archive_sha256": "8f1316699a26ecfed282d836477d7d3a52b7fa26e1c5d9eaded624f00f459ff1",
+  "archive_bytes": 26828239,
+  "manifest_sha256": "c6b9c0d6a5a9ee17e0f1f9654cf5cae361ab2c660e7706b5c9d9123f59f4d6d0",
+  "runtime_version": "3.11.17",
+  "runtime_asset_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10",
+  "notices": 19,
+  "runtime_files": 2059
+}

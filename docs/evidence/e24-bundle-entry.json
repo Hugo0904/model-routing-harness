@@ -1,0 +1,120 @@
+{
+  "kind": "actual_shipped_fresh_contract_delta_no_model",
+  "source_commit": "fd634663afddb56662a0a7e8362a68665d21f439",
+  "source_archive_module_paths_equal": true,
+  "archive_source_identity_verified": true,
+  "python_modules": 46,
+  "verified_manifest_records": 2059,
+  "commands": [
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "plugin",
+        "prepare",
+        "--root",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/plugin",
+        "--settings",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json",
+        "--scope-contract",
+        "fresh-root-cli",
+        "--scope-workspace",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/work",
+        "--codex-binary",
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "settings",
+        "configure",
+        "--path",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json",
+        "--permit-task-export",
+        "--allow-workspace",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/work"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "settings",
+        "enable",
+        "--path",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/runtime/bin/python3.11",
+        "-I",
+        "-B",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/plugin/plugins/model-routing-harness/launcher.py"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/runtime/bin/python3.11",
+        "-I",
+        "-B",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/plugin/plugins/model-routing-harness/launcher.py"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "settings",
+        "show",
+        "--path",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "settings",
+        "disable",
+        "--path",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json"
+      ],
+      "exit": 0
+    },
+    {
+      "argv": [
+        "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+        "settings",
+        "show",
+        "--path",
+        "/private/tmp/mrh-fresh-bundle-6torgv2h/state/settings.json"
+      ],
+      "exit": 0
+    }
+  ],
+  "configuration_scope": {
+    "contract": "official-0.159.3-fresh-root-cli-v1",
+    "workspace": "/private/tmp/mrh-fresh-bundle-6torgv2h/work",
+    "assurance": "fresh-root-cli-configuration",
+    "active_session": "unverified; requires native SessionStart",
+    "native_invocation": "unverified"
+  },
+  "fresh_root_cli_delta": {
+    "harmless_project_mcp": true,
+    "three_hook_events": true,
+    "pre_without_start_recorded_precisely": true,
+    "synthetic_start_cannot_mint_valid_record": true,
+    "model_requests": 0
+  },
+  "registry_preserves_settings_read_and_disable": true,
+  "real_classifier_calls": 0,
+  "login_or_status_calls": 0,
+  "formal_registration_or_trust": false,
+  "reused_package_foundation": "E21; E22 prior consumer steps before the new refusal assertion",
+  "cleanup": true,
+  "elapsed_seconds": 3.706
+}

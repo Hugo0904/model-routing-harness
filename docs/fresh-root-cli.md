@@ -1,5 +1,7 @@
 # 日常 CLI 的有限接入
 
+目前已完成來源、修正版 E24 套件及正常 home 的官方安裝／MRH 三項 Hook 信任。真實 CLI 委派仍未通過啟動來源驗證：設定來源在程序出生後變更，分類器保持零次嘗試，原委派完成排序。新 daily profile 已停用，等待 A 收斂啟動契約；此頁不是日常路由已可用的宣告。完整結果見 [D65 原生驗證](evidence/d65-native-adoption.json)。
+
 此接入使用現有 ChatGPT 登入與官方 Codex CLI 0.159.3。準備 profile 不代表已有有效 session：只有原生 `SessionStart` 的 `startup`，連同實際 CLI 程序、出生時間、執行檔、home 與設定來源驗證成功，才提供 `fresh-root-cli-configuration` 保證。它是有官方來源依據的設定保證；目前模型取自當次 Hook，未宣稱直接讀到子代理 resolver。
 
 用 standalone 的 `mrh plugin prepare --root <獨立 artifact 目錄> --settings <獨立 settings.json> --scope-contract fresh-root-cli --scope-workspace <起始工作區> --codex-binary <官方原生執行檔>` 明確選用。省略此新選項時，既有 pinned 契約維持原樣。使用 normal `CODEX_HOME`，由官方 `plugin marketplace add`、`plugin add` 及啟動時 Hook review 安裝／信任，只新增 MRH；準備結果列出原生指令。信任 review 修改設定後，請關閉該 session，再開全新的 CLI。
@@ -24,3 +26,5 @@
 resume/fork/compact/clear、exec、daemon、App/app-server、巢狀 session、外來執行檔／home／PID 或無法確認的來源不提供此保證。SessionStart 不呼叫分類器、不建立模型嘗試統計。App 的日常接入仍待完成。
 
 停用方法：`mrh settings disable --path <settings.json>`。移除只有 `codex plugin remove model-routing-harness@model-routing-harness-local --json`；獨立的 profile、證據及其他 Hook 保留，不還原整個 home、不登出。
+
+本機候選入口為 `/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh`，設定位於 `/Users/shawn/Code/model-routing-harness/runtime/daily-cli/profile/settings.json`。`settings view --path` 已用此實際入口讀回四級畫面；最終為 revision 5、Routing Off。啟動紀錄改放設定目錄之外的自有 sibling，已實測寫入紀錄後仍可讀取／停用，舊紀錄另保留。

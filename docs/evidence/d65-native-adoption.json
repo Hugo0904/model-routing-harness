@@ -1,0 +1,181 @@
+{
+  "kind": "D65_normal_CLI_adoption_actual_failure_and_safe_retention",
+  "source_commit": "fd634663afddb56662a0a7e8362a68665d21f439",
+  "parent_executor": {
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "verified_turn": "01a12ed2-f657-7b43-8738-875007e76834"
+  },
+  "whole_task_complete": false,
+  "daily_routing_accepted": false,
+  "package": {
+    "directory": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64",
+    "archive": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64.tar.gz",
+    "archive_sha256": "191bade81022c51a7dde3db2b771f2e6118a451bd80f0728cc8cede93ba1b6d3",
+    "archive_bytes": 26828424,
+    "manifest_sha256": "ff3542267010832e12825e368336cdb26f8e686c53411bf88df8481c7912ddd7",
+    "runtime_version": "3.11.17",
+    "runtime_asset_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10",
+    "notices": 19,
+    "runtime_files": 2059,
+    "entry": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e24-macos-arm64/mrh",
+    "entry_sha256": "9d199a0a41a3877ea4a2f4c9137a239b1c619bd23a61a7eebb1dca00ae3856da",
+    "app_archive_sha256": "91c07161749431878cc990d94d931740c497f8116406327a3be6e999edf7ad7f",
+    "installed_runtime_sha256": "3be29e9f55ab9e60b8465c17e3f5969d5ddaffa2596d5ee0547954cd9c16a7b4",
+    "binding_equals_prepared": true
+  },
+  "installed": {
+    "plugin_id": "model-routing-harness@model-routing-harness-local",
+    "cache": "/Users/shawn/.codex/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+    "artifact": "/Users/shawn/Code/model-routing-harness/runtime/daily-cli/artifact",
+    "sessions": "/Users/shawn/Code/model-routing-harness/runtime/daily-cli/profile-fresh-cli-sessions",
+    "native_registration": "official marketplace add/plugin add",
+    "hook_trust": "three MRH hooks individually reviewed/trusted via native UI",
+    "unrelated_preservation": {
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "other_plugins_preserved": true,
+      "other_marketplaces_preserved": true,
+      "other_trust_preserved": true,
+      "global_hooks_preserved": true,
+      "mrh_trust": {
+        "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0": {
+          "trusted_hash": "sha256:54b35bf52c1a6222871aefaf0bc5af02e1a4bd58ad019cefdb5d5268bebeb088"
+        },
+        "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0": {
+          "trusted_hash": "sha256:b45d7b13f6b2934feeb846102695c576aa9b151d1b8d9a186fb8d77a7586f947"
+        },
+        "model-routing-harness@model-routing-harness-local:hooks/hooks.json:session_start:0:0": {
+          "trusted_hash": "sha256:eee279504db103604ed5340304e75a0a846d3894273b64bfa655d8d3b06dd50d"
+        }
+      },
+      "tui_section_changed": true
+    }
+  },
+  "policy": {
+    "basis": "carried-forward E20 choices",
+    "unchanged": true,
+    "top_mode": "Main",
+    "tiers": {
+      "Light": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      },
+      "Mid": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      },
+      "Small": {
+        "effort": "low",
+        "model": "gpt-5.6-luna"
+      }
+    },
+    "rates_models": [
+      "gpt-5.6-luna",
+      "gpt-6.1-sol"
+    ],
+    "normal_parent_price_missing": "gpt-6-astra",
+    "allowlist_roots": [
+      "/"
+    ],
+    "final_enabled": false,
+    "final_revision": 5
+  },
+  "login": {
+    "public_login_status": "chatgpt",
+    "credential_bytes_read_by_mrh": false,
+    "model_attempts": [],
+    "fresh_scope_auth_binding": true,
+    "owned_scratch_removed": true
+  },
+  "native_probe": {
+    "controlled_task": "one generic child sorting literal [3,1,2]; no files, commands, web/MCP, Goal or other tasks requested",
+    "parent_session": "01a12ee6-473d-7831-915f-1af264562a03",
+    "result": "[1, 2, 3]",
+    "session_start": {
+      "session_id": "01a12ee6-473d-7831-915f-1af264562a03",
+      "status": "invalid",
+      "reason": "scope_fresh_sources_not_predated",
+      "identity": null
+    },
+    "pre_decision": [
+      {
+        "session_id": "01a12ee6-473d-7831-915f-1af264562a03",
+        "turn_id": "01a12eec-5cec-7382-96b7-21a4ed73f1ca",
+        "tool_call_id": "call_RdcfIkEOHTO3g1Y7YWme80MI",
+        "action": "preserve",
+        "reason": "scope_fresh_lifecycle"
+      }
+    ],
+    "classifier_model_attempts": 0,
+    "receipt": {
+      "agent_id": "/root/sort_numbers",
+      "evidence_kind": "reported",
+      "actual_model": null,
+      "verified": false
+    },
+    "root_observation": {
+      "pid": 32939,
+      "birth_ns": 1791788203301357000,
+      "image": "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+      "argv": [
+        "/Users/shawn/.nvm/versions/node/v20.19.4/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+        "--no-daemon",
+        "--no-alt-screen",
+        "-C",
+        "/Users/shawn/Code"
+      ],
+      "codex_home": "/Users/shawn/.codex",
+      "late_sources": {
+        "/Users/shawn/.codex/config.toml": {
+          "ctime_ns": 1791788497718912072,
+          "device": 16777232,
+          "inode": 153318723
+        },
+        "/Users/shawn/.codex": {
+          "ctime_ns": 1791788991270495952,
+          "device": 16777232,
+          "inode": 69142259
+        },
+        "/Library/Preferences": {
+          "ctime_ns": 1791788989750915604,
+          "device": 16777232,
+          "inode": 143377489
+        }
+      }
+    },
+    "limits": "receipt is reported, not verified actual-model observation; later file metadata identifies provenance violations but not the writing process or exact first failing path"
+  },
+  "repairs": {
+    "reason_whitelist": "4baa534",
+    "registry_settings_ownership": "fd634663",
+    "e23_registry_retained": "/Users/shawn/Code/model-routing-harness/runtime/daily-cli/e23-registry-retained",
+    "actual_disable_and_settings_view": "PASS"
+  },
+  "verification": {
+    "reused": "11 new source cases + 22 affected legacy cases accepted D66; E21 foundation; D57 native auth/allowlist; unaffected E20 controls",
+    "new_delta": "reason-persistence direct case; prepared registry/read/disable direct case; E24 packaged delta 3.706s, 46 modules/2059 manifest records",
+    "builds": 3,
+    "build_sequence": "E22 exposed missing reason enum; E23 exposed settings-folder overlap in native use; E24 is final corrected candidate; E21 original retained",
+    "native_tasks": 2,
+    "native_task_reason": "one initial probe and one affected retry after confirmed ownership repair; not a new model matrix",
+    "public_isolated_login_checks_this_unit": 1,
+    "failed_packaged_check": {
+      "candidate": "E22",
+      "failure": "new missing-start reason was outside REASONS, so Store returned store_error",
+      "repaired": "add four new fixed reasons; direct persistence consumer PASS; E23 shipped delta PASS"
+    }
+  },
+  "safe_final_state": {
+    "only_new_daily_profile_disabled": true,
+    "normal_parent_model_unchanged": true,
+    "e20_revision": 25,
+    "e20_disabled": true,
+    "no_credentials_copied_read_hashed_or_logged_by_mrh": true,
+    "no_goal_created": true,
+    "no_screenshots_created": true,
+    "owned_native_processes_closed": true
+  },
+  "remaining": "A must decide a configuration-provenance producer/epoch that remains valid through native normal-home updates, or a precise product constraint; no same-session rebaseline or weakened role/default guard. App continues with C separately.",
+  "tracking": "new trusted context host-check ready; pending selection current_host_turn_unavailable; no task identity invented"
+}
