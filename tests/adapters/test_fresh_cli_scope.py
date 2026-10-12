@@ -156,8 +156,15 @@ class FreshScopeTests(unittest.TestCase):
         value=settings.read(state)
         value.update(enabled=True,task_export_permitted=True,provider='typesafe',classifier_model='jev-1.13.0',allowed_workspaces=[str(self.work)])
         state.write_text(json.dumps(value))
+        missing=configured_event(self.event,state,scope_binding=self.binding)
+        self.assertIn('verified native startup is missing',missing.get('systemMessage',''))
+        import sqlite3
+        with sqlite3.connect((state.parent/'events.sqlite3').as_uri()+'?mode=ro',uri=True) as db:
+            self.assertEqual(db.execute('select count(*) from attempts').fetchone()[0],0)
+            self.assertEqual(db.execute("select json_extract(decision,'$.reason') from proposals").fetchone()[0],'scope_fresh_start_missing')
+        before=(state.parent/'events.sqlite3').read_bytes()
         self.assertEqual(configured_event(self.start,state,scope_binding=self.binding),{})
-        self.assertFalse((state.parent/'events.sqlite3').exists())
+        self.assertEqual((state.parent/'events.sqlite3').read_bytes(),before)
         from tests.adapters.test_typesafe import FakeTransport
         transport=FakeTransport()
         for index,fields in enumerate(({'model':'chosen'},{'reasoning_effort':'high'},{'agent_type':'explorer'})):

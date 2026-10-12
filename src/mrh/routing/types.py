@@ -13,6 +13,8 @@ REASONS = {"classifier_unavailable", "unrelated_event", "explicit_model", "fixed
            "cost_unknown", "top_fixed_requested", "cheaper_child_requested", "store_error",
            "proposal_pending", "proposal_conflict"}
 REASONS.update({'explicit_effort','scope_unsupported','scope_changed','scope_host_unverified'})
+REASONS.update({'scope_fresh_start_missing','scope_fresh_lifecycle',
+                'scope_fresh_sources_changed','scope_fresh_sources_not_predated'})
 REASONS.update({"typesafe_disabled", "typesafe_export_denied", "typesafe_missing_credentials", "typesafe_unverified_transport",
                 "typesafe_invalid_task", "typesafe_malformed_response", "typesafe_model_mismatch",
                 "typesafe_http_401", "typesafe_http_422", "typesafe_http_429", "typesafe_http_529",

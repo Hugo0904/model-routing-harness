@@ -163,9 +163,66 @@ def inspect(bundle,binary):
     return result
 
 
+def inspect_fresh_delta(bundle,binary):
+    """Repair check for the new contract; prior E21 consumers are reused."""
+    started=time.monotonic();manifest=json.loads((bundle/'manifest.json').read_text())
+    assert file_manifest(bundle)==manifest['files']
+    source=Path(__file__).resolve().parents[3]
+    with zipfile.ZipFile(bundle/'app/mrh.pyz') as archive:
+        modules={name for name in archive.namelist() if name.startswith('mrh/') and name.endswith('.py')}
+        expected={'mrh/'+p.relative_to(source/'src/mrh').as_posix() for p in (source/'src/mrh').rglob('*.py')}
+        assert modules==expected
+        for name in modules:assert archive.read(name)==(source/'src'/name).read_bytes()
+    commands=[]
+    with tempfile.TemporaryDirectory(prefix='mrh-fresh-bundle-',dir='/private/tmp') as temp:
+        root=Path(temp).resolve();home=root/'home';home.mkdir();work=root/'work';work.mkdir()
+        (home/'config.toml').write_text('model="gpt-6-astra"\n')
+        project=work/'.codex';project.mkdir();(project/'config.toml').write_text('[mcp_servers.fixture]\ncommand="unexecuted"\n')
+        state=root/'state/settings.json';plugin=root/'plugin';entry=bundle/'mrh'
+        env={'HOME':str(root),'CODEX_HOME':str(home),'PATH':os.defpath,'TMPDIR':str(root),'LANG':'en_US.UTF-8'}
+        def run(argv,data=None):
+            proc=subprocess.run(list(map(str,argv)),input=data,cwd=work,env=env,text=True,capture_output=True,timeout=15)
+            commands.append({'argv':list(map(str,argv)),'exit':proc.returncode});assert proc.returncode==0,proc.stderr
+            return json.loads(proc.stdout)
+        prepared=run([entry,'plugin','prepare','--root',plugin,'--settings',state,'--scope-contract','fresh-root-cli',
+                      '--scope-workspace',work,'--codex-binary',binary])
+        assert prepared['configuration_scope']['assurance']=='fresh-root-cli-configuration'
+        assert prepared['configuration_scope']['active_session'].startswith('unverified')
+        installed=plugin/'plugins/model-routing-harness';python=prepared['artifact']['python']
+        assert set(json.loads((installed/'hooks/hooks.json').read_text())['hooks'])=={'SessionStart','PreToolUse','PostToolUse'}
+        run([entry,'settings','configure','--path',state,'--permit-task-export','--allow-workspace',work])
+        run([entry,'settings','enable','--path',state])
+        event={'hook_event_name':'PreToolUse','tool_name':'collaborationspawn_agent','session_id':'s','turn_id':'t','tool_use_id':'c',
+               'cwd':str(work),'model':'gpt-6.1-sol','tool_input':{'message':'owned literal','task_name':'probe','fork_turns':'none'}}
+        result=run([python,'-I','-B',installed/'launcher.py'],json.dumps(event))
+        assert 'verified native startup is missing' in result.get('systemMessage',''),result
+        import sqlite3
+        with sqlite3.connect((state.parent/'events.sqlite3').as_uri()+'?mode=ro',uri=True) as db:
+            assert db.execute('select count(*) from attempts').fetchone()[0]==0
+            assert db.execute("select json_extract(decision,'$.reason') from proposals").fetchone()[0]=='scope_fresh_start_missing'
+        # An actual shipped launcher with a synthetic event lacks native ancestry.
+        start={'hook_event_name':'SessionStart','source':'startup','session_id':'s','cwd':str(work),'model':'gpt-6.1-sol'}
+        result=run([python,'-I','-B',installed/'launcher.py'],json.dumps(start))
+        assert 'native invocation is outside' in result.get('systemMessage',''),result
+        sessions=Path(prepared['artifact']['codex_scope']['sessions'])
+        assert not any(json.loads(p.read_text()).get('status')=='valid' for p in sessions.glob('*.json'))
+        from mrh.infrastructure.plugin import _runtime_archive
+        assert sha256(installed/'runtime.pyz')==hashlib.sha256(_runtime_archive()).hexdigest()
+    assert not root.exists()
+    return {'kind':'actual_shipped_fresh_contract_delta_no_model','source_commit':manifest['source_commit'],
+            'source_archive_module_paths_equal':True,'archive_source_identity_verified':True,'python_modules':len(modules),
+            'verified_manifest_records':len(manifest['files']),'commands':commands,'configuration_scope':prepared['configuration_scope'],
+            'fresh_root_cli_delta':{'harmless_project_mcp':True,'three_hook_events':True,'pre_without_start_recorded_precisely':True,
+                'synthetic_start_cannot_mint_valid_record':True,'model_requests':0},
+            'real_classifier_calls':0,'login_or_status_calls':0,'formal_registration_or_trust':False,
+            'reused_package_foundation':'E21; E22 prior consumer steps before the new refusal assertion',
+            'cleanup':True,'elapsed_seconds':round(time.monotonic()-started,3)}
+
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--bundle',type=Path,required=True)
     parser.add_argument('--binary',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
-    args=parser.parse_args();result=inspect(args.bundle.resolve(),args.binary.resolve())
+    parser.add_argument('--fresh-only',action='store_true',help='only the new finite contract and source/archive parity')
+    args=parser.parse_args();result=(inspect_fresh_delta if args.fresh_only else inspect)(args.bundle.resolve(),args.binary.resolve())
     args.output.write_text(json.dumps(result,indent=2)+'\n')
-    print(json.dumps({k:result[k] for k in ('verified_manifest_records','python_modules','subscription_guard','cleanup','elapsed_seconds')}))
+    print(json.dumps({k:result[k] for k in ('verified_manifest_records','python_modules','subscription_guard','fresh_root_cli_delta','cleanup','elapsed_seconds') if k in result}))
