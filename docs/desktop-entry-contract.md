@@ -128,3 +128,9 @@ D68 的「pinned App／binary＋native fresh SessionStart＋本機 configuration
 A 決定在既有官方能力及原授權內是否有這項證明來源，或將此 bundled 版本的 Desktop 接入明列未支援；不要求改 App、替換 binary、讀私人 cache／auth、停用 managed policy、加 dispatcher 或重跑 CLI 來消除這個缺口。仍保留原 App 最後 native delegation/readback／disable 的驗收義務，尚未到該步。
 
 唯一版本化修改為本文件與新 sanitized evidence。無 runtime／adapter／測試變更、無 tests/build/model/UI/launch/install/trust；D66/D67、A 補證、CLI／核心／模型矩陣沿用。C 的 turn `01a12ee7-13a6-7322-9166-0d819d0be992` 已核 `gpt-6.1-sol/xhigh`；同一人類 item `01a12edd-5354-7a20-82b0-004744cdeb89`／turn `01a12edd-464c-78b1-a390-90ca4685f414` 已由 supported read_thread 核實。Monitor check ready，正常 escalation 後 pending selection 成功保存 `source_pending/unbound_existing_work`，仍無 task_id，不冒稱已登記／接受。B/A 檔案、真實 profile、E20、auth/history、dist 與 allowlist `/` 未修改。
+
+### D68-C-001 傳送狀態：未送達
+
+来源成果 commit `fa92c0e` 的完整 D68 報告以原生 `send_message_to_thread` 送往原 local A，遭自動審查拒絕。送出前已核原目的地與本輪直接人類來源；拒絕理由明示工作本身已獲授權，但未見本批 D68 本機路徑、已安裝 binary 身分與內部實作細節對該聊天的明確傳送授權。既有 D67 的相同授權核對已兩次被拒，當前人類來源也未新增 D68 payload 確認，因此不重複沒有新證據的重送。
+
+本地成果與原 App 義務保留，A 未透過本次工具收到報告；待人類明確允許此 D68 payload 傳至原 A 才沿同 route 續送。沒有更換工具／目的地／channel、刪改敏感欄位或其他聊天 relay，也沒有把文件保存說成已交付或已接受。

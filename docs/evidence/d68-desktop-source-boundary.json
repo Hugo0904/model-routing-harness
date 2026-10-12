@@ -158,5 +158,16 @@
   "human_source_turn": "01a12edd-464c-78b1-a390-90ca4685f414",
   "effective_model": "gpt-6.1-sol",
   "effective_effort": "xhigh",
-  "executor_turn": "01a12ee7-13a6-7322-9166-0d819d0be992"
+  "executor_turn": "01a12ee7-13a6-7322-9166-0d819d0be992",
+  "delivery": {
+    "status": "not_delivered",
+    "route": "native send_message_to_thread",
+    "destination": "original local A",
+    "source_commit": "fa92c0e",
+    "attempts": 1,
+    "review_result": "work authorized; explicit D68 payload transmission confirmation required",
+    "prior_authorization_and_destination_verified": true,
+    "unchanged_retry_performed": false,
+    "continuation": "human explicit approval for this payload; same route only"
+  }
 }
