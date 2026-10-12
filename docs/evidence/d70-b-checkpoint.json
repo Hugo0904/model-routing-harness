@@ -74,5 +74,6 @@
     "task_id": null,
     "A_membership_not_assumed": true
   },
-  "delivery": "pending native send to original A; update this same report if enforcement rejects"
+  "delivery": "sent successfully through native send_message_to_thread to original A 01a12262-186b-7670-9af0-59566703db4a; same D70-B-001 report",
+  "official_B_goal": null
 }
