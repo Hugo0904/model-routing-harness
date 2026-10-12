@@ -1,5 +1,7 @@
 # D66：已安裝 Desktop 的建立請求來源
 
+D67 的立即 caller 查證已追加於文末：找到真實 `pta` constructor、封閉的 extension-host request，以及另一條實際 fresh-local `mcp_app_follow_up` producer。它的 caller context 尚未在這次範圍證明受 key schema 限制；依 A 的停止條件返回這個具體邊界，沒有把 D66 的假設物件升格成實際輸入。
+
 已定位實際 Desktop 的 conversation 建立／RPC 組裝鏈，證實它會在磁碟設定之外送入 request config。**尚未證明普通 fresh local UI 的所有 caller `configOverrides` 都不含 child-default／default-role／profile 覆寫**；process ancestry 加 SessionStart 的 lifecycle 身分不能替代這項資料。這不是重述泛用 app-server schema，也不是實際 App 接通證據。本輪不修改或啟用路由。
 
 ## 來源身分與查證方法
@@ -58,3 +60,26 @@ A 的單一決策是：如何取得／約束 **普通 fresh local UI 的 caller 
 C exact turn `01a12eb5-2376-7340-bc92-6874a4be20a7` 經 metadata-only helper核為 `gpt-6.1-sol/high`；人類 A user `01a12eb0-610c-7760-b065-f1469ad3d1ad` 已由 supported read_thread核實，原 A/C 分線授權沿用。唯一寫入為本文件。未讀私人session/DB/記憶/認證或個人config，未呼叫私有API／攔 traffic／注入debugger，未launch/restart/UI/login/model/install，無tests/build/newGoal/subagent。B/A的dirty edits、E20/profile/dist與 `/` allowlist不改。
 
 Monitor context仍缺current native user／task，check可讀但pending selection回 `current_host_turn_unavailable`；不捏造ledger身分／接受。這是來源檢視與精確待決事項交付，**不是實際App使用驗收**。
+
+## D67：立即 caller 的實際構造與停止點
+
+沿同一 installed source 的 mapper aliases 做直接 caller 查找，不重讀 D66 assembler／泛用 backend schema。`app-initial` export 明確將 `pta → Hvt`、`GGi → QOt`、`HGi → nkt`；直接 importer 為 asar `webview/assets/new-thread-a920912d4148.js`（SHA256 `15fdb588ff6481eddc910c32098313b823a27105ed4501b48af634d5cd4922bb`，5,094 characters）。本次只為這些 alias查 import header，不建立整個 App graph。
+
+| 實際 constructor／caller | 確定 keys、spread 與 validation |
+|---|---|
+| initial `pta`，`5252912–5256720` | 真的建立 `configOverrides`：局部 `k`只明寫 `model_reasoning_effort`、一個 `gTe` feature marker、`features.auth_elicitation`、`features.tool_suggest`、`tool_suggest.discoverables`，work-permissions分支另寫 `web_search`。`config/read`結果轉為 `O=hm(E)`，輸出在另一個 `config:O` 欄位，不能混成 `configOverrides`。 |
+| 同 `pta`，`5256536–5256660` | 若 `context.firstTurnConfigOverrides`存在，真正 return 是 `{...t.firstTurnConfigOverrides,...k}`。局部確定keys覆蓋同名keys，**沒有排除其他keys的局部 validator**；這是實際constructor的輸入邊界，仍須核 caller的context來源，不假設它必然可包含任意key。 |
+| initial `fso/hso`，`6545902–6547620` | 既有 `create_thread` worktree路徑 `lso → fso → hso` 的 `configOverrides`來源有封閉helper：`hso(model,thinking)`僅在model為null且thinking非null時回 `{model_reasoning_effort:thinking}`，其他情況為null。沒有caller config map直接spread到這個欄位；`mso`的model/effort則在collaborationMode。保留上游schema／input是否合法的界限，不將此範圍擴成全部新聊天。 |
+| initial `UC` extension host，`1396600–1397300` | startup傳入固定 literal `{ephemeral:true, permissions:':read-only', threadSource:'mcp_extension_host'}`，options只有timeout。**沒有 config／profile／child-default／default-role request欄位，也沒有caller object spread。** 此producer輸入構造閉合；其disk/backend角色仍屬原宿主檢查，不由此literal推論。 |
+
+### 新出現的實際 fresh-local producer
+
+`new-thread-a920912d4148.js` 的 `Z(scope,{context:t,destination:n,...})` 在 `destination.hostId='local'` 有實際 Codex建立分支（`1081–2980`）。它將 **caller的 `context:t` 原樣交給 `j=pta`**，並指定 `agentMode:'auto'`、`shouldSendPermissionOverrides:false`、`collaborationMode:null`、projectless workspace。之後（約 `3950–4700`）實際呼叫 `V=HGi`，輸入含 `...P(L)`（`P=GGi`），明定 `threadSource:'mcp_app_follow_up'`、`turnTrigger:'mcp_app_new_thread'`。
+
+此5,094-character caller裡的檢查是account／abort、user-gesture／response-items、workspace與image-model支援，**没有對 `context.firstTurnConfigOverrides`作 `parse`／`safeParse`或key whitelist**。但上游caller可能另有validation；本單元沒有證明那個schema，不將「本函式沒驗」說成「全鏈允許惡意keys」，也沒有觀察到真值。這是從已定位aliases找到的、另一個真實 fresh-local來源，不是用任意object造的反例。
+
+按 D67「同一窄 call-site search看到另一個不可區分 producer就返回」的停止條件，在此停止。`mcp_app_follow_up`與 `mcp_extension_host`是不同 producer；不能只因後者literal乾淨，就把前者或普通context視為同樣封閉。本次亦未證明Hook可直接區分這個threadSource；若 A 已有同一步身分對應證據可沿用，不強制另造Hook欄位。
+
+**單一待決事項：**有限Desktop contract須如何處理這個已可達的 `Z.context → pta.firstTurnConfigOverrides` 邊界？若要共用「無 relevant override」invariant，下一個必要事實是該context的實際上游producer／validated key schema；若已有可沿用的同一步身分，才可把此分支明確排除。這次不能據此開全App路由，也不表示需要再盤點所有client。
+
+本輪前後均為 `gpt-6.1-sol/high`；中斷前turn `01a12ecc-0066-7401-b085-47ef91e424dd`、接續turn `01a12ed3-013d-7161-ae44-a5b854654b87` 的metadata-only核實保留。唯一修改本文件，無tests/build/JSexecution/UI/launch/model/private data讀取，無new Goal/agent；B/A與保留環境不動。D66已接受的resource身分／assembler evidence沿用，未重跑；新 direct-caller resource identity另列如上。
