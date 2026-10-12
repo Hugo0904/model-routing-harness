@@ -121,6 +121,28 @@ def inspect(bundle,binary):
         assert run([python,'-I','-B',launcher],data=json.dumps(event),extra={'MRH_SUBSCRIPTION_CLASSIFIER_ACTIVE':'1'})=={}
         assert (state.parent/'events.sqlite3').read_bytes()==db_before
         run([entry,'settings','disable','--path',state]);assert run([entry,'settings','show','--path',state])['settings']['enabled'] is False
+        # Added contract at the actual shipped prepare/launcher consumer. No
+        # fixture event can mint a native startup or initiate a model attempt.
+        fresh_state=root/'fresh-state/settings.json';fresh_plugin=root/'fresh-plugin'
+        project=work/'.codex';project.mkdir();(project/'config.toml').write_text('[mcp_servers.fixture]\ncommand="unexecuted"\n')
+        fresh=run([entry,'plugin','prepare','--root',fresh_plugin,'--settings',fresh_state,
+                   '--scope-contract','fresh-root-cli','--scope-workspace',work,'--codex-binary',binary])
+        assert fresh['configuration_scope']['assurance']=='fresh-root-cli-configuration'
+        assert fresh['configuration_scope']['active_session'].startswith('unverified')
+        fresh_installed=fresh_plugin/'plugins/model-routing-harness'
+        hooks=json.loads((fresh_installed/'hooks/hooks.json').read_text())['hooks']
+        assert set(hooks)=={'SessionStart','PreToolUse','PostToolUse'}
+        run([entry,'settings','configure','--path',fresh_state,'--permit-task-export','--allow-workspace',work])
+        run([entry,'settings','enable','--path',fresh_state])
+        refused=run([python,'-I','-B',fresh_installed/'launcher.py'],data=json.dumps(event))
+        assert 'verified native startup is missing' in refused.get('systemMessage','')
+        count_code="import sqlite3,json,sys;db=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True);print(json.dumps(db.execute('select count(*) from attempts').fetchone()[0]));db.close()"
+        assert run([python,'-I','-B','-c',count_code,fresh_state.parent/'events.sqlite3'])==0
+        sessions=Path(fresh['artifact']['codex_scope']['sessions'])
+        assert not list(sessions.glob('*.json')) or all(p.name=='.mrh-owner.json' for p in sessions.glob('*.json'))
+        fresh_delta={'actual_shipped_prepare':True,'harmless_project_mcp':True,'three_hook_events':True,
+                     'static_status_not_active_assurance':True,'pre_without_start_refused':True,
+                     'no_native_start_record_minted':True,'model_requests':0}
         from mrh.infrastructure.plugin import _runtime_archive
         expected=hashlib.sha256(_runtime_archive()).hexdigest();assert sha256(runtime)==expected
         result={'kind':'actual_shipped_entry_and_private_runtime_with_owned_scope_no_provider',
@@ -130,6 +152,7 @@ def inspect(bundle,binary):
             'commands':commands,'prepared':prepared,
             'subscription_guard':guard,'missing_auth_source_zero_attempt_refusal':True,
             'workspace_allowlist_delta':allowlist_delta,
+            'fresh_root_cli_delta':fresh_delta,
             'provider_switch_preserves_policy_permissions_and_legacy_history':True,
             'disabled_hook_zero_database':True,'recursion_launcher_zero_database_changes':True,
             'prepared_runtime_matches_current_source':expected,'real_classifier_calls':0,'real_test_turns':0,

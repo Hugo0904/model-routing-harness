@@ -5,6 +5,10 @@ All public notices are fixed text; caller data and exception text stay out.
 """
 
 FAULTS = {
+    'scope_fresh_start_missing': 'a verified native startup is missing; open a fresh supported CLI session',
+    'scope_fresh_lifecycle': 'this session lifecycle is unsupported or invalidated; open a fresh CLI session',
+    'scope_fresh_sources_changed': 'guarded configuration sources changed; open a fresh CLI session',
+    'scope_fresh_sources_not_predated': 'configuration provenance does not predate CLI startup; open a fresh session',
     'codex_subscription_auth_source_unconfirmed': 'the File-auth source could not be confirmed',
     'codex_subscription_auth_source_invalid': 'the saved authentication source metadata is unsafe or unavailable',
     'codex_subscription_auth_reference_invalid': 'the isolated authentication reference changed',

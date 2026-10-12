@@ -21,11 +21,12 @@ def fail(reason):
 class FileAuthSource:
     home: Path
     workspace: Path
+    scope_contract: str | None = None
 
     @classmethod
-    def resolve(cls, home, workspace):
+    def resolve(cls, home, workspace, *, scope_contract=None):
         try:
-            value = cls(owned.canonical_path(home), owned.canonical_path(workspace))
+            value = cls(owned.canonical_path(home), owned.canonical_path(workspace), scope_contract)
             value.verify()
             return value
         except ClassifierFailure:
@@ -42,7 +43,11 @@ class FileAuthSource:
             from mrh.adapters.hosts.codex_scope import _configuration, _toml
             # Same finite config-layer contract as the existing trusted scope.
             # No credential file is opened, hashed or passed to a JSON reader.
-            _configuration(self.home, self.workspace)
+            from mrh.adapters.hosts import fresh_cli_scope
+            if self.scope_contract == fresh_cli_scope.CONTRACT:
+                fresh_cli_scope.configuration(self.home, [self.workspace])
+            else:
+                _configuration(self.home, self.workspace)
             mode = _toml(self.home / 'config.toml').get('cli_auth_credentials_store', 'file')
             if mode != 'file':
                 fail('auth_source_unconfirmed')
@@ -65,7 +70,7 @@ def source_for_binding(binding):
         from mrh.adapters.hosts.codex_scope import check
         scope = json.loads(owned.read_regular(binding), object_pairs_hook=owned._unique)['codex_scope']
         check(scope)  # Configured evidence remains configured, not observed.
-        return FileAuthSource.resolve(scope['codex_home'], scope['workspace'])
+        return FileAuthSource.resolve(scope['codex_home'], scope['workspace'], scope_contract=scope['contract'])
     except ClassifierFailure:
         raise
     except (OSError, ValueError, KeyError, TypeError):

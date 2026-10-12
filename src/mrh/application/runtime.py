@@ -45,6 +45,21 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
     if os.environ.get(SENTINEL):
         return {}  # Before settings, DB, auth, host inspection or model work.
     event=canonical_event(event)
+    if isinstance(event,dict) and event.get('hook_event_name') == 'SessionStart' and scope_binding is not None:
+        try:
+            import json
+            from mrh.infrastructure.owned import read_regular
+            from mrh.adapters.hosts import fresh_cli_scope
+            from mrh.adapters.hosts.codex_scope import ScopeError
+            descriptor=json.loads(read_regular(scope_binding))['codex_scope']
+            if descriptor.get('contract') != fresh_cli_scope.CONTRACT:return {}
+            value=read(settings_path)
+            if not value['enabled'] or not value['task_export_permitted']:return {}
+            return fresh_cli_scope.session_start(descriptor,event,scope_binding)
+        except Exception as exc:
+            from mrh.adapters.hosts.codex_scope import ScopeError
+            reason=str(exc) if isinstance(exc,ScopeError) else 'scope_host_unverified'
+            return warning(reason)
     # Settings never come from cwd/tool_input. Invalid identities are neutral
     # before any data creation; preserving a valid admitted call still records
     # its existing canonical facts without executing a classifier.
@@ -90,7 +105,7 @@ def configured_event(event, settings_path, *, host_resolver=None, transport=None
                     from mrh.adapters.hosts.codex_scope import check
                     from mrh.infrastructure.owned import read_regular
                     descriptor=json.loads(read_regular(scope_binding))['codex_scope']
-                    observed=check(descriptor,event,synthetic=classifier.synthetic)
+                    observed=check(descriptor,event,synthetic=classifier.synthetic,binding=scope_binding)
                 else:observed = resolver.resolve(event)
                 if type(observed) is HostSnapshot:
                     caps = observed

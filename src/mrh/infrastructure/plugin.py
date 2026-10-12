@@ -123,13 +123,14 @@ def _old_artifact(root):
         raise owned.OwnedError("owned_source_changed") from None
 
 
-def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_binary=None):
+def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_binary=None, scope_contract=None):
     root = owned.canonical_path(root)
     settings_path = owned.canonical_path(settings_path)
     if root == settings_path.parent or root in settings_path.parents or settings_path.parent in root.parents:
         raise owned.OwnedError("settings_code_overlap")
     # Reject unknown target contents before touching either root.
     old_artifact = _old_artifact(root) if root.exists() and any(root.iterdir()) else None
+    python = str(Path(python or sys.executable).resolve())
     scope=old_artifact.get('codex_scope') if old_artifact is not None else None
     if scope_workspace is not None:
         from mrh.adapters.hosts.codex_scope import prepare as prepare_scope, ScopeError
@@ -138,7 +139,15 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
             found=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
             if found is None:raise ScopeError('scope_unsupported')
             codex_binary=found
-        scope=prepare_scope(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),scope_workspace)
+        if scope_contract == 'fresh-root-cli':
+            from mrh.adapters.hosts.fresh_cli_scope import prepare as prepare_fresh
+            scope=prepare_fresh(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),
+                                scope_workspace,settings_path.parent/'fresh-cli-sessions',python)
+        else:
+            scope=prepare_scope(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),scope_workspace)
+    elif scope_contract is not None:
+        from mrh.adapters.hosts.codex_scope import ScopeError
+        raise ScopeError('scope_unsupported')
     elif scope is not None:
         from mrh.adapters.hosts.codex_scope import check
         check(scope)
@@ -171,6 +180,11 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
                                          "runtime_sha256": _hash(runtime)}),
     }
     if scope is not None:
+        from mrh.adapters.hosts.fresh_cli_scope import CONTRACT as fresh_contract
+        if scope['contract'] == fresh_contract:
+            hooks=json.loads(files[prefix+'hooks/hooks.json'])
+            hooks['hooks']['SessionStart']=[{'matcher':'.*','hooks':[{'type':'command','command':command,'timeout':50}]}]
+            files[prefix+'hooks/hooks.json']=_json(hooks)
         files[prefix+'binding.json']=_json({'schema_version':1,'python':python,'settings_path':str(settings_path),
                                          'runtime_sha256':_hash(runtime),'codex_scope':scope})
     root = owned.initialize(root, "bundle")

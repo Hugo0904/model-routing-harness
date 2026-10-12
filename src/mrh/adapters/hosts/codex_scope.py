@@ -37,13 +37,15 @@ class ConfigurationScope:
     error: str | None = None
     assurance: str = 'inspected-configuration'
     descriptor: dict | None = None
+    recheck_event: dict | None = None
 
     def __getattr__(self, name):return getattr(self.facts, name)
 
     def validation_reason(self, proposal):
         if self.descriptor is not None:
-            try:check(self.descriptor)
-            except (ScopeError,OSError,ValueError):return 'scope_changed'
+            try:check(self.descriptor, self.recheck_event)
+            except (ScopeError,OSError,ValueError) as exc:
+                return str(exc) if self.recheck_event is not None and isinstance(exc,ScopeError) else 'scope_changed'
         return self.error or self.facts.validation_reason(proposal, configuration=True)
 
 
@@ -185,7 +187,10 @@ def _native_parent(scope):
     raise ScopeError('scope_host_unverified')
 
 
-def check(scope, event=None, *, native=True, synthetic=False):
+def check(scope, event=None, *, native=True, synthetic=False, binding=None):
+    from mrh.adapters.hosts import fresh_cli_scope
+    if isinstance(scope,dict) and scope.get('contract')==fresh_cli_scope.CONTRACT:
+        return fresh_cli_scope.check(scope,event,binding=binding or scope.get('_binding'),synthetic=synthetic)
     if not isinstance(scope,dict) or scope.get('contract')!=CONTRACT:raise ScopeError('scope_unsupported')
     if scope.get('binary_sha256')!=BINARY_SHA256 or executable_hash(scope['binary'])!=BINARY_SHA256:
         raise ScopeError('scope_changed')
