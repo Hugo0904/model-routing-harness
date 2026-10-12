@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E19 shipped entry: provider/CAS/history and real preflight guard, no model."""
+"""Shipped entry: provider/CAS/history, allowlist and missing-auth guard, no model."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
@@ -31,7 +31,7 @@ def inspect(bundle,binary):
         assert set(modules)==source_modules, 'source_archive_module_paths_mismatch'
         for name in modules:assert archive.read(name)==(source/'src'/name).read_bytes()
     before=file_manifest(bundle)
-    with tempfile.TemporaryDirectory(prefix='mrh-e19-bundle-',dir='/private/tmp') as temp:
+    with tempfile.TemporaryDirectory(prefix='mrh-subscription-bundle-',dir='/private/tmp') as temp:
         root=Path(temp).resolve();home=root/'home';home.mkdir();work=root/'work';work.mkdir()
         state=root/'state/settings.json';plugin=root/'plugin';entry=bundle/'mrh'
         env={'HOME':str(root),'CODEX_HOME':str(home),'PATH':os.defpath,'TMPDIR':str(root),
@@ -66,14 +66,55 @@ def inspect(bundle,binary):
         for field in ('policy','enabled','task_export_permitted','allowed_workspaces'):assert legacy[field]==now[field]
         stats_code=import_code+"from mrh.infrastructure.store import Store;print(json.dumps(Store(sys.argv[2]).stats(True)))"
         assert run([python,'-I','-B','-c',stats_code,bundle/'app/mrh.pyz',state.parent/'events.sqlite3'])==old_stats
+        # Exercise the shipped CLI/schema and its actual hot-read consumer.
+        # Legacy roots deliberately match: invalid selected files must not fall back.
+        legacy_roots=run([entry,'settings','configure','--path',state,'--allow-workspace',work])['settings']
+        allowlist=root/'workspace-allowlist.json'
+        allowlist.write_text(json.dumps({'schema_version':1,'roots':[str(work)]}))
+        selected=run([entry,'settings','configure','--path',state,
+                      '--workspace-allowlist-file',allowlist,
+                      '--expected-revision',legacy_roots['revision']])['settings']
+        assert selected['workspace_allowlist_file']==str(allowlist)
+        preserved={key:value for key,value in legacy_roots.items() if key!='revision'}
+        def check_preserved(value):
+            assert {key:item for key,item in value.items()
+                    if key not in ('revision','workspace_allowlist_file')}==preserved
+        check_preserved(selected)
+        assert run([entry,'settings','show','--path',state])['settings']==selected
+        selected_bytes=state.read_bytes()
+        allowance_code=import_code+"from mrh.infrastructure.settings import read,workspace_allowed;from mrh.infrastructure.settings_schema import SettingsError;\ntry: print(json.dumps({'allowed':workspace_allowed(read(sys.argv[2]),sys.argv[3])}))\nexcept SettingsError as e: print(json.dumps({'error':e.reason}))"
+        def allowance():
+            return run([python,'-I','-B','-c',allowance_code,bundle/'app/mrh.pyz',state,work])
+        matching=allowance();assert matching=={'allowed':True}
+        allowlist.write_text(json.dumps({'schema_version':1,'roots':[]}))
+        empty=allowance();assert empty=={'allowed':False}
+        assert state.read_bytes()==selected_bytes
+        allowlist.write_text('{invalid')
+        malformed=allowance();assert malformed=={'error':'workspace_allowlist_invalid'}
+        assert state.read_bytes()==selected_bytes
+        cleared=run([entry,'settings','configure','--path',state,
+                     '--clear-workspace-allowlist-file',
+                     '--expected-revision',selected['revision']])['settings']
+        assert 'workspace_allowlist_file' not in cleared
+        check_preserved(cleared)
+        assert run([entry,'settings','show','--path',state])['settings']==cleared
+        legacy_again=allowance();assert legacy_again=={'allowed':True}
+        assert run([python,'-I','-B','-c',stats_code,bundle/'app/mrh.pyz',state.parent/'events.sqlite3'])==old_stats
+        allowlist_delta={'selected_path_readback':True,'matching_root':matching,
+                        'same_file_empty_roots_hot_reload':empty,'malformed_without_legacy_fallback':malformed,
+                        'file_edits_preserve_settings_bytes':True,'clear_field_absent':True,
+                        'clear_restores_legacy_roots':legacy_again,
+                        'policy_permissions_provider_and_unrelated_fields_preserved':True,
+                        'legacy_history_preserved':True}
         settings_bytes=state.read_bytes()
         run([entry,'plugin','prepare','--root',plugin,'--settings',state]);assert state.read_bytes()==settings_bytes
         detail=run([entry,'settings','view','--path',state,'--plain','--width','56'],decode=False)
         assert 'Codex subscription' in detail and 'gpt-6-luna' in detail
         (home/'AGENTS.md').write_text('Owned global-instruction canary')
+        assert not (home/'auth.json').exists()
         code=import_code+"from mrh.adapters.providers.codex_subscription import CodexSubscriptionClassifier;from mrh.routing.core import ClassifierFailure;from mrh.routing.attempts import GuardedAttempts;events=[];r=GuardedAttempts(2,lambda *a,**k:events.append(a));\ntry: CodexSubscriptionClassifier(enabled=True,task_export_permitted=True,scope_binding=sys.argv[2]).classify('Sort literal numbers [3,1,2].',None,r)\nexcept ClassifierFailure as e: print(json.dumps({'reason':e.reason,'attempts':events}))\nfinally:r.cancel()"
         guard=run([python,'-I','-B','-c',code,bundle/'app/mrh.pyz',binding])
-        assert guard=={'reason':'codex_subscription_home_instructions','attempts':[]}
+        assert guard=={'reason':'codex_subscription_auth_source_invalid','attempts':[]}
         run([entry,'settings','configure','--path',state,'--permit-task-export','--allow-workspace',work])
         run([entry,'settings','enable','--path',state])
         db_before=(state.parent/'events.sqlite3').read_bytes()
@@ -87,10 +128,12 @@ def inspect(bundle,binary):
             'python_modules':len(modules),'verified_manifest_records':len(manifest['files']),
             'archive_source_identity_verified':True,'source_archive_module_paths_equal':True,
             'commands':commands,'prepared':prepared,
-            'subscription_guard':guard,'provider_switch_preserves_policy_permissions_and_legacy_history':True,
+            'subscription_guard':guard,'missing_auth_source_zero_attempt_refusal':True,
+            'workspace_allowlist_delta':allowlist_delta,
+            'provider_switch_preserves_policy_permissions_and_legacy_history':True,
             'disabled_hook_zero_database':True,'recursion_launcher_zero_database_changes':True,
             'prepared_runtime_matches_current_source':expected,'real_classifier_calls':0,'real_test_turns':0,
-            'formal_registration_or_trust':False,'owned_root':str(root)}
+            'formal_registration_or_trust':False,'login_or_status_calls':0,'owned_root':str(root)}
     result['cleanup']=not root.exists();assert result['cleanup']
     assert file_manifest(bundle)==before
     result['manifest_unchanged_after_entry']=True;result['elapsed_seconds']=round(time.monotonic()-started,3)
