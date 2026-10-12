@@ -1,0 +1,78 @@
+{
+  "report_id": "D70-B-001",
+  "status": "saved_at_user_quota_pause",
+  "complete": false,
+  "usage": {
+    "used_percent": 94,
+    "remaining_percent": 6,
+    "ordinary_usage_allowed": true,
+    "stop_rule": "human requires save/pause only below 7 percent"
+  },
+  "authority": {
+    "A_thread": "01a12262-186b-7670-9af0-59566703db4a",
+    "human_turn": "01a12f59-a681-74c3-91d8-5001b985a6ca",
+    "human_item": "01a12f59-ad4c-7c11-8586-0ab7e60da6a5",
+    "verified_by": "supported A read_thread, actual user message",
+    "blueprint_commit": "e1fbb4d"
+  },
+  "executor": {
+    "thread": "01a12265-1821-76b3-be93-acf74e1485c9",
+    "executing_turn": "01a12f65-d268-7f10-8851-89892003f2d0",
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "verified_by": "approved session_meta/turn_context helper"
+  },
+  "workspace": {
+    "path": "/Users/shawn/Code/model-routing-harness",
+    "branch": "mrh-001",
+    "head_before_checkpoint": "e160d2ed898021fd51260ece815f7255a94ed51f"
+  },
+  "done": [
+    "Read D70 current product contract and REQUIREMENTS correction",
+    "Verified direct human authorization and actual B executor profile",
+    "Mapped concrete old admission dependencies: runtime host facts and subscription_auth routing-scope check",
+    "Monitor host-check ready; escalated host-select pending returned source_pending/unbound_existing_work"
+  ],
+  "not_done": [
+    "No D70 implementation or source edits",
+    "No D70 tests/build/login/model calls",
+    "No normal-home registry mutation",
+    "No Goal creation",
+    "No claim of daily CLI/App completion"
+  ],
+  "continuation": {
+    "mode": "shared advisory decision, stock hosts, parent-owned delegation",
+    "B_owner": "common advisory/settings/editor/auth-decoupling/store/CLI/package/live CLI/use/cleanup",
+    "C_owner": "App probe/helper/docs/evidence only; no B common source",
+    "dependency": "C exclusive normal-home MRH registry until its exact restoration/readback is relayed by A; source/package/isolated CLI may proceed independently",
+    "next_unit": [
+      "Versioned platform-neutral advisory with candidate lists and legacy Codex mapping; keep explicit model/effort/role bypass",
+      "Decouple FileAuthSource/source_for_binding from child-default routing assurance while retaining credential metadata/reference/lock/isolation",
+      "Use existing store for same-task/session/turn dedup and call replay, then stock pre-tool deny/reason parent handoff",
+      "Focused affected checks, earliest minimal real isolated CLI classifier-to-parent-to-child or parent fallback",
+      "Standalone actual consumer and normal installation after C release, truthful readback, instructions/cleanup"
+    ],
+    "forbidden": [
+      "vendor core/runtime changes",
+      "birth guard repair or source provenance research",
+      "invented prices/main-model changes",
+      "second classifier/dispatcher/executor",
+      "model-choice instruction in starting probe to fake Hook effect",
+      "legacy matrix reruns or staging C edits"
+    ]
+  },
+  "retained_state": {
+    "daily_profile": "existing E24 disabled revision 5 from accepted D69; not mutated this turn",
+    "E20": "retained",
+    "login_history_dist_tiers_rates_allowlist": "retained",
+    "no_temp_images_or_processes_created": true
+  },
+  "tracking": {
+    "context": "/Users/shawn/Code/Canopy-Task-Monitor/runtime/host-recording/contexts/8ea224c67f49b1a70256197716e3db587aaecf26e2e2330ac4d3e0468a1989a1/pending/monitor-context.json",
+    "selection": "source_pending",
+    "reason": "unbound_existing_work",
+    "task_id": null,
+    "A_membership_not_assumed": true
+  },
+  "delivery": "pending native send to original A; update this same report if enforcement rejects"
+}
