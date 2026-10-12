@@ -83,3 +83,9 @@ Monitor context仍缺current native user／task，check可讀但pending selectio
 **單一待決事項：**有限Desktop contract須如何處理這個已可達的 `Z.context → pta.firstTurnConfigOverrides` 邊界？若要共用「無 relevant override」invariant，下一個必要事實是該context的實際上游producer／validated key schema；若已有可沿用的同一步身分，才可把此分支明確排除。這次不能據此開全App路由，也不表示需要再盤點所有client。
 
 本輪前後均為 `gpt-6.1-sol/high`；中斷前turn `01a12ecc-0066-7401-b085-47ef91e424dd`、接續turn `01a12ed3-013d-7161-ae44-a5b854654b87` 的metadata-only核實保留。唯一修改本文件，無tests/build/JSexecution/UI/launch/model/private data讀取，無new Goal/agent；B/A與保留環境不動。D66已接受的resource身分／assembler evidence沿用，未重跑；新 direct-caller resource identity另列如上。
+
+### D67-C-001 傳送狀態：未送達
+
+來源成果已提交 `a5d27e76b37d3f89b963ad56d628775779724176`。向原 A 的 `send_message_to_thread` 被自動審查拒絕；一次有界 recovery 已用官方 `read_thread`核對原local督導身分與人類續作來源，再以同工具、同目的地、保留原資料重送，仍被拒絕。審查表示目的地已確認為同一本機工作執行緒，但帳號所有權／本次本機路徑與內部實作細節的明確傳送授權仍不足，並稱原D65授權不涵蓋D67 payload。
+
+這是 enforced messaging boundary；不表示原同任務施工／回報意圖已撤銷。A未透過該工具收到D67報告，不宣称已送達，不換recipient/channel/tool、刪改敏感欄位或由其他聊天relay來繞過。報告保留在本文件，源碼查證單元已完成；待人類對「將D67-C-001含本機路徑、installed非使用者source identity及內部symbols／spans送至原A」作本次明確確認後，才可沿同一官方route續送。本段只保存未送達事實，不是替代派工或接受。
