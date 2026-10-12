@@ -29,3 +29,9 @@ Monitor check ready，pending selection 為 `source_pending/unbound_existing_wor
 5. 完成後只移除自有 probe，精確恢復並讀回原 MRH-only registration／trust／disabled 狀態，回原 A 解除 B normal-installation 依賴。B 完整套件的最終 App 採用仍是另一個未完成義務，不另造分類器。
 
 這份保存點沒有完成 D70 的 App 接點單元或全產品驗收；真 App Hook、主模型行為、shared artifact 採用與清理／停用驗收仍待續作。
+
+## D70-C-001 傳送狀態：未送達
+
+保存成果 commit `e160d2e` 以原生 `send_message_to_thread` 回報原 local A，遭自動審查拒絕。送出前已核本輪人類來源、原目的地與工作授權；審查仍要求本批本機路徑、提交／helper實作及額度狀態對該聊天的明確傳送確認。既有同類授權核對沒有新增此批 payload 的明確確認，因此沒有再次重送。
+
+技術上沒有 normal-registry restore 依賴，但 A 尚未透過此次工具收到這項 release 與 quota checkpoint。完整保存點保留；待人類明確允許這份 D70-C-001 傳至原 A 後，才沿同一路線續送。不改recipient/tool/channel、不刪改欄位或以其他聊天relay繞過，也不將本地保存視為送達／接受。施工仍遵守 remaining 6% 的原額度停止規則。

@@ -43,5 +43,15 @@
     "real child or parent continuation evidence",
     "precise registry restore after any future mutation",
     "B shared artifact final App adoption"
-  ]
+  ],
+  "delivery": {
+    "status": "not_delivered",
+    "report_id": "D70-C-001",
+    "source_commit": "e160d2e",
+    "route": "native send_message_to_thread to original local A",
+    "attempts": 1,
+    "review_reason": "work authorized; explicit transmission confirmation for this payload required",
+    "unchanged_retry": false,
+    "continuation": "human explicit approval; same route only"
+  }
 }
