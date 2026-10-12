@@ -151,6 +151,20 @@ class FreshScopeTests(unittest.TestCase):
         self.start_session();self.identity['pid']+=1
         with self.assertRaises(pinned.ScopeError):self.facts()
 
+    def test_prepared_session_registry_preserves_settings_read_and_disable(self):
+        from mrh.infrastructure import plugin
+        state=self.root/'owned-state/settings.json';artifact=self.root/'owned-artifact'
+        with patch.dict(os.environ,{'CODEX_HOME':str(self.home)}):
+            prepared=plugin.prepare(artifact,state,scope_workspace=self.work,codex_binary=self.binary,
+                                    scope_contract='fresh-root-cli')
+        scope=prepared['artifact']['codex_scope'];binding=artifact/'plugins/model-routing-harness/binding.json'
+        self.assertNotIn(state.parent,Path(scope['sessions']).parents)
+        settings.update(state,enabled=True,task_export_permitted=True)
+        self.assertEqual(configured_event(self.start,state,scope_binding=binding),{})
+        self.assertTrue(settings.read(state)['enabled'])
+        self.assertFalse(settings.update(state,enabled=False)['enabled'])
+        self.assertEqual(configured_event(self.event,state,scope_binding=binding),{})
+
     def test_runtime_startup_protected_allowlist_and_decision_boundary(self):
         state=self.profile/'state/settings.json'; settings.init(state)
         value=settings.read(state)

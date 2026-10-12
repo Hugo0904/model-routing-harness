@@ -141,8 +141,13 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
             codex_binary=found
         if scope_contract == 'fresh-root-cli':
             from mrh.adapters.hosts.fresh_cli_scope import prepare as prepare_fresh
+            # Settings has a strict file-only ownership boundary. Session
+            # records live in a separate owned sibling, never inside it.
+            sessions=settings_path.parent.with_name(settings_path.parent.name+'-fresh-cli-sessions')
+            if sessions == root or root in sessions.parents or sessions in root.parents:
+                raise owned.OwnedError('settings_code_overlap')
             scope=prepare_fresh(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),
-                                scope_workspace,settings_path.parent/'fresh-cli-sessions',python)
+                                scope_workspace,sessions,python)
         else:
             scope=prepare_scope(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),scope_workspace)
     elif scope_contract is not None:

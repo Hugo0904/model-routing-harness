@@ -206,6 +206,10 @@ def inspect_fresh_delta(bundle,binary):
         assert 'native invocation is outside' in result.get('systemMessage',''),result
         sessions=Path(prepared['artifact']['codex_scope']['sessions'])
         assert not any(json.loads(p.read_text()).get('status')=='valid' for p in sessions.glob('*.json'))
+        assert state.parent not in sessions.parents
+        assert run([entry,'settings','show','--path',state])['settings']['enabled'] is True
+        run([entry,'settings','disable','--path',state])
+        assert run([entry,'settings','show','--path',state])['settings']['enabled'] is False
         from mrh.infrastructure.plugin import _runtime_archive
         assert sha256(installed/'runtime.pyz')==hashlib.sha256(_runtime_archive()).hexdigest()
     assert not root.exists()
@@ -214,6 +218,7 @@ def inspect_fresh_delta(bundle,binary):
             'verified_manifest_records':len(manifest['files']),'commands':commands,'configuration_scope':prepared['configuration_scope'],
             'fresh_root_cli_delta':{'harmless_project_mcp':True,'three_hook_events':True,'pre_without_start_recorded_precisely':True,
                 'synthetic_start_cannot_mint_valid_record':True,'model_requests':0},
+            'registry_preserves_settings_read_and_disable':True,
             'real_classifier_calls':0,'login_or_status_calls':0,'formal_registration_or_trust':False,
             'reused_package_foundation':'E21; E22 prior consumer steps before the new refusal assertion',
             'cleanup':True,'elapsed_seconds':round(time.monotonic()-started,3)}
