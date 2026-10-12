@@ -1,6 +1,17 @@
 # 啟用已驗證的本機 CLI 路徑
 
-D57 新增的登入隔離與白名單目前是 **source-ready 基礎**，尚未重新打包、登錄全域 Hook 或完成日常 App 接通。下方 E20 入口與原登入環境保持原樣；新版 source 使用方式見本頁末節。
+D57 的登入隔離與白名單已納入 **E21 獨立候選**，實際 bundled entry 的 allowlist、設定／歷史保留與無 auth 拒絕檢查通過。這不表示已登錄全域 Hook 或完成日常 App 接通。下方已登入的保留環境仍使用 E20 plugin；本次沒有升級、重登入或更動該環境。
+
+## E21 新工具入口（尚未安裝到保留環境）
+
+```sh
+MRH_E21_ENTRY=/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.3.0-e21-macos-arm64/mrh
+"$MRH_E21_ENTRY" --help
+```
+
+套件自帶 private Python，不需安裝 SDK。E21 的[建置身分](evidence/e21-build.json)與[實際 packaged consumer](evidence/e21-bundle-entry.json)核對了目前 source、兩種 archive、完整 manifest 和新 allowlist 入口；沒有模型、login/status 或正式註冊／trust 呼叫。D57 的 22 項來源檢查及既有 native 結果沿用，沒有重跑。
+
+E21 目前是可交付的工具候選，**保留 session 的已載入 Hook 仍是 E20**。不要只把下面的 `MRH_ENTRY` 換成 E21 就當 plugin 已升級；正常 daily CLI／App 還缺同一步已解析 child role／原模型的宿主契約，整體接通由 A 整合驗收。
 
 使用已讀回成功的 E20 獨立套件與已登入、保留的同一 home，不需 Python、SDK 或 API key。普通便宜模型切換、同 Goal 的兩回 fresh classification／lifecycle，以及 Top Fixed 的較高 configured child／結果已由 A 驗收。D48 的 Top/0.99、native Main blocked、沒有 child 與同一 Luna parent 完成也已由 A 驗收。完整 R1、Desktop／原全域 home 與自主 Goal 續跑尚未完成，見 [E19 實際證據](e19-subscription-classifier.md)。目前 MRH disabled／task 外送 denied，啟用要由以下明確指令進行。Source 已按責任分層；E20 已套用同一 session 的 plugin，原 settings／revision／registry／歷史保持相同，登入沒有重建。
 
@@ -76,7 +87,7 @@ codex_cli -C "$MRH_WORKSPACE"
 本機 source／venv 開發入口、合成 demo 與歷史驗證仍見 README 和 E3／E4G；實際使用以上獨立入口即可。
 
 
-## D57 source 設定入口（尚未接到日常 Hook）
+## E21 白名單設定入口（尚未接到日常 Hook）
 
 專案已建立 `workspace-allowlist.local.json`；使用者後續已將 roots 改為 `/`，此現有設定保留，不回填 Code。它涵蓋本 Mac 所有 filesystem-backed cwd，不增加權限、不涵蓋其他 host 或缺失 cwd；完整說明見[白名單備註](workspace-allowlist.md)。該檔已被 Git 忽略，初始化不覆蓋既有檔案。可編輯嚴格 JSON：
 
@@ -84,15 +95,15 @@ codex_cli -C "$MRH_WORKSPACE"
 {"schema_version": 1, "roots": ["/absolute/canonical/workspace"]}
 ```
 
-root 必須是唯一的絕對 canonical 路徑；空 roots 表示全部不准入。可攜範例為 [workspace-allowlist.json](../examples/workspace-allowlist.json)，預設空清單。新 source 設定命令為：
+root 必須是唯一的絕對 canonical 路徑；空 roots 表示全部不准入。可攜範例為 [workspace-allowlist.json](../examples/workspace-allowlist.json)，預設空清單。E21 已驗證以下入口：
 
 ```sh
-PYTHONPATH=src python3 -B -m mrh settings configure --path /absolute/owned-profile/settings.json --workspace-allowlist-file /absolute/path/workspace-allowlist.local.json
-PYTHONPATH=src python3 -B -m mrh settings configure --path /absolute/owned-profile/settings.json --clear-workspace-allowlist-file
+"$MRH_E21_ENTRY" settings configure --path /absolute/owned-profile/settings.json --workspace-allowlist-file /absolute/path/workspace-allowlist.local.json
+"$MRH_E21_ENTRY" settings configure --path /absolute/owned-profile/settings.json --clear-workspace-allowlist-file
 ```
 
-請替換範例路徑；只供 A 完成宿主接法後選取正確 profile，不對保留的 E20 設定執行。設定檔沒有新欄位時沿用 `allowed_workspaces`；明確選取檔案後以檔案為準，清除後才回到 legacy roots。檔案每次新 PreToolUse 重讀；缺失、格式錯誤或讀取失敗會警告並保留原呼叫，不退回較寬舊清單，也不建立新的事件記錄。已准入的 Post 收據仍可關聯，白名單後續編輯不會觸發重分級；disabled／外送 denied 仍保留原停用語義。
+請替換範例路徑；只供 A 完成宿主接法後選取正確 owned profile，**本次不對保留的 E20 設定執行**。設定檔沒有新欄位時沿用 `allowed_workspaces`；明確選取檔案後以檔案為準，清除後才回到 legacy roots。檔案每次新 PreToolUse 重讀；缺失、格式錯誤或讀取失敗會警告並保留原呼叫，不退回較寬舊清單，也不建立新的事件記錄。已准入的 Post 收據仍可關聯，白名單後續編輯不會觸發重分級；disabled／外送 denied 仍保留原停用語義。
 
 classifier 使用乾淨臨時 home，只為已確認 File 模式建立單一 auth 檔案引用。MRH 不讀／複製／輸出憑證；官方 CLI 可能依原有刷新機制寫回同一原檔。MRH 以自有跨程序鎖串行自己的 classifier，等待受 deadline／取消控制，並在取消時先結束自己的程序再清除引用與 scratch。它不協調其他 Codex 程序，也不自動切換 keyring、重登入或移除原 AGENTS。
 
-日常 App 的已解析 child role／原模型資料來源仍未接通。因此本節不表示全域 Hook 已登錄、四級已替你設定，或完整日常路由已驗收；E20 套件也尚未重建為此 source 版本。
+日常 CLI／App 的已解析 child role／原模型資料來源仍未接通。因此本節不表示全域 Hook 已登錄、四級已替你設定，或完整日常路由已驗收。E21 已包含這份基礎 source，但保留的 E20 plugin 沒有更換。

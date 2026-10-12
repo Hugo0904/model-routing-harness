@@ -1,0 +1,104 @@
+{
+  "kind": "E21_actual_standalone_entry_integration_no_model",
+  "source_commit": "31d2d5e56ebc0ffa7559a6f3a21acc8f42ffd831",
+  "build_evidence": "docs/evidence/e21-build.json",
+  "entry_evidence": "docs/evidence/e21-bundle-entry.json",
+  "archive_sha256": "4f8b6aa360d75c9bd6a16481c380682581acaf36b49707c985fe04782369f3d8",
+  "manifest_sha256": "faf3cb8fd1247ff0c45bb500e8110752167a57062cca794b378ab069e0339261",
+  "app_archive_sha256": "aa506371d11f8437357e61e671c709eb1173187c0850b013efb97bf8b3a617cd",
+  "prepared_runtime_sha256": "46bffdf317dfc32bd44c34111feb914570d84fbedcd3caded3b2207a58a83b76",
+  "source_sha256": {
+    "src/mrh/__init__.py": "13d029d3be7f480ffffbd2e9a273e64ef1e5b4fd2d7b24811ca8899d6671ff0c",
+    "src/mrh/cli.py": "3950407c27786252f6542cfa13b4611418935b3849323c248eff6ed6a8bc2aeb",
+    "src/mrh/__main__.py": "307299fda7b77d22c64cb51430ec75e5f59d78e9c948786afb3b2544fe45e4b7",
+    "src/mrh/adapters/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/adapters/providers/subscription_auth.py": "62e9f9ad5f6391a86e9d48321378724c2a81115fdb0eb77c950892e266d1cada",
+    "src/mrh/adapters/providers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/adapters/providers/typesafe.py": "9d9da2dc0841dbb461467d1aba68d83662afdb42ccae2f4c511d820b7a8a4451",
+    "src/mrh/adapters/providers/codex_subscription.py": "3963f08435fbd465b0d43ce3ddd815059cad32399ecb44e2cac4545662589d2d",
+    "src/mrh/adapters/providers/typesafe_protocol.py": "cfb4c17944e80e0001d9907c5eb07a4960f5724b0787da4300727f1a3a8ef346",
+    "src/mrh/adapters/catalogs/catalog.py": "64a487cf4adf301b6029b4c6b65c8a0ede72bcdb4d6b97f5b315c43544769a10",
+    "src/mrh/adapters/catalogs/isolation.py": "c2c11566ecc8542c805bb5e6059cae46e5468d20ace00411dcaaf2d873f37f22",
+    "src/mrh/adapters/catalogs/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/adapters/catalogs/claude_catalog.py": "bfecbeb7e033c4b4a0f515cc72f1f367a6f6e0d62964044e52b0c2953ad435dc",
+    "src/mrh/adapters/catalogs/gemini_catalog.py": "6bdd6be7183a9139dfbdb9ac16d454d02b53d1b44c007147627fcc3084d86fe2",
+    "src/mrh/adapters/hosts/isolated_host_export.py": "4f410b3c45c1b8fa9fea013841f51c10d376e21e2a9ae3244b23d5ca9c44c974",
+    "src/mrh/adapters/hosts/codex.py": "f7db9d50832290a5985fd906d0d72dd40d3cef8a43b5c60ff3fa83b9d0277783",
+    "src/mrh/adapters/hosts/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/adapters/hosts/isolated_live_hook.py": "73ea824c9bf1d943d6fa9d87add7dc7c17c15f74862f9391d9f558b9d40c21ab",
+    "src/mrh/adapters/hosts/codex_defaults.py": "f28d2b53fcafc432b03910f4b9a7ea0da736b130be89bd0653c90da227aca483",
+    "src/mrh/adapters/hosts/codex_scope.py": "da393d331f9d074d5d8f05358da78affdba660f8c34e45864de19a1e690e4c56",
+    "src/mrh/application/simulation.py": "e939b2eed44328b52e13552a480dd61b7fd7c5f3aa325377bbfe6909d2568f74",
+    "src/mrh/application/service.py": "8d46d9b43aab1c9be727a337239f909be69db8595b448b6eafd7616503b50ec5",
+    "src/mrh/application/classifier.py": "de7530742aa13abe271b2e7f1020d4eada4470b141a77b1b77a48ec08b41021a",
+    "src/mrh/application/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/application/runtime.py": "8ffde9cf5f222dce007216b24e318c1578ca0ab07552131c911f50ed6003c750",
+    "src/mrh/routing/facts.py": "1893fae37b1096008510ddc0407431c77335ef2eaa0aa21810a044e5cdf7556d",
+    "src/mrh/routing/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/routing/core.py": "56744981b026ad28f7f0c3bca0cbbfba708f03f84ab40570a417560c6f96d6a7",
+    "src/mrh/routing/types.py": "6f081f0845dcd8c68a5a5318162ff5a4598e7d7be14a513b51e41f32194d1bca",
+    "src/mrh/routing/classification_spec.py": "8440c8170e3c1f614136e40c1144e9da60edeb8c2bdcd059e50c8b7acc4231ac",
+    "src/mrh/routing/attempts.py": "0a4634e9300c77ac276650e7abc0688730da918f78baf9757ba5c3b2cbfe1ae1",
+    "src/mrh/routing/faults.py": "7cff37606d68b84b07bc5e4e9efc8f64527e06a0b838080cb34a48c92c14ce48",
+    "src/mrh/infrastructure/store.py": "653f7ddde33e703da485b596b7bd9d28ae30b9f75d1e9562524171b120880faf",
+    "src/mrh/infrastructure/settings_schema.py": "2681c85c99cad6761eca74b4124a65d22e8c47bc025fe100fea79880c0bf277d",
+    "src/mrh/infrastructure/owned.py": "ae284a85ebecfb529aa92abf00a67112a765089f97605ac6a4c118207dd4201a",
+    "src/mrh/infrastructure/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/infrastructure/installer.py": "158a089d7d1c78b44f1e6042e44f4ec9f4cd70604b81148f25c2528a78578264",
+    "src/mrh/infrastructure/bindings.py": "b8165faea6dea4d0a82b25821bc2fbc818efc6548f90cb534d69d1219876c9e8",
+    "src/mrh/infrastructure/settings.py": "140144c5fbc2842a1e01ced7d5e891c0b57649273473febc45cedf35fd23f7c7",
+    "src/mrh/infrastructure/plugin.py": "abe2c25ea057336ea519743af764273370157dd4fd7b82307025be7a87bf522b",
+    "src/mrh/presentation/settings_editor.py": "1b4d59615c8463903e442f19bef6774b0fb5b0926d369de01a8648bb0dd3ac82",
+    "src/mrh/presentation/terminal.py": "7e919531f7cb909321f681f2e11eb712726bbc6e9ca2b9f91bc8b200bad86775",
+    "src/mrh/presentation/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/mrh/presentation/cli.py": "fc8d91384aba5801865bb5940389ba289343b89cd076e48b8dc2b396e6d41577",
+    "src/mrh/presentation/model_selector.py": "e339c0823789a13bb88137ec09be72a3e7d0b63ea4b5157bd914baeb4274fffd"
+  },
+  "verifier_sha256": "09eeaed1399356bd76118e5ccab9b0fc55f3d1981eaede0ebcfa965e392bdd34",
+  "recursive_source_archive_parity": true,
+  "complete_manifest_records": 2059,
+  "packaged_allowlist_delta": {
+    "selected_path_readback": true,
+    "matching_root": {
+      "allowed": true
+    },
+    "same_file_empty_roots_hot_reload": {
+      "allowed": false
+    },
+    "malformed_without_legacy_fallback": {
+      "error": "workspace_allowlist_invalid"
+    },
+    "file_edits_preserve_settings_bytes": true,
+    "clear_field_absent": true,
+    "clear_restores_legacy_roots": {
+      "allowed": true
+    },
+    "policy_permissions_provider_and_unrelated_fields_preserved": true,
+    "legacy_history_preserved": true
+  },
+  "guard": {
+    "reason": "codex_subscription_auth_source_invalid",
+    "attempts": []
+  },
+  "build_invocations": 1,
+  "packaged_consumer_invocations": 1,
+  "model_requests": 0,
+  "login_or_status_calls": 0,
+  "formal_registration_trust_or_activation": false,
+  "retained_e20_environment_mutated": false,
+  "original_allowlist_roots_preserved": [
+    "/"
+  ],
+  "allowlist_sha256_unchanged": "5e517e446101fe13d9d4d38652a0fd435e67e6e9ccdc7ad36d220268027255a7",
+  "scratch_removed": true,
+  "manifest_unchanged_after_entry": true,
+  "reused": {
+    "D57_source_commit": "d65fa5d9310311fa009c376e44e4d0dacf638eb5",
+    "foundation_evidence": "docs/evidence/d57-foundation.json",
+    "focused_unique_source_checks": 22,
+    "source_checks_rerun": 0,
+    "auth_review": "docs/evidence/d57-auth-review.json",
+    "native_ordinary_fixed_main_goal": "previously_accepted_not_rerun"
+  },
+  "daily_host_boundary": "same-step resolved child role/default original model contract remains A-owned; E21 is not daily installed; retained plugin remains E20"
+}
