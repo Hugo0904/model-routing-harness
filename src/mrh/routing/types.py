@@ -1,8 +1,5 @@
 """Our internal protocol; these shapes are not a Jev wire API."""
-from dataclasses import dataclass, field
-import hashlib
-import json
-import math
+from dataclasses import dataclass
 import re
 
 TIERS = ("Light", "Small", "Mid", "Top")
@@ -47,89 +44,11 @@ def safe_model_id(value, limit=128):
             bool(re.fullmatch(r"[A-Za-z0-9_.:/-]+(?:\[[A-Za-z0-9_.:-]+\])?", value)) and
             not value.lower().startswith(("sk-", "bearer", "password", "secret")))
 
-
-@dataclass(frozen=True)
-class Proposal:
-    platform: str
-    surface: str
-    session_id: str
-    turn_id: str
-    tool_call_id: str
-    tool_input: dict
-    synthetic: bool = False
-    tool_name: str = "spawn_agent"
-
-    @property
-    def identity(self):
-        ids = [self.platform, self.surface, self.session_id, self.turn_id, self.tool_call_id]
-        if not all(safe_id(x) for x in ids):
-            raise ValueError("invalid_identity")
-        return hashlib.sha256(json.dumps(ids, separators=(",", ":")).encode()).hexdigest()
-
-    @property
-    def task(self):
-        value = self.tool_input.get("message", "")
-        return value if isinstance(value, str) else ""
-
-
-@dataclass(frozen=True)
-class Decision:
-    action: str = "preserve"
-    reason: str = "classifier_unavailable"
-    tier: str | None = None
-    confidence: float | None = None
-    patch: dict = field(default_factory=dict)
-    synthetic: bool = False
-    context_status: str = "absent"
-    target_model: str | None = None
-
-    def validate(self):
-        if self.action not in ("preserve", "request_child", "return_to_main", "operator_update_required") or self.reason not in REASONS or type(self.synthetic) is not bool:
-            raise ValueError("invalid_decision")
-        if self.context_status not in ("absent", "export_denied", "oversized", "sensitive", "permitted", "timeout", "error"):
-            raise ValueError("invalid_decision")
-        if self.tier is None:
-            if self.confidence is not None:
-                raise ValueError("invalid_decision")
-        elif self.tier not in TIERS or isinstance(self.confidence, bool) or not isinstance(self.confidence, (int, float)) or not math.isfinite(self.confidence) or not 0 <= self.confidence <= 1:
-            raise ValueError("invalid_decision")
-        if not isinstance(self.patch, dict) or set(self.patch) - {"model", "reasoning_effort"}:
-            raise ValueError("invalid_decision")
-        if self.action == "request_child":
-            if not safe_model_id(self.patch.get("model")) or ("reasoning_effort" in self.patch and not safe_id(self.patch["reasoning_effort"])):
-                raise ValueError("invalid_decision")
-            if self.tier is None or self.confidence < 0.5:
-                raise ValueError("invalid_decision")
-        elif self.patch:
-            raise ValueError("invalid_decision")
-        if self.action == "return_to_main" and (self.tier != "Top" or self.confidence < 0.5 or self.reason != "top_main_requested"):
-            raise ValueError("invalid_decision")
-        if self.action == "operator_update_required":
-            if self.tier is None or self.confidence < 0.5 or not safe_model_id(self.target_model) or self.reason not in UNAVAILABLE_REASONS:
-                raise ValueError("invalid_decision")
-        elif self.target_model is not None:
-            raise ValueError("invalid_decision")
-        return self
-
-    def as_dict(self):
-        value = {"schema_version": 1, "action": self.action, "reason": self.reason,
-                "tier": self.tier, "confidence": self.confidence, "patch": self.patch,
-                "synthetic": self.synthetic, "context_status": self.context_status}
-        if self.target_model is not None:
-            value['target_model'] = self.target_model
-        return value
-
-    @classmethod
-    def from_dict(cls, value):
-        return cls(**{k: v for k, v in value.items() if k != "schema_version"}).validate()
-
-
 @dataclass(frozen=True)
 class Classification:
     tier: str
     confidence: float
     reason_code: str = "classified"
-
 
 @dataclass(frozen=True)
 class ContextSummary:

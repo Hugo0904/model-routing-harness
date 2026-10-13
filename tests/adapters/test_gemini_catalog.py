@@ -9,7 +9,6 @@ import unittest
 from unittest.mock import patch
 
 from mrh.infrastructure import settings
-from mrh.infrastructure.bindings import Registry, BindingError
 from mrh.adapters.catalogs.catalog import Catalog, CatalogError, Model, ToolCatalog, describe_tool, executable_hash, installation_hash
 from mrh.adapters.catalogs.gemini_catalog import GeminiCatalog, installation, parse_initialize, parse_session, _unique
 
@@ -88,18 +87,6 @@ class GeminiCatalogTests(unittest.TestCase):
             with self.assertRaisesRegex(CatalogError, 'tool_changed_rebind_required'): ToolCatalog().refresh(binding)
             self.assertEqual(acquire.call_count, 1)
 
-    def test_save_revalidates_whole_package_and_cancel_history_policy_stays_equal(self):
-        registry = Registry(self.root / 'registry'); candidate = describe_tool(self.candidate())
-        binding = registry.associate(candidate, expected_revision=0); path = Path(binding['settings_path'])
-        snapshot = Catalog(binding['id'], 'gemini', binding['executable_sha256'], binding['version'],
-                           'synthetic:gemini-fixture', time.time(), (Model('auto', 'Auto', ()),), assurance='synthetic')
-        registry.record_refresh(binding, snapshot,expected_revision=registry.read()['revision']); current = registry.read()['bindings'][0]
-        initial = settings.read(path); before = path.read_bytes(); self.chunk.write_text('// update\n')
-        with self.assertRaisesRegex(BindingError, 'tool_changed_rebind_required'):
-            registry.save(current, initial, initial['policy'], snapshot, 'auto')
-        self.assertEqual(path.read_bytes(), before)
-        self.assertFalse((path.parent / 'events.sqlite3').exists())
-        self.assertNotEqual(installation_hash('gemini', self.entry), current['executable_sha256'])
 
 
 if __name__ == '__main__': unittest.main()

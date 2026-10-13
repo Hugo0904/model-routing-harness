@@ -189,26 +189,6 @@ def sanitized_environment(root):
             'LANG':'en_US.UTF-8','NO_COLOR':'1',SENTINEL:'1'}
 
 
-def execution_login_status(binary, execution):
-    from mrh.adapters.catalogs.catalog import executable_hash
-    from mrh.adapters.hosts.codex_scope import BINARY_SHA256, VERSION
-    if executable_hash(binary)!=BINARY_SHA256:_failure('isolation_unsupported')
-    env=sanitized_environment(execution.root)
-    env['CODEX_SQLITE_HOME']=str(execution.root/'state');env['TMPDIR']=str(execution.root)
-    code,out,_=run_process([str(binary),'--version'],b'',execution.work,env,execution,limit=8192)
-    if code or out.decode().strip()!=VERSION:_failure('isolation_unsupported')
-    execution.check()
-    code,out,err=run_process([str(binary),'--no-daemon','-c','cli_auth_credentials_store="file"',
-                            '-c','forced_login_method="chatgpt"','login','status'],
-                           b'',execution.work,env,execution,limit=8192)
-    if chatgpt_status(code,out,err):category='chatgpt'
-    else:
-        lines=(out+err).decode('utf-8',errors='replace').splitlines()
-        lines=[line.strip() for line in lines if line.strip() and not line.startswith(
-            'WARNING: proceeding, even though we could not create PATH aliases:')]
-        category=('api' if len(lines)==1 and lines[0].startswith('Logged in using an API key') else
-                  'not_logged_in' if lines==['Not logged in'] else 'unknown')
-    return env,category
 
 
 def standalone_login_status(binary, execution):
@@ -221,8 +201,8 @@ def standalone_login_status(binary, execution):
     return env,('chatgpt' if chatgpt_status(code,out,err) else 'not_logged_in')
 
 
-def validate_execution(binary, execution, pinned=True):
-    env,category=(execution_login_status if pinned else standalone_login_status)(binary,execution)
+def validate_execution(binary, execution):
+    env,category=standalone_login_status(binary,execution)
     if category!='chatgpt':_failure('chatgpt_login_required')
     return env
 
@@ -232,7 +212,7 @@ def public_login_status(binary, source_home, workspace, recorder, *, lock_root=N
     from mrh.adapters.providers.subscription_auth import FileAuthSource, execution_home
     source=FileAuthSource.resolve(source_home,workspace)
     with execution_home(source,recorder,lock_root) as execution:
-        _,category=execution_login_status(binary,execution)
+        _,category=standalone_login_status(binary,execution)
         result={'status':category,'source_regular':True,'reference_symlink':True,
                 'owned_scratch':str(execution.root),'model_requests':0}
     result['scratch_removed']=not Path(result['owned_scratch']).exists()
@@ -252,12 +232,11 @@ def invocation(binary, work, schema, model=MODEL):
 
 class CodexSubscriptionClassifier:
     synthetic=False
-    def __init__(self, *, enabled=False, task_export_permitted=False, runner=None, scope_binding=None, model=MODEL, home=None, standalone=False):
+    def __init__(self, *, enabled=False, task_export_permitted=False, runner=None, model=MODEL, home=None, standalone=True):
         self.enabled=enabled is True;self.task_export_permitted=task_export_permitted is True
         self.model=model;self.home=home;self.standalone=standalone is True
         if runner is not None and getattr(runner,'synthetic',None) is not True:_failure('unverified_process')
         self.runner=runner;self.synthetic=runner is not None
-        self.scope_binding=scope_binding
 
     def classify(self,task,context,recorder):
         if not self.enabled:_failure('disabled')
@@ -269,23 +248,13 @@ class CodexSubscriptionClassifier:
             if self.runner is not None:
                 output=recorder.invoke('0',lambda enter:self.runner.request(data,recorder,enter),kind=kind,requested_model=self.model)
             else:
-                from mrh.adapters.catalogs.catalog import discover, executable_hash
-                from mrh.adapters.providers.subscription_auth import source_for_binding, source_for_home, execution_home
-                standalone=self.standalone and self.scope_binding is None
-                if standalone:
-                    candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
-                    if candidate is None:_failure('isolation_unsupported')
-                    source=source_for_home(self.home)
-                else:
-                    from mrh.adapters.hosts.codex_scope import BINARY_SHA256
-                    if self.scope_binding is not None:
-                        from mrh.infrastructure.owned import read_regular
-                        candidate=_loads(read_regular(self.scope_binding))['codex_scope']['binary']
-                    else:candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
-                    if candidate is None or executable_hash(candidate)!=BINARY_SHA256:_failure('isolation_unsupported')
-                    source=source_for_binding(self.scope_binding)
+                from mrh.adapters.catalogs.catalog import discover
+                from mrh.adapters.providers.subscription_auth import source_for_home, execution_home
+                candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
+                if candidate is None:_failure('isolation_unsupported')
+                source=source_for_home(self.home)
                 with execution_home(source,recorder) as execution:
-                    root=execution.root;work=execution.work;env=validate_execution(candidate,execution,pinned=not standalone)
+                    root=execution.root;work=execution.work;env=validate_execution(candidate,execution)
                     schema=root/'answer.json';schema.write_text(json.dumps(SCHEMA))
                     def request(enter):
                         execution.check();enter();code,out,_=run_process(invocation(candidate,work,schema,self.model),data,work,env,execution)

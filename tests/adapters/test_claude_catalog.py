@@ -13,11 +13,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from mrh.adapters.catalogs import catalog; from mrh.presentation import cli; from mrh.infrastructure import settings
-from mrh.infrastructure.bindings import Registry
 from mrh.adapters.catalogs.catalog import Catalog, CatalogError, CodexCatalog, Model, ToolCatalog, executable_hash
 import mrh.adapters.catalogs.claude_catalog as claude_catalog
 from mrh.adapters.catalogs.claude_catalog import ClaudeCatalog, parse_initialize
-from mrh.routing.types import Proposal, safe_id, safe_model_id
+from mrh.routing.types import safe_id, safe_model_id
 
 
 REQUEST_ID = "mrh_initialize_0123456789abcdef"
@@ -116,27 +115,10 @@ class ModelIdentifierTests(unittest.TestCase):
 
         self.assertFalse(safe_id("opus[1m]"))
         self.assertTrue(safe_id("session-012345"))
-        proposal = Proposal("claude", "surface", "session[1m]", "turn", "call", {})
-        with self.assertRaises(ValueError):
-            _ = proposal.identity
+
 
 
 class ToolCatalogDispatchTests(unittest.TestCase):
-    def test_dispatches_catalog_refresh_without_starting_a_cli(self):
-        codex_binding = {"tool": "codex"}
-        claude_binding = {"tool": "claude"}
-        codex_catalog = object()
-        claude_catalog = object()
-        with patch.object(CodexCatalog, "refresh", return_value=codex_catalog) as codex_refresh, \
-                patch.object(ClaudeCatalog, "refresh", return_value=claude_catalog) as claude_refresh:
-            self.assertIs(ToolCatalog().refresh(codex_binding), codex_catalog)
-            self.assertIs(ToolCatalog().refresh(claude_binding), claude_catalog)
-
-        codex_refresh.assert_called_once_with(codex_binding)
-        claude_refresh.assert_called_once_with(claude_binding)
-        with self.assertRaises(CatalogError) as raised:
-            ToolCatalog().refresh({"tool": "gemini"})
-        self.assertEqual(str(raised.exception), "tool_catalog_unsupported")
 
     def test_claude_description_uses_its_tool_specific_version_adapter(self):
         candidate = {"tool": "claude", "executable": "/synthetic/claude", "label": "Claude", "supported": True}
@@ -303,65 +285,10 @@ trace_path.write_text(json.dumps({"request": request, "extra": extra, "accepted"
         self.assertEqual(self.run_responder("timeout", timeout=True), "claude_catalog_timeout")
 
 
-class Tty(io.StringIO):
-    def isatty(self):
-        return True
 
 
-class SyntheticClaudeProvider:
-    def __init__(self, rows):
-        self.rows = tuple(rows)
-        self.calls = 0
-
-    def refresh(self, binding):
-        self.calls += 1
-        return Catalog(
-            binding["id"],
-            "claude",
-            binding["executable_sha256"],
-            binding["version"],
-            "synthetic:claude-selector-fixture",
-            time.time(),
-            self.rows,
-            assurance="synthetic",
-        ).validate()
 
 
-class ClaudeSelectorRoundTripTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name).resolve() / "registry"
-        self.registry = Registry(self.root)
-        executable = str(Path("/usr/bin/true").resolve())
-        self.candidate = {
-            "tool": "claude",
-            "label": "Synthetic Claude fixture",
-            "executable": executable,
-            "supported": True,
-            "version": "2.1.267 (Claude Code)",
-            "executable_sha256": executable_hash(executable),
-        }
-        self.binding = self.registry.associate(self.candidate, expected_revision=0)
-        row = Model("opus[1m]", "Opus 1M", (), resolved_model="claude-opus-5[1m]")
-        self.provider = SyntheticClaudeProvider((row,))
-        self.settings_path = Path(self.binding["settings_path"])
-        self.dependencies = {
-            "provider": self.provider,
-            "discovery": lambda: [self.candidate],
-            "describe": lambda candidate: candidate,
-        }
-
-    def run_selector(self, text):
-        stdout, stderr = io.StringIO(), io.StringIO()
-        code = cli.main(
-            ["model", "light", "--root", str(self.root), "--plain", "--width", "120"],
-            stdin=Tty(text),
-            stdout=stdout,
-            stderr=stderr,
-            model_dependencies=self.dependencies,
-        )
-        return code, stdout.getvalue(), stderr.getvalue()
 
 
 

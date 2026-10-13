@@ -11,7 +11,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from mrh.adapters.providers.subscription_auth import FileAuthSource, execution_home, source_lock, source_for_binding
+from mrh.adapters.providers.subscription_auth import FileAuthSource, execution_home, source_lock
 from mrh.adapters.providers.codex_subscription import run_process, sanitized_environment
 from mrh.infrastructure import owned
 from mrh.routing.attempts import GuardedAttempts
@@ -74,20 +74,6 @@ class SubscriptionAuthTests(unittest.TestCase):
         self.assertEqual((self.home/'AGENTS.md').read_text(),'DO_NOT_LOAD_CANARY')
         recorder.cancel()
 
-    def test_binding_configuration_and_file_mode_must_still_be_current(self):
-        from mrh.adapters.hosts import codex_scope as scope
-        descriptor={'contract':scope.CONTRACT,'binary':'/synthetic-official','binary_sha256':scope.BINARY_SHA256,
-                    'codex_home':str(self.home),'workspace':str(self.work),'models':scope.DEFAULT_MODELS,
-                    'configuration_fingerprint':scope._hash(scope._configuration(self.home,self.work))}
-        binding=self.root/'binding.json';binding.write_text(json.dumps({'codex_scope':descriptor}))
-        with patch('mrh.adapters.hosts.codex_scope.executable_hash',return_value=scope.BINARY_SHA256):
-            self.assertEqual(source_for_binding(binding).path,self.auth)
-            (self.home/'config.toml').write_text('cli_auth_credentials_store="keyring"')
-            with self.assertRaises(ClassifierFailure) as e:source_for_binding(binding)
-            self.assertEqual(e.exception.reason,'codex_subscription_auth_source_unconfirmed')
-            (self.home/'config.toml').write_text('model="changed"')
-            with self.assertRaises(ClassifierFailure) as e:source_for_binding(binding)
-            self.assertEqual(e.exception.reason,'codex_subscription_auth_source_unconfirmed')
 
     def test_reference_tamper_and_cancel_remove_scratch_after_owned_process(self):
         recorder=GuardedAttempts(4);source=self.source()

@@ -21,12 +21,11 @@ def fail(reason):
 class FileAuthSource:
     home: Path
     workspace: Path
-    scope_contract: str | None = None
 
     @classmethod
-    def resolve(cls, home, workspace, *, scope_contract=None):
+    def resolve(cls, home, workspace):
         try:
-            value = cls(owned.canonical_path(home), owned.canonical_path(workspace), scope_contract)
+            value = cls(owned.canonical_path(home), owned.canonical_path(workspace))
             value.verify()
             return value
         except ClassifierFailure:
@@ -40,22 +39,18 @@ class FileAuthSource:
 
     def verify(self):
         try:
-            from mrh.adapters.hosts.codex_scope import _configuration, _toml
-            # Same finite config-layer contract as the existing trusted scope.
-            # No credential file is opened, hashed or passed to a JSON reader.
-            from mrh.adapters.hosts import fresh_cli_scope
-            if self.scope_contract == fresh_cli_scope.CONTRACT:
-                fresh_cli_scope.configuration(self.home, [self.workspace])
-            else:
-                _configuration(self.home, self.workspace)
-            mode = _toml(self.home / 'config.toml').get('cli_auth_credentials_store', 'file')
-            if mode != 'file':
-                fail('auth_source_unconfirmed')
+            import tomllib
             owned.canonical_path(self.home)
+            config = self.home / 'config.toml'
+            if config.exists():
+                if not stat.S_ISREG(config.lstat().st_mode):
+                    fail('auth_source_invalid')
+                raw = owned.read_regular(config)
+                if tomllib.loads(raw.decode('utf-8')).get('cli_auth_credentials_store', 'file') != 'file':
+                    fail('auth_source_unconfirmed')
             info = self.path.lstat()
             if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                    or info.st_nlink != 1 or info.st_mode & 0o077
-                    or self.path != self.path.resolve()):
+                    or info.st_nlink != 1 or info.st_mode & 0o077):
                 fail('auth_source_invalid')
         except ClassifierFailure:
             raise
@@ -77,9 +72,11 @@ class HomeAuthSource(FileAuthSource):
             owned.canonical_path(self.home)
             config = self.home / 'config.toml'
             if config.exists():
-                with open(config, 'rb') as stream:
-                    if tomllib.load(stream).get('cli_auth_credentials_store', 'file') != 'file':
-                        fail('auth_source_unconfirmed')
+                if not stat.S_ISREG(config.lstat().st_mode):
+                    fail('auth_source_invalid')
+                raw = owned.read_regular(config)
+                if tomllib.loads(raw.decode('utf-8')).get('cli_auth_credentials_store', 'file') != 'file':
+                    fail('auth_source_unconfirmed')
             info = self.path.lstat()
             if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
                     or info.st_nlink != 1 or info.st_mode & 0o077):
@@ -93,25 +90,13 @@ class HomeAuthSource(FileAuthSource):
 def source_for_home(home=None):
     base = Path(home) if home else Path(os.environ.get('CODEX_HOME') or Path(pwd.getpwuid(os.getuid()).pw_dir) / '.codex')
     try:
-        value = HomeAuthSource(owned.canonical_path(base), Path('/'), None)
+        value = HomeAuthSource(owned.canonical_path(base), Path('/'))
     except (OSError, ValueError, TypeError):
         fail('auth_source_unconfirmed')
     value.verify()
     return value
 
 
-def source_for_binding(binding):
-    if binding is None:
-        fail('auth_source_unconfirmed')
-    try:
-        from mrh.adapters.hosts.codex_scope import check
-        scope = json.loads(owned.read_regular(binding), object_pairs_hook=owned._unique)['codex_scope']
-        check(scope)  # Configured evidence remains configured, not observed.
-        return FileAuthSource.resolve(scope['codex_home'], scope['workspace'], scope_contract=scope['contract'])
-    except ClassifierFailure:
-        raise
-    except (OSError, ValueError, KeyError, TypeError):
-        fail('auth_source_unconfirmed')
 
 
 @contextmanager
