@@ -10,7 +10,7 @@ import time
 
 from mrh.advisory import advice_text
 from mrh.advisory.request import Advice, AdvisoryRequest
-from mrh.advisory.store import AdviceStore, request_id, task_hash
+from mrh.advisory.store import AdviceStore, candidates, request_id, task_hash
 from mrh.infrastructure import settings_v2 as v2
 from mrh.routing.attempts import GuardedAttempts
 from mrh.routing.core import ClassifierFailure, bounded_call
@@ -22,7 +22,7 @@ QUIET = {"explicit_model", "explicit_effort", "named_role", "low_confidence",
 
 def _from_row(row):
     return Advice(row["action"], row["reason"], row["tier"], row["confidence"],
-                  tuple(json.loads(row["candidates"])), row["request_id"], extra={"replayed": True})
+                  candidates(row), row["request_id"], extra={"replayed": row.get("_replayed", True)})
 
 
 def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factory, clock=time.time) -> Advice:
@@ -45,8 +45,7 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
     if stored:
         return _from_row(stored)
     if req.explicit_model is not None:
-        reissue = store.advice_for_model(req.platform, req.session_id, req.explicit_model, now)
-        return finish(keep("advice_reissue" if reissue else "explicit_model"))
+        return _from_row(store.preserve_explicit(rid, req, thash, provider, now))
     if req.explicit_effort is not None:
         return finish(keep("explicit_effort"))
     if req.role is not None and req.role not in v2.generic_roles(settings["policy"], req.platform):
@@ -66,6 +65,7 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
     fault = None
     result = None
     try:
+        emit(rid, provider, "classification_requested")
         classifier = classifier_factory()
         result = bounded_call(lambda: classifier.classify(req.task, None, attempts), timeout)
         attempts.check()
@@ -78,6 +78,7 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
     finally:
         attempts.cancel()
     if fault:
+        emit(rid, provider, "classification_error", error_reason=fault)
         return finish(keep(fault), notice_reason=fault)
     if (not isinstance(result, Classification) or result.tier not in TIERS or isinstance(result.confidence, bool)
             or not isinstance(result.confidence, (int, float)) or not math.isfinite(result.confidence)

@@ -1,0 +1,82 @@
+{
+  "report_id": "MRH-CLOSE-R1-B-001",
+  "state": "source candidate; not built, installed or accepted",
+  "source_base": "5249eb2631138097f2a5549d2027a3f3ae31c282",
+  "source_manifest": {
+    "README.md": "bb1bf96f44d6db0fd0e663864d91c0bdb32478d01e4b99f39a293b80b82829c7",
+    "REQUIREMENTS.md": "9c626fd54d90b8fae577cdd192e0ba5cf4d4ee9e557d5c7093c441ed78fbe9bf",
+    "docs/takeover/CODEX-HANDOFF.md": "29ebd0622006845da3b56f3d8457eecdca18a076dc4dc5e5cb1be5e9298d8053",
+    "docs/takeover/HANDOFF.md": "85273f70b6716c6c11596295bc6cd69044805006360520bacb4c471b1add9527",
+    "src/mrh/advisory/engine.py": "b9ff88ee417173bde21cb21a8769bb5231bff03d7d2f2f37777557904af9e12f",
+    "src/mrh/advisory/store.py": "7e428485e1f96f995be2bd8f5c6211a4b820be7b6ee8c6ed870cfcf9f236b197",
+    "src/mrh/presentation/ctrl.py": "4dd05b8ac0099eebbb83181704c63b4e661692e0de5d022e87821896ad14ea7d",
+    "src/mrh/presentation/dashboard.py": "ad0776bbbf7f710e30f2c80d4d8dae78f446370855e4afbffd37efc8b6a2dac4",
+    "src/mrh/presentation/report_html.py": "01e41f06f5d83e55d2cc13c4a114d8ef984a09bd01200530eafb9e6b3399208a",
+    "src/mrh/presentation/stats_view.py": "b722f664a040877afd17d5616859d8553640be019b03faa2a81485ec83598ff4",
+    "tests/advisory/test_engine.py": "b52cd543e0a11632d1840c56144ee3a86f8735b105e1a21d5808b15afcc801dc",
+    "tests/presentation/test_ctrl.py": "6e93b4b33a58ce3c29794d8929e7871ba16c6b0232764ff87016e472dddd1516",
+    "tests/presentation/test_stats_view.py": "63ca6ad87297657319a2a13d5343634a86e61573d113aa5ab5d9be985c0bed64",
+    "tests/advisory/test_correlation.py": "113fff08d51bd4bce806524140ad699619caf2a8794a502f6202b8bc47fb530c",
+    "tests/presentation/test_catalog_choices.py": "54b7f08cd11e05492528389e368072e9c9438e9e66ea3d5bc31993fb4bb5ba54"
+  },
+  "changes": [
+    "Same normalized task/platform/session/turn, candidate model/effort, bounded time and unambiguous one-time correlation; atomic replay/claim in existing candidates JSON payload",
+    "PostToolUse only correlates the exact saved pre-call; no model-only cross-task adoption",
+    "Legacy rows remain unchanged; unverified relation counters and observed/requested model distinctions",
+    "Classifier attempted/entered/failed calls and unknown token usage remain visible; same-event telemetry deduplicated",
+    "Catalog declaration/cache/builtin source and effort basis shown; known retired/unavailable entries cannot be added interactively",
+    "status --json shares the CLI calculations and opens MRH data read-only; no Monitor DB, daemon or App UI"
+  ],
+  "schema": "Original four-table _SCHEMA is byte-for-byte unchanged; no relation table, migration or historical UPDATE",
+  "verification": {
+    "budget_seconds": 300,
+    "elapsed_seconds_including_preparation_interpretation_and_review": 343.109,
+    "overrun_seconds": 43.109,
+    "remaining_seconds": 0,
+    "budget_adherence": false,
+    "overrun_action": "Stopped all additional verification; disclosed to A. No unilateral extension.",
+    "test_runner_seconds": 7.371,
+    "focused_unique_cases": 31,
+    "first_focus": "31 tests, 7 fixture ownership setup errors; 24 passed",
+    "fixture_repair": "New fixtures moved under resolved owned child directories; 8/8 new cases passed; product ownership guard unchanged",
+    "full_suite_runs": 1,
+    "full_suite_total": 295,
+    "full_suite_failures": 4,
+    "full_suite_new_failures": 0,
+    "full_suite_failure_ids": [
+      "test_dispatches_catalog_refresh_without_starting_a_cli (tests.adapters.test_claude_catalog.ToolCatalogDispatchTests.test_dispatches_catalog_refresh_without_starting_a_cli)",
+      "test_explicit_fixed_role_and_unrelated_skip (tests.routing.test_core.CoreTests.test_explicit_fixed_role_and_unrelated_skip)",
+      "test_fixed_parent_unchanged_and_guards (tests.routing.test_core.CoreTests.test_fixed_parent_unchanged_and_guards)",
+      "test_resolved_baseline_cost_negative_positive_unknown_and_fixed (tests.routing.test_e3_facts.FactsTests.test_resolved_baseline_cost_negative_positive_unknown_and_fixed)"
+    ],
+    "provider_model_calls_in_new_statistics_settings_cases": 0,
+    "Claude_and_native_model_checks": "not run by B; C owner",
+    "proofs": {
+      "mrh-close-r1-b-focused.log": {
+        "path": "/private/tmp/mrh-close-r1-b-focused.log",
+        "sha256": "93cb6139156a745cd7740bd06055abbc24f89159ad22e64fd34bbcd4c5e54949"
+      },
+      "mrh-close-r1-b-focused-repair.log": {
+        "path": "/private/tmp/mrh-close-r1-b-focused-repair.log",
+        "sha256": "8d54467f354b2655eedff783fdfdce986815fd0eb63cbe693a94ccdef8902d90"
+      },
+      "mrh-close-r1-b-unit.log": {
+        "path": "/private/tmp/mrh-close-r1-b-unit.log",
+        "sha256": "1becc502cb2a90f61fa97147e05b9bd3d7204d69446aeb0a56ffcdd97484fe0c"
+      }
+    }
+  },
+  "retained_evidence": {
+    "CLI_fdb7428": "10 valid successes / 12 launches including preparation",
+    "App_fdb7428": "10 valid completed trials: 8 advice/adopted + 2 low-confidence preserves; accepted by A, no two extra runs",
+    "original_Claude_smoke": "9/9 for old candidate, not asserted for changed source"
+  },
+  "Canopy": "Existing ContextSummary/export guard and provider context_summary seam retained. Active advisory classifier receives None; live Canopy summary remains unconnected. No Core or Hook change.",
+  "preservation": "No build/install/plugin/trust/daily setting writes; no cleanup of unknown temp/. Daily new Codex/Claude settings retain their prior state.",
+  "remaining": [
+    "A freeze/accept this source candidate and decide how to account for the 43.109s local verification overrun",
+    "One frozen package/install and C same-version Claude/native/settings verification within original overall quota",
+    "Live Canopy summary is not established by this candidate; original unmet boundary retained",
+    "A final overall acceptance"
+  ]
+}

@@ -4,12 +4,12 @@
 
 ## 一、你要完成的事
 
-**目標**：在使用者日常的 Codex（CLI 與桌面 App）上，讓 MRH 真的把子代理派到分級器建議的較便宜模型。Claude Code 端已完成並啟用。2026-10-13 B 接管的 Codex 建議文案候選，在隔離 CLI 的 10 次有效試跑中均收到建議、重新委派，並觀察到子代理使用 `gpt-5.6-luna / low` 完成任務；日常及桌面 App 的接受仍由 A／C 處理。
+**目標**：在使用者日常的 Codex（CLI 與桌面 App）上，讓 MRH 真的把子代理派到分級器建議的較便宜模型。Claude Code 端已完成並啟用。2026-10-13 B 接管的 Codex 建議文案候選，在隔離 CLI 的 10 次有效試跑中均收到建議、重新委派，並觀察到子代理使用 `gpt-5.6-luna / low` 完成任務；原 App 候選的 10 有效試次（8 採用、2 低信心保留且全完成）也已接受；新候選與新日常設定待 C／A。
 
 ### B 的 CLI 交付（MRH-002-CLI-B-001）
 
 - 只增加 Codex 建議文案：要求重新呼叫 `spawn_agent`、使用 `fork_turns="none"`，並提供必要的子任務上下文；Claude 文案、引擎及資料契約不變。
-- 重用 9 次批次＋pilot3，有效試跑為 10/10；全部啟動共 12 次，另兩次前置試跑的缺少 Hook 證據／未設定候選模型情況完整保留。實際模型與推理強度取自官方 `thread/read`，不只看 DB 的 `followed`。詳見 [CLI 證據](../evidence/l2-codex-advice-20261013.json)。
+- 重用 9 次批次＋pilot3，有效試跑為 10/10；全部啟動共 12 次，另兩次前置試跑的缺少 Hook 證據／未設定候選模型情況完整保留。實際模型與推理強度取自官方 `thread/read`，不只看 DB 的 `followed`。詳見 CLI 證據（歷史檔案見 Git 紀錄）。
 - 原始 343 項單元測試只有 PLAN §15 的 5 個既有失敗，輸入未變而沿用；同候選的 Claude smoke 新一輪 **9/9**。候選封裝為 `dist/model-routing-harness-0.4.0-codex-advice`，程式內容與已安裝、daily 及 scratch runtime 一致，B 未重裝。
 - 日常設定仍為 `enabled=true / provider=jev`；Claude settings、Codex hooks 與 launcher 均符合保留的原始雜湊。C 獨占正常 Codex registry／trust／App 驗證，B 不並寫；本交付不宣稱桌面或整體完成。
 

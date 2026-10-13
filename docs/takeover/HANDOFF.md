@@ -2,6 +2,18 @@
 
 > 本檔由 Claude 執行者在 P6 填完 `<!-- 待填 -->`。完成後把「貼給 Codex 的訊息」整段貼到 Codex「Canopy 子代理分級器 督導」對話。
 
+
+## MRH-CLOSE-R1 六項收尾狀態
+
+| 項目 | 目前狀態 | 尚缺 |
+|---|---|---|
+| 統計 | 局部 source 候選：精確關聯、舊資料未知、失敗呼叫計數；不新增表或歷史回填 | B 已檢查：完整 295 項／4 既有失敗，無新增失敗；待 A 接受 |
+| 設定操作 | 清單來源／更新失敗與 effort 依據可辨；已宣告失效不得新增，現有設定保留 | B 隔離來源／下架／取消檢查通過，C 實際操作待驗 |
+| 實際委派 | 原 fdb7428 CLI 10/10、App 10 有效＝8 採用＋2 低信心保留且全完成，已接受 | 新候選與新日常設定由 C 驗證，不補舊 App 2 次 |
+| Monitor 出口 | `mrh status --json` 共用 CLI 統計，只讀 MRH 資料 | B 同資料 JSON／唯讀檢查通過；本輪無 App 施工 |
+| Canopy 選配 | `ContextSummary`／provider 摘要介面保留；advisory 傳 None，未接 live Canopy | live 接入未證，不修改 Core／新增 Hook |
+| 最終交付 | B source 候選、本地檢查已交付；耗時 343.109 秒，超出 300 秒 43.109 秒，補驗停止；未建置部署，原設定／歷史保留 | A 凍結一次版本，再封裝／安裝、C 同版本 gate、A 最終接受 |
+
 ## 貼給 Codex 的訊息
 
 ```
@@ -69,7 +81,7 @@ mrh ctrl show     # 目前設定
 
 - Claude Code 由 stable 2.1.287 換成 `claude-code@latest` cask（2.1.296；先 `brew uninstall --cask claude-code` 再 `brew install --cask claude-code@latest`，兩者衝突）。`~/.claude` 設定未動。
 - 2.1.296 實測：子代理 `haiku` → `claude-haiku-5-5`、`sonnet` → `claude-sonnet-5-5`（2.1.287 的 `haiku` 是 Haiku 4.5）；Agent 工具新增 `effort` 參數，建議文字已帶出 `effort=…`，主模型自選 effort 視為明示。實測：Light/0.91 → 主模型改派 haiku＋effort=medium → 子代理 claude-haiku-5-5 → followed=1。
-- 使用者設定（Claude）：Light `haiku:medium`、Small `haiku:xhigh`、Mid `sonnet:medium`；Codex 三級仍為 `gpt-5.6-luna:low`；Top 為 Main。路由仍停用。
+- 使用者設定（Claude）：Light `haiku:medium`、Small `haiku:xhigh`、Mid `sonnet:medium`；Codex 三級仍為 `gpt-5.6-luna:low`；Top 為 Main。這是當時狀態；日常設定後來已啟用。
 
 ## 2026-10-13 夜間更新：CLI 畫面
 
@@ -81,14 +93,14 @@ mrh ctrl show     # 目前設定
 ## 2026-10-13 深夜更新：指令統一為新版
 
 - 舊指令 `model`、`settings`、`config`、`doctor`、`demo` 與舊 `stats/status` 的舊參數已從 CLI 移除；`mrh status`／`mrh stats` 只剩新版。**留下的內部指令：`hook`**（兩邊 hook 靠它）。裸 `mrh` 列出中文指令清單。
-- 因此 `presentation/model_selector.py`、`settings_editor.py`、`infrastructure/bindings.py`、`installer.py`、`application/runtime.py` 等已成孤兒程式碼，可由 Codex 清理時一併刪除（刪前確認 Claude 路徑沒用到並跑回歸）。對應的舊測試已刪（test_model_selector、test_settings_cli、test_rebind 與零星案例）。
+- 因此 `presentation/model_selector.py`、`settings_editor.py`、`infrastructure/bindings.py`、`installer.py`、`application/runtime.py` 等已成孤兒程式碼，屬歷史可刪候選；此輪不全面清理（刪前確認 Claude 路徑沒用到並跑回歸）。對應的舊測試已刪（test_model_selector、test_settings_cli、test_rebind 與零星案例）。
 - 控制中心 Esc／← = 返回上一步（多步驟畫面逐步返回，主選單按 Esc 才離開，Ctrl-C 直接離開）；`scripts/verification/terminal/verify_esc_back.py` 在偽終端驗證。
 
 ## 未完成／已知問題
 
 1. **Codex CLI 候選已驗證，尚待整體接受**：新文案明確要求以 `fork_turns=none` 重派。10 次有效隔離試跑均由真 Jev 建議並改派到原生讀回的 `gpt-5.6-luna / low`，且任務完成；全部 12 次啟動與兩次前置試跑均有記錄。證據：`docs/evidence/codex/l2-codex-advice-20261013.json`。不據此宣稱日常遵從率或省錢幅度。
 2. **日常設定已啟用**：最新讀回為 `enabled=true / provider=jev`，早期停用記錄是歷史狀態。正常 Codex registry／trust 與 App 的最後讀回由 C 負責；B 未更動日常設定。Codex 仍只看得到 `task_name`。
-3. **Codex App（桌面版）**：同一外掛理論上可用，未實測（原 C 的 probe：`docs/codex/advisory-app.md`）。
+3. **Codex App（桌面版）**：原候選已接受 10 有效試次（8 建議採用、2 低信心保留且全完成）；新候選驗證由 C 負責，見 `docs/evidence/codex/codex-app-c-20261013.json`。
 4. **Gemini**：只有模型清單，沒有 Hook 接頭（P7 未做）。
 5. 控制中心沒有「宿主接入」畫面。
 6. **遵從率的適用範圍**：本候選的簡單文字 Light 任務為 10/10，其他任務、等級與日常／App 遵從率仍未知；DB `children_following_advice` 本身不能證明實際子模型。

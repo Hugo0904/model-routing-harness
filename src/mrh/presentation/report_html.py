@@ -60,7 +60,7 @@ def render(settings, data, period_label, generated=None):
     platforms = [p for p in ("claude", "codex", "gemini") if any(policy["tiers"].get(t, {}).get(p) for t in v2.TIERS) or policy["fixed"].get(p)]
     usage = data["classifier_usage"].get("jev")
     per_call = (usage["input_tokens"] * stats_view.JEV_USD_PER_INPUT_TOKEN / usage["calls"]) if usage and usage["calls"] else None
-    jev_line = f"約 ${per_call:.5f} / 次" if per_call else "按 token 計費，約 $0.00002 / 次"
+    jev_line = f"已回報用量估計 ${per_call:.5f} / 次" if per_call is not None and not usage.get("usage_unknown_calls") else "呼叫成本尚未完整觀測"
 
     rows = []
     for tier in ("Light", "Small", "Mid", "Top"):
@@ -89,6 +89,9 @@ def render(settings, data, period_label, generated=None):
     else:
         left = '<div class="empty">這段期間還沒有子代理委派經過 MRH。</div>'
         right = ""
+    if data.get("reissues"):
+        left += f'<p class="note">另有 {data["reissues"]} 次已確認重派，不重複計數。</p>'
+    left += "".join(f'<p class="note">{_e(note)}</p>' for note in stats_view.accounting_notes(data))
 
     bullets = ["只有主模型沒指定模型、推理強度或專門角色時，才給建議",
                f"分級信心低於 {policy['threshold']:.2f}，原樣放行，沿用主模型的選擇",

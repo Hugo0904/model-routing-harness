@@ -5,6 +5,7 @@ from mrh.presentation.terminal import cell_width
 
 PLATFORM = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
 REASON = {
+    "advice_reissue": "舊重派紀錄（關聯未確認，按獨立呼叫計數）",
     "explicit_model": "主模型自己指定了模型（不干預）",
     "explicit_effort": "主模型已自己指定推理強度（effort）",
     "named_role": "專門角色、fork 或自訂子代理（不干預）",
@@ -78,6 +79,20 @@ def _pct(part, whole):
     return f"{part * 100 // whole}%" if whole else "—"
 
 
+def accounting_notes(data):
+    """One explanation of evidence limits for every statistics consumer."""
+    notes = []
+    if data.get("children_following_prior_advice"):
+        notes.append(f"本期 {data['children_following_prior_advice']} 次採用較早的建議，另列，不混入本期建議比例。")
+    if data.get("unverified_reissues") or data.get("unverified_followed_children"):
+        notes.append(f"舊紀錄關聯未確認：重派 {data.get('unverified_reissues', 0)}、跟隨 {data.get('unverified_followed_children', 0)}；不推定成功。")
+    if data.get("followed_requested_models"):
+        notes.append("採用模型僅有請求值，實際模型未回報：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["followed_requested_models"].items())))
+    if data.get("classifier_failed_requests") or any(u.get("usage_unknown_calls") for u in data["classifier_usage"].values()):
+        notes.append(f"分級嘗試 {data.get('classifier_requests', 0)} 次，失敗 {data.get('classifier_failed_requests', 0)} 次；成本只估已回報 tokens，缺少用量仍未知。")
+    return notes
+
+
 def render(data, period_label, threshold=None, color=False):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
@@ -85,7 +100,7 @@ def render(data, period_label, threshold=None, color=False):
     lines = [f"MRH 統計 ─ {period_label}", ""]
     if not total:
         return "\n".join(lines + ["  這段期間沒有任何子代理委派經過 MRH。",
-                                  "  （路由關閉、不在生效範圍，或主模型沒有派子代理時都不會有紀錄。）", ""])
+                                  "  （路由關閉、不在生效範圍，或主模型沒有派子代理時都不會有紀錄。）", *accounting_notes(data), ""])
     platforms = "、".join(f"{PLATFORM.get(p, p)} {sum(v.values())}" for p, v in sorted(data["per_platform"].items()))
     handled = advised + main
     lines += [f"■ 子代理委派：共 {total} 次（{platforms}）",
@@ -106,10 +121,10 @@ def render(data, period_label, threshold=None, color=False):
     followed = data["children_following_advice"]
     lines += ["■ 建議的效果",
               f"    主模型照建議改派  {progress_bar(followed * 100 // advised if advised else 0, 24, color)}  {followed} / {advised} 次（{_pct(followed, advised)}）"]
-    if followed:
-        lines.append("    實際執行的模型：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["followed_models"].items())))
+    if data["followed_models"]:
+        lines.append("    已回報的執行模型：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["followed_models"].items())))
     if advised > followed:
-        lines.append("    沒照做的部分：主模型可能自己完成，或改派了清單以外的模型。")
+        lines.append("    尚未確認採用的部分：可能自己完成、改派其他模型，或缺少可證明的關聯。")
     lines.append("")
     if data["tiers"]:
         order = ("Light", "Small", "Mid", "Top")
@@ -122,6 +137,7 @@ def render(data, period_label, threshold=None, color=False):
     if not data["classifier_usage"]:
         lines.append("    沒有呼叫分級器。")
     for kind, u in sorted(data["classifier_usage"].items()):
-        cost = ("估計 " + _usd(u["input_tokens"] * JEV_USD_PER_INPUT_TOKEN) if kind == "jev" else "使用訂閱額度")
+        cost = (("用量未回報，成本未知" if not u["input_tokens"] and (u.get("usage_unknown_calls") or u.get("failed"))
+                 else "估計 " + _usd(u["input_tokens"] * JEV_USD_PER_INPUT_TOKEN)) if kind == "jev" else "使用訂閱額度")
         lines.append(f"    {PROVIDER.get(kind, kind)}：呼叫 {u['calls']} 次，輸入 {u['input_tokens']:,} tokens，{cost}")
-    return "\n".join(lines + [""])
+    return "\n".join(lines + accounting_notes(data) + [""])

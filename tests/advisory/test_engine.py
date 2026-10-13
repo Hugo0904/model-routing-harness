@@ -67,7 +67,7 @@ class EngineTests(unittest.TestCase):
     def test_a_call_carrying_the_advised_model_is_a_reissue_not_a_new_delegation(self):
         fake = Fake(Classification("Light", 0.9))
         self.run_engine(req("c1"), fake)                                              # advises luna
-        same_session = self.run_engine(req("c2", task="again", explicit_model="luna"), fake)
+        same_session = self.run_engine(req("c2", explicit_model="luna", explicit_effort="low"), fake)
         self.assertEqual(same_session.reason, "advice_reissue")
         other = self.run_engine(req("c3", task="x", explicit_model="some-other-model"), fake)
         self.assertEqual(other.reason, "explicit_model")                              # a model nobody suggested is the parent's own choice
@@ -118,6 +118,7 @@ class EngineTests(unittest.TestCase):
     def test_following_advice_is_recorded_once(self):
         from mrh.advisory.request import Child
         self.run_engine(req("c1"), Fake(Classification("Light", 0.9)))
+        self.run_engine(req("k1", explicit_model="luna", explicit_effort="low"), Fake())
         child = Child("codex", "s", "k1", "luna", "low", None, "agent-1")
         self.assertTrue(self.store.record_child(child, __import__("time").time()))
         other = Child("codex", "s", "k2", "luna", "low", None, "agent-2")   # the advice was already consumed

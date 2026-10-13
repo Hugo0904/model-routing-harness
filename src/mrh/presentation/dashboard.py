@@ -149,7 +149,8 @@ def _where(data, policy, inner, p, color):
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
     total = advised + main + kept
     if not total:
-        return [p("這段期間還沒有子代理委派經過 MRH。", "dim")], 0
+        return [p("這段期間還沒有子代理委派經過 MRH。", "dim"),
+                *[p(clip(note, inner), "faint") for note in stats_view.accounting_notes(data)]], 0
     parts = [(t, data["tiers"][t]) for t in TIERS if data["tiers"].get(t)]
     wide = inner >= 96
     left_w = (inner * 11) // 20 if wide else inner
@@ -166,6 +167,7 @@ def _where(data, policy, inner, p, color):
         for reason, n in sorted(data["kept_unchanged"].items(), key=lambda x: -x[1])[:4]:
             left.append(p("· " + clip(stats_view.REASON.get(reason, reason), left_w - 8) + f"  {n}", "dim"))
     followed = data["children_following_advice"]
+    left += [p(clip(note, left_w), "faint") for note in stats_view.accounting_notes(data)]
 
     def bar(title, part, whole, note):
         pct = part * 100 // whole if whole else 0
@@ -186,7 +188,8 @@ def render(settings, data, period_label, width=100, color=False, today=None):
     p, inner = Paint(color), max(76, min(120, width)) - 4
     c = settings["classifier"]
     usage = data["classifier_usage"].get("jev")
-    per_call = (f"${usage['input_tokens'] * stats_view.JEV_USD_PER_INPUT_TOKEN / usage['calls']:.5f}/次" if usage and usage["calls"] else "約 $0.00002/次") + " · ~0.5 秒"
+    per_call = (f"已回報 ${usage['input_tokens'] * stats_view.JEV_USD_PER_INPUT_TOKEN / usage['calls']:.5f}/次"
+                if usage and usage["calls"] and not usage.get("usage_unknown_calls") else "呼叫成本尚未完整觀測")
     chip_text = "MRH · DELEGATION ROUTER"
     chip = [p("╭" + "─" * (cell_width(chip_text) + 4) + "╮", "border"), p("│", "border") + "  " + p(chip_text, "dim") + "  " + p("│", "border"),
             p("╰" + "─" * (cell_width(chip_text) + 4) + "╯", "border")]

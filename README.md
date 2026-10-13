@@ -20,14 +20,22 @@
 ```sh
 mrh                          # 什麼都不加：列出所有指令
 mrh ctrl                     # 互動選單（↑↓ 選擇、Enter 確認、Esc 或 ← 返回上一步、Ctrl-C 離開）
-mrh ctrl dashboard [--days N] # 終端儀表板：流程、難度表（含價格）、分段比例條、進度條（80–120 欄自適應）
-mrh ctrl stats [--days N]    # 中文統計
+mrh status [--days N]         # 終端儀表板：流程、難度表（含價格）、分段比例條、進度條（80–120 欄自適應）
+mrh stats [--days N]        # 中文統計
 mrh ctrl show [--json]       # 目前設定一覽
 mrh ctrl set KEY VALUE       # 腳本用；mrh ctrl keys 列出所有 KEY
 mrh key status jev           # 金鑰狀態（只顯示有沒有，不顯示內容）
 ```
 
 可設定：路由開關、分級器（Jev／Codex 訂閱／Claude 訂閱）與模型與逾時、四級各平台的候選模型（有序，可帶推理強度，如 `gpt-5.6-luna:low`）、Top 交回主模型（Main）或用固定清單（Fixed）、信心門檻（0.50–0.99）、生效資料夾（`/` 代表全部）。
+
+模型清單會標明 CLI 宣告來源與更新時間；宣告不等於帳號實際可用。清單更新失敗時，快取或內建參考會標成未確認；離線不當作下架。工具已明確宣告失效的項目不能新增，原設定與歷史保留。手動輸入也不代表已驗證可執行。
+
+統計只把能對上同任務、回合與工具呼叫的後續委派列為已確認採用；請求模型與已回報執行模型分開，舊紀錄缺少關聯時明示未知。分級失敗仍列入分級嘗試／已開始呼叫，沒有回報用量時不當作零成本。
+
+Monitor 資料出口沿用 `mrh status --json --days 7`（`--days 0` 為全部）；與 CLI 卡片讀取同一份統計，只有 JSON、不新增快照或 Monitor DB 存取，也不做 App 畫面。未建立設定／DB時，不由統計出口建立它們。
+
+Canopy 保留既有 `ContextSummary` 與分級器 `context_summary` 的選配介面；目前 advisory 入口傳入 `None`，尚未接上 live Canopy。此輪不讀私人記憶、Hook 暫存或對話，也不修改 Canopy Core。
 
 ## 分級器與費用
 

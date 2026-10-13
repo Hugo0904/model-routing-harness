@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from mrh.advisory.request import Advice, AdvisoryRequest, Child
-from mrh.advisory.store import AdviceStore
+from mrh.advisory.store import AdviceStore, request_id, task_hash
 from mrh.presentation import stats_view
 from mrh.presentation.terminal import cell_width
 
@@ -16,13 +16,15 @@ class StatsViewTests(unittest.TestCase):
         now = time.time()
         def add(n, platform, action, reason, tier=None, cands=()):
             req = AdvisoryRequest(platform, "s", "t", f"c{n}", f"task {n}")
-            self.store.save(f"r{n}", req, f"h{n}", Advice(action, reason, tier, 0.9 if tier else None, cands), "jev", now)
+            self.store.save(f"r{n}", req, task_hash(platform, "s", f"task {n}"), Advice(action, reason, tier, 0.9 if tier else None, cands), "jev", now)
         add(1, "claude", "advise", "advice_given", "Light", ({"model": "haiku"},))
         add(2, "claude", "advise", "advice_given", "Mid", ({"model": "sonnet"},))
         add(3, "claude", "continue_main", "top_main_requested", "Top")
         add(4, "codex", "preserve", "named_role")
         add(5, "claude", "preserve", "low_confidence", "Small")
         self.store.attempt("r1", "jev", "returned", now, input_tokens=440, output_tokens=45)
+        pre = AdvisoryRequest("claude", "s", "t", "k1", "task 1", "haiku", "medium")
+        self.store.preserve_explicit(request_id("claude", "s", "t", "k1"), pre, task_hash("claude", "s", "task 1"), "jev", now)
         self.store.record_child(Child("claude", "s", "k1", "haiku", "medium", "claude-haiku-5-5", "a1"), now)
 
     def test_readable_summary_answers_what_why_effect_and_cost(self):

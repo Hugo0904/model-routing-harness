@@ -77,14 +77,22 @@ def apply_set(path, settings, key, value):
     return f"{key} 已儲存（版本 {saved['revision']}）"
 
 
-def stats_text(path, days, as_json=False, color=False):
+def statistics(path, days):
+    """Shared data for status, stats, HTML and the machine-readable export."""
     from mrh.advisory.store import AdviceStore
     from mrh.presentation import stats_view
     since = 0 if days is None else time.time() - days * 86400
     label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
     db = path.parent / "advice.sqlite3"
-    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {},
-        "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    data = AdviceStore.read_stats(db, since) if db.exists() else {"since": since, "decisions": {}, "per_platform": {}, "kept_unchanged": {},
+        "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}, "followed_requested_models": {},
+        "reissues": 0, "unverified_reissues": 0, "unverified_followed_children": 0, "classifier_calls": 0, "classifier_requests": 0,
+        "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0}
+    return data, label
+
+
+def stats_text(path, days, as_json=False, color=False):
+    data, label = statistics(path, days)
     if as_json:
         return json.dumps(data, indent=2, sort_keys=True)
     return stats_view.render(data, label, v2.read(path)["policy"]["threshold"], color)
@@ -92,45 +100,54 @@ def stats_text(path, days, as_json=False, color=False):
 
 def report_html_page(path, days):
     """Standalone dashboard page from the settings and the decision log."""
-    from mrh.advisory.store import AdviceStore
     from mrh.presentation import report_html as page
-    since = 0 if days is None else time.time() - days * 86400
-    label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
-    db = path.parent / "advice.sqlite3"
-    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
-        "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    data, label = statistics(path, days)
     return page.render(v2.read(path), data, label)
 
 
 def dashboard_text(path, days, width, color):
     """The card layout: routing flow + tier table + proportion bars."""
-    from mrh.advisory.store import AdviceStore
     from mrh.presentation import dashboard
-    since = 0 if days is None else time.time() - days * 86400
-    label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
-    db = path.parent / "advice.sqlite3"
-    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
-        "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    data, label = statistics(path, days)
     return dashboard.render(v2.read(path), data, label, width, color)
 
 
+class ModelChoices(list):
+    """Picker entries retain their declaration source, not an execution guarantee."""
+    def __init__(self, models=(), *, status="unverified", source="未確認的來源", fetched_at=None, blocked=(), reason=None):
+        super().__init__(models)
+        self.status, self.source, self.fetched_at = status, source, fetched_at
+        self.blocked, self.reason = frozenset(blocked), reason
+
+    def description(self):
+        stamp = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.fetched_at)) if self.fetched_at else "未取得更新時間"
+        state = "CLI 宣告清單（不代表帳號實際可用）" if self.status == "advertised" else "清單未確認；離線或更新失敗不等於下架"
+        return f"{state}；來源：{self.source}；{stamp}" + (f"；{self.reason}" if self.reason else "")
+
+
 def list_models(platform, cache={}):
-    """Models from the installed CLI's own catalog; empty means 'type it in'."""
-    if platform in cache:
-        return cache[platform]
-    models = []
+    """Refresh declarations; keep an explicitly labelled last-known list on failure."""
+    previous = cache.get(platform)
+    if previous is not None and not isinstance(previous, ModelChoices):
+        previous = ModelChoices(previous)
+    reason = "找不到已安裝的工具"
     try:
         from mrh.adapters.catalogs import catalog
         found = next((c for c in catalog.discover() if c["tool"] == platform), None)
         if found:
             binding = {**catalog.describe_tool(found), "id": "ctrl-" + platform}
-            models = [(m.id, m.efforts) for m in catalog.ToolCatalog().refresh(binding).models if m.state == "available"]
+            result = catalog.ToolCatalog().refresh(binding)
+            value = ModelChoices([(m.id, m.efforts) for m in result.models if m.state == "available"],
+                                 status="advertised", source=f"{result.source} / {result.version}", fetched_at=result.fetched_at,
+                                 blocked=[m.id for m in result.models if m.state in ("retired", "unavailable")])
+            cache[platform] = value
+            return value
     except Exception:
-        models = []
-    if not models:
-        models = [(m, ()) for m in logic.FALLBACK_MODELS.get(platform, ())]
-    cache[platform] = models
-    return models
+        reason = "工具清單更新失敗"
+    return ModelChoices(previous if previous is not None else [(m, ()) for m in logic.FALLBACK_MODELS.get(platform, ())],
+                        source=("上次的 " + previous.source) if previous is not None else "內建參考名稱（非即時清單）",
+                        fetched_at=previous.fetched_at if previous is not None else None,
+                        blocked=previous.blocked if previous is not None else (), reason=reason)
 
 
 class Session:
@@ -139,6 +156,26 @@ class Session:
 
     def settings(self):
         return v2.read(self.path)
+
+    def model_choices(self, platform):
+        try:
+            value = self.models(platform)
+        except Exception:
+            value = ModelChoices(reason="工具清單更新失敗")
+        choices = value if isinstance(value, ModelChoices) else ModelChoices(value)
+        self.menu.note(choices.description())
+        return choices
+
+    def check_new_candidates(self, entries, choices):
+        if any(c["model"] in choices.blocked for c in entries):
+            raise logic.CtrlError("工具已宣告該模型下架或不可選；現有設定保留，不能新增這個選項。")
+        declared = dict(choices)
+        for entry in entries:
+            if choices.status != "advertised" or entry["model"] not in declared:
+                self.menu.note("這是未確認的模型／推理設定；儲存不表示工具或帳號能執行。")
+            elif entry.get("effort") and entry["effort"] not in declared[entry["model"]]:
+                raise logic.CtrlError("這個推理強度未在該模型的 CLI 宣告清單中；没有儲存。")
+        return entries
 
     def _confirm_save(self):
         """Esc here means 'not now': nothing is written and the previous screen stays."""
@@ -200,9 +237,11 @@ class Session:
                     if s["provider"] == "jev":
                         step = 2; continue
                     platform = "codex" if s["provider"] == "codex_subscription" else "claude"
-                    choices = [(f"{m}", m) for m, _ in self.models(platform)] + [("自己輸入模型名稱", None)]
+                    source = self.model_choices(platform)
+                    choices = [(f"{m}" + ("（未確認）" if source.status != "advertised" else ""), m) for m, _ in source] + [("自己輸入模型名稱（未確認）", None)]
                     model = self.menu.pick("分級器用的模型（小而快的最合適）", choices, s["model"])
                     model = model or self.menu.text("模型名稱")
+                    self.check_new_candidates([{"model": model}], source)
                     if model != s["model"]:
                         self.set_key("classifier.model", model, f"分級器模型 → {model}")
                     step = 2
@@ -215,6 +254,8 @@ class Session:
                 if step == 0:
                     raise
                 step = 0 if step == 1 or self.settings()["classifier"]["provider"] == "jev" else 1
+            except logic.CtrlError as exc:
+                self.menu.note(str(exc)); step = 1
 
     def edit_list(self, scope, platform):
         s = self.settings()
@@ -233,14 +274,16 @@ class Session:
                 raise                                  # one step back: the platform choice
             try:
                 if action == "add":
-                    models = self.models(platform)
+                    models = self.model_choices(platform)
                     if not models:
                         self.menu.note("這個工具沒有可用的模型清單，請改用「直接輸入模型」。"); continue
-                    model, efforts = models[self.menu.pick("模型", [(m, n) for n, (m, _) in enumerate(models)], trail=[*trail, "模型"])]
+                    model, efforts = models[self.menu.pick("模型", [(m + ("（未確認）" if models.status != "advertised" else ""), n) for n, (m, _) in enumerate(models)], trail=[*trail, "模型"])]
+                    self.menu.note("推理強度依據：該模型的 CLI 宣告；不是實際執行證明。" if models.status == "advertised" else "沒有已確認的推理清單；預設不指定推理強度。")
                     effort = self.menu.pick("推理強度（effort）", [("不指定推理強度", None), *[(e, e) for e in efforts]], trail=[*trail, model, "effort"]) if efforts else None
                     items.append({"model": model, **({"effort": effort} if effort else {})})
                 elif action == "type":
-                    items += logic.parse_candidates(self.menu.text("模型，例如 gpt-5.6-luna:low", trail=[*trail, "模型"]))
+                    entries = logic.parse_candidates(self.menu.text("模型，例如 gpt-5.6-luna:low", trail=[*trail, "模型"]))
+                    items += self.check_new_candidates(entries, self.model_choices(platform))
                 elif action in ("remove", "top") and items:
                     index = self.menu.pick("要選哪一個", [(logic.format_candidates([c]), n) for n, c in enumerate(items)], trail=trail)
                     items.insert(0, items.pop(index)) if action == "top" else items.pop(index)
@@ -346,11 +389,16 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
     except SettingsError:
         return _fail(stderr, "找不到設定檔：請用 --settings 指定、設定 MRH_SETTINGS，或先完成安裝")
     try:
+        action = getattr(args, "ctrl_action", None)
         if not path.exists():
+            if action in ("dashboard", "stats", "report"):
+                return _fail(stderr, "找不到設定檔；統計讀取不會建立新設定")
             v2.init(path)
         settings = v2.read(path)
         action = getattr(args, "ctrl_action", None)
         if action == "dashboard":
+            if getattr(args, "json", False):
+                stdout.write(stats_text(path, None if args.days == 0 else args.days, True) + "\n"); return 0
             stdout.write(dashboard_text(path, None if args.days == 0 else args.days, args.width or terminal_width(), color)); return 0
         if action == "stats":
             stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json, color) + "\n"); return 0

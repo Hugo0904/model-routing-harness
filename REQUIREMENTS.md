@@ -15,13 +15,15 @@
 
 本段是目前施工基準；下文較早的直接改寫／失敗保留 spawn／不可用即等候操作者規則，與本段衝突時由本段取代，歷史成果保留。各家委派前 Hook 呼叫同一個分級器；每等級可設定 Codex、Claude、Gemini 等各家的模型／推理清單。分級器回傳等級與清單，由原主模型選自己的平台配置並建立子代理，做不到就由主模型繼續。保留明示模型、推理設定與專門角色，不保證主模型必然採用建議或每次必省成本。四級、0.5門檻、Main／Fixed設定、外送範圍、登入隔離與真實紀錄仍保留。分級失敗或沒有可用選項時回原主模型，不替使用者暗選其他平台。
 
-共用核心不依賴 Codex 本體；本次選用的 Codex 訂閱登入只是既有分類來源接頭。不修改、替換或重編譯任何廠商核心，不新增 dispatcher，也不要求主模型先呼叫分級工具。Hook 真正交回模型的效果、避免重複分類及主模型實際建立子代理／繼續工作，須用最小真實消費者驗證；不能拿 UI 提示或單元測試冒充。沿原 B/C 分工，A 整合驗收；完整施工與必要驗證見 docs/MRH-001.md D70。已完成且仍適用的部分沿用，不重做或擴大。
+共用核心不依賴 Codex 本體；本次選用的 Codex 訂閱登入只是既有分類來源接頭。不修改、替換或重編譯任何廠商核心，不新增 dispatcher，也不要求主模型先呼叫分級工具。Hook 真正交回模型的效果、避免重複分類及主模型實際建立子代理／繼續工作，須用最小真實消費者驗證；不能拿 UI 提示或單元測試冒充。沿原 B/C 分工，A 整合驗收；現行收尾與必要驗證見 docs/takeover/HANDOFF.md。已完成且仍適用的部分沿用，不重做或擴大。
 
-## 目前交付狀態（2026-10-12）
+## 目前交付狀態（2026-10-13）
 
-現有本機入口為 E20／0.3.0：source／tests／scripts按責任分層，舊native ordinary／Fixed／Main／same-Goal fresh分類證據已由A接受。新版以固定cache建置、指定無模型packaged consumer及同一已登入home的實際安裝／trust／保存讀回已完成，操作見 [quickstart](docs/quickstart.md)。MRH目前停用／外送禁止，登入和歷史保留；沒有新model call或改原保護。
+目前為 0.4.0 建議式路由。原 fdb7428 的 CLI 10/10 有效試跑及 App 10 個有效試次（8 次有建議且採用、2 次低信心保留，全部完成）已由 A 接受，保留其原範圍。日常新 Codex 候選 Light=gpt-6-luna/high、Small=gpt-6-luna/max、Mid=gpt-6.1-sol/high 已保存；這些新設定的 live 證據由 C 接續。
 
-下方E9R等分數／接受表是各source當時的歷史快照，不代表當前全目標完成。Desktop／原global採用、自主Goal排程、其他宿主及原R1/R2未接受義務保持原條件／分母，沒有宣稱100%。
+MRH-CLOSE-R1 僅收尾統計正確性、設定操作、實際委派與最終交付；Monitor 只讀 `mrh status --json` 同一份資料，不施工 App 畫面。Canopy 選配摘要介面保留但當前 advisory 未接 live 摘要。新版 source 候選尚待本地驗證、A 凍結版本、封裝／安裝、C 的同版本 live 驗證及 A 最終接受；不宣稱全目標完成。
+
+下方 E 階段是歷史證據與當時準則，與上述現行狀態不同者以本段為準。舊本機證據已移除時，可由 Git 歷史查回，不以歷史接受冒充新版驗證。
 
 ## 一、任務與合作方式
 
@@ -298,7 +300,7 @@ C2C 尚未能讀取新專案時，只回報存取缺口，不擅自放寬權限�
 | S5 選配接入 | Canopy 摘要及 Monitor 統計契約／合成例；缺席與失效可回退 | 第一階段不含 live Canopy／Monitor 接入；既有三專案未修改 |
 | S6 審查及交付 | 原 GPT 設定與視覺對焦；A 已接受 E8/E9R 限定候選，操作指南／證據／清理／本機 Git 齊備 | 原 GPT 最後摘要審查支持限定接受；B 收尾已確認；全 R1 未驗收，沒有 push |
 
-版本、測試、archive identity、exact-version matrix 和支持限制見 [E6 證據](docs/e6-action-facts-proof.md)；歷史接受與目前工作指示見 [任務記錄](docs/MRH-001.md)。新舊封裝／native／provider／production 證據各自保留，不互相替代。
+版本、測試、archive identity、exact-version matrix 和支持限制見 E6 證據（歷史檔案見 Git 紀錄）；歷史接受與目前工作指示見 任務記錄（歷史檔案見 Git 紀錄）。新舊封裝／native／provider／production 證據各自保留，不互相替代。
 
 ## 2026-10-11 授權增補（保留原始 R1）
 
@@ -306,7 +308,7 @@ C2C 尚未能讀取新專案時，只回報存取缺口，不擅自放寬權限�
 
 ## E7 隔離宿主出口實驗
 
-E7 在 pinned `rust-v0.159.3` 的實際 resolver 上實作可選的唯讀出口，並提供獨立 patch、license、重現方法及 source-test consumer。正式入口維持未知事實時保留原呼叫；不替換安裝版、不啟用正式 Hook。Rust source test、來源資料接入 MRH 的合成回放及手填 parser fixtures 各自標示；修改版 native CLI、真模型、帳戶可用性、自主 Main 交回和完整 R1 仍未驗證。詳見 [E7 證據](docs/e7-host-export-proof.md)。A 的 E7 接受仍待報告後決定，原始分母與先前限定接受範圍不變。
+E7 在 pinned `rust-v0.159.3` 的實際 resolver 上實作可選的唯讀出口，並提供獨立 patch、license、重現方法及 source-test consumer。正式入口維持未知事實時保留原呼叫；不替換安裝版、不啟用正式 Hook。Rust source test、來源資料接入 MRH 的合成回放及手填 parser fixtures 各自標示；修改版 native CLI、真模型、帳戶可用性、自主 Main 交回和完整 R1 仍未驗證。詳見 E7 證據（歷史檔案見 Git 紀錄）。A 的 E7 接受仍待報告後決定，原始分母與先前限定接受範圍不變。
 
 ## 2026-10-11 CLI 設定與額度增補
 
@@ -316,7 +318,7 @@ E7 在 pinned `rust-v0.159.3` 的實際 resolver 上實作可選的唯讀出口�
 
 ## E9R 限定接受
 
-A 已檢查真設定的 120／56 欄 PTY/xterm.js 畫面並接受表格修正。當前 source bytes 與 E9R 離線 wheel／installed 入口證據一致；不重跑無影響的核心或宿主測試。E8 的 9 次實際 source/native Hook dispatch 為隔離 lib-test 邊界，不能替代安裝版採用、真 child／provider 或自主 Main 接回。參閱 [設定指南](docs/quickstart.md) 與 [E9R 證據](docs/e9r-configured-table-proof.md)。
+A 已檢查真設定的 120／56 欄 PTY/xterm.js 畫面並接受表格修正。當前 source bytes 與 E9R 離線 wheel／installed 入口證據一致；不重跑無影響的核心或宿主測試。E8 的 9 次實際 source/native Hook dispatch 為隔離 lib-test 邊界，不能替代安裝版採用、真 child／provider 或自主 Main 接回。參閱 設定指南（歷史檔案見 Git 紀錄） 與 E9R 證據（歷史檔案見 Git 紀錄）。
 
 
 ## R3 發布使用門檻（2026-10-11 補充）
@@ -325,7 +327,7 @@ A 已檢查真設定的 120／56 欄 PTY/xterm.js 畫面並接受表格修正。
 
 優先直接使用已安裝 CLI 的模型清單入口。發布验收須確認乾淨使用環境沒有另外安裝 SDK 仍可操作相應 CLI 的選單；目前 Python 原始碼／venv 指令是開發候選用法，不能當成已滿足此發布條件。此要求保留 R1/R2 未完成項目與真憑證／正式啟用界線。
 
-E15 本機 macOS arm64 候選包已由 A 核對 archive／manifest 與全部來源，親自從無外部 Python／SDK 的新環境完成選單保存／取消及私有 interpreter 的 plugin 啟動；詳見 [E15 驗收](docs/evidence/e15-a-acceptance.json)。本機候選的執行環境門檻已符合；其他平台、簽章／公證／公開發布、正式路由採用與原 R1/R2 義務仍未完成。
+E15 本機 macOS arm64 候選包已由 A 核對 archive／manifest 與全部來源，親自從無外部 Python／SDK 的新環境完成選單保存／取消及私有 interpreter 的 plugin 啟動；詳見 E15 驗收（歷史檔案見 Git 紀錄）。本機候選的執行環境門檻已符合；其他平台、簽章／公證／公開發布、正式路由採用與原 R1/R2 義務仍未完成。
 
 ## R2 使用者修正：專屬短指令與模型選單（部分已驗收）
 
@@ -343,7 +345,7 @@ E15 本機 macOS arm64 候選包已由 A 核對 archive／manifest 與全部來�
 R2 續接：使用者已明確要求既有 B 依上述方向實作，D19／E10 已定義下一個工作單元。D18 額度暫停由此指示恢復至下一個自然保存點；未授權正式啟用或真憑證外測，R2 目前仍待實作與驗收。
 
 
-R2 驗收進度：E10R 的 Codex 工具宣告清單鍵盤選擇／保存、返回保留草稿與取消不改設定，及 D25 隔離公開 Hook 停止／同 call 鎖住／新 call 才重執行，已由 A 實際操作通過，詳見 [E10R 驗收](docs/evidence/e10r-a-acceptance.json)。E13 追加 macOS Claude 2.1.267 的無 SDK CLI 宣告清單接頭；A 已操作 Opus 1M／low 保存與兩步返回、Haiku 僅 inherit，以及取消後原設定 bytes 不變，詳見 [E13 驗收](docs/evidence/e13-a-acceptance.json)。E16／E16R 追加 macOS Gemini 0.63.0 的無憑證、無 task／outbound 公開 CLI 模型清單與 inherit 選單，以及同一份設定的 CLI 更新確認；A 已實際操作保存、返回、取消、更新確認及不支援版本拒絕，核對原設定／歷史與停止狀態保留，詳見 [E16](docs/evidence/e16-a-acceptance.json)／[E16R 驗收](docs/evidence/e16r-a-acceptance.json)。這些是工具宣告清單及操作證據，不能當成正式宿主採用、帳號可用性或公開發布。其他版本／OS、真實下架／執行錯誤觀測與原 R1/R2 其餘義務仍保留。
+R2 驗收進度：E10R 的 Codex 工具宣告清單鍵盤選擇／保存、返回保留草稿與取消不改設定，及 D25 隔離公開 Hook 停止／同 call 鎖住／新 call 才重執行，已由 A 實際操作通過，詳見 E10R 驗收（歷史檔案見 Git 紀錄）。E13 追加 macOS Claude 2.1.267 的無 SDK CLI 宣告清單接頭；A 已操作 Opus 1M／low 保存與兩步返回、Haiku 僅 inherit，以及取消後原設定 bytes 不變，詳見 E13 驗收（歷史檔案見 Git 紀錄）。E16／E16R 追加 macOS Gemini 0.63.0 的無憑證、無 task／outbound 公開 CLI 模型清單與 inherit 選單，以及同一份設定的 CLI 更新確認；A 已實際操作保存、返回、取消、更新確認及不支援版本拒絕，核對原設定／歷史與停止狀態保留，詳見 E16（歷史檔案見 Git 紀錄）／E16R 驗收（歷史檔案見 Git 紀錄）。這些是工具宣告清單及操作證據，不能當成正式宿主採用、帳號可用性或公開發布。其他版本／OS、真實下架／執行錯誤觀測與原 R1/R2 其餘義務仍保留。
 
 
 ### R2 停止規則修正（D23，優先於上述 fallback）
