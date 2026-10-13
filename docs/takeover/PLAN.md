@@ -272,7 +272,7 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
 
 ## 15. P0 結果（2026-10-13）
 
-2026-10-13 清理續接：原既有失敗已保留於歷史logs；相關舊core/e3/dispatched-Gemini測試已隨功能清理移除，但新版整體unit尚未完成，不能宣稱全綠。最新停點與精確gate／時間見HANDOFF。原範圍內必要Claude/Jev呼叫現已有人類持續授權；仍受owner、固定版本及總驗證時間限制。
+2026-10-13 清理續接：原既有失敗已保留於歷史logs；相關舊core/e3/dispatched-Gemini測試已隨功能清理移除，但當時新版unit未完成；R3修正canonical fixture後153 unit全綠（source-only），不能當installed接受。最新停點與精確gate／時間見HANDOFF。原範圍內必要Claude/Jev呼叫現已有人類持續授權；仍受owner、固定版本及總驗證時間限制。
 
 
 - Branch `mrh-002-ctrl`；baseline 291 tests、5 failures，皆為 HEAD 既有的過時斷言，非本輪造成：

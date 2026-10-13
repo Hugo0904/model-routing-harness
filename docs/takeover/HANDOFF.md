@@ -130,3 +130,9 @@ MRH-CLOSE-R1-B-002：只補互動新增准入與 status 公開設定出口。準
 - `36283d8`：舊 routing／store／binding／scope 模組及專屬測試已刪，必要 provider primitives、v1/v2 相容、新 UI／資料與摘要 DTO 保留；**整層尚未通過**。unit在FIFO config讀取阻塞，已停止；改用既有非阻塞普通檔案讀取後 FIFO 回歸1/1通過，但完整unit、剩餘舊render/tests、文件及終驗未完成。
 - 本次R2驗證517.133秒／500秒，超17.133秒；下一gate前已攔下，沒有啟動。已回報總累計1706.860／1800秒，不自行借C/A配額。
 - source尚未凍結、建置或部署；原CLI/App有效證據與日常設定保留。README由C專屬，不由B編輯。
+
+## MRH-CLEANUP-R3-B source 候選
+
+`603d37b`只修隔離auth fixture的canonical來源，保留invalid語義與no-process/no-attempt斷言；完整153 unit全綠，第四層source必要gate已補齊。舊renderer雖可刪，但不再被新CLI使用、也未引用已刪流程，依R3不為可選瘦身加層或重跑。
+
+原命令／JSON公開設定與同目標Hook基線最終檢查未開始：開始前210秒門檻已攔下。source未建置／部署，installed與最終接受未證；README仍C專屬。日常設定／DB沒有變更，舊有效CLI/App證據保留。
