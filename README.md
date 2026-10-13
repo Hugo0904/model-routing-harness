@@ -93,7 +93,7 @@ Claude 可用 `low／medium／high／xhigh／max`，別名 `haiku`、`sonnet`、
 2. `mrh key status jev`：注意環境變數 `TYPESAFE_API_KEY` 的優先順序比 Keychain 高，過期的環境變數會蓋掉正確的金鑰。
 3. `mrh ctrl stats`：看「沒有介入的原因」，例如金鑰無效、信心低於門檻、專門角色。
 4. Codex 沒作用：在 Codex 輸入 `/hooks`，確認 `model-routing-harness` 的 hook 已信任。
-5. Claude Code 沒作用：確認版本（見下方限制）與 `~/.claude/settings.json` 內有 MRH 的 hook。`python3 scripts/verification/claude_smoke.py` 會真的呼叫 Claude 與 Jev（約 $0.3）；須先取得使用者當次同意，不得自動連續執行。
+5. Claude Code 沒作用：確認版本（見下方限制）與 `~/.claude/settings.json` 內有 MRH 的 hook。`python3 scripts/verification/claude_smoke.py` 會真的呼叫 Claude 與 Jev（約 $0.3）；本輪必要回歸已獲使用者授權，等候選固定後統一安排，沿用有效結果，不無故重複呼叫。
 
 ## 安裝（macOS arm64）
 
@@ -139,6 +139,6 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 PYTHONPATH=src python3 -m unittest discover -s tests -t .
 ```
 
-清理尚未完成驗收；已知失敗與尚未補驗的停點見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。最終候選仍待核對命令、封裝／安裝一致性及兩邊 Hook；付費 smoke 另須使用者同意。
+清理尚未完成驗收；已知失敗與尚未補驗的停點見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。最終候選仍待核對命令、封裝／安裝一致性及兩邊 Hook。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定候選、既定預算與單一執行者安排，不擴項或重跑有效證據。
 
 需求：`REQUIREMENTS.md`。接手與驗證紀錄：`docs/`（見 `docs/README.md`）。舊階段文件已刪除，需要追查歷史請用 `git log`。
