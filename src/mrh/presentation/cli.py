@@ -70,6 +70,16 @@ def build_parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name, help=help_text)
         _add_stats_options(command)
 
+    ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
+    ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
+    ctrl_actions = ctrl.add_subparsers(dest="ctrl_action")
+    ctrl_show = ctrl_actions.add_parser("show", help="print the current configuration")
+    ctrl_show.add_argument("--json", action="store_true")
+    ctrl_set = ctrl_actions.add_parser("set", help="change one setting (see `mrh ctrl keys`)")
+    ctrl_set.add_argument("key"); ctrl_set.add_argument("value")
+    ctrl_actions.add_parser("keys", help="list the settable keys")
+    _add_display_options(ctrl)
+
     key = commands.add_parser("key", help="manage the classifier API key (stored in the macOS Keychain)")
     key.add_argument("action", choices=("status", "set", "delete"))
     key.add_argument("name", choices=("jev",))
@@ -442,6 +452,9 @@ def main(
                           bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
             return _cmd_stats(args)
+        if args.command == "ctrl":
+            from mrh.presentation import ctrl
+            return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))
         if args.command == "key":
             from mrh.presentation import key_cli
             return key_cli.run(args.action, args.name, stdout=stdout, stderr=stderr)

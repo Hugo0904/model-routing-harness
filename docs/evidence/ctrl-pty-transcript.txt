@@ -1,0 +1,112 @@
+
+MRH  /  control center
+
+  Routing       OFF   task text is NOT sent to the classifier
+  Classifier    Jev (TypeSafe API) · jev-1.13.0 · timeout 10s
+  Jev API key   set in Keychain
+  Confidence    advise at or above 0.50
+  Top tier      Main (the main model keeps Top-tier work)
+  Applies to    (nowhere)
+
+  Candidates, in order of preference
+    Light  (none)
+    Small  (none)
+    Mid    (none)
+    Top    (none)
+
+  Settings      /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpd38ztv9t/owned/settings.json  (revision 0)
+  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+                                                                                                    
+  MRH  /  MODEL POLICY                                                                              
+                                                                                                    
+  What do you want to change?                                                                       
+                                                                                                    
+  > 1. Routing on/off                                                                               
+    2. Classifier (Jev / Codex / Claude)                                                            
+    3. Tier models                                                                                  
+    4. Top tier mode                                                                                
+    5. Confidence threshold                                                                         
+    6. Where it applies                                                                             
+    7. API key status                                                                               
+    8. Statistics                                                                                   
+    9. Quit                                                                                         
+                                                                                                    
+  > 
+<<< key: Routing screen >>>
+
+  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+                                                                                                    
+  MRH  /  MODEL POLICY                                                                              
+                                                                                                    
+  Routing                                                                                           
+                                                                                                    
+    1. ON: advise models for subagent delegations                                                   
+  > 2. OFF: never touch a delegation [current]                                                      
+                                                                                                    
+  > 
+<<< key: Move to ON >>>
+                                                                                                    
+  MRH  /  MODEL POLICY                                                                              
+                                                                                                    
+  Routing                                                                                           
+                                                                                                    
+  > 1. ON: advise models for subagent delegations                                                   
+    2. OFF: never touch a delegation [current]                                                      
+                                                                                                    
+  > 
+<<< key: Choose ON >>>
+
+  Turning routing on sends each delegation's task text to Jev (TypeSafe API).
+
+  Change: routing ON
+  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+                                                                                                    
+  MRH  /  MODEL POLICY                                                                              
+                                                                                                    
+  Save this change?                                                                                 
+                                                                                                    
+  > 1. Save                                                                                         
+    2. Cancel                                                                                       
+                                                                                                    
+  > 
+<<< key: Save >>>
+
+  Saved.
+
+MRH  /  control center
+
+  Routing       ON   task text is sent to the classifier
+  Classifier    Jev (TypeSafe API) · jev-1.13.0 · timeout 10s
+  Jev API key   set in Keychain
+  Confidence    advise at or above 0.50
+  Top tier      Main (the main model keeps Top-tier work)
+  Applies to    (nowhere)
+
+  Candidates, in order of preference
+    Light  (none)
+    Small  (none)
+    Mid    (none)
+    Top    (none)
+
+  Settings      /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpd38ztv9t/owned/settings.json  (revision 1)
+  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+                                                                                                    
+  MRH  /  MODEL POLICY                                                                              
+                                                                                                    
+  What do you want to change?                                                                       
+                                                                                                    
+  > 1. Routing on/off                                                                               
+    2. Classifier (Jev / Codex / Claude)                                                            
+    3. Tier models                                                                                  
+    4. Top tier mode                                                                                
+    5. Confidence threshold                                                                         
+    6. Where it applies                                                                             
+    7. API key status                                                                               
+    8. Statistics                                                                                   
+    9. Quit                                                                                         
+                                                                                                    
+  > 
+<<< key: Quit (9) >>>
+
+
+<<< settings after: enabled=True task_export=True revision=1 >>>
