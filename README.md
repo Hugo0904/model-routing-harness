@@ -118,7 +118,7 @@ mrh hook --platform codex --settings <settings.json 絕對路徑>
 mrh hook --platform claude --settings <settings.json 絕對路徑>
 ```
 
-`plugin prepare --advisory` 產生供兩邊共用的 `launcher.py`、`binding.json` 與 `runtime.pyz`。日常接入使用 `runtime/daily-cli/artifact`，兩邊讀同一份 `runtime/daily-cli/profile/settings.json`；升級時保留這些路徑。舊 `hook --candidate`、`--simulate-tier`、`--simulate-confidence`、`--scope-binding`、`--db` 分支已從目前原始碼移除；舊 prepare 模式與其餘第二層清理仍待完成。
+`plugin prepare --advisory` 產生供兩邊共用的 `launcher.py`、`binding.json` 與 `runtime.pyz`。日常接入使用 `runtime/daily-cli/artifact`，兩邊讀同一份 `runtime/daily-cli/profile/settings.json`；升級時保留這些路徑。舊 `hook --candidate`、`--simulate-tier`、`--simulate-confidence`、`--scope-binding`、`--db` 分支、非 advisory prepare 模式及其舊 scope 綁定已從原始碼移除。
 
 預設**停用**。用 `mrh ctrl` 開啟；開啟代表把子代理任務文字送給你選的分級器。停用：`mrh ctrl set enabled off`；移除 Claude hook：`mrh install claude --artifact … --remove --apply`。
 
@@ -130,8 +130,8 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 - **Codex 的限制**：Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱；含糊的標籤信心度低，會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
 - Claude Code 的子代理 `effort` 參數需 2.1.292 以上，`haiku`／`sonnet` 別名要 2.1.293 以上才對應到 5.5 系列（Homebrew 請用 `claude-code@latest`）。
 - Gemini CLI 未接 Hook；Canopy live 選配接入未完成。
-- 本輪清理已移除第一層五個孤立模組與舊 Hook 分支；Hook 分支修正尚未重驗，舊 prepare、其餘第二層與混合測試仍待處理。新版尚未建置部署，不能把原始碼變更當作日常接入已更新。最新停點見 [HANDOFF](docs/takeover/HANDOFF.md)；清理範圍見 [CODEX-CLEANUP](docs/takeover/CODEX-CLEANUP.md)。
-- 新 Codex 候選 `gpt-6-luna/high`、`gpt-6-luna/max`、`gpt-6.1-sol/high` 已設定，但對應子代理的實際完成證據仍待補；原 `gpt-5.6-luna/low` 結果不能抵扣。
+- 本輪原始碼清理已完成必要範圍，候選 `19f5021` 的 153 項單元測試全過並已由督導接受；剩餘舊 renderer 屬可選瘦身，不再追加清理。這是原始碼驗收，封裝／安裝與新版 Claude 回歸仍待完成，不能據此宣稱新版已部署或全部交付已接受。詳見 [HANDOFF](docs/takeover/HANDOFF.md) 與 [CODEX-CLEANUP](docs/takeover/CODEX-CLEANUP.md)。
+- 新 Codex 候選 `gpt-6-luna/high`、`gpt-6-luna/max`、`gpt-6.1-sol/high` 的三組明示參數已被原生工具接受，各建立一個子代理並由官方回讀確認完成排序。宿主回報沒有實際模型／推理強度欄位，這兩欄仍未知；不能拿請求值、主模型或原 `gpt-5.6-luna/low` 結果代替實際模型回讀，也不延伸成新版 Hook 端到端驗證。
 
 ## 開發
 
@@ -139,6 +139,6 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 PYTHONPATH=src python3 -m unittest discover -s tests -t .
 ```
 
-清理尚未完成驗收；已知失敗與尚未補驗的停點見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。最終候選仍待核對命令、封裝／安裝一致性及兩邊 Hook。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定候選、既定預算與單一執行者安排，不擴項或重跑有效證據。
+原始碼候選已通過 153 項單元測試；最終命令、Hook／設定保留比對、同版封裝／安裝及 Claude 回歸結果仍待完成，見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定收尾清單與單一執行者安排，不擴項或重跑有效證據。
 
 需求：`REQUIREMENTS.md`。接手與驗證紀錄：`docs/`（見 `docs/README.md`）。舊階段文件已刪除，需要追查歷史請用 `git log`。
