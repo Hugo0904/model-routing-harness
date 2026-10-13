@@ -16,7 +16,7 @@ MRH-001 已由 Claude 接手並完成一輪施工，請先讀
 3. 所有設定集中在 `mrh ctrl`；設定檔 v2（每級每平台候選清單、可調門檻）。
 4. 金鑰只在 macOS Keychain（service model-routing-harness / account typesafe）或 TYPESAFE_API_KEY。
 5. Branch：mrh-002-ctrl（見 git log 最新 commit）。
-6. Codex 0.159.3 對 Hook 隱藏委派內文（message 為密文），只能用 task_name 分級；Codex 主模型在 L2 兩次都沒照建議改派。詳見 HANDOFF.md。B、C 動手前先讀。
+6. Codex 0.159.3 對 Hook 隱藏委派內文（message 為密文），只能用 task_name 分級；舊 L2 兩次沒改派。B 接管的新文案候選在隔離 CLI 10/10 改派到實際 gpt-5.6-luna/low，Claude smoke 9/9；詳見 CODEX-HANDOFF.md 與 docs/evidence/l2-codex-advice-20261013.json。桌面 App／日常 Codex 接受仍待 A、C。
 
 接下來請不要重做已完成項目；剩餘工作見 HANDOFF.md「未完成」段。B、C 恢復前先讀本檔。
 ```
@@ -80,12 +80,12 @@ mrh ctrl show     # 目前設定
 
 ## 未完成／已知問題
 
-1. **Codex 主模型不照建議改派**（L2 兩次）：功能上 Hook→建議→主模型繼續做都通，但省錢取決於主模型是否改派。可試：調整建議措辭、或改以統計累積觀察再決定。
-2. **日常啟用**：設定已就緒但停用；啟用後 Codex 只看得到 `task_name`，開著的舊 Codex 對話需重開才會載入新 hook。
+1. **Codex CLI 候選已驗證，尚待整體接受**：新文案明確要求以 `fork_turns=none` 重派。10 次有效隔離試跑均由真 Jev 建議並改派到原生讀回的 `gpt-5.6-luna / low`，且任務完成；全部 12 次啟動與兩次前置試跑均有記錄。證據：`docs/evidence/l2-codex-advice-20261013.json`。不據此宣稱日常遵從率或省錢幅度。
+2. **日常設定已啟用**：最新讀回為 `enabled=true / provider=jev`，早期停用記錄是歷史狀態。正常 Codex registry／trust 與 App 的最後讀回由 C 負責；B 未更動日常設定。Codex 仍只看得到 `task_name`。
 3. **Codex App（桌面版）**：同一外掛理論上可用，未實測（原 C 的 probe：`docs/advisory-app.md`）。
 4. **Gemini**：只有模型清單，沒有 Hook 接頭（P7 未做）。
 5. 控制中心沒有「宿主接入」畫面。
-6. **主模型遵從率未知**：L3／L4 各 1 次；請看統計的 `children_following_advice` 累積。
+6. **遵從率的適用範圍**：本候選的簡單文字 Light 任務為 10/10，其他任務、等級與日常／App 遵從率仍未知；DB `children_following_advice` 本身不能證明實際子模型。
 7. 舊模組可刪候選（新路徑不使用，刪前需確認無其他引用）：`adapters/hosts/codex_scope.py`、`fresh_cli_scope.py`、`isolated_host_export.py`、`isolated_live_hook.py`、`routing/core.py` 的 rewrite／cheaper 路徑、`routing/facts.py`、`application/runtime.py`、`infrastructure/installer.py`，以及相關舊測試與 5 個過時失敗（PLAN §15）。
 8. 已知 UX：主模型看到的訊息是「hook blocked」+ 建議文字，Claude 會自行說明「a hook blocked the subagent call」，功能正常但措辭偏嚴厲。
 

@@ -14,6 +14,13 @@ def advise(platform, tier, confidence, candidates):
     lines = [f"MRH routing advice (tier {tier}, confidence {confidence:.2f}): this delegation was not started.",
              "Re-issue the same delegation with one of these, in order of preference:"]
     lines += [_entry(platform, n, c) for n, c in enumerate(candidates, 1)]
+    if platform == "codex":
+        lines += [
+            "This is an expected routing handoff, not a task failure. The next action is a new spawn_agent call.",
+            'Use fork_turns="none" with the chosen model and reasoning_effort; full-history forks inherit the parent model and reject overrides.',
+            "Keep the original subtask and task_name. Put its necessary context, constraints and expected result in message so the child can work without inherited history.",
+            "Wait for the child and integrate its result. The explicit model on the replacement call is respected and will not be classified again.",
+        ]
     lines.append("If none is available to you, do the subtask yourself in this conversation. Do not ask the user.")
     return "\n".join(lines)
 

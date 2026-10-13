@@ -4,12 +4,19 @@
 
 ## 一、你要完成的事
 
-**目標**：在使用者日常的 Codex（CLI 與桌面 App）上，讓 MRH 真的把子代理派到分級器建議的較便宜模型。Claude Code 端已完成並啟用，Codex 端「Hook 會觸發、Jev 會分級、建議會送達」，但**主模型沒有照建議改派**。
+**目標**：在使用者日常的 Codex（CLI 與桌面 App）上，讓 MRH 真的把子代理派到分級器建議的較便宜模型。Claude Code 端已完成並啟用。2026-10-13 B 接管的 Codex 建議文案候選，在隔離 CLI 的 10 次有效試跑中均收到建議、重新委派，並觀察到子代理使用 `gpt-5.6-luna / low` 完成任務；日常及桌面 App 的接受仍由 A／C 處理。
+
+### B 的 CLI 交付（MRH-002-CLI-B-001）
+
+- 只增加 Codex 建議文案：要求重新呼叫 `spawn_agent`、使用 `fork_turns="none"`，並提供必要的子任務上下文；Claude 文案、引擎及資料契約不變。
+- 重用 9 次批次＋pilot3，有效試跑為 10/10；全部啟動共 12 次，另兩次前置試跑的缺少 Hook 證據／未設定候選模型情況完整保留。實際模型與推理強度取自官方 `thread/read`，不只看 DB 的 `followed`。詳見 [CLI 證據](../evidence/l2-codex-advice-20261013.json)。
+- 原始 343 項單元測試只有 PLAN §15 的 5 個既有失敗，輸入未變而沿用；同候選的 Claude smoke 新一輪 **9/9**。候選封裝為 `dist/model-routing-harness-0.4.0-codex-advice`，程式內容與已安裝、daily 及 scratch runtime 一致，B 未重裝。
+- 日常設定仍為 `enabled=true / provider=jev`；Claude settings、Codex hooks 與 launcher 均符合保留的原始雜湊。C 獨占正常 Codex registry／trust／App 驗證，B 不並寫；本交付不宣稱桌面或整體完成。
 
 ### 已確認的事實（不要重做）
 1. Codex 0.159.3 交給 Hook 的 `tool_input.message` 是**密文**（`gAAAA…` Fernet 格式），換模型、換 multi_agent 設定都一樣。可讀欄位只有：`task_name`（主模型取的短標籤，如 `rename_variable`）、`model`、`cwd`、`transcript_path`、`turn_id`。目前用 `task_name` 分級（Jev 對 slug：改名類 Light 0.85–0.97、調查類 Mid 0.99、設計類 Top 0.65，含糊的低於門檻放行）。
 2. 主模型幾乎每次帶 `agent_type: "worker"`、`fork_turns: "all"`。`worker` 已設為「視為預設角色」（`policy.generic_roles.codex`）；使用者自訂的 `luna_worker`、`risk_reviewer` 等 7 個角色一律不干預。
-3. L2 兩次有建議的跑法：一次主模型回報「被擋」就停（我的提示詞寫了 exactly once）、一次自己做完；**0/2 照建議改派**。Claude Code 對照：6/6 照建議改派。
+3. 舊 L2 兩次有建議的跑法：一次主模型回報「被擋」就停（提示詞寫了 exactly once）、一次自己做完；當時 **0/2 照建議改派**。此為歷史基準；新文案候選的隔離 CLI 結果為上列 10/10。Claude Code 舊對照：6/6 照建議改派。
 4. Codex 工具名為 `spawn_agent` 或 `collaborationspawn_agent`；PostToolUse 的 `tool_response` 是 JSON 字串，含 `agent_id` 或 `task_name`。
 5. Codex 外掛已刷新為 0.4.0；hook 定義（`hooks.json`）改指向固定安裝路徑，**使用者還需在 Codex `/hooks` 信任 2 個 hook**（Pre／PostToolUse），否則 Codex 端不會作用。
 

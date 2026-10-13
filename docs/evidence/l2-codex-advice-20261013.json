@@ -1,0 +1,235 @@
+{
+  "report_id": "MRH-002-CLI-B-001",
+  "observed_at": "2026-10-13T09:50:04.538845+00:00",
+  "state": "CLI candidate verified; overall acceptance and Desktop App remain with A/C",
+  "change": "Codex-only advice tells the parent to re-issue spawn_agent with fork_turns=none, the suggested model/reasoning_effort, and sufficient subtask context. Claude text and shared routing contracts are unchanged.",
+  "candidate": {
+    "branch": "mrh-002-ctrl",
+    "source_baseline": "63edfef8cd3038f518601b9b3292069d6d78021a",
+    "advice_source_sha256": "8c1110de6fc2eab64bbe878f2db0e7479f0640f74f7b4ec3c409c0276e3f1717",
+    "standalone": {
+      "directory": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.4.0-codex-advice",
+      "archive": "/Users/shawn/Code/model-routing-harness/dist/model-routing-harness-0.4.0-codex-advice.tar.gz",
+      "archive_sha256": "c02e69a50ce9e3942194b46c79a0688fa72ee94e4e7a1596b9c2356966cee085",
+      "archive_bytes": 26866588,
+      "manifest_sha256": "29456e4adb661324283623eed82c4b52536121a6339cfa6621fba285b3b8fc76",
+      "runtime_version": "3.11.17",
+      "runtime_asset_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10",
+      "notices": 19,
+      "runtime_files": 2059
+    },
+    "package_and_installed_app_sha256": "eb17a2cafcaef0af5406937f675d30511c1dfb2d5c2a8fd6cec9b8b7cd4905b9",
+    "daily_and_scratch_runtime_sha256": "1dbe183596a568034377b9f532e1c5e32d8528a28054c18cae8ff955cf004fcf",
+    "all_source_modules_match_package_installed_daily_and_scratch": true,
+    "original_macos_arm64_dist_is_older_candidate": true
+  },
+  "cli": {
+    "host": "Native Codex CLI exec with scratch workspace/profile/DB and scoped hooks",
+    "parent_model": "gpt-6.1-sol",
+    "parent_effort": "high",
+    "classifier": "jev-1.13.0",
+    "task": "Alphabetize three literal words; parent must delegate, wait, and return the answer. No model/routing hints in the user prompt.",
+    "all_launches": 12,
+    "preparation_launches": 2,
+    "configured_candidate_trials": 10,
+    "jev_requests": 11,
+    "jev_returned": 11,
+    "advice_given": 10,
+    "reissued_after_advice": 10,
+    "actual_suggested_child": 10,
+    "task_completed_in_candidate_trials": 10,
+    "compliance_given_advice": "10/10",
+    "routing_over_all_launches_including_setup": "10/12",
+    "actual_child_model": "gpt-5.6-luna",
+    "actual_child_effort": "low",
+    "actual_model_evidence": "Official app-server thread/read subAgentActivity started model/reasoningEffort, paired with completion in the controlled CLI trace. children.followed/requested fields alone are not counted as model evidence.",
+    "samples": [
+      {
+        "sample": "pilot3",
+        "parent": "01a13484-f94c-7f43-89f0-c1da8be8fd2e",
+        "child": "01a13485-5946-7f02-9497-2863ff1d5a3b",
+        "confidence": 0.97,
+        "trace_sha256": "b69738b36b73e118938107f653d024e9ebd3b4c7cfdad19cd3f4f0ad03c27b9a"
+      },
+      {
+        "sample": "run-1",
+        "parent": "01a13487-70eb-74a3-8b0e-3dbd6eec36bb",
+        "child": "01a13487-b91f-7f42-8117-17476e11d287",
+        "confidence": 0.97,
+        "trace_sha256": "53c0d44efac7973477c1ae80121746bef012f79b0f618ea6760f8680b71acc29"
+      },
+      {
+        "sample": "run-2",
+        "parent": "01a13488-1c54-7342-8d1a-414f61dd5f09",
+        "child": "01a13488-6300-7481-aba5-8a622f46d9e6",
+        "confidence": 0.97,
+        "trace_sha256": "505d53c42f297dad476dcac654b3042e265c318a967166e1392e1220b15bfdaf"
+      },
+      {
+        "sample": "run-3",
+        "parent": "01a13488-9326-7022-a6b9-273db5dd2e75",
+        "child": "01a13488-ffa5-7e33-9734-e9864ed46465",
+        "confidence": 0.97,
+        "trace_sha256": "f46eef0e4bf5c6d15f5b29fbbb8ce0b7f7bb049bc321b04354bd9d3ceee073ba"
+      },
+      {
+        "sample": "run-4",
+        "parent": "01a13489-5085-7380-bc19-2dc29b5e2745",
+        "child": "01a13489-9f49-7750-9f01-bda6524ac451",
+        "confidence": 0.99,
+        "trace_sha256": "9ad8e7f6eb20530ba206d5f9e0a43b3ac83aa722e3d4163c3ff28a6633b7ca8c"
+      },
+      {
+        "sample": "run-5",
+        "parent": "01a13489-ed13-7e82-8fd8-b34385a62119",
+        "child": "01a1348a-3416-7022-8628-4989b356275d",
+        "confidence": 0.99,
+        "trace_sha256": "c8ae1ca17f4714c7a41f96400d4929f80d42aaebf3fc899019329a407d7c22a7"
+      },
+      {
+        "sample": "run-6",
+        "parent": "01a1348a-6cef-7261-a3a3-47bd5d7513ac",
+        "child": "01a1348a-b0ec-76a2-88cb-2eb04907c2ba",
+        "confidence": 0.99,
+        "trace_sha256": "504e3c56452c68fe746688296201a747095d357759ad2961724908a5cd441b8e"
+      },
+      {
+        "sample": "run-7",
+        "parent": "01a1348a-e58d-7622-b2f1-06db2627f42d",
+        "child": "01a1348b-4fbd-71a3-bc08-d9061d00fd69",
+        "confidence": 0.97,
+        "trace_sha256": "2c80b68131b04d091af9b402343cc3664d67cd4a5c187752456b5b8389c597ac"
+      },
+      {
+        "sample": "run-8",
+        "parent": "01a1348b-8feb-7ee3-b8bf-e3bb404485a3",
+        "child": "01a1348c-1eeb-7863-873c-d5b29f88300d",
+        "confidence": 0.97,
+        "trace_sha256": "b6c50147c71abbbd9473296034a8834ca6b1233d05dc4d06a9f948bed8f90d64"
+      },
+      {
+        "sample": "run-9",
+        "parent": "01a1348c-6ae1-7441-8b9c-2289848799e1",
+        "child": "01a1348c-c555-74f0-840b-f7dc7dbe18c1",
+        "confidence": 0.97,
+        "trace_sha256": "23717776bca25c6293f1da2bf4e8e1f1d5e5c5a98eb66af808000cb208e29735"
+      }
+    ],
+    "preparation": [
+      {
+        "sample": "pilot",
+        "parent": "01a13480-8fdb-7c11-98a4-c601372a8987",
+        "observed": "File-edit task returned DONE; no advice, Jev attempt, or child row for that session. Cause of absent Hook evidence is not inferred.",
+        "counted_in_configured_trials": false
+      },
+      {
+        "sample": "pilot2",
+        "parent": "01a13483-2044-7ce0-a8c1-3496645cab34",
+        "observed": "Jev returned Light/0.97 but action=preserve, reason=no_candidates_for_platform. No child; parent sorted the words itself. This was before a Codex Light candidate was configured.",
+        "counted_in_configured_trials": false
+      }
+    ],
+    "reused_valid_trials": 10,
+    "new_model_trials_by_B": 0,
+    "batch_elapsed_seconds": 370.09,
+    "recorded_jev_input_tokens_all_11_requests": 4655,
+    "recorded_jev_output_tokens_all_11_requests": 495,
+    "total_paid_cost": "not observed; no savings claim",
+    "limits": "Small text-only Light tasks in isolated CLI runs; no Desktop, normal-session adherence, or other-tier reliability claim.",
+    "delivery_cli_version": "0.162.1",
+    "trial_cli_version": "Not independently captured in the preserved run artifacts; the 0.159.3 version in the earlier L2 evidence is historical, not asserted for this batch."
+  },
+  "unit_gate": {
+    "reused": true,
+    "command": "PYTHONPATH=src python3 -m unittest discover -s tests -t .",
+    "total": 343,
+    "failures": 5,
+    "new_failures": 0,
+    "elapsed_seconds": 10.286,
+    "expected_failure_ids": [
+      "test_dispatches_catalog_refresh_without_starting_a_cli (tests.adapters.test_claude_catalog.ToolCatalogDispatchTests.test_dispatches_catalog_refresh_without_starting_a_cli)",
+      "test_doctor_does_not_import_store_or_touch_external_services (tests.presentation.test_cli.CliTests.test_doctor_does_not_import_store_or_touch_external_services)",
+      "test_explicit_fixed_role_and_unrelated_skip (tests.routing.test_core.CoreTests.test_explicit_fixed_role_and_unrelated_skip)",
+      "test_fixed_parent_unchanged_and_guards (tests.routing.test_core.CoreTests.test_fixed_parent_unchanged_and_guards)",
+      "test_resolved_baseline_cost_negative_positive_unknown_and_fixed (tests.routing.test_e3_facts.FactsTests.test_resolved_baseline_cost_negative_positive_unknown_and_fixed)"
+    ],
+    "baseline_reference": "docs/takeover/PLAN.md section 15",
+    "reuse_basis": "Original run used this advice candidate; no src/tests/smoke-script commits changed between baseline 63edfef and takeover HEAD 037b48c. Current source matches installed and tested candidate byte-for-byte."
+  },
+  "claude_gate": {
+    "command": "python3 -B scripts/verification/claude_smoke.py",
+    "exit_code": 0,
+    "passed": 9,
+    "total": 9,
+    "installed_candidate_tested": true,
+    "checks": [
+      "Exactly one PreToolUse and PostToolUse entry; fixed files exist and claude platform argument is retained (4)",
+      "Light advice is followed; resolvedModel is claude-haiku-5-5 and requested effort is medium (2)",
+      "Built-in Explore preserved (1)",
+      "Explicit model preserved without classification (1)",
+      "Invalid Jev key preserves delegation with typesafe_http_401 (1)"
+    ],
+    "effort_observation_limit": "The stock smoke checks requested_effort=medium and observed resolvedModel; it does not independently report the resolved effort.",
+    "prior_attempt": "The prior A smoke log ended with OperationalError: no such table: advice after static checks; it is preserved and is not counted as a completed passing run.",
+    "scratch_cleanup": "The successful stock script removed its own scratch directory. Raw A CLI evidence remains preserved."
+  },
+  "preservation": {
+    "baseline_and_readback": "runtime/codex-advice-20261013/preserved-before.json and preserved-after.json",
+    "daily_settings_claude_settings_codex_hooks_launcher_match_baseline": true,
+    "daily_enabled": true,
+    "daily_classifier": "jev",
+    "B_changed_normal_install_registry_trust_or_daily_settings": false,
+    "unknown_temp_preserved": true,
+    "C_owns_normal_Codex_registry_trust_App_and_final_readback": true
+  },
+  "proofs": {
+    "batch_summary": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/batch-summary.json",
+      "sha256": "2e7fa34cb5d6a71bafb6a34565abcef60857256a5eba5dcf8665947f8ca5f6de"
+    },
+    "batch_readback_runner": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-advice-batch.py",
+      "sha256": "84706000496304b809399556a7bcdb71a7d93a377df8177d973aa7775180771c"
+    },
+    "pilot3_native": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/pilot3-thread.json",
+      "sha256": "65c9c14fcc4ec8499c732924ecfab52cd0cd14502bb63d368e82b128a81fc338"
+    },
+    "scratch_settings": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/profile/settings.json",
+      "sha256": "81cd276f70e1c4991d00ed94e1277d281eb03089cf11964c568f07af4c9c0f93"
+    },
+    "scratch_advice_db": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/profile/advice.sqlite3",
+      "sha256": "7f5d5672f03ba53775b49ba85f6dd8d536ce71bfb37978de4ea024d9d986b402"
+    },
+    "unit_log": {
+      "path": "/private/tmp/mrh-codex-routing-tests-20261013.log",
+      "sha256": "323aaedc885086043373f23dee854fddc93f4a426660e9a91b1b6a16e5952809"
+    },
+    "claude_smoke_log": {
+      "path": "/private/tmp/mrh-claude-smoke-b-20261013.log",
+      "sha256": "8270b51f5ec3106ce98d305c3ccb36c27c92d4da6a66deba961ff90b1c098757"
+    },
+    "claude_smoke_script": {
+      "path": "/Users/shawn/Code/model-routing-harness/scripts/verification/claude_smoke.py",
+      "sha256": "8bdb8c0d99612dbbe45d592604a53c32b02c454dd31962f8dc91edeadf9d1218"
+    },
+    "pilot": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/pilot.jsonl",
+      "sha256": "c7eafa2bc0c275b9597db6f3a2353effd63bc4f25691c8f24bd7984353e34e2e"
+    },
+    "pilot2": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/pilot2.jsonl",
+      "sha256": "f27226f9fca63b80ad554723b1ffee0cce72e57ec3dbe83618c54b8cd0aca0ea"
+    },
+    "pilot3": {
+      "path": "/private/tmp/mrh-codex-advice-20261013/pilot3.jsonl",
+      "sha256": "b69738b36b73e118938107f653d024e9ebd3b4c7cfdad19cd3f4f0ad03c27b9a"
+    }
+  },
+  "remaining": [
+    "C true Desktop App routing and normal Codex registry/trust readback with this same candidate",
+    "A reconciles original remaining obligations and accepts the delivery; CLI/smoke PASS is not whole-goal completion"
+  ]
+}
