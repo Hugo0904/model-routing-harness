@@ -1,6 +1,0 @@
-{
-  "command": "python3 -m unittest discover -s tests -p test_host_goal.py -v",
-  "exit_code": 0,
-  "wall_seconds": 0.109,
-  "scope": "changed Goal fixture lifecycle and evidence rejection"
-}

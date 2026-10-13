@@ -24,7 +24,7 @@ class GeminiCatalogTests(unittest.TestCase):
         self.chunk = self.package / 'bundle/chunk.js'; self.chunk.write_text('// public bundle fixture\n')
         (self.package / 'package.json').write_text(json.dumps({'name': '@google/gemini-cli', 'version': '0.63.0', 'bin': {'gemini': 'bundle/gemini.js'}}))
         shutil.copyfile('/usr/bin/true', prefix / 'bin/node'); (prefix / 'bin/node').chmod(0o755)
-        probe = json.loads((Path(__file__).resolve().parents[2] / 'docs/evidence/e16-acp-probe.json').read_text())
+        probe = json.loads((Path(__file__).resolve().parents[2] / 'tests/fixtures/e16-acp-probe.json').read_text())
         self.init, self.session = [copy.deepcopy(x) for x in probe['cases'][-1]['received'][:2]]
 
     def candidate(self):

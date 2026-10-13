@@ -77,4 +77,4 @@ mrh install claude --artifact <artifact 目錄> --apply    # 套用（自動備�
 PYTHONPATH=src python3 -m unittest discover -s tests -t .      # 5 個已知舊失敗，見 docs/takeover/PLAN.md §15
 ```
 
-需求與歷史：`REQUIREMENTS.md`、`docs/MRH-001.md`、舊版 README 在 `docs/README-legacy.md`。
+需求：`REQUIREMENTS.md`。接手與驗證紀錄：`docs/`（見 `docs/README.md`）。舊階段文件已刪除，需要追查歷史請用 `git log`。

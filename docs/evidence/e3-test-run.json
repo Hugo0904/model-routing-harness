@@ -1,8 +1,0 @@
-{
-  "recorded_at": "2026-10-09T21:55:45.341529+00:00",
-  "command": "PYTHONPATH=src python3 -m unittest discover -s tests -v",
-  "exit_code": 0,
-  "wall_seconds": 0.692,
-  "evidence_kind": "offline_local_candidates",
-  "real_provider_requests": 0
-}

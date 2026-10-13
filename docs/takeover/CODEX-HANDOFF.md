@@ -1,6 +1,6 @@
 # 給 Codex 的交接：完成 Codex 端串接（Claude 端已完成，請勿弄壞）
 
-日期：2026-10-13　分支：`mrh-002-ctrl`　先讀本檔，再讀 `HANDOFF.md`（整體狀態）、`PLAN.md §16`（偏離）、`docs/evidence/l2-codex-cli.json`（Codex 實測）。
+日期：2026-10-13　分支：`mrh-002-ctrl`　先讀本檔，再讀 `HANDOFF.md`（整體狀態）、`PLAN.md §16`（偏離）、`docs/evidence/codex/l2-codex-cli.json`（Codex 實測）。
 
 ## 一、你要完成的事
 
@@ -23,7 +23,7 @@
 ### 建議的工作順序
 | # | 工作 | 說明／驗收 |
 |---|---|---|
-| 1 | 確認 hook 在 Codex CLI 與 **桌面 App** 都載入並信任 | App 完全沒實測過。原 C 的 probe：`docs/advisory-app.md`、`scripts/verify_app_advisory.py` |
+| 1 | 確認 hook 在 Codex CLI 與 **桌面 App** 都載入並信任 | App 完全沒實測過。原 C 的 probe：`docs/codex/advisory-app.md`、`scripts/verify_app_advisory.py` |
 | 2 | 讓主模型照建議做，擇一或組合，**各測 ≥10 次記錄遵從率** | (a) 調整 `advice_text.advise()` 的 Codex 措辭（強調「重派是預期做法，不是錯誤」）；(b) **直接填入模式**：Claude Code 實測 `updatedInput` 可讓 hook 直接改寫 model/effort（子代理實際跑 haiku 5.5、主模型不知情、不用多一個來回）；Codex 早期 E 階段也驗證過 allow＋updatedInput 可改子模型，但當時因「看不到角色／原模型」而放棄——現在已知 `agent_type` 可讀、明示 model/effort 可讀，條件足夠；(c) 不要把兩平台強綁同一模式，做成**每平台可設定**（`ctrl`：advise／fill） |
 | 3 | 改善 Codex 分級依據 | `task_name` 太薄。評估用官方 `UserPromptSubmit` hook 把使用者原話存進 advice DB（以 session＋turn 為鍵），委派時一併送分級；這會多一個 hook（需再信任一次）。注意：**不要讀 `transcript_path`**（私人紀錄，先前規範禁止） |
 | 4 | `fork_turns: "all"` 時改 model 是否被接受 | 未測。若 Codex 對 fork 忽略／拒絕 model，建議無效，需在 `CodexHost` 標記並放行 |

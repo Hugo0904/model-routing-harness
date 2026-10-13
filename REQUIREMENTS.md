@@ -9,7 +9,7 @@
 - 所有設定集中於 `mrh ctrl`（設定檔 v2）：分級器與模型、四級各平台有序候選清單、Top Main／Fixed、信心門檻 0.50–0.99、生效範圍。
 - 路由為**建議式**（承 2026-10-12 修正）：PreToolUse deny＋建議，主模型自己重派；明示模型／推理／角色一律放行；同任務 10 分鐘只建議一次。
 - 支援 Codex、Claude Code；Gemini 僅模型清單。
-- 施工與驗證紀錄：`docs/takeover/PLAN.md`、`docs/takeover/HANDOFF.md`、`docs/evidence/l1-jev.json`、`docs/evidence/l3-l4-claude-code.json`。
+- 施工與驗證紀錄：`docs/takeover/PLAN.md`、`docs/takeover/HANDOFF.md`、`docs/evidence/jev/l1-jev.json`、`docs/evidence/claude/l3-l4-claude-code.json`。
 
 ## 2026-10-12 最新人類修正：共用分級建議，由主模型執行
 

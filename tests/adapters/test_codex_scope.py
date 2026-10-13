@@ -81,7 +81,7 @@ class ScopeTests(unittest.TestCase):
                ['codex','--no-daemon','--cd='+str(self.work)],['codex','--no-daemon','-C'+str(self.work)],
                ['codex','app-server','--listen','stdio://'],['codex','app-server','--listen=stdio://']]
         for args in valid:self.assertTrue(codex_scope.supported_startup(args),args)
-        forms=json.loads((Path(__file__).resolve().parents[2]/'docs/evidence/e17r-parser-forms.json').read_text())['rows']
+        forms=json.loads((Path(__file__).resolve().parents[2]/'tests/fixtures/e17r-parser-forms.json').read_text())['rows']
         for row in forms:self.assertFalse(codex_scope.supported_startup(['codex','--no-daemon',*row['argv']]),row['argv'])
         for args in (['codex'],['codex','--remote=unix://x'],['codex','resume','--no-daemon'],
                      ['codex','--no-daemon','--unknown-mode'],['codex','--no-daemon','app-server','--listen=ws://localhost']):

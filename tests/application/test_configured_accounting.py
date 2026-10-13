@@ -12,7 +12,7 @@ from tests.adapters.test_typesafe import FakeTransport
 
 
 def saved_events(surface="shell", scenario="explicit"):
-    path = Path(__file__).resolve().parents[2] / ("docs/evidence/e5-" + surface + "-plugin.json")
+    path = Path(__file__).resolve().parents[2] / ("tests/fixtures/e5-" + surface + "-plugin.json")
     case = next(c for c in json.loads(path.read_text())["cases"] if c["scenario"] == scenario)
     return [copy.deepcopy(row["event"]) for row in case["injected_runtime_events"]]
 

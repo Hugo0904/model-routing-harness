@@ -1,6 +1,0 @@
-test_public_configuration_and_enable_are_independent_idempotent_and_read_only_show (test_settings_runtime.SettingsRuntimeTests.test_public_configuration_and_enable_are_independent_idempotent_and_read_only_show) ... ok
-
-----------------------------------------------------------------------
-Ran 1 test in 0.014s
-
-OK

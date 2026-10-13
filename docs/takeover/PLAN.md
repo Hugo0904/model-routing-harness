@@ -5,7 +5,7 @@
 - Canopy 任務：`TK20261013-133016-B15B`（`/Users/shawn/Code/Canopy/logs/progress/task_20261013_TK20261013-133016-B15B.md`）
 - 起點：branch `mrh-001` HEAD `e5605c0`；baseline 291 tests、5 failures（見 P0）
 
-本文件是本輪唯一施工依據。與 `REQUIREMENTS.md`、`docs/MRH-001.md` 衝突時以本文件為準；舊文件只當歷史參考，**不要通讀 `docs/MRH-001.md`（1400+ 行）**，需要時用 grep 查特定段落。
+本文件是本輪唯一施工依據。與 `REQUIREMENTS.md` 衝突時以本文件為準；舊階段文件（含原 `MRH-001.md`）已於 2026-10-13 刪除，需要追查歷史請用 `git log`。
 
 ---
 
@@ -291,4 +291,4 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
 - 控制中心沒有「宿主接入」畫面；安裝改為 `mrh plugin prepare --advisory` ＋ `mrh install claude`。
 - L3／L4 用 scratch 目錄與 scratch 設定直接掛 launcher 跑，沒有碰全域設定。
 - 實測中發現並修正：cwd 為符號連結（/tmp）時 allowlist 靜默判外；選單預設焦點落在 Quit。
-- L2 實測發現（見 docs/evidence/l2-codex-cli.json）：Codex 0.159.3 的 Hook 輸入 `message` 為密文 → `adapters/hosts/advisory_hosts.py` 改用 `task_name`；`agent_type=worker` 為常態 → 新增 `policy.generic_roles`（Codex 預設 worker）；L2 共跑 6 次（超過 2 次上限，原因是 3 個不同根因的缺陷，非重試同一失敗）。
+- L2 實測發現（見 docs/evidence/codex/l2-codex-cli.json）：Codex 0.159.3 的 Hook 輸入 `message` 為密文 → `adapters/hosts/advisory_hosts.py` 改用 `task_name`；`agent_type=worker` 為常態 → 新增 `policy.generic_roles`（Codex 預設 worker）；L2 共跑 6 次（超過 2 次上限，原因是 3 個不同根因的缺陷，非重試同一失敗）。

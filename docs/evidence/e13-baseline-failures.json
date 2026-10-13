@@ -1,9 +1,0 @@
-{
-  "baseline_revision": "3f577924aaf0bcbdf1f795ee6f77e1adb096af8c",
-  "exit": 1,
-  "same_schema_expectation_failure": true,
-  "same_default_details_expectation_failure": true,
-  "owned_root": "/private/tmp/mrh-e13-baseline-t8q0qix1",
-  "prior_fixture_gap": "first narrow archive lacked test_typesafe and e5 fixture; account test was unverified there",
-  "root_absent": true
-}
