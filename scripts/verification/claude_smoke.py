@@ -7,23 +7,36 @@ Uses an isolated scratch artifact + settings + database (never the daily ones), 
 (~/.local/bin/mrh), so rebuild and `install_local.py` first if you changed code. Also statically checks the real
 hook entry in ~/.claude/settings.json.  Exit code 0 only when every check passes.
 """
-import json, os, shlex, shutil, sqlite3, subprocess, sys, tempfile
+import json, os, shlex, shutil, sqlite3, subprocess, sys, tempfile, time
 from pathlib import Path
 
 MRH = shutil.which("mrh") or str(Path.home() / ".local/bin/mrh")
 APP = Path.home() / ".local/share/model-routing-harness/app"
 results = []
+evidence = {"started_at": time.time(), "checks": [], "scenarios": []}
+
+
+def save_evidence():
+    target = os.environ.get("MRH_SMOKE_EVIDENCE_DIR")
+    if target:
+        path = Path(target).resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "smoke-results.json").write_text(json.dumps(evidence, indent=2) + "\n")
 
 
 def check(name, ok, detail=""):
-    results.append(ok)
+    results.append(bool(ok))
+    evidence["checks"].append({"name": name, "passed": bool(ok), "detail": detail})
+    save_evidence()
     print(("PASS  " if ok else "FAIL  ") + name + (f"   {detail}" if detail else ""))
 
 
 def mrh(*args):
     r = subprocess.run([MRH, *args], capture_output=True, text=True)
     if r.returncode:
-        raise SystemExit(f"mrh {' '.join(args)} failed: {r.stderr.strip()}")
+        evidence["helper_failure"] = {"command": list(args[:2]), "returncode": r.returncode}
+        save_evidence()
+        raise SystemExit(f"mrh {' '.join(args[:2])} failed (exit {r.returncode}); raw stderr not retained")
     return r.stdout
 
 
@@ -42,19 +55,47 @@ def static_install_check():
 
 def scenario(work, settings_json, db, prompt, model="opus", env=None):
     e = dict(os.environ, **(env or {})); e.pop("CLAUDE_CODE_SIMPLE", None)
-    before = len(sqlite3.connect(db).execute("select 1 from advice").fetchall()) if Path(db).exists() else 0
-    r = subprocess.run(["claude", "-p", "--model", model, "--settings", settings_json, "--setting-sources", "", "--no-session-persistence",
-                        "--permission-mode", "bypassPermissions", "--max-budget-usd", "1.0", "--output-format", "json", prompt],
-                       capture_output=True, text=True, timeout=420, cwd=work, env=e)
-    con = sqlite3.connect(db)
-    decisions = con.execute(f"select action,reason from advice order by ts limit -1 offset {before}").fetchall()
-    kids = con.execute("select requested_model,requested_effort,resolved_model,followed from children order by ts").fetchall()
+    before = 0
+    if Path(db).exists():
+        with sqlite3.connect(f"file:{db}?mode=ro", uri=True) as con:
+            before = con.execute("select count(*) from advice").fetchone()[0]
+    record = {"index": len(evidence["scenarios"]) + 1, "requested_parent_model": model, "returncode": None}
+    started = time.monotonic()
+    try:
+        r = subprocess.run(["claude", "-p", "--model", model, "--settings", settings_json, "--setting-sources", "", "--no-session-persistence",
+                            "--permission-mode", "bypassPermissions", "--max-budget-usd", "1.0", "--output-format", "json", prompt],
+                           capture_output=True, text=True, timeout=420, cwd=work, env=e)
+        record["returncode"] = r.returncode
+        try:
+            output = json.loads(r.stdout)
+            record["is_error"] = output.get("is_error")
+            record["usage"] = {k: v for k, v in output.get("usage", {}).items() if type(v) in (int, float)}
+            record["total_cost_usd"] = output.get("total_cost_usd")
+        except (ValueError, AttributeError):
+            record["output_format_error"] = "not_expected_json"
+    except subprocess.TimeoutExpired:
+        record["failure_reason"] = "claude_process_timeout"
+        raise
+    finally:
+        record["elapsed_seconds"] = time.monotonic() - started
+        try:
+            with sqlite3.connect(f"file:{db}?mode=ro", uri=True) as con:
+                con.row_factory = sqlite3.Row
+                record["advice"] = [dict(row) for row in con.execute("select * from advice order by ts limit -1 offset ?", (before,))]
+                record["children"] = [dict(row) for row in con.execute("select * from children order by ts")]
+                record["attempts"] = [dict(row) for row in con.execute("select * from attempts order by ts")]
+        except sqlite3.Error as exc:
+            record["capture_error"] = type(exc).__name__
+        evidence["scenarios"].append(record)
+        save_evidence()
+    if "capture_error" in record:
+        raise RuntimeError("smoke_database_unavailable")
+    decisions = [(row["action"], row["reason"]) for row in record["advice"]]
+    kids = [(row["requested_model"], row["requested_effort"], row["resolved_model"], row["followed"]) for row in record["children"]]
     return r.returncode, decisions, kids
 
 
-def main():
-    static_install_check()
-    tmp = Path(tempfile.mkdtemp(prefix="mrh-smoke-")).resolve()
+def run_scenarios(tmp):
     work, art, settings = tmp / "work", tmp / "art", tmp / "profile" / "settings.json"
     work.mkdir()
     (work / "utils.py").write_text("def total(items):\n    cnt = 0\n    for i in items:\n        cnt += i\n    return cnt\n")
@@ -81,9 +122,32 @@ def main():
     code, dec, _ = scenario(work, str(cs), db, "Use the Agent tool (subagent_type general-purpose) to answer PONG. Reply DONE.", env={"TYPESAFE_API_KEY": "invalid-key"})
     check("D. a rejected Jev key never blocks the delegation", code == 0 and dec == [("preserve", "typesafe_http_401")], str(dec))
 
-    shutil.rmtree(tmp, ignore_errors=True)
+def main():
+    tmp = None
+    try:
+        static_install_check()
+        if not all(results):
+            raise RuntimeError("static_hook_prerequisite_failed")
+        tmp = Path(tempfile.mkdtemp(prefix="mrh-smoke-")).resolve()
+        (tmp / "OWNED.json").write_text(json.dumps({"owner": "MRH Claude smoke", "pid": os.getpid()}) + "\n")
+        evidence["scratch_path"] = str(tmp)
+        save_evidence()
+        run_scenarios(tmp)
+    except BaseException as exc:
+        evidence["failure_type"] = type(exc).__name__
+        if isinstance(exc, RuntimeError):
+            evidence["failure_reason"] = str(exc)
+        raise
+    finally:
+        passed = len(results) == 9 and all(results) and "failure_type" not in evidence
+        if tmp and passed:
+            shutil.rmtree(tmp)
+        evidence.update(completed_at=time.time(), passed=sum(results), total=len(results),
+                        all_nine_passed=passed, scratch_removed=bool(tmp and not tmp.exists()),
+                        scratch_preserved_for_failure=bool(tmp and tmp.exists()))
+        save_evidence()
     print(f"\n{sum(results)}/{len(results)} checks passed")
-    sys.exit(0 if all(results) else 1)
+    sys.exit(0 if evidence["all_nine_passed"] else 1)
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ mrh key status jev           # 金鑰狀態（只顯示有沒有，不顯示內�
 
 統計只把能對上同任務、回合與工具呼叫的後續委派列為已確認採用；請求模型與已回報執行模型分開，舊紀錄缺少關聯時明示未知。分級失敗仍列入分級嘗試／已開始呼叫，沒有回報用量時不當作零成本。
 
-Monitor 的資料出口是 `mrh status --json --days 7`（`--days 0` 為全部）。目前原始碼讓終端卡片與 JSON 使用同一份統計及公開設定組裝；JSON 保留統計欄位，另有 `status.format_version`、`status.generated_at`、路由開關、`status.classifier` 與 `status.policy`（門檻、Top 模式、各級及 Fixed 候選）。`mrh stats --json` 保留原統計契約。Monitor 只需讀這份出口，不另存快照、不存取 Monitor DB，也不做 App 畫面。統計出口不建立缺少的設定或 DB；此輪新增的設定區塊仍待最終候選的指令比對。
+Monitor 的資料出口是 `mrh status --json --days 7`（`--days 0` 為全部）。終端卡片與 JSON 使用同一份統計及公開設定組裝；JSON 保留統計欄位，另有 `status.format_version`、`status.generated_at`、路由開關、`status.classifier` 與 `status.policy`（門檻、Top 模式、各級及 Fixed 候選）。`mrh stats --json` 保留原統計契約。同版已安裝指令比對已確認這份組裝與唯讀行為。Monitor 只需讀這份出口，不另存快照、不存取 Monitor DB，也不做 App 畫面；統計出口不建立缺少的設定或 DB。
 
 Canopy 保留既有 `ContextSummary` 與分級器 `context_summary` 的選配介面；目前 advisory 入口傳入 `None`，尚未接上 live Canopy。此輪不讀私人記憶、Hook 暫存或對話，也不修改 Canopy Core。
 
@@ -130,7 +130,8 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 - **Codex 的限制**：Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱；含糊的標籤信心度低，會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
 - Claude Code 的子代理 `effort` 參數需 2.1.292 以上，`haiku`／`sonnet` 別名要 2.1.293 以上才對應到 5.5 系列（Homebrew 請用 `claude-code@latest`）。
 - Gemini CLI 未接 Hook；Canopy live 選配接入未完成。
-- 本輪原始碼清理已完成必要範圍，候選 `19f5021` 的 153 項單元測試全過並已由督導接受；剩餘舊 renderer 屬可選瘦身，不再追加清理。這是原始碼驗收，封裝／安裝與新版 Claude 回歸仍待完成，不能據此宣稱新版已部署或全部交付已接受。詳見 [HANDOFF](docs/takeover/HANDOFF.md) 與 [CODEX-CLEANUP](docs/takeover/CODEX-CLEANUP.md)。
+- 本輪原始碼清理已完成必要範圍，候選 `19f5021` 的 153 項單元測試全過並已由督導接受；剩餘舊 renderer 屬可選瘦身，不再追加清理。同版封裝已本機安裝，48 個產品模組一致，15 項已安裝指令與 Hook／設定保留比對已接受。本次同版 Claude／Jev 回歸 9/9 通過，成功 scratch 已清除，日常設定與 Hook 定義雜湊保持原值；整體最後驗收仍由督導確認。詳見 [HANDOFF](docs/takeover/HANDOFF.md) 與 [CODEX-CLEANUP](docs/takeover/CODEX-CLEANUP.md)。
+- 本次 Claude 回歸涵蓋 Light 建議後重派、Haiku 5.5 的宿主模型回報與 medium 請求、Explore 保留、明示 Sonnet／medium 保留，以及 Jev 金鑰被拒絕時原委派仍完成。Light 的 `followed=1` 有同任務／回合／呼叫的關聯欄位配對；獨立的實際推理強度回讀未提供，不把請求值當作供應商遙測。
 - 新 Codex 候選 `gpt-6-luna/high`、`gpt-6-luna/max`、`gpt-6.1-sol/high` 的三組明示參數已被原生工具接受，各建立一個子代理並由官方回讀確認完成排序。宿主回報沒有實際模型／推理強度欄位，這兩欄仍未知；不能拿請求值、主模型或原 `gpt-5.6-luna/low` 結果代替實際模型回讀，也不延伸成新版 Hook 端到端驗證。
 
 ## 開發
@@ -139,6 +140,6 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 PYTHONPATH=src python3 -m unittest discover -s tests -t .
 ```
 
-原始碼候選已通過 153 項單元測試；最終命令、Hook／設定保留比對、同版封裝／安裝及 Claude 回歸結果仍待完成，見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定收尾清單與單一執行者安排，不擴項或重跑有效證據。
+原始碼 153 項、已安裝指令／保留比對 15 項與同版 Claude 回歸 9/9 的證據分開記錄，見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定收尾清單與單一執行者安排，不擴項或重跑有效證據。可用 `MRH_SMOKE_EVIDENCE_DIR` 指定本機 smoke 報告目錄；腳本只保存必要的結果與關聯欄位，成功刪除自有 scratch，失敗則保留供判讀。
 
 需求：`REQUIREMENTS.md`。接手與驗證紀錄：`docs/`（見 `docs/README.md`）。舊階段文件已刪除，需要追查歷史請用 `git log`。
