@@ -38,5 +38,8 @@ class CatalogChoicesTests(unittest.TestCase):
             session = ctrl.Session(path, Menu(), io.StringIO(), models=lambda _: choices)
             for item in ({"model": "retired"}, {"model": "fresh", "effort": "ultra"}):
                 with self.assertRaises(CtrlError): session.check_new_candidates([item], choices)
+            for uncertain in (ctrl.ModelChoices([("fresh", ("high",))]), ctrl.ModelChoices([], status="advertised", source="fixture")):
+                with self.assertRaises(CtrlError): session.check_new_candidates([{"model": "fresh"}], uncertain)
+            self.assertEqual(session.check_new_candidates([{"model": "fresh", "effort": "high"}], choices), [{"model": "fresh", "effort": "high"}])
             self.assertFalse(session.save({"enabled": True}, "candidate"))
             self.assertEqual(path.read_bytes(), before)

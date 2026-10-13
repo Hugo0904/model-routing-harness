@@ -80,7 +80,7 @@ class CtrlTests(unittest.TestCase):
         class Tty(io.StringIO):
             def isatty(self): return True
             def fileno(self): raise OSError          # forces the numbered fallback, not raw key reads
-        code = ctrl.main(args, stdin=Tty(script), stdout=out, stderr=err, secrets_module=Keys(), models=lambda _: [])
+        code = ctrl.main(args, stdin=Tty(script), stdout=out, stderr=err, secrets_module=Keys(), models=lambda _: ctrl.ModelChoices([("gpt-5.6-luna", ("low",))], status="advertised", source="unit-fixture"))
         saved = v2.read(self.path)
         self.assertEqual(code, 0, err.getvalue())
         self.assertTrue(saved["enabled"] and saved["task_export_permitted"])
