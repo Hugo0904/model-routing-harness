@@ -7,14 +7,15 @@
 
 本文件是本輪唯一施工依據。與 `REQUIREMENTS.md` 衝突時以本文件為準；舊階段文件（含原 `MRH-001.md`）已於 2026-10-13 刪除，需要追查歷史請用 `git log`。
 
-## 最新固定收尾清單（MRH-FINAL-B-INSTALL-001）
+## 最新整體交付狀態（MRH-FINAL-B-DOC-CLOSE-003；2026-10-14）
 
-人類已解除之前全部工程驗證時間硬上限，保留原 2366.633 秒與超支歷史，改按固定清單完成即停：既定指令／Hook 與設定比對、一次固定候選封裝安裝、既定 Claude／Jev 回歸與結果文件。不擴矩陣、不重跑有效結果、不 push；原較早階段的配額與待同意事項是歷史，不能重新作為本輪停止或逐階段批准條件。
+在 `main`，產品 source 為 A 已接受的 `19f5021a33c10ac907a09a8a3864570151eb9cd0`。A 已接受功能、固定安裝與驗證；C 的同版 Claude／Jev smoke 9/9、4 情境 exit 0、零重跑，Light 關聯 `followed=1`、解析模型 `claude-haiku-5-5`，請求 effort `medium` 而實際解析 effort 未回報；Explore、明示模型、Jev 401 三種保護亦通過。C README／checker commit `d54bce3` 不改 runtime，installed/daily pyz SHA 維持 `bc82051fa4bea596995305fca518928624599a3df18c682ab3bc128a5b4714c8`／`05c60025ee2c207124c8a496add3a3d95f71f16174468610426e6bf242fb3b77`。
 
-B 的前兩項已完成：A 接受的 `19f5021` 產品 source（153 unit 全過，沿用）已安裝至原固定路徑，原 mrh／App 接頭路徑、日常 settings、Claude settings、兩邊 Hook 定義與 Codex trusted／enabled 保留；48 個產品模組與封裝、installed、daily runtime、官方 cache 同源。已安裝版 commands、JSON／卡片同組裝、stats 原契約、缺失設定／DB 唯讀、隔離 prepare、Claude dry diff 與兩平台 noop 均通過。B 不呼叫 Claude／Jev；C 是唯一最後 smoke／README owner，A 是整體接受 owner。精確來源、SHA、比對與恢復副本见 [HANDOFF](HANDOFF.md) 最新段及 `runtime/MRH-FINAL-B-INSTALL-001/`，最後 smoke 與整體接受仍待完成。
+已接受的其餘範圍沿用原證據：153 unit、15 項安裝版檢查、原 CLI 10/10、Codex App 10 次（8 採用、2 低信心保留，皆完成）；Main／Fixed／Goal 組合沿用既有宿主與 advisory 分支證據，不稱本次重跑端到端。NEW3 三組請求獲接受並完成，實際模型／effort 未知。Canopy live 摘要未接、Monitor 僅共用 status JSON 出口而無 App、Gemini 無 Hook、readiness 訊息不等於 native 採用、本機候選未 push／公開發行，均保留為支援界線，沒有新增施工待辦。
 
-A 已接受上述安裝單元；`MRH-FINAL-B-BUNDLE-DOCS-002` 接續僅修 `mrh_bundle.py` README 常數與封裝／installed README、manifest、tar，於既有 `main` 提交 `b89a764`。只更新說明與 source_commit／builder hash／README hash-size 索引；runtime／pyz 不變，沒有重建、重安裝、prepare 或 registry 更新。文件同版、索引及 tar 讀回通過；新 SHA 與恢復副本見 HANDOFF／該單 runtime 證據，不覆寫原有效實測證據。
+本次只同步 REQUIREMENTS、HANDOFF、PLAN 三份狀態文案；A 已接受功能／安裝／驗證，三文件更新完成後由 A 回讀整合。C smoke 報告 SHA `7c0254af6df6765f6b0b42fa5358037b682aede1d839f54389e4cf788a50a008`。成本依證據列於 HANDOFF：C 至 commit 620.899 秒、至報告 3243.898 秒、Claude 程序 59.770 秒／`$0.435344165`；commit 後間隔的工作量未知，Jev 與 C parent 成本未獨立提供。
 
+下方 P0–P6 舊執行狀態與核取清單是 2026-10-13 的同期歷史，不是目前待辦；原產品決策與要求仍保留。
 ---
 
 ## 0. 使用者要的產品（一句話）
@@ -183,7 +184,7 @@ PostToolUse：記錄實際派出的子代理（model、agent_id），若同 sess
 
 非互動（給腳本與測試）：`mrh ctrl show [--json]`、`mrh ctrl set <key> <value>`，key 例：`enabled`、`task_export`、`classifier.provider`、`classifier.model`、`classifier.timeout`、`threshold`、`top_mode`、`tiers.Light.codex`（值 `gpt-5.6-luna:low,gpt-6-luna`）、`fixed.claude`。
 
-## 10. 分階段施工（每階段結束：測試→commit→更新 Canopy 紀錄）
+## 10. 歷史分階段施工計畫（2026-10-13；下方核取狀態不是目前待辦）
 
 **P0 準備**
 - [ ] `git switch -c mrh-002-ctrl`；跑 baseline 測試，確認 291／5 failures。
@@ -278,7 +279,7 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
 
 ---
 
-## 15. P0 結果（2026-10-13）
+## 15. P0 結果（2026-10-13；歷史快照，已由頂部狀態取代）
 
 2026-10-13 清理續接：原既有失敗已保留於歷史 logs；相關舊 core/e3/dispatched-Gemini 測試已隨功能清理移除。R3 修正 canonical fixture 後 153 unit 全綠並由 A 接受；B 後續完成同版安裝與固定本機檢查，不能代替 C 最後 Claude／Jev gate。必要服務呼叫已有人類持續授權；沿原 owner、固定版本與最新固定清單執行，總時間硬上限已解除。
 
@@ -289,7 +290,7 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
   - `test_cli...doctor_does_not_import_store...`：doctor 文字已改成「retained for explicitly selected legacy profiles」→ P3 重寫 doctor 文字時一併更新斷言。
 - Jev 真實連線已由使用者在開工前驗證（Keychain 取 key → HTTP 200、jev-1.13.0、Light／0.96、input 439 tokens）。
 
-## 16. 執行結果與偏離計畫之處（2026-10-13）
+## 16. 執行結果與偏離計畫之處（2026-10-13；歷史快照）
 
 完成：P0–P3、P4 的封裝與 daily 產物準備、P5 的 L1／L3／L4、P6。未完成：L2（Codex 實測）、daily 設定遷移 v2、`codex plugin add` 刷新、Claude hook 套用（均需使用者同意，見 HANDOFF）。
 

@@ -17,13 +17,19 @@
 
 共用核心不依賴 Codex 本體；本次選用的 Codex 訂閱登入只是既有分類來源接頭。不修改、替換或重編譯任何廠商核心，不新增 dispatcher，也不要求主模型先呼叫分級工具。Hook 真正交回模型的效果、避免重複分類及主模型實際建立子代理／繼續工作，須用最小真實消費者驗證；不能拿 UI 提示或單元測試冒充。沿原 B/C 分工，A 整合驗收；現行收尾與必要驗證見 docs/takeover/HANDOFF.md。已完成且仍適用的部分沿用，不重做或擴大。
 
-## 目前交付狀態（2026-10-13）
+## 目前交付狀態（2026-10-14）
 
-目前為 0.4.0 建議式路由。原 fdb7428 的 CLI 10/10 有效試跑及 App 10 個有效試次（8 次有建議且採用、2 次低信心保留，全部完成）已由 A 接受，保留其原範圍。日常新 Codex 候選 Light=gpt-6-luna/high、Small=gpt-6-luna/max、Mid=gpt-6.1-sol/high 已保存；這些新設定的 live 證據由 C 接續。
+目前交付為 `main` 上的 0.4.0 本機候選，產品 source `19f5021a33c10ac907a09a8a3864570151eb9cd0` 已由 A 接受，153 項單元測試全過。固定安裝、封裝說明及安裝版 15 項指令／Hook 檢查亦已由 A 接受。C 的同版 Claude／Jev smoke 已一次通過：9/9、4 個情境皆 exit 0、沒有重跑。這是目前候選的消費者回歸，不代表所有平台或整個原始產品願景均已完成。
 
-MRH-CLOSE-R1 僅收尾統計正確性、設定操作、實際委派與最終交付；Monitor 只讀 `mrh status --json` 同一份資料，不施工 App 畫面。Canopy 選配摘要介面保留但當前 advisory 未接 live 摘要。新版 source 候選尚待本地驗證、A 凍結版本、封裝／安裝、C 的同版本 live 驗證及 A 最終接受；不宣稱全目標完成。
+保留 A 已接受的原範圍證據：原 CLI 10/10；原 Codex App 10 個有效試次中 8 次採用建議、2 次因低信心保留原路徑，全部完成。Main／Fixed／Goal 組合沿用既有宿主與 advisory 分支證據，沒有把它們寫成這次重新端到端執行。NEW3 的三組子代理請求獲接受並完成，但實際執行模型與 effort 回讀未知。
 
-下方 E 階段是歷史證據與當時準則，與上述現行狀態不同者以本段為準。舊本機證據已移除時，可由 Git 歷史查回，不以歷史接受冒充新版驗證。
+C smoke 的 Light 情境以同一 session、turn、task、call 及 advice request 關聯到後續委派：`followed=1`，實際解析模型為 `claude-haiku-5-5`；請求 effort 是 `medium`，Claude 沒有提供獨立的實際解析 effort。另三個情境證明內建 Explore 不受干預、明示模型選擇保留且不呼叫分類器、Jev 回 401 時委派仍繼續。4 次 Claude 程序全以 exit 0 結束，scratch 已移除。日常設定、Claude 設定、Codex hooks SHA 均維持基線；installed runtime 與 daily runtime SHA 也未變。
+
+安裝版提供人用卡片與 JSON 的同一 status 組裝、保留舊 stats JSON 契約，Monitor 僅使用該 status JSON 資料出口，沒有獨立 App。Canopy 摘要介面存在，但目前未接 live 摘要；Gemini 有模型清單，沒有 Hook。外掛準備器的通用 readiness 訊息不當作 native 行為採用證據。本機候選未 push、未簽署／公證或公開發行。
+
+SMOKE 證據：`runtime/MRH-FINAL-C-SMOKE-003/report.json`（SHA-256 `7c0254af6df6765f6b0b42fa5358037b682aede1d839f54389e4cf788a50a008`）、同目錄 `smoke-results.json` 與 `final-readback.json`。同版安裝與本機檢查見 `runtime/MRH-FINAL-B-INSTALL-001/`；封裝文字與索引同步見 `runtime/MRH-FINAL-B-BUNDLE-DOCS-002/`。Claude CLI 回報成本 `$0.435344165`、程序 59.770 秒；Jev 費用未獨立回報，不能當成零。C 至 commit 用時 620.899 秒，至最終報告 3243.898 秒；commit 後間隔中的工作量未知，不能視為實際工時。C 主模型 token／費用未提供。
+
+A 已接受功能、安裝與驗證結果。本次三份狀態文件已同步，尚待 A 回讀此文件整合；不把本句當作 A 已接受尚未讀取的文案。下方 E 階段及早期狀態屬歷史證據與當時準則，過時狀態以本段為準；原產品需求及支援界線仍保留。
 
 ## 一、任務與合作方式
 
