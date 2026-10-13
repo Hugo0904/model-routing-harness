@@ -277,3 +277,17 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
   - `test_claude_catalog...dispatches_catalog_refresh`：gemini 分派 reason 與斷言不同步 → P7 前不動。
   - `test_cli...doctor_does_not_import_store...`：doctor 文字已改成「retained for explicitly selected legacy profiles」→ P3 重寫 doctor 文字時一併更新斷言。
 - Jev 真實連線已由使用者在開工前驗證（Keychain 取 key → HTTP 200、jev-1.13.0、Light／0.96、input 439 tokens）。
+
+## 16. 執行結果與偏離計畫之處（2026-10-13）
+
+完成：P0–P3、P4 的封裝與 daily 產物準備、P5 的 L1／L3／L4、P6。未完成：L2（Codex 實測）、daily 設定遷移 v2、`codex plugin add` 刷新、Claude hook 套用（均需使用者同意，見 HANDOFF）。
+
+偏離：
+- v2 設定放在**新檔** `infrastructure/settings_v2.py`，沒有改 `settings_schema.py`／`settings.py`（只擴充 `FILES` 允許 advice DB）；舊指令（`mrh settings`、`mrh model`）仍只認 v1，v2 檔請用 `mrh ctrl`。
+- 宿主接頭在 `adapters/hosts/advisory_hosts.py`（Codex＋Claude 兩個小類別），沒有新增 `claude_code.py`、也沒改 `codex.py`。
+- Codex 訂閱分級用顯式 `standalone=True` 模式（不需 scope binding、不釘二進位雜湊）；沒有改變舊預設。
+- Claude 訂閱分級不用 `--json-schema`（會多一輪，14 秒 vs 9 秒），改容錯解析；預設逾時各 provider 不同（jev 10／codex 20／claude 25 秒）。
+- 預設分級器 Claude 目錄：Claude CLI 2.1.287 超出舊目錄讀取器釘死的版本，控制中心對 claude 平台用內建別名 haiku／sonnet／opus。
+- 控制中心沒有「宿主接入」畫面；安裝改為 `mrh plugin prepare --advisory` ＋ `mrh install claude`。
+- L3／L4 用 scratch 目錄與 scratch 設定直接掛 launcher 跑，沒有碰全域設定。
+- 實測中發現並修正：cwd 為符號連結（/tmp）時 allowlist 靜默判外；選單預設焦點落在 Quit。
