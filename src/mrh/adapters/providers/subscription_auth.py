@@ -63,6 +63,43 @@ class FileAuthSource:
             fail('auth_source_invalid')
 
 
+@dataclass(frozen=True)
+class HomeAuthSource(FileAuthSource):
+    """Standalone mode: an official CLI home with a file-stored login, no MRH scope binding.
+
+    Only metadata is checked; no credential file is opened. Hook-time safety comes from
+    the isolated execution home, the disabled-feature flags and strict output parsing.
+    """
+
+    def verify(self):
+        try:
+            import tomllib
+            owned.canonical_path(self.home)
+            config = self.home / 'config.toml'
+            if config.exists():
+                with open(config, 'rb') as stream:
+                    if tomllib.load(stream).get('cli_auth_credentials_store', 'file') != 'file':
+                        fail('auth_source_unconfirmed')
+            info = self.path.lstat()
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
+                    or info.st_nlink != 1 or info.st_mode & 0o077):
+                fail('auth_source_invalid')
+        except ClassifierFailure:
+            raise
+        except (OSError, ValueError, TypeError):
+            fail('auth_source_invalid')
+
+
+def source_for_home(home=None):
+    base = Path(home) if home else Path(os.environ.get('CODEX_HOME') or Path(pwd.getpwuid(os.getuid()).pw_dir) / '.codex')
+    try:
+        value = HomeAuthSource(owned.canonical_path(base), Path('/'), None)
+    except (OSError, ValueError, TypeError):
+        fail('auth_source_unconfirmed')
+    value.verify()
+    return value
+
+
 def source_for_binding(binding):
     if binding is None:
         fail('auth_source_unconfirmed')

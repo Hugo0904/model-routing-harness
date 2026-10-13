@@ -112,7 +112,7 @@ class TypesafeClassifier:
             if 300 <= response.status < 400:
                 raise ClassifierFailure("typesafe_redirect_rejected")
             if response.status != 200:
-                code = "typesafe_http_" + str(response.status) if response.status in (401, 422, 429, 529) else "typesafe_http_5xx" if 500 <= response.status < 600 else "typesafe_http_error"
+                code = "typesafe_http_" + str(response.status) if response.status in (401, 402, 422, 429, 529) else "typesafe_http_5xx" if 500 <= response.status < 600 else "typesafe_http_error"
                 raise ClassifierFailure(code)
             if len(response.body) > MAX_RESPONSE_BYTES:
                 raise ClassifierFailure("typesafe_oversized_response")

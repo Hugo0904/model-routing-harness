@@ -70,6 +70,10 @@ def build_parser() -> argparse.ArgumentParser:
         command = commands.add_parser(name, help=help_text)
         _add_stats_options(command)
 
+    key = commands.add_parser("key", help="manage the classifier API key (stored in the macOS Keychain)")
+    key.add_argument("action", choices=("status", "set", "delete"))
+    key.add_argument("name", choices=("jev",))
+
     doctor = commands.add_parser("doctor", help="show capability boundaries without probing services")
     _add_display_options(doctor)
 
@@ -429,6 +433,9 @@ def main(
                           bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
             return _cmd_stats(args)
+        if args.command == "key":
+            from mrh.presentation import key_cli
+            return key_cli.run(args.action, args.name, stdout=stdout, stderr=stderr)
         if args.command == "doctor":
             return _cmd_doctor(args)
         if args.command == "config":

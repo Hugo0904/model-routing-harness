@@ -211,8 +211,18 @@ def execution_login_status(binary, execution):
     return env,category
 
 
-def validate_execution(binary, execution):
-    env,category=execution_login_status(binary,execution)
+def standalone_login_status(binary, execution):
+    """Login status without the pinned-binary gate: an incompatible CLI fails closed later."""
+    env=sanitized_environment(execution.root)
+    env['CODEX_SQLITE_HOME']=str(execution.root/'state');env['TMPDIR']=str(execution.root)
+    code,out,err=run_process([str(binary),'--no-daemon','-c','cli_auth_credentials_store="file"',
+                            '-c','forced_login_method="chatgpt"','login','status'],
+                           b'',execution.work,env,execution,limit=8192)
+    return env,('chatgpt' if chatgpt_status(code,out,err) else 'not_logged_in')
+
+
+def validate_execution(binary, execution, pinned=True):
+    env,category=(execution_login_status if pinned else standalone_login_status)(binary,execution)
     if category!='chatgpt':_failure('chatgpt_login_required')
     return env
 
@@ -231,10 +241,10 @@ def public_login_status(binary, source_home, workspace, recorder, *, lock_root=N
     return result
 
 
-def invocation(binary, work, schema):
+def invocation(binary, work, schema, model=MODEL):
     argv=[str(binary),'--no-daemon','exec','--ignore-user-config','--ephemeral','--json',
           '--strict-config','--sandbox','read-only','--skip-git-repo-check','--color','never',
-          '--output-schema',str(schema),'-C',str(work),'-m',MODEL]
+          '--output-schema',str(schema),'-C',str(work),'-m',model]
     for feature in DISABLED:argv+=['--disable',feature]
     for value in (*OVERRIDES,'instructions='+json.dumps(INSTRUCTIONS)):argv+=['-c',value]
     return argv+['-']
@@ -242,8 +252,9 @@ def invocation(binary, work, schema):
 
 class CodexSubscriptionClassifier:
     synthetic=False
-    def __init__(self, *, enabled=False, task_export_permitted=False, runner=None, scope_binding=None):
+    def __init__(self, *, enabled=False, task_export_permitted=False, runner=None, scope_binding=None, model=MODEL, home=None, standalone=False):
         self.enabled=enabled is True;self.task_export_permitted=task_export_permitted is True
+        self.model=model;self.home=home;self.standalone=standalone is True
         if runner is not None and getattr(runner,'synthetic',None) is not True:_failure('unverified_process')
         self.runner=runner;self.synthetic=runner is not None
         self.scope_binding=scope_binding
@@ -256,25 +267,31 @@ class CodexSubscriptionClassifier:
         kind='synthetic' if self.synthetic else 'codex_subscription'
         try:
             if self.runner is not None:
-                output=recorder.invoke('0',lambda enter:self.runner.request(data,recorder,enter),kind=kind,requested_model=MODEL)
+                output=recorder.invoke('0',lambda enter:self.runner.request(data,recorder,enter),kind=kind,requested_model=self.model)
             else:
                 from mrh.adapters.catalogs.catalog import discover, executable_hash
-                from mrh.adapters.hosts.codex_scope import BINARY_SHA256, VERSION
-                if self.scope_binding is not None:
-                    from mrh.infrastructure.owned import read_regular
-                    candidate=_loads(read_regular(self.scope_binding))['codex_scope']['binary']
-                else:candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
-                if candidate is None or executable_hash(candidate)!=BINARY_SHA256:_failure('isolation_unsupported')
-                from mrh.adapters.providers.subscription_auth import source_for_binding, execution_home
-                source=source_for_binding(self.scope_binding)
+                from mrh.adapters.providers.subscription_auth import source_for_binding, source_for_home, execution_home
+                standalone=self.standalone and self.scope_binding is None
+                if standalone:
+                    candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
+                    if candidate is None:_failure('isolation_unsupported')
+                    source=source_for_home(self.home)
+                else:
+                    from mrh.adapters.hosts.codex_scope import BINARY_SHA256
+                    if self.scope_binding is not None:
+                        from mrh.infrastructure.owned import read_regular
+                        candidate=_loads(read_regular(self.scope_binding))['codex_scope']['binary']
+                    else:candidate=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
+                    if candidate is None or executable_hash(candidate)!=BINARY_SHA256:_failure('isolation_unsupported')
+                    source=source_for_binding(self.scope_binding)
                 with execution_home(source,recorder) as execution:
-                    root=execution.root;work=execution.work;env=validate_execution(candidate,execution)
+                    root=execution.root;work=execution.work;env=validate_execution(candidate,execution,pinned=not standalone)
                     schema=root/'answer.json';schema.write_text(json.dumps(SCHEMA))
                     def request(enter):
-                        execution.check();enter();code,out,_=run_process(invocation(candidate,work,schema),data,work,env,execution)
+                        execution.check();enter();code,out,_=run_process(invocation(candidate,work,schema,self.model),data,work,env,execution)
                         if code:_failure('process_failed')
                         return out
-                    output=recorder.invoke('0',request,kind=kind,requested_model=MODEL)
+                    output=recorder.invoke('0',request,kind=kind,requested_model=self.model)
             classification,tokens=parse_stream(output)
             recorder.finish('0','returned',**tokens)
             return classification

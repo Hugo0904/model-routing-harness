@@ -17,7 +17,7 @@ REASONS.update({'scope_fresh_start_missing','scope_fresh_lifecycle',
                 'scope_fresh_sources_changed','scope_fresh_sources_not_predated'})
 REASONS.update({"typesafe_disabled", "typesafe_export_denied", "typesafe_missing_credentials", "typesafe_unverified_transport",
                 "typesafe_invalid_task", "typesafe_malformed_response", "typesafe_model_mismatch",
-                "typesafe_http_401", "typesafe_http_422", "typesafe_http_429", "typesafe_http_529",
+                "typesafe_http_401", "typesafe_http_402", "typesafe_http_422", "typesafe_http_429", "typesafe_http_529",
                 "typesafe_http_5xx", "typesafe_http_error", "typesafe_network_error",
                 "typesafe_timeout", "typesafe_oversized_response", "typesafe_redirect_rejected"})
 REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_protection", "fixed_role_effort",
@@ -26,6 +26,8 @@ REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_
                 "cached_effect_mismatch"})
 REASONS.update({'catalog_model_unavailable', 'catalog_model_retired'})
 REASONS.add('operator_stop_unavailable')
+REASONS.update({'claude_subscription_'+reason for reason in (
+    'disabled','export_denied','recursion','malformed_response','process_failed','timeout','cli_not_found')})
 REASONS.update({'codex_subscription_'+reason for reason in (
     'disabled','export_denied','recursion','invalid_task','malformed_response',
     'oversized_response','tool_activity','process_failed','timeout',

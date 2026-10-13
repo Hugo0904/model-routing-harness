@@ -4,7 +4,8 @@ from pathlib import Path
 from mrh.infrastructure import owned
 from mrh.infrastructure.settings_schema import SettingsError, default_settings, parse_settings, validate_settings
 
-FILES = {"settings.json", "model-profile.json", "events.sqlite3", "events.sqlite3.lock", "events.sqlite3.key", "events.sqlite3-wal", "events.sqlite3-shm"}
+FILES = {"settings.json", "model-profile.json", "events.sqlite3", "events.sqlite3.lock", "events.sqlite3.key", "events.sqlite3-wal", "events.sqlite3-shm",
+         "advice.sqlite3", "advice.sqlite3.lock", "advice.sqlite3-wal", "advice.sqlite3-shm"}
 
 
 def _location(path, *, check_contents=True):
