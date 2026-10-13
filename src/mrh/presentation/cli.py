@@ -45,6 +45,7 @@ def _add_stats_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--synthetic", action="store_true", help="read the isolated synthetic partition")
     parser.add_argument("--json", action="store_true", help="print the unmodified statistics object")
     parser.add_argument("--details", action="store_true", help="show full statistics and telemetry")
+    parser.add_argument("--days", type=float, default=None, help="period in days (0 = all records)")
     _add_display_options(parser)
 
 
@@ -64,8 +65,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_display_options(model)
 
     for name, help_text in (
-        ("stats", "show event statistics"),
-        ("status", "show current local routing status and statistics"),
+        ("stats", "statistics in plain language (same as `mrh ctrl stats`)"),
+        ("status", "card dashboard (same as `mrh ctrl dashboard`)"),
     ):
         command = commands.add_parser(name, help=help_text)
         _add_stats_options(command)
@@ -468,6 +469,13 @@ def main(
                           stdin=stdin, stdout=stdout, width=args.width or terminal_width(), color=_wants_color(args),
                           bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
+            if args.db is None and args.settings is None and not args.synthetic and not args.details:
+                # Plain `mrh status` / `mrh stats` show the current advisory data. The flags above select the legacy event store.
+                from mrh.presentation import ctrl
+                args.ctrl_action = "dashboard" if args.command == "status" else "stats"
+                if args.days is None:
+                    args.days = 7 if args.command == "status" else 1
+                return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))
             return _cmd_stats(args)
         if args.command == "install":
             from mrh.infrastructure import claude_hook as ch
