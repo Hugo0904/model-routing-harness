@@ -42,16 +42,19 @@ mrh key set jev      # 由 macOS 提示輸入，金鑰不經過 MRH、不進任�
 
 ## 安裝（macOS arm64）
 
-建置與封裝見 `scripts/packaging/build_standalone.py`；封裝內含私有 Python，不需另外安裝 SDK。
+封裝內含私有 Python，不需另外安裝 SDK。安裝到固定位置（之後升級路徑不變，hook 不需重新信任）：
 
 ```sh
-B=/path/to/model-routing-harness-0.4.0-macos-arm64
-$B/mrh plugin prepare --advisory --root <artifact 目錄> --settings <settings.json 路徑> --python $B/runtime/bin/python3.11
-# Codex：codex plugin marketplace add <artifact 目錄> → codex plugin add model-routing-harness@model-routing-harness-local → 在 Codex 輸入 /hooks 信任
-# Claude Code：先看差異，確認後再套用（會備份原檔，保留你其他 hook）
-$B/mrh install claude --artifact <artifact 目錄>            # 只顯示差異
-$B/mrh install claude --artifact <artifact 目錄> --apply
+python3 scripts/packaging/build_standalone.py --cache build/e15-public-assets --output dist/<名稱> --archive dist/<名稱>.tar.gz
+python3 scripts/packaging/install_local.py --bundle dist/<名稱> --settings <settings.json 絕對路徑>
+#   → ~/.local/share/model-routing-harness/app、~/.local/bin/mrh、~/.config/model-routing-harness/active-settings
+mrh plugin prepare --advisory --root <artifact 目錄> --settings <settings.json> --python ~/.local/share/model-routing-harness/app/runtime/bin/python3.11
+# Codex：codex plugin marketplace add <artifact 目錄>（首次）→ codex plugin add model-routing-harness@model-routing-harness-local → Codex 內 /hooks 信任
+mrh install claude --artifact <artifact 目錄>            # 只顯示差異
+mrh install claude --artifact <artifact 目錄> --apply    # 套用（自動備份，保留其他 hook）
 ```
+
+升級：重建封裝 → `install_local.py` → `mrh plugin prepare …`（同參數）→ `codex plugin add …`。hook 指令路徑不變，信任不失效。
 
 預設**停用**。用 `mrh ctrl` 開啟；開啟代表把子代理任務文字送給你選的分級器。停用：`mrh ctrl set enabled off`；移除 Claude hook：`mrh install claude --artifact … --remove --apply`。
 
