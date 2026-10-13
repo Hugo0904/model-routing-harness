@@ -57,11 +57,10 @@ class Menu:
     def pick(self, title, items, current=None, trail=None):
         """Return the value of the chosen (label, value) pair."""
         items = list(items)
-        self.path(trail)
         fd = self._tty_fd()
         if fd is None:
             self.stdout.write(render_choices(title, [f"{i + 1}. {label}" + (" [目前]" if current is not None and value == current else "")
-                                                     for i, (label, value) in enumerate(items)], width=self.width, color=self.color, heading="控制中心"))
+                                                     for i, (label, value) in enumerate(items)], width=self.width, color=self.color, heading="控制中心", trail=trail))
             while True:
                 answer = self.text("請輸入編號")
                 if answer.isdigit() and 1 <= int(answer) <= len(items):
@@ -75,7 +74,7 @@ class Menu:
         def draw(replace=False):
             rows = [("> " if i == focus else "  ") + f"{i + 1}. {label}" + (" [目前]" if current is not None and value == current else "")
                     for i, (label, value) in enumerate(items)]
-            frame = render_choices(title, rows, width=self.width, color=self.color, heading="控制中心")
+            frame = render_choices(title, rows, width=self.width, color=self.color, heading="控制中心", trail=trail)
             if replace:
                 self.stdout.write("\r\x1b[" + str(frame.count("\n")) + "A")
             self.stdout.write(frame); self.stdout.write("  > "); self.stdout.flush()

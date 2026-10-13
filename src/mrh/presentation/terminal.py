@@ -462,13 +462,17 @@ def _configuration_lines(configuration: Mapping[str, Any], width: int, color: bo
     return lines
 
 
-def _policy_frame(title: str, contents: list[str], *, width: int | None, color: bool, heading: str = "MODEL POLICY") -> str:
+def _policy_frame(title: str, contents: list[str], *, width: int | None, color: bool, heading: str = "MODEL POLICY", trail: list | None = None) -> str:
     columns = min(140, _width(width))
     inner = columns - 4
-    lines = ["", _fit("MRH  /  " + heading, inner), "", _fit(title, inner), ""] + contents + [""]
+    head = ["", _fit("MRH  /  " + heading, inner)]
+    if trail:
+        head.append(_fit("路徑：" + " > ".join(str(t) for t in trail), inner))
+    lines = head + ["", _fit(title, inner), ""] + contents + [""]
+    accent = set(range(1, len(head))) | {len(head) + 1}
     fitted = ["  " + line + " " * max(0, inner - cell_width(line)) + "  " for line in lines]
     if color:
-        return "\n".join(_BG + (_LAVENDER if index in (1, 3) else _FG) + line + _RESET
+        return "\n".join(_BG + (_LAVENDER if index in accent else _FG) + line + _RESET
                          for index, line in enumerate(fitted)) + "\n"
     return "\n".join(fitted) + "\n"
 
@@ -489,13 +493,13 @@ def render_policy_review(changes: list[str], *, width: int | None = None, color:
     return _policy_frame("REVIEW POLICY CHANGES", contents, width=width, color=color)
 
 
-def render_choices(title: str, entries: list[str], *, width: int, color: bool = False, heading: str = "MODEL POLICY") -> str:
+def render_choices(title: str, entries: list[str], *, width: int, color: bool = False, heading: str = "MODEL POLICY", trail: list | None = None) -> str:
     """Numbered catalog choices share the current-policy frame and cell geometry."""
     inner = min(140, _width(width)) - 4
     contents = []
     for entry in entries:
         contents.extend(_cell_chunks(entry, inner))
-    return _policy_frame(title, contents, width=width, color=color, heading=heading)
+    return _policy_frame(title, contents, width=width, color=color, heading=heading, trail=trail)
 
 
 def render_stats(stats: Mapping[str, Any], *, width: int | None = None,
