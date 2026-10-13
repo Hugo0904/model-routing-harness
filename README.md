@@ -86,7 +86,19 @@ Claude 可用 `low／medium／high／xhigh／max`，別名 `haiku`、`sonnet`、
 | 限制只在某些資料夾生效 | `mrh ctrl set allowed_workspaces "/Users/me/專案A,/Users/me/專案B"`（`/` 代表全部） |
 | 視為預設角色（不當成專門角色） | `mrh ctrl set generic_roles.codex worker` |
 
-**資料放哪裡**：設定檔 `settings.json` 與統計資料庫 `advice.sqlite3` 在同一個資料夾（路徑見 `mrh ctrl show` 最後一行）。資料庫只存次數、等級、模型等，**不存任務內容**。想清空統計，把 `advice.sqlite3*` 移走即可，下次會自動重建。
+**清除統計**（只清統計資料，不碰設定與金鑰；刪除前一定先預覽，並要你輸入確認）：
+
+```sh
+mrh stats reset --today        # 今天
+mrh stats reset --days 7       # 最近 7 天內（30、或任意天數都可以）
+mrh stats reset --all          # 全部
+```
+
+互動時預覽後要輸入「刪除 N」（N 是預覽顯示的總筆數）才會真的刪除，輸入其他內容就取消；在腳本中沒加 `--yes` 只會顯示預覽。`mrh ctrl` 選單的「清除統計」也是同樣流程。範圍內所有統計資料表（委派、分級器呼叫、子代理、通知）一起清除，**包含除錯用的分級器呼叫紀錄**。
+
+**統計保留期限**：預設保留 365 天，超過的紀錄會自動刪除（每天最多整理一次，由 hook 在記錄子代理時順便做，不拖慢派工）。調整：`mrh ctrl set stats.retention_days 180`（`0` 代表永久保留）；選單「統計保留天數」也可以改。每次委派約佔 1 KB，所以即使每天 200 次，一年也只有約 70 MB。
+
+**資料放哪裡**：設定檔 `settings.json` 與統計資料庫 `advice.sqlite3` 在同一個資料夾（路徑見 `mrh ctrl show` 最後一行）。資料庫只存次數、等級、模型等，**不存任務內容**。想清空統計請用上面的 `mrh stats reset`。
 
 **出問題時**：
 1. `mrh ctrl show`：路由是否開啟、適用範圍是否包含目前資料夾、金鑰是否已設定。

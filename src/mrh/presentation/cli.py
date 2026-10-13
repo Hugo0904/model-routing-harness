@@ -49,6 +49,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh ctrl               控制中心（互動選單：模型、分級器、信心門檻、適用範圍…）
   mrh status             儀表板（流程、難度表、分段比例條）
   mrh stats              文字統計（可加 --days N；0 = 全部）
+  mrh stats reset        清除統計（--today／--days N／--all；會先預覽並要你輸入確認）
   mrh ctrl show          目前設定一覽
   mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
   mrh key status jev     金鑰狀態（set 存入、delete 刪除）
@@ -70,7 +71,16 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     for name, help_text in (("status", "card dashboard"), ("stats", "statistics in plain language")):
-        _add_stats_options(commands.add_parser(name, help=help_text))
+        parser_for = commands.add_parser(name, help=help_text)
+        _add_stats_options(parser_for)
+        if name == "stats":
+            reset = parser_for.add_subparsers(dest="stats_action").add_parser("reset", help="delete statistics (preview first; needs a typed confirmation or --yes)")
+            scope = reset.add_mutually_exclusive_group()
+            scope.add_argument("--today", action="store_true", help="records since 00:00 today")
+            scope.add_argument("--days", dest="reset_days", type=int, help="records within the last N days")
+            scope.add_argument("--all", action="store_true", help="every record")
+            reset.add_argument("--settings", type=Path, default=argparse.SUPPRESS, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
+            reset.add_argument("--yes", action="store_true", help="really delete (without it: preview, or a typed confirmation when interactive)")
 
     ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
     ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
@@ -167,7 +177,7 @@ def main(
     try:
         if args.command in {"stats", "status"}:
             from mrh.presentation import ctrl
-            args.ctrl_action = "dashboard" if args.command == "status" else "stats"
+            args.ctrl_action = "reset" if getattr(args, "stats_action", None) == "reset" else "dashboard" if args.command == "status" else "stats"
             if args.days is None:
                 args.days = 7 if args.command == "status" else 1
             return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))

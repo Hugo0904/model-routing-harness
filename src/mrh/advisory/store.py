@@ -6,6 +6,7 @@ for dedupe. Nothing here can hold a credential.
 from __future__ import annotations
 
 import hashlib
+from contextlib import closing
 import json
 import os
 import sqlite3
@@ -114,6 +115,45 @@ class AdviceStore:
         if not readonly:
             db.execute("PRAGMA journal_mode=WAL")
         return db
+
+    TABLES = ("advice", "attempts", "children", "notices")
+
+    def preview_since(self, cutoff):
+        """What a reset from `cutoff` (epoch seconds; rows with ts >= cutoff) would delete, and what would remain. Writes nothing."""
+        with closing(self.connect(readonly=True)) as db:
+            delete = {t: db.execute(f"SELECT COUNT(*) FROM {t} WHERE ts>=?", (cutoff,)).fetchone()[0] for t in self.TABLES}
+            total = {t: db.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in self.TABLES}
+            first, last = db.execute("SELECT MIN(ts), MAX(ts) FROM advice WHERE ts>=?", (cutoff,)).fetchone()
+        return {"delete": delete, "keep": {t: total[t] - delete[t] for t in self.TABLES}, "first": first, "last": last}
+
+    def _delete(self, where, value):
+        with closing(self.connect()) as db:
+            db.execute("BEGIN IMMEDIATE")                  # one transaction: never half-deleted
+            deleted = {t: db.execute(f"DELETE FROM {t} WHERE {where}", (value,)).rowcount for t in self.TABLES}
+            db.commit()
+        if sum(deleted.values()):                          # give the space back to the file system
+            with closing(self.connect()) as db:
+                db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                db.execute("VACUUM")
+        return deleted
+
+    def delete_since(self, cutoff):
+        """Manual reset: remove every record at or after `cutoff`. Settings and keys are not stored here."""
+        return self._delete("ts>=?", cutoff)
+
+    def prune_before(self, cutoff):
+        return self._delete("ts<?", cutoff)
+
+    def maintain(self, retention_days, now):
+        """Drop records older than the retention period, at most once per calendar day (0 = keep forever)."""
+        if not retention_days:
+            return 0
+        today = int(now // 86400)
+        with closing(self.connect()) as db:
+            if db.execute("PRAGMA user_version").fetchone()[0] == today:
+                return 0
+            db.execute(f"PRAGMA user_version={today}")
+        return sum(self.prune_before(now - retention_days * 86400).values())
 
     @classmethod
     def read_stats(cls, path, since):

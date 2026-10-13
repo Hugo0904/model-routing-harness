@@ -59,6 +59,14 @@ def changes_for(settings, key, value):
         return {"enabled": parse_bool(value)}
     if key == "task_export":
         return {"task_export_permitted": parse_bool(value)}
+    if key == "stats.retention_days":
+        try:
+            days = int(str(value).strip())
+        except ValueError:
+            raise CtrlError("保留天數必須是整數（0 代表永久保留）") from None
+        if not 0 <= days <= v2.MAX_RETENTION_DAYS:
+            raise CtrlError(f"保留天數必須介於 0 到 {v2.MAX_RETENTION_DAYS}（0 代表永久保留）")
+        return {"retention_days": days}
     if key == "classifier.provider":
         provider = str(value).strip().lower()
         if provider not in v2.PROVIDERS:
@@ -100,6 +108,6 @@ def changes_for(settings, key, value):
 
 
 def key_names():
-    return ["enabled", "task_export", "classifier.provider", "classifier.model", "classifier.timeout", "threshold",
+    return ["enabled", "task_export", "stats.retention_days", "classifier.provider", "classifier.model", "classifier.timeout", "threshold",
             "top_mode", "allowed_workspaces", *[f"tiers.{t}.{p}" for t in v2.TIERS for p in v2.PLATFORMS],
             *[f"fixed.{p}" for p in v2.PLATFORMS], *[f"generic_roles.{p}" for p in v2.PLATFORMS]]

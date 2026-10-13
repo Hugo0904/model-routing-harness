@@ -29,7 +29,8 @@ def snapshot(settings, path, secrets_module=secrets):
             "applies_to": v2.effective_roots(settings)[0], "applies_to_source": v2.effective_roots(settings)[1],
             "tiers": settings["policy"]["tiers"],
             "fixed": settings["policy"]["fixed"],
-            "generic_roles": settings["policy"].get("generic_roles", v2.DEFAULT_GENERIC_ROLES)}
+            "generic_roles": settings["policy"].get("generic_roles", v2.DEFAULT_GENERIC_ROLES),
+            "retention_days": v2.retention_days(settings)}
 
 
 def _row(label, text):
@@ -63,6 +64,7 @@ def render(snap, width=100):
         lines.append("    （Top 目前交回主模型自己做；上表 Top 一列只在設為 Fixed 時才會用到）")
     roles = "；".join(f"{p}: {', '.join(r)}" for p, r in snap["generic_roles"].items() if r) or "（無）"
     lines += ["", _row("視為預設角色", roles + "   （其他命名的專門角色一律不干預）"),
+              _row("統計保留", "永久保留" if not snap["retention_days"] else f"{snap['retention_days']} 天（超過的紀錄會自動刪除）"),
               _row("設定檔", f"{snap['settings_path']}（版本 {snap['revision']}）")]
     return "\n".join(sanitize_text(line) if i else line for i, line in enumerate(lines)) + "\n"
 
@@ -75,6 +77,20 @@ def apply_set(path, settings, key, value):
         return f"{key} 已寫入 {settings['workspace_allowlist_file']}"
     saved = v2.update(path, expected_revision=settings["revision"], **logic.changes_for(settings, key, value))
     return f"{key} 已儲存（版本 {saved['revision']}）"
+
+
+def reset_stats(path, scope, days, *, yes, stdin, stdout, ask=None):
+    """Delete statistics in a range after a preview and a typed confirmation (or --yes). Settings are never touched."""
+    from mrh.advisory.store import AdviceStore
+    from mrh.presentation import stats_reset
+    db = path.parent / "advice.sqlite3"
+    if not db.exists():
+        stdout.write("還沒有任何統計資料。\n")
+        return 0
+    interactive = getattr(stdin, "isatty", lambda: False)()
+    ask = ask or (lambda prompt: (stdout.write(prompt + "\n  > "), stdout.flush(), stdin.readline())[-1])
+    code, _ = stats_reset.run(AdviceStore(db), scope, days, yes=yes, interactive=interactive, ask=ask, out=stdout)
+    return code
 
 
 def statistics(path, days):
@@ -360,6 +376,23 @@ class Session:
         days = self.menu.pick("儀表板統計期間", [("過去 24 小時", 1), ("過去 7 天", 7), ("過去 30 天", 30), ("全部", None)])
         self.out.write("\n" + dashboard_text(self.path, days, self.menu.width, self.menu.color) + "\n")
 
+    def retention(self):
+        now = v2.retention_days(self.settings())
+        value = self.menu.text(f"統計保留幾天？超過的紀錄會自動刪除（目前 {'永久保留' if not now else str(now) + ' 天'}；0 代表永久保留；直接按 Enter 保持不變）")
+        if value:
+            self.set_key("stats.retention_days", value, f"統計保留 → {'永久' if value == '0' else value + ' 天'}")
+
+    def reset(self):
+        scope, days = self.menu.pick("要清除哪個範圍的統計？", [("今天", ("today", None)), ("最近 7 天內", ("days", 7)), ("最近 30 天內", ("days", 30)),
+                                                              ("自己輸入天數", ("custom", None)), ("全部", ("all", None))])
+        if scope == "custom":
+            raw = self.menu.text("最近幾天內的紀錄要清除？（輸入正整數）")
+            if not raw.isdigit() or int(raw) < 1:
+                self.menu.note("請輸入大於 0 的整數。"); return
+            scope, days = "days", int(raw)
+        reset_stats(self.path, scope, days, yes=False, stdin=self.menu.stdin, stdout=self.out,
+                    ask=lambda prompt: self.menu.text(prompt.strip()))
+
     def report(self):
         from pathlib import Path
         import webbrowser
@@ -376,7 +409,7 @@ class Session:
     def run(self):
         screens = [("路由開關", self.routing), ("分級器（Jev / Codex 訂閱 / Claude 訂閱）", self.classifier), ("各難度要用的模型", self.tiers),
                    ("Top 難度怎麼處理", self.top), ("信心門檻", self.threshold), ("適用範圍（哪些資料夾）", self.where),
-                   ("API 金鑰狀態", self.api_key), ("儀表板（圖表版面）", self.dashboard), ("統計（文字）", self.stats), ("網頁報表（選用）", self.report)]
+                   ("API 金鑰狀態", self.api_key), ("儀表板（圖表版面）", self.dashboard), ("統計（文字）", self.stats), ("清除統計", self.reset), ("統計保留天數", self.retention), ("網頁報表（選用）", self.report)]
         while True:
             self.out.write("\n" + render(snapshot(self.settings(), self.path, self.secrets), self.menu.width))
             try:
@@ -411,6 +444,16 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
             v2.init(path)
         settings = v2.read(path)
         action = getattr(args, "ctrl_action", None)
+        if action == "reset":
+            if args.all:
+                scope, days = "all", None
+            elif args.today:
+                scope, days = "today", None
+            elif args.reset_days:
+                scope, days = "days", args.reset_days
+            else:
+                return _fail(stderr, "請指定範圍：--today、--days N 或 --all（再加 --yes 才會真的刪除，不加只顯示預覽）")
+            return reset_stats(path, scope, days, yes=args.yes, stdin=stdin, stdout=stdout)
         if action == "dashboard":
             if getattr(args, "json", False):
                 stdout.write(json.dumps(status_data(path, None if args.days == 0 else args.days), indent=2, sort_keys=True) + "\n"); return 0

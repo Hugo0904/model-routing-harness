@@ -24,6 +24,8 @@ PLATFORMS = ("codex", "claude", "gemini")
 TIERS = ("Light", "Small", "Mid")
 PROVIDERS = {"jev": TYPESAFE_MODEL, "codex_subscription": "gpt-6-luna", "claude_subscription": "haiku"}
 MAX_CANDIDATES = 5
+DEFAULT_RETENTION_DAYS = 365          # statistics older than this are removed automatically; 0 keeps everything
+MAX_RETENTION_DAYS = 3650
 # Roles a parent attaches by habit, not a specialised role with its own model settings.
 # Codex's built-in `worker` is sent on almost every spawn; `default` / `general-purpose` are implicit.
 DEFAULT_GENERIC_ROLES = {"codex": ["worker"], "claude": [], "gemini": []}
@@ -104,7 +106,7 @@ def generic_roles(policy, platform):
 
 def validate(value):
     """Validate and return a fresh v2 document."""
-    if type(value) is not dict or set(value) - _TOP - {"workspace_allowlist_file"} or _TOP - set(value):
+    if type(value) is not dict or set(value) - _TOP - {"workspace_allowlist_file", "retention_days"} or _TOP - set(value):
         _invalid()
     if value["schema_version"] != SCHEMA_VERSION or type(value["schema_version"]) is not int or value["owner"] != OWNER:
         _invalid()
@@ -124,6 +126,11 @@ def validate(value):
               "policy": _policy(value["policy"])}
     if "workspace_allowlist_file" in value:
         result["workspace_allowlist_file"] = _validate_workspace_path(value["workspace_allowlist_file"])
+    if "retention_days" in value:
+        days = value["retention_days"]
+        if type(days) is not int or not 0 <= days <= MAX_RETENTION_DAYS:
+            _invalid()
+        result["retention_days"] = days
     return result
 
 
@@ -210,7 +217,7 @@ def init(path):
         raise SettingsError("settings_unowned") from None
 
 
-_CHANGEABLE = {"enabled", "task_export_permitted", "allowed_workspaces", "workspace_allowlist_file",
+_CHANGEABLE = {"retention_days", "enabled", "task_export_permitted", "allowed_workspaces", "workspace_allowlist_file",
                "classifier", "policy"}
 
 
@@ -244,6 +251,10 @@ def update(path, *, expected_revision=None, **changes):
 
 
 workspace_allowed = legacy.workspace_allowed
+
+
+def retention_days(settings):
+    return settings.get("retention_days", DEFAULT_RETENTION_DAYS)
 
 
 def effective_roots(settings):

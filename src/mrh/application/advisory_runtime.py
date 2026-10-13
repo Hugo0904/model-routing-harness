@@ -43,6 +43,7 @@ def handle(event, platform, settings_path, *, classifier_factory=None, clock=Non
         now = clock or time.time
         if post is not None:
             store.record_child(post, now())
+            store.maintain(v2.retention_days(settings), now())      # at most once a day
             return {}
         factory = classifier_factory or (lambda: build(settings))
         advice = engine.decide(pre, settings, store, factory, now)
