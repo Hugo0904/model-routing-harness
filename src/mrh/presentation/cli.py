@@ -78,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
     ctrl_set = ctrl_actions.add_parser("set", help="change one setting (see `mrh ctrl keys`)")
     ctrl_set.add_argument("key"); ctrl_set.add_argument("value")
     ctrl_actions.add_parser("keys", help="list the settable keys")
+    ctrl_dash = ctrl_actions.add_parser("dashboard", help="card-style dashboard: routing flow, tier table, proportion bars")
+    ctrl_dash.add_argument("--days", type=float, default=7, help="period in days (0 = all records; default 7)")
     ctrl_report = ctrl_actions.add_parser("report", help="write an HTML dashboard (tier table + proportion bars)")
     ctrl_report.add_argument("--days", type=float, default=7, help="period in days (0 = all records; default 7)")
     ctrl_report.add_argument("--out", help="output file (default ~/.local/state/model-routing-harness/report.html)")

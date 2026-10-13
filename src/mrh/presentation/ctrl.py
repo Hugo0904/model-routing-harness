@@ -10,6 +10,7 @@ from mrh.application import ctrl_logic as logic
 from mrh.infrastructure import secrets, settings_v2 as v2
 from mrh.infrastructure.settings_schema import SettingsError
 from mrh.presentation.menu import Back, Cancelled, Menu
+from mrh.presentation import report_html, stats_view
 from mrh.presentation.terminal import cell_width, sanitize_text, terminal_width
 
 TOP_HELP = {"Main": "Top 難度由主模型自己做", "Fixed": "Top 難度建議改用「Top 清單」裡的模型"}
@@ -48,16 +49,18 @@ def render(snap, width=100):
              _row("Top 難度", f"{snap['top_mode']}（{TOP_HELP[snap['top_mode']]}）"),
              _row("適用範圍", (", ".join(snap["applies_to"]) or "（無）") +
                   ("" if snap["applies_to_source"] == "settings" else f"   （清單存放於 {snap['applies_to_source']}）")),
-             "", "  候選模型（依優先順序，第一個最優先）"]
-
-    def rows(label, lists):
-        shown = [f"{p}: {logic.format_candidates(lists[p])}" for p in v2.PLATFORMS if lists.get(p)]
-        lines.append(f"    {label:<6} " + ("  |  ".join(shown) if shown else "（未設定）"))
-    for tier in v2.TIERS:
-        rows(tier, snap["tiers"].get(tier, {}))
-    rows("Top", snap["fixed"])
-    if snap["top_mode"] == "Main" and snap["fixed"]:
-        lines.append("           （Top 清單只在 Top 難度設為 Fixed 時才會用到）")
+             ""]
+    platforms = [p for p in ("claude", "codex", "gemini") if any(snap["tiers"].get(t, {}).get(p) for t in v2.TIERS) or snap["fixed"].get(p)] or ["claude", "codex"]
+    widths = [max(14, max(cell_width(logic.format_candidates(snap["tiers"].get(t, {}).get(p, [])) if t != "Top" else logic.format_candidates(snap["fixed"].get(p, []))) for t in (*v2.TIERS, "Top")) + 2) for p in platforms]
+    pad = lambda text, w: text + " " * max(1, w - cell_width(text))
+    lines.append("  候選模型（依優先順序，第一個最優先）")
+    lines.append("    " + pad("難度", 8) + "".join(pad(stats_view.PLATFORM.get(p, p).upper(), w) for p, w in zip(platforms, widths)) + "適用情境")
+    for tier in (*v2.TIERS, "Top"):
+        pool = snap["fixed"] if tier == "Top" else snap["tiers"].get(tier, {})
+        cells = "".join(pad(logic.format_candidates(pool.get(p, [])) if pool.get(p) else "—", w) for p, w in zip(platforms, widths))
+        lines.append("    " + pad(tier.lower(), 8) + cells + report_html.TIER_WHEN[tier])
+    if snap["top_mode"] == "Main":
+        lines.append("    （Top 目前交回主模型自己做；上表 Top 一列只在設為 Fixed 時才會用到）")
     roles = "；".join(f"{p}: {', '.join(r)}" for p, r in snap["generic_roles"].items() if r) or "（無）"
     lines += ["", _row("視為預設角色", roles + "   （其他命名的專門角色一律不干預）"),
               _row("設定檔", f"{snap['settings_path']}（版本 {snap['revision']}）")]
@@ -74,7 +77,7 @@ def apply_set(path, settings, key, value):
     return f"{key} 已儲存（版本 {saved['revision']}）"
 
 
-def stats_text(path, days, as_json=False):
+def stats_text(path, days, as_json=False, color=False):
     from mrh.advisory.store import AdviceStore
     from mrh.presentation import stats_view
     since = 0 if days is None else time.time() - days * 86400
@@ -84,10 +87,10 @@ def stats_text(path, days, as_json=False):
         "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
     if as_json:
         return json.dumps(data, indent=2, sort_keys=True)
-    return stats_view.render(data, label, v2.read(path)["policy"]["threshold"])
+    return stats_view.render(data, label, v2.read(path)["policy"]["threshold"], color)
 
 
-def report_html(path, days):
+def report_html_page(path, days):
     """Standalone dashboard page from the settings and the decision log."""
     from mrh.advisory.store import AdviceStore
     from mrh.presentation import report_html as page
@@ -97,6 +100,18 @@ def report_html(path, days):
     data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
         "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
     return page.render(v2.read(path), data, label)
+
+
+def dashboard_text(path, days, width, color):
+    """The card layout: routing flow + tier table + proportion bars."""
+    from mrh.advisory.store import AdviceStore
+    from mrh.presentation import dashboard
+    since = 0 if days is None else time.time() - days * 86400
+    label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
+    db = path.parent / "advice.sqlite3"
+    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
+        "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    return dashboard.render(v2.read(path), data, label, width, color)
 
 
 def list_models(platform, cache={}):
@@ -237,12 +252,29 @@ class Session:
 
     def stats(self):
         days = self.menu.pick("統計期間", [("過去 24 小時", 1), ("過去 7 天", 7), ("過去 30 天", 30), ("全部", None)])
-        self.out.write("\n" + stats_text(self.path, days) + "\n")
+        self.out.write("\n" + stats_text(self.path, days, color=self.menu.color) + "\n")
+
+    def dashboard(self):
+        days = self.menu.pick("儀表板統計期間", [("過去 24 小時", 1), ("過去 7 天", 7), ("過去 30 天", 30), ("全部", None)])
+        self.out.write("\n" + dashboard_text(self.path, days, self.menu.width, self.menu.color) + "\n")
+
+    def report(self):
+        from pathlib import Path
+        import webbrowser
+        out = Path.home() / ".local/state/model-routing-harness/report.html"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(report_html_page(self.path, 7), encoding="utf-8")
+        self.menu.note(f"已產生網頁報表（過去 7 天）：{out}")
+        try:
+            webbrowser.open(out.as_uri())
+            self.menu.note("已用瀏覽器開啟。")
+        except Exception:
+            self.menu.note("請自行用瀏覽器開啟上面的檔案。")
 
     def run(self):
         screens = [("路由開關", self.routing), ("分級器（Jev / Codex 訂閱 / Claude 訂閱）", self.classifier), ("各難度要用的模型", self.tiers),
                    ("Top 難度怎麼處理", self.top), ("信心門檻", self.threshold), ("適用範圍（哪些資料夾）", self.where),
-                   ("API 金鑰狀態", self.api_key), ("統計", self.stats)]
+                   ("API 金鑰狀態", self.api_key), ("儀表板（圖表版面）", self.dashboard), ("統計（文字）", self.stats), ("網頁報表（選用）", self.report)]
         while True:
             self.out.write("\n" + render(snapshot(self.settings(), self.path, self.secrets), self.menu.width))
             try:
@@ -271,13 +303,15 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
             v2.init(path)
         settings = v2.read(path)
         action = getattr(args, "ctrl_action", None)
+        if action == "dashboard":
+            stdout.write(dashboard_text(path, None if args.days == 0 else args.days, args.width or terminal_width(), color)); return 0
         if action == "stats":
-            stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json) + "\n"); return 0
+            stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json, color) + "\n"); return 0
         if action == "report":
             from pathlib import Path
             out = Path(args.out) if args.out else Path.home() / ".local/state/model-routing-harness/report.html"
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(report_html(path, None if args.days == 0 else args.days), encoding="utf-8")
+            out.write_text(report_html_page(path, None if args.days == 0 else args.days), encoding="utf-8")
             stdout.write(f"報表已產生：{out}\n")
             if args.open:
                 import webbrowser

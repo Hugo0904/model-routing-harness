@@ -35,7 +35,7 @@ ul{margin:16px 0 0;padding:0;list-style:none}li{color:var(--text);padding:3px 0 
 .legend{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0 10px;color:var(--dim)}.legend em{font-style:normal;display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
 .bar{margin:0 0 20px}.bar .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.bar .track{height:14px;border-radius:7px;background:var(--track);margin:6px 0 4px;overflow:hidden}.bar .fill{height:100%;background:var(--lav);border-radius:7px}
 .bar .note{color:var(--faint);font-size:13px}.foot{display:flex;justify-content:space-between;color:var(--faint);font-size:12px;letter-spacing:.1em;border-top:1px solid var(--edge);padding-top:14px;margin-top:6px;gap:12px;flex-wrap:wrap}
-.empty{color:var(--dim);padding:18px 0}
+.note2{color:var(--faint);font-size:12px;margin-top:10px}.empty{color:var(--dim);padding:18px 0}
 """
 
 
@@ -65,8 +65,10 @@ def render(settings, data, period_label, generated=None):
     rows = []
     for tier in ("Light", "Small", "Mid", "Top"):
         top = tier == "Top"
+        claude = (settings["policy"]["fixed"] if tier == "Top" else settings["policy"]["tiers"].get(tier, {})).get("claude", [])
+        price = stats_view.claude_price(claude[0]["model"]) if claude else "—"
         cells = "".join(f"<td>{_e(_models(settings, tier, p))}" + ("<small>留給主模型</small>" if top and policy["top_mode"] == "Main" and p == platforms[0] else "") + "</td>" for p in platforms)
-        rows.append(f'<tr class="{"top" if top else ""}"><td class="t">{tier.lower()}</td>{cells}<td class="w">{_e(TIER_WHEN[tier])}</td></tr>')
+        rows.append(f'<tr class="{"top" if top else ""}"><td class="t">{tier.lower()}</td>{cells}<td>{_e(price)}</td><td class="w">{_e(TIER_WHEN[tier])}</td></tr>')
     head = "".join(f"<th>{PLATFORM_TITLE[p]}</th>" for p in platforms)
 
     if total:
@@ -101,6 +103,6 @@ def render(settings, data, period_label, generated=None):
 <div class="box hl"><b>{_e(c["model"])}</b><span>一道選擇題<br>{_e(jev_line)} · 約 0.5 秒</span></div><div class="arrow">→</div>
 <div class="box"><b>難度</b><span>light · small · mid · top</span></div><div class="arrow">→</div>
 <div class="box"><b>模型</b><span>依你設定的表格<br>各工具各自一份</span></div></div>
-<table><tr><th>TIER</th>{head}<th>WHEN</th></tr>{"".join(rows)}</table><ul>{"".join(f"<li>{_e(b)}</li>" for b in bullets)}</ul></div>
+<table><tr><th>TIER</th>{head}<th>$/MTOK IN/OUT</th><th>WHEN</th></tr>{"".join(rows)}</table><div class="note2">價格為 Claude 官方牌價（美元／百萬 token，輸入／輸出），僅供參考；Codex 以訂閱額度計，不列價格。</div><ul>{"".join(f"<li>{_e(b)}</li>" for b in bullets)}</ul></div>
 <div class="card"><p class="label">WHERE {total} DELEGATIONS WENT · {_e(period_label)}</p><div class="cols"><div>{left}</div><div>{right}</div></div></div>
 <div class="foot"><span>NUMBERS FROM THE ROUTER'S DECISION LOG · {_e(stamp)}</span><span>MRH</span></div></div></body></html>"""

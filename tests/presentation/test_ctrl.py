@@ -67,7 +67,8 @@ class CtrlTests(unittest.TestCase):
         data = json.loads(self.cli("show", "--json")[1])
         self.assertEqual(data["api_key"], {"jev": {"environment": False, "keychain": True}})
         text = self.cli("show")[1]
-        self.assertIn("codex: gpt-5.6-luna:low", text)
+        self.assertIn("gpt-5.6-luna:low", text)
+        self.assertRegex(text, r"light\s+haiku|light\s+gpt-5\.6-luna:low")
         self.assertLess(text.count("\n"), 22)
 
     def test_interactive_flow_enables_routing_and_edits_a_list(self):

@@ -21,6 +21,48 @@ REASON = {
 }
 PROVIDER = {"jev": "Jev", "codex_subscription": "Codex 訂閱", "claude_subscription": "Claude 訂閱", "synthetic": "測試資料"}
 JEV_USD_PER_INPUT_TOKEN = 0.042 / 1_000_000
+# Official list prices per million tokens (input, output), checked 2026-10. Display only; nothing is billed from this table.
+CLAUDE_PRICES = (("haiku", (0.10, 0.50)), ("sonnet", (2, 10)), ("opus", (4, 20)), ("fable", (10, 50)))
+
+
+def claude_price(model):
+    for name, (low, high) in CLAUDE_PRICES:
+        if name in str(model).lower():
+            fmt = lambda v: f"{v:.2f}" if v < 1 else f"{v:g}"
+            return f"{fmt(low)} / {fmt(high)}"
+    return "—"
+
+
+# ---- terminal bars
+TIER_RGB = {"Light": (75, 80, 168), "Small": (100, 105, 201), "Mid": (169, 174, 245), "Top": (232, 234, 252)}
+TIER_GLYPH = {"Light": "░", "Small": "▒", "Mid": "▓", "Top": "█"}
+
+
+def stacked_bar(parts, width, color):
+    """parts: [(tier, count)]. Each segment's length is proportional; the percentage sits in the caption."""
+    total = sum(n for _, n in parts) or 1
+    cells, used = [], 0
+    for i, (tier, n) in enumerate(parts):
+        size = width - used if i == len(parts) - 1 else max(1 if n else 0, round(n * width / total))
+        size = max(0, min(size, width - used)); used += size
+        if color:
+            r, g, b = TIER_RGB[tier]
+            cells.append(f"\x1b[38;2;{r};{g};{b}m" + "█" * size + "\x1b[0m")
+        else:
+            cells.append(TIER_GLYPH[tier] * size)
+    return "".join(cells)
+
+
+def _swatch(tier, color):
+    r, g, b = TIER_RGB[tier]
+    return f"\x1b[38;2;{r};{g};{b}m■\x1b[0m" if color else TIER_GLYPH[tier]
+
+
+def progress_bar(percent, width, color):
+    filled = round(width * percent / 100)
+    if color:
+        return "\x1b[38;2;169;174;245m" + "█" * filled + "\x1b[38;2;70;74;99m" + "█" * (width - filled) + "\x1b[0m"
+    return "█" * filled + "░" * (width - filled)
 
 
 def _pad(text, width):
@@ -36,7 +78,7 @@ def _pct(part, whole):
     return f"{part * 100 // whole}%" if whole else "—"
 
 
-def render(data, period_label, threshold=None):
+def render(data, period_label, threshold=None, color=False):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
     total = advised + main + kept
@@ -45,7 +87,9 @@ def render(data, period_label, threshold=None):
         return "\n".join(lines + ["  這段期間沒有任何子代理委派經過 MRH。",
                                   "  （路由關閉、不在生效範圍，或主模型沒有派子代理時都不會有紀錄。）", ""])
     platforms = "、".join(f"{PLATFORM.get(p, p)} {sum(v.values())}" for p, v in sorted(data["per_platform"].items()))
+    handled = advised + main
     lines += [f"■ 子代理委派：共 {total} 次（{platforms}）",
+              f"    有介入的比例      {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）",
               "    " + _pad("給建議，請主模型改用你設定的模型", 40) + f"{advised:>4} 次",
               "    " + _pad("判定為 Top，請主模型自己做", 40) + f"{main:>4} 次",
               "    " + _pad("沒有介入，原樣放行", 40) + f"{kept:>4} 次", ""]
@@ -59,7 +103,7 @@ def render(data, period_label, threshold=None):
         lines.append("")
     followed = data["children_following_advice"]
     lines += ["■ 建議的效果",
-              f"    給了 {advised} 次建議 → 主模型照建議改派 {followed} 次（{_pct(followed, advised)}）"]
+              f"    主模型照建議改派  {progress_bar(followed * 100 // advised if advised else 0, 24, color)}  {followed} / {advised} 次（{_pct(followed, advised)}）"]
     if followed:
         lines.append("    實際執行的模型：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["followed_models"].items())))
     if advised > followed:
@@ -67,8 +111,11 @@ def render(data, period_label, threshold=None):
     lines.append("")
     if data["tiers"]:
         order = ("Light", "Small", "Mid", "Top")
+        parts = [(t, data["tiers"][t]) for t in order if t in data["tiers"]]
+        tsum = sum(n for _, n in parts)
         lines += ["■ 分級結果（分級器判定的難度）",
-                  "    " + " · ".join(f"{t} {data['tiers'][t]}" for t in order if t in data["tiers"]), ""]
+                  "    " + stacked_bar(parts, 48, color),
+                  "    " + "   ".join(f"{_swatch(t, color)} {t.lower()} {n}（{_pct(n, tsum)}）" for t, n in parts), ""]
     lines.append("■ 分級器用量")
     if not data["classifier_usage"]:
         lines.append("    沒有呼叫分級器。")
