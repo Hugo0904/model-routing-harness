@@ -108,8 +108,19 @@ def report_html_page(path, days):
 def dashboard_text(path, days, width, color):
     """The card layout: routing flow + tier table + proportion bars."""
     from mrh.presentation import dashboard
+    data = status_data(path, days)
+    return dashboard.render(data["status"], data, data["status"]["period_label"], width, color)
+
+
+def status_data(path, days):
+    """One public assembly for both the status card and its JSON export."""
+    settings = v2.read(path)
     data, label = statistics(path, days)
-    return dashboard.render(v2.read(path), data, label, width, color)
+    data["status"] = {"format_version": 1, "generated_at": time.time(), "period_label": label,
+                      "enabled": settings["enabled"], "task_export_permitted": settings["task_export_permitted"],
+                      "classifier": {k: settings["classifier"][k] for k in ("provider", "model", "timeout_seconds")},
+                      "policy": {k: settings["policy"][k] for k in ("threshold", "top_mode", "tiers", "fixed")}}
+    return data
 
 
 class ModelChoices(list):
@@ -172,7 +183,7 @@ class Session:
         declared = dict(choices)
         for entry in entries:
             if choices.status != "advertised" or entry["model"] not in declared:
-                self.menu.note("這是未確認的模型／推理設定；儲存不表示工具或帳號能執行。")
+                raise logic.CtrlError("模型清單未確認，不能新增這個選項；可保留、排序或移除原有設定。")
             elif entry.get("effort") and entry["effort"] not in declared[entry["model"]]:
                 raise logic.CtrlError("這個推理強度未在該模型的 CLI 宣告清單中；没有儲存。")
         return entries
@@ -275,12 +286,16 @@ class Session:
             try:
                 if action == "add":
                     models = self.model_choices(platform)
+                    if models.status != "advertised":
+                        self.menu.note("參考名稱：" + ("、".join(m for m, _ in models) or "無"))
+                        self.menu.note("模型清單未確認，不能新增選項；原設定保留。")
+                        continue
                     if not models:
                         self.menu.note("這個工具沒有可用的模型清單，請改用「直接輸入模型」。"); continue
                     model, efforts = models[self.menu.pick("模型", [(m + ("（未確認）" if models.status != "advertised" else ""), n) for n, (m, _) in enumerate(models)], trail=[*trail, "模型"])]
                     self.menu.note("推理強度依據：該模型的 CLI 宣告；不是實際執行證明。" if models.status == "advertised" else "沒有已確認的推理清單；預設不指定推理強度。")
                     effort = self.menu.pick("推理強度（effort）", [("不指定推理強度", None), *[(e, e) for e in efforts]], trail=[*trail, model, "effort"]) if efforts else None
-                    items.append({"model": model, **({"effort": effort} if effort else {})})
+                    items += self.check_new_candidates([{"model": model, **({"effort": effort} if effort else {})}], models)
                 elif action == "type":
                     entries = logic.parse_candidates(self.menu.text("模型，例如 gpt-5.6-luna:low", trail=[*trail, "模型"]))
                     items += self.check_new_candidates(entries, self.model_choices(platform))
@@ -398,7 +413,7 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
         action = getattr(args, "ctrl_action", None)
         if action == "dashboard":
             if getattr(args, "json", False):
-                stdout.write(stats_text(path, None if args.days == 0 else args.days, True) + "\n"); return 0
+                stdout.write(json.dumps(status_data(path, None if args.days == 0 else args.days), indent=2, sort_keys=True) + "\n"); return 0
             stdout.write(dashboard_text(path, None if args.days == 0 else args.days, args.width or terminal_width(), color)); return 0
         if action == "stats":
             stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json, color) + "\n"); return 0

@@ -57,7 +57,8 @@ class CorrelationTests(unittest.TestCase):
         before = self.path.parent.joinpath('advice.sqlite3').read_bytes()
         out = io.StringIO()
         self.assertEqual(cli.main(["status", "--settings", str(self.path), "--days", "0", "--json"], stdout=out, stderr=io.StringIO()), 0)
-        self.assertEqual(json.loads(out.getvalue()), data)
+        exported = json.loads(out.getvalue()); exported.pop("status")
+        self.assertEqual(exported, data)
         self.assertEqual(self.path.parent.joinpath('advice.sqlite3').read_bytes(), before)
 
     def test_different_task_turn_session_platform_effort_or_window_is_not_reissue(self):

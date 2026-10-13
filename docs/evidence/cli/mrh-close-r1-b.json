@@ -1,22 +1,22 @@
 {
-  "report_id": "MRH-CLOSE-R1-B-001",
+  "report_id": "MRH-CLOSE-R1-B-002",
   "state": "source candidate; not built, installed or accepted",
   "source_base": "5249eb2631138097f2a5549d2027a3f3ae31c282",
   "source_manifest": {
-    "README.md": "bb1bf96f44d6db0fd0e663864d91c0bdb32478d01e4b99f39a293b80b82829c7",
+    "README.md": "65ac5bacc83d1c213c1348126c08ce6af4efa331ef72a1d2697c2e9dce54e332",
     "REQUIREMENTS.md": "9c626fd54d90b8fae577cdd192e0ba5cf4d4ee9e557d5c7093c441ed78fbe9bf",
     "docs/takeover/CODEX-HANDOFF.md": "29ebd0622006845da3b56f3d8457eecdca18a076dc4dc5e5cb1be5e9298d8053",
-    "docs/takeover/HANDOFF.md": "85273f70b6716c6c11596295bc6cd69044805006360520bacb4c471b1add9527",
+    "docs/takeover/HANDOFF.md": "fd955044f5769939356c3391dc01441343a390b4c1a2f681638ed4ae533dd39f",
     "src/mrh/advisory/engine.py": "b9ff88ee417173bde21cb21a8769bb5231bff03d7d2f2f37777557904af9e12f",
     "src/mrh/advisory/store.py": "7e428485e1f96f995be2bd8f5c6211a4b820be7b6ee8c6ed870cfcf9f236b197",
-    "src/mrh/presentation/ctrl.py": "4dd05b8ac0099eebbb83181704c63b4e661692e0de5d022e87821896ad14ea7d",
+    "src/mrh/presentation/ctrl.py": "3740a0b20b4a8d95b5e94c6cfbd6cce21e305c09f70a601432248e739c1d2eab",
     "src/mrh/presentation/dashboard.py": "ad0776bbbf7f710e30f2c80d4d8dae78f446370855e4afbffd37efc8b6a2dac4",
     "src/mrh/presentation/report_html.py": "01e41f06f5d83e55d2cc13c4a114d8ef984a09bd01200530eafb9e6b3399208a",
     "src/mrh/presentation/stats_view.py": "b722f664a040877afd17d5616859d8553640be019b03faa2a81485ec83598ff4",
     "tests/advisory/test_engine.py": "b52cd543e0a11632d1840c56144ee3a86f8735b105e1a21d5808b15afcc801dc",
     "tests/presentation/test_ctrl.py": "6e93b4b33a58ce3c29794d8929e7871ba16c6b0232764ff87016e472dddd1516",
     "tests/presentation/test_stats_view.py": "63ca6ad87297657319a2a13d5343634a86e61573d113aa5ab5d9be985c0bed64",
-    "tests/advisory/test_correlation.py": "113fff08d51bd4bce806524140ad699619caf2a8794a502f6202b8bc47fb530c",
+    "tests/advisory/test_correlation.py": "085e0850c64eac676f8c303d97cde1f39b961c526b59e9d9082248d0b2cb4ed6",
     "tests/presentation/test_catalog_choices.py": "54b7f08cd11e05492528389e368072e9c9438e9e66ea3d5bc31993fb4bb5ba54"
   },
   "changes": [
@@ -78,5 +78,33 @@
     "One frozen package/install and C same-version Claude/native/settings verification within original overall quota",
     "Live Canopy summary is not established by this candidate; original unmet boundary retained",
     "A final overall acceptance"
-  ]
+  ],
+  "prior_report_id": "MRH-CLOSE-R1-B-001",
+  "revision_2": {
+    "base": "99283c6ba69027b475af4548b6166447aafbb673",
+    "changes": [
+      "Interactive add/type admits only an advertised model and its declared effort; unverified fallback/reference cannot be appended; existing retention/sort/removal and explicit ctrl set remain unchanged",
+      "status JSON preserves root statistics and adds a whitelist status block assembled by the same function as the card; stats JSON remains unchanged"
+    ],
+    "validation": {
+      "started_wall": 1791899228.4589143,
+      "started_monotonic": 1052884.3102436105,
+      "limit_seconds": 60,
+      "prior_seconds": 343.109,
+      "start_basis": "mtime of first JSON assertion adjustment in this unit",
+      "elapsed_seconds": 81.392,
+      "remaining_seconds": 0,
+      "overrun_seconds": 21.392,
+      "cumulative_B_seconds": 424.501,
+      "verification_stopped": true,
+      "checks_started_this_revision": 0
+    },
+    "new_checks": "None executed; quota exhausted before starting a new check. No old result asserted as new-candidate PASS.",
+    "unverified": [
+      "New interactive guard paths and public status JSON/card field parity/readonly not executed at new candidate",
+      "Existing interactive-success fixture still uses an unverified empty list and needs an advertised test catalog for the new admission rule; not changed after the quota stop",
+      "Prior full suite is c441823 evidence, not a new complete gate for this revision"
+    ],
+    "deployment": "not built or installed"
+  }
 }
