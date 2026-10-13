@@ -263,7 +263,7 @@ class InstalledLauncherFaultTests(unittest.TestCase):
             # the independent launcher rather than returning a successful {}.
             with zipfile.ZipFile(io.BytesIO(original_runtime)) as original, zipfile.ZipFile(folder / 'runtime.pyz', 'w') as broken:
                 for name in original.namelist():
-                    if name not in ('mrh/application/runtime.py', 'mrh/routing/faults.py'):
+                    if name not in ('mrh/application/advisory_runtime.py', 'mrh/routing/faults.py'):
                         broken.writestr(name, original.read(name))
             binding['runtime_sha256'] = hashlib.sha256((folder / 'runtime.pyz').read_bytes()).hexdigest()
             (folder / 'binding.json').write_text(json.dumps(binding))
