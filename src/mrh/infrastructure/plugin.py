@@ -202,7 +202,11 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         old = _old_artifact(root)
         if old is not None and old.get("settings_path") != str(settings_path):
             raise owned.OwnedError("registered_settings_conflict")
-        settings.init(settings_path)  # Non-overwriting, separate writable state.
+        if advisory:
+            from mrh.infrastructure import settings_v2
+            settings_v2.init(settings_path)  # reads v1 or v2; never rewrites an existing file
+        else:
+            settings.init(settings_path)  # Non-overwriting, separate writable state.
         for name, data in files.items():
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)

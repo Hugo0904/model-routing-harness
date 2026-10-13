@@ -24,6 +24,11 @@ class AdvisoryPluginTests(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         return json.loads(run.stdout)
 
+    def test_preparing_again_over_an_existing_v2_settings_file_keeps_it(self):
+        before = self.settings.read_bytes()
+        plugin.prepare(self.root, self.settings, sys.executable, advisory=True)
+        self.assertEqual(self.settings.read_bytes(), before)
+
     def test_artifact_shape(self):
         hooks = json.loads((self.root / "plugins/model-routing-harness/hooks/hooks.json").read_text())["hooks"]
         self.assertEqual(set(hooks), {"PreToolUse", "PostToolUse"})        # no SessionStart / scope machinery
