@@ -50,7 +50,7 @@ MRH-001 已由 Claude 接手並完成一輪施工，請先讀
 | 日常設定 | `runtime/daily-cli/profile/settings.json` 已是 **v2、provider=jev、停用（enabled=false）**，allowlist 檔已還原為 `/`；v1 備份 `runtime/daily-cli/settings.v1.bak.json` |
 | 日常產物 | `runtime/daily-cli/artifact` 為 0.4.0 advisory（舊 E24 備份在 `artifact.e24.bak`）；**Codex 外掛副本已刷新**（`codex plugin add …`，config.toml 備份 `runtime/daily-cli/codex-config.before-refresh.toml`）。更新程式後重建封裝、重新 prepare、再 `codex plugin add` 即可，只要 hooks.json 不變，信任不失效 |
 | Codex hooks 信任 | 已由使用者信任 MRH 的 2 個 hook（Pre／PostToolUse；SessionStart 已移除） |
-| Claude Code hook | **未套用**。`mrh install claude --artifact <repo>/runtime/daily-cli/artifact` 可先看差異 |
+| Claude Code hook | **已套用**（2026-10-13，使用者同意）：`~/.claude/settings.json` 新增 Pre／PostToolUse（matcher `Agent|Task`），備份 `~/.claude/settings.json.mrh-bak-20261013-151613`；其餘設定與原有 hook 未動。路由停用中，hook 回 `{}`。移除：`mrh install claude --artifact <artifact> --remove --apply` |
 | 金鑰 | Keychain 已設定（`mrh key status jev`） |
 | 分級費用 | 估計 ≈ $0.02／千次（Jev） |
 
