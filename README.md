@@ -60,6 +60,8 @@ $B/mrh install claude --artifact <artifact 目錄> --apply
 實測（單次樣本，見 `docs/evidence/`）：Jev 三個難度樣本全部分對；Claude Code（Sonnet 主模型）被建議後改派 haiku 子代理，Top 級由主模型自己完成。**不代表主模型長期遵從率**——要看統計：`mrh ctrl` → Statistics 的 `children_following_advice`。
 
 - 設定檔 v2；舊 v1 讀取時自動遷移，第一次用 `mrh ctrl` 存檔時才改寫。
+- **Codex 的限制**：Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱；含糊的標籤信心度低，會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
+- Codex 實測 2 次，主模型收到建議後**都沒有改派建議的模型**（自己做完或回報被擋）；Claude Code 實測 1/1 有改派。尚未量到長期遵從率。
 - Codex App（桌面版）未實測；Gemini CLI 未接 Hook。
 - 舊的「強制改寫」路徑與其測試仍在 repo 內但新流程不使用，見 `docs/takeover/HANDOFF.md` 的可刪清單。
 

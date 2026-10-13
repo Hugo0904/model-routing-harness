@@ -16,6 +16,7 @@ MRH-001 已由 Claude 接手並完成一輪施工，請先讀
 3. 所有設定集中在 `mrh ctrl`；設定檔 v2（每級每平台候選清單、可調門檻）。
 4. 金鑰只在 macOS Keychain（service model-routing-harness / account typesafe）或 TYPESAFE_API_KEY。
 5. Branch：mrh-002-ctrl（見 git log 最新 commit）。
+6. Codex 0.159.3 對 Hook 隱藏委派內文（message 為密文），只能用 task_name 分級；Codex 主模型在 L2 兩次都沒照建議改派。詳見 HANDOFF.md。B、C 動手前先讀。
 
 接下來請不要重做已完成項目；剩餘工作見 HANDOFF.md「未完成」段。B、C 恢復前先讀本檔。
 ```
@@ -39,16 +40,16 @@ MRH-001 已由 Claude 接手並完成一輪施工，請先讀
   - **L1 Jev**：Light／Mid／Top 三樣本全分對（0.96／1.0／1.0），約 430 毫秒，一次 ~440 input tokens（≈$0.000018）。`docs/evidence/l1-jev.json`
   - **L3 Claude Code**（Sonnet 主模型，scratch 目錄）：Jev Light/0.91 → 主模型收到建議 → 自己重派 `model=haiku` → 子代理實際為 claude-haiku-4-5 → 記錄 `followed=1`。
   - **L4 Top**：Jev Top/1.0 → `continue_main` → 主模型自己完成，未開子代理。`docs/evidence/l3-l4-claude-code.json`
-  - **L2 Codex CLI：尚未做**（需使用者同意，見下）。
+  - **L2 Codex CLI**（`docs/evidence/l2-codex-cli.json`）：外掛已刷新為 0.4.0 並由使用者信任。Hook 真的觸發、Jev 真分級、deny 建議送達 Codex 主模型。**發現三件事**：①Codex 0.159.3 交給 Hook 的 `message` 是**密文**（Fernet），任何模型／multi-agent 設定都一樣，只有 `task_name`（主模型取的短標籤）、`model`、`cwd` 可讀 → 改用 `task_name` 分級（Jev 對 slug：改名類 Light 0.85–0.97、調查類 Mid 0.99、設計類 Top 0.65，含糊的自動低於門檻放行）；②主模型幾乎每次帶 `agent_type: "worker"` → 新增可設定的「視為預設的角色」（Codex 預設 `worker`，你自訂的 `luna_worker` 等仍受保護）；③**兩次有建議的跑法，Codex 主模型都沒有照建議改派**（一次回報被擋、一次自己做完），Claude Code 則 1/1 照做。單次樣本，遵從率未知。
 - **P6**：README 改為使用者導向（舊版在 `docs/README-legacy.md`）、REQUIREMENTS 加 2026-10-13 修正段、PLAN §16 偏離紀錄。
 
 ## 目前狀態
 
 | 項目 | 狀態 |
 |---|---|
-| 日常設定 | `runtime/daily-cli/profile/settings.json` 仍是 **v1、停用（enabled=false）**，provider 仍是 codex_subscription；備份 `runtime/daily-cli/settings.v1.bak.json`。尚未改成 Jev（等 Codex 刷新後再遷移，見下） |
-| 日常產物 | `runtime/daily-cli/artifact` 已用 0.4.0 advisory 重新準備（舊的 E24 備份在 `artifact.e24.bak`）。**Codex 已安裝的外掛副本仍是舊 E24**，需 `codex plugin add model-routing-harness@model-routing-harness-local` 刷新並在 Codex `/hooks` 重新信任 |
-| Codex hooks 信任 | 舊 E24 的雜湊仍有效；新產物變更後需重新信任 |
+| 日常設定 | `runtime/daily-cli/profile/settings.json` 已是 **v2、provider=jev、停用（enabled=false）**，allowlist 檔已還原為 `/`；v1 備份 `runtime/daily-cli/settings.v1.bak.json` |
+| 日常產物 | `runtime/daily-cli/artifact` 為 0.4.0 advisory（舊 E24 備份在 `artifact.e24.bak`）；**Codex 外掛副本已刷新**（`codex plugin add …`，config.toml 備份 `runtime/daily-cli/codex-config.before-refresh.toml`）。更新程式後重建封裝、重新 prepare、再 `codex plugin add` 即可，只要 hooks.json 不變，信任不失效 |
+| Codex hooks 信任 | 已由使用者信任 MRH 的 2 個 hook（Pre／PostToolUse；SessionStart 已移除） |
 | Claude Code hook | **未套用**。`mrh install claude --artifact <repo>/runtime/daily-cli/artifact` 可先看差異 |
 | 金鑰 | Keychain 已設定（`mrh key status jev`） |
 | 分級費用 | 估計 ≈ $0.02／千次（Jev） |
@@ -64,8 +65,8 @@ $B/mrh ctrl --settings $S show
 
 ## 未完成／已知問題
 
-1. **L2 Codex CLI 實測**：流程已備妥——刷新外掛、`/hooks` 信任後，在 scratch 目錄用暫時縮小的 allowlist 跑 `codex exec`，只影響該目錄，跑完還原。
-2. **日常設定遷移到 v2＋provider 改 Jev**：必須在 Codex 外掛刷新**之後**做（舊 E24 執行期只認 v1，遇到 v2 會在每次委派顯示警告）。已開啟的舊 Codex 對話需重開。
+1. **Codex 主模型不照建議改派**（L2 兩次）：功能上 Hook→建議→主模型繼續做都通，但省錢取決於主模型是否改派。可試：調整建議措辭、或改以統計累積觀察再決定。
+2. **日常啟用**：設定已就緒但停用；啟用後 Codex 只看得到 `task_name`，開著的舊 Codex 對話需重開才會載入新 hook。
 3. **Codex App（桌面版）**：同一外掛理論上可用，未實測（原 C 的 probe：`docs/advisory-app.md`）。
 4. **Gemini**：只有模型清單，沒有 Hook 接頭（P7 未做）。
 5. 控制中心沒有「宿主接入」畫面。

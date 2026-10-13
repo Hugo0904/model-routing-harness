@@ -1,0 +1,63 @@
+{
+  "level": "L2",
+  "host": "Codex CLI 0.159.3 (codex exec, scratch directory; the daily plugin refreshed to 0.4.0 and trusted by the user)",
+  "parent_model": "gpt-6-astra",
+  "classifier": "jev-1.13.0",
+  "scope": "daily settings temporarily enabled with the allowlist narrowed to a scratch directory; both restored afterwards and read back (enabled=false, allowlist ['/'])",
+  "runs": [
+    {
+      "n": 1,
+      "prompt": "delegate a trivial PONG task",
+      "result": "preserve low_confidence (Light 0.44): Jev was classifying ciphertext"
+    },
+    {
+      "n": 2,
+      "result": "preserve named_role: Codex sends agent_type=worker on nearly every spawn -> fixed with configurable generic_roles (default: worker)"
+    },
+    {
+      "n": 3,
+      "result": "preserve low_confidence (Light 0.31, 1236 input tokens): same ciphertext cause"
+    },
+    {
+      "n": 4,
+      "result": "hook input captured: tool_input.message is an opaque Fernet token (gAAAA...) for every model and multi_agent setting tried; readable fields: task_name, model, cwd. Fixed: classify task_name when message is ciphertext"
+    },
+    {
+      "n": 5,
+      "prompt": "must call spawn_agent exactly once",
+      "result": "advise Light 0.87 -> gpt-5.6-luna:low; parent reported the delegation as blocked and stopped (the prompt forbade a second call)"
+    },
+    {
+      "n": 6,
+      "prompt": "delegate this small job with spawn_agent",
+      "result": "advise Light 0.87 -> deny delivered to the model verbatim; parent did the job itself and replied DONE (utils.py edited); no child started, followed=0"
+    }
+  ],
+  "task_name_only_jev_samples": {
+    "rename_variable": [
+      "Light",
+      0.88
+    ],
+    "fix_typo_readme": [
+      "Light",
+      0.97
+    ],
+    "implement_pagination_orders_api": [
+      "Mid",
+      0.31
+    ],
+    "design_consistency_model": [
+      "Top",
+      0.65
+    ],
+    "investigate_flaky_integration_test": [
+      "Mid",
+      0.99
+    ]
+  },
+  "conclusions": [
+    "Hook fires and the deny reaches the Codex parent in 0.159.3",
+    "Codex hides the delegation text from hooks; classification rests on the parent's own task_name label",
+    "In 2 of 2 advised Codex runs the parent did not re-issue with the suggested model (Claude Code: 1 of 1 did). Single samples; follow-through is unmeasured"
+  ]
+}
