@@ -71,6 +71,13 @@ mrh ctrl show     # 目前設定
 - 2.1.296 實測：子代理 `haiku` → `claude-haiku-5-5`、`sonnet` → `claude-sonnet-5-5`（2.1.287 的 `haiku` 是 Haiku 4.5）；Agent 工具新增 `effort` 參數，建議文字已帶出 `effort=…`，主模型自選 effort 視為明示。實測：Light/0.91 → 主模型改派 haiku＋effort=medium → 子代理 claude-haiku-5-5 → followed=1。
 - 使用者設定（Claude）：Light `haiku:medium`、Small `haiku:xhigh`、Mid `sonnet:medium`；Codex 三級仍為 `gpt-5.6-luna:low`；Top 為 Main。路由仍停用。
 
+## 2026-10-13 夜間更新：CLI 畫面
+
+- 控制中心、`mrh key`、錯誤訊息、統計全為中文；設定一覽改成難度表。
+- 新增 `mrh ctrl dashboard`（參考 A40 Delegation Router 版面：圓角卡片、流程四格、難度表含 Claude 官方價、分段比例條、進度條）。使用者要求畫面**一律以 CLI 為主**（無 UI 環境查看），網頁報表 `mrh ctrl report` 只是選用預覽。
+- Claude 真實環境測試（真實安裝的 hook）：輕量→改派 Haiku 5.5＋effort、平行 3 個、互動模式（fork 開啟）、Explore 不干預、中文、金鑰錯誤不擋工作且通知顯示給使用者；`scripts/verification/claude_smoke.py` 9/9。
+- 已部署最新程式（hooks.json 不變）。給 Codex 的交接：`CODEX-HANDOFF.md`。
+
 ## 未完成／已知問題
 
 1. **Codex 主模型不照建議改派**（L2 兩次）：功能上 Hook→建議→主模型繼續做都通，但省錢取決於主模型是否改派。可試：調整建議措辭、或改以統計累積觀察再決定。

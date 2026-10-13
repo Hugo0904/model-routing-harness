@@ -19,6 +19,8 @@
 
 ```sh
 mrh ctrl                     # 互動選單（方向鍵、Enter、← 返回、Esc 取消）
+mrh ctrl dashboard [--days N] # 終端儀表板：流程、難度表（含價格）、分段比例條、進度條（80–120 欄自適應）
+mrh ctrl stats [--days N]    # 中文統計
 mrh ctrl show [--json]       # 目前設定一覽
 mrh ctrl set KEY VALUE       # 腳本用；mrh ctrl keys 列出所有 KEY
 mrh key status jev           # 金鑰狀態（只顯示有沒有，不顯示內容）
