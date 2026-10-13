@@ -91,10 +91,15 @@ def changes_for(settings, key, value):
         return {"policy": {**policy, "tiers": tiers}}
     if len(parts) == 2 and parts[0] == "fixed" and parts[1] in v2.PLATFORMS:
         return {"policy": {**policy, "fixed": {**policy["fixed"], parts[1]: parse_candidates(value)}}}
+    if len(parts) == 2 and parts[0] == "generic_roles" and parts[1] in v2.PLATFORMS:
+        names = [r.strip() for r in str(value).split(",") if r.strip()]
+        if len(names) > 8 or not all(safe_id(r) for r in names):
+            raise CtrlError("role names, comma separated (at most 8)")
+        return {"policy": {**policy, "generic_roles": {**policy.get("generic_roles", v2.DEFAULT_GENERIC_ROLES), parts[1]: names}}}
     raise CtrlError("unknown key: " + key[:60])
 
 
 def key_names():
     return ["enabled", "task_export", "classifier.provider", "classifier.model", "classifier.timeout", "threshold",
             "top_mode", "allowed_workspaces", *[f"tiers.{t}.{p}" for t in v2.TIERS for p in v2.PLATFORMS],
-            *[f"fixed.{p}" for p in v2.PLATFORMS]]
+            *[f"fixed.{p}" for p in v2.PLATFORMS], *[f"generic_roles.{p}" for p in v2.PLATFORMS]]

@@ -11,6 +11,7 @@ import time
 from mrh.advisory import advice_text
 from mrh.advisory.request import Advice, AdvisoryRequest
 from mrh.advisory.store import AdviceStore, request_id, task_hash
+from mrh.infrastructure import settings_v2 as v2
 from mrh.routing.attempts import GuardedAttempts
 from mrh.routing.core import ClassifierFailure, bounded_call
 from mrh.routing.types import REASONS, TIERS, Classification
@@ -47,7 +48,7 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
         return finish(keep("explicit_model"))
     if req.explicit_effort is not None:
         return finish(keep("explicit_effort"))
-    if req.role is not None:
+    if req.role is not None and req.role not in v2.generic_roles(settings["policy"], req.platform):
         return finish(keep("named_role"))
     if store.recent_advice(req.platform, req.session_id, thash, now):
         return finish(keep("advice_already_given"))

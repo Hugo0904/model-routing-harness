@@ -55,6 +55,15 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(advice.action, "preserve")
         self.assertEqual(fake.calls, 0)
 
+    def test_only_habitual_generic_roles_are_classified_specialised_ones_are_respected(self):
+        fake = Fake(Classification("Light", 0.9))
+        self.assertEqual(self.run_engine(req("w", role="worker"), fake).action, "advise")        # Codex sends `worker` on nearly every spawn
+        for n, role in enumerate(("luna_worker", "risk_reviewer", "explorer")):
+            self.assertEqual(self.run_engine(req(f"r{n}", task=f"t{n}", role=role), fake).reason, "named_role")
+        custom = settings(**LISTS, generic_roles={"codex": ["explorer"]})
+        self.assertEqual(engine.decide(req("x", task="other", role="explorer"), custom, self.store, lambda: fake).action, "advise")
+        self.assertEqual(engine.decide(req("y", task="other2", role="worker"), custom, self.store, lambda: fake).reason, "named_role")
+
     def test_light_advice_lists_candidates_in_user_order_for_the_calling_platform(self):
         advice = self.run_engine(req(), Fake(Classification("Light", 0.9)))
         self.assertEqual((advice.action, advice.tier), ("advise", "Light"))

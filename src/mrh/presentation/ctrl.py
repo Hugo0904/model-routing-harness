@@ -26,7 +26,8 @@ def snapshot(settings, path, secrets_module=secrets):
             "api_key": {"jev": key_state("jev", secrets_module)},
             "threshold": settings["policy"]["threshold"], "top_mode": settings["policy"]["top_mode"],
             "allowed_workspaces": settings["allowed_workspaces"], "tiers": settings["policy"]["tiers"],
-            "fixed": settings["policy"]["fixed"]}
+            "fixed": settings["policy"]["fixed"],
+            "generic_roles": settings["policy"].get("generic_roles", v2.DEFAULT_GENERIC_ROLES)}
 
 
 def render(snap, width=100):
@@ -48,6 +49,8 @@ def render(snap, width=100):
     rows("Top", snap["fixed"])
     if snap["top_mode"] == "Main" and snap["fixed"]:
         lines.append("           (the Top list is used only when Top is Fixed)")
+    roles = "; ".join(f"{p}: {', '.join(r)}" for p, r in snap["generic_roles"].items() if r) or "(none)"
+    lines += ["", f"  Treated as default roles   {roles}   (any other named role is left alone)"]
     lines += ["", f"  Settings      {snap['settings_path']}  (revision {snap['revision']})"]
     return "\n".join(sanitize_text(line) if i else line for i, line in enumerate(lines)) + "\n"
 

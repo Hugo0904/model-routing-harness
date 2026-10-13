@@ -24,6 +24,9 @@ PLATFORMS = ("codex", "claude", "gemini")
 TIERS = ("Light", "Small", "Mid")
 PROVIDERS = {"jev": TYPESAFE_MODEL, "codex_subscription": "gpt-6-luna", "claude_subscription": "haiku"}
 MAX_CANDIDATES = 5
+# Roles a parent attaches by habit, not a specialised role with its own model settings.
+# Codex's built-in `worker` is sent on almost every spawn; `default` / `general-purpose` are implicit.
+DEFAULT_GENERIC_ROLES = {"codex": ["worker"], "claude": [], "gemini": []}
 THRESHOLD_RANGE = (0.5, 0.99)
 FILES = legacy.FILES
 MAX_BYTES = 65_536
@@ -69,7 +72,7 @@ def _classifier(value):
 
 
 def _policy(value):
-    if type(value) is not dict or set(value) - {"threshold", "top_mode", "tiers", "fixed", "rates"}:
+    if type(value) is not dict or set(value) - {"threshold", "top_mode", "tiers", "fixed", "rates", "generic_roles"}:
         _invalid()
     threshold = value.get("threshold", 0.5)
     if not _is_finite_number(threshold) or not THRESHOLD_RANGE[0] <= threshold <= THRESHOLD_RANGE[1]:
@@ -83,9 +86,20 @@ def _policy(value):
     fixed = _candidates(value.get("fixed", {}))
     if top_mode == "Fixed" and not any(fixed.values()):
         _invalid()
-    return {"threshold": threshold, "top_mode": top_mode,
-            "tiers": {tier: _candidates(items) for tier, items in tiers.items()},
-            "fixed": fixed, "rates": _validate_rates(value.get("rates", {}))}
+    result = {"threshold": threshold, "top_mode": top_mode,
+              "tiers": {tier: _candidates(items) for tier, items in tiers.items()},
+              "fixed": fixed, "rates": _validate_rates(value.get("rates", {}))}
+    if "generic_roles" in value:
+        roles = value["generic_roles"]
+        if type(roles) is not dict or set(roles) - set(PLATFORMS) or any(
+                type(v) is not list or len(v) > 8 or not all(safe_id(r) for r in v) for v in roles.values()):
+            _invalid()
+        result["generic_roles"] = {p: list(v) for p, v in roles.items()}
+    return result
+
+
+def generic_roles(policy, platform):
+    return set(policy.get("generic_roles", DEFAULT_GENERIC_ROLES).get(platform, []))
 
 
 def validate(value):
