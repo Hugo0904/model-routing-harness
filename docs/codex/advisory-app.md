@@ -1,4 +1,18 @@
-# App 分級建議接點：D70-C-001 保存點
+# Codex App 分級建議驗證
+
+## 2026-10-13：真 App 批次與正常接入恢復
+
+原 C 聊天以真實 Desktop App、原生委派工具、真 Jev 與 `fdb7428` 的已安裝程式完成一批隔離測試。10 次有效設定試次中，8 次收到 native deny/reason 建議，主代理保持相同子任務與名稱，以 `fork_turns="none"` 重派；8 個子代理的官方 `thread/read` 模型設定均為 `gpt-5.6-luna/low`，並完成排序。另 2 次信心低於既有 0.65 門檻，保留原委派並完成。最初準備設定的空值錯誤另計 1 次，未呼叫 Jev；修正後保留原紀錄。全部分母是 11 次，符合建議的委派為 8/8，採用候選的比例為有效試次 8/10、全部試次 8/11。
+
+App 的 `subAgentActivity` 模型／強度欄位為 null。精確子代理 metadata 配合原生 started/completed 與回覆，證明宿主採用了設定並完成子任務，但不是每回合的供應商模型遙測；不以 DB 的 `followed` 或 requested 欄位取代證據。若原驗收要求 10 個採用候選的子代理，仍只有 8 個，不能把低信心放行算進去。整體與這個證據界線仍由原 A 接受。
+
+本次新增 helper 的 `prepare-installed`：複製既有 launcher/runtime，不重建分類器；只放行原 C 的 session、cwd 與列出的排序測試名稱。原 `prepare` 固定 fixture 模式保留。其他 session/cwd/task 的直接檢查 3/3 回 `{}`，未增加紀錄。註冊、兩個 Hook 的信任與移除均使用官方介面。收尾已移除 A/C 臨時接入、恢復正常 MRH 啟用並讀回原 Hook 信任及其他外掛狀態。
+
+人類之後要求的日常候選已用安裝的 `mrh ctrl` 套用並讀回：Light=`gpt-6-luna/high`、Small=`gpt-6-luna/max`、Mid=`gpt-6.1-sol/high`。只有這三個 Codex 清單及必要 revision 變更；Top、Claude、Jev 與其他欄位保留。這是設定證據，舊隔離候選的模型結果不適用於新候選。同期日常套件增加了 `040b840` 的統計變更，也未由本批舊版本證據驗證；保留後續提交及文件整理，不重跑既有 CLI/unit/Claude。
+
+完整非敏感證據：[codex-app-c-20261013.json](../evidence/codex/codex-app-c-20261013.json)。原始自有隔離紀錄仍保存在 `runtime/codex-app-c-20261013/`。傳回原 A 的原生訊息遭自動核准審查拒絕，已提出明確傳送授權問題；目前只在本地保存，尚未送達或接受，不改工具／收件人繞過。
+
+## 2026-10-11：D70-C-001 歷史保存點
 
 目前完成的是**固定回覆 probe 的本地準備與直接介面檢查**，尚未完成真實 App Hook／parent 消費者驗證。沒有呼叫真分類器、建立 child 或讀到 App parent 的實際選模行為。原 CLI／核心／Main 等仍適用的證據保留；本次没有重跑。
 

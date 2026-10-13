@@ -69,6 +69,79 @@ def prepare(root, session, cwd):
         'removal': ['codex', 'plugin', 'remove', NAME + '@' + MARKETPLACE, '--json']}
 
 
+def prepare_installed(root, session, cwd, artifact, settings):
+    """Scope the existing real product; never rebuild or replace its classifier."""
+    root = root.resolve(); cwd = cwd.resolve(strict=True); artifact = artifact.resolve(strict=True)
+    if root.exists():
+        raise ValueError('probe root already exists; preserve it')
+    binding = json.loads((artifact / 'binding.json').read_text())
+    archive = (artifact / 'runtime.pyz').read_bytes()
+    if hashlib.sha256(archive).hexdigest() != binding['runtime_sha256']:
+        raise ValueError('installed runtime/binding mismatch')
+    values = json.loads(settings.read_text())
+    if values.get('schema_version') != 2 or values.get('classifier', {}).get('provider') != 'jev':
+        raise ValueError('expected current Jev settings v2')
+    root.mkdir(parents=True, mode=0o700)
+    plugin = root / 'plugins' / 'mrh-codex-app-c-check'
+    (plugin / 'hooks').mkdir(parents=True)
+    profile = root / 'profile'; profile.mkdir(mode=0o700)
+    write_json(root / 'OWNED.json', {'owner': OWNER, 'kind': 'real-product-scoped-App-probe'})
+    values.update(enabled=True, task_export_permitted=True,
+                  allowed_workspaces=[str(cwd)])
+    values.pop('workspace_allowlist_file', None)
+    write_json(profile / 'settings.json', values)
+    marker = settings.parent / '.mrh-owner.json'
+    if marker.exists(): shutil.copyfile(marker, profile / marker.name)
+    binding['settings_path'] = str(profile / 'settings.json')
+    write_json(plugin / 'binding.json', binding)
+    (plugin / 'runtime.pyz').write_bytes(archive)
+    shutil.copyfile(artifact / 'launcher.py', plugin / 'launcher.py')
+    tasks = ['alphabetize_words_app_c' + str(n).zfill(2) for n in range(1, 12)]
+    write_json(plugin / 'scope.json', {'session_id': session, 'cwd': str(cwd),
+        'task_names': tasks, 'python': binding['python']})
+    wrapper = '''import json,subprocess,sys,time
+from pathlib import Path
+p=Path(__file__).resolve().parent
+try:
+ s=json.loads((p/'scope.json').read_text()); raw=sys.stdin.buffer.read(2000001)
+ if len(raw)>2000000: print('{}'); raise SystemExit(0)
+ e=json.loads(raw); v=e.get('tool_input',{})
+ if (e.get('session_id')!=s['session_id'] or e.get('cwd')!=s['cwd']
+     or v.get('task_name') not in s['task_names']):
+  print('{}'); raise SystemExit(0)
+ r=subprocess.run([s['python'],'-I','-B',str(p/'launcher.py')],input=raw,capture_output=True,timeout=50)
+ out=json.loads(r.stdout)
+ record={'ts':time.time(),'session_id':e.get('session_id'),'turn_id':e.get('turn_id'),
+  'tool_use_id':e.get('tool_use_id'),'event':e.get('hook_event_name'),
+  'tool_name':e.get('tool_name'),'task_name':v.get('task_name'),
+  'parent_model_reported':e.get('model'),'requested_model':v.get('model'),
+  'requested_effort':v.get('reasoning_effort'),'fork_turns':v.get('fork_turns'),
+  'advice':out.get('hookSpecificOutput',{}).get('permissionDecisionReason')}
+ with (p/'observations.jsonl').open('a') as f: f.write(json.dumps(record)+'\\n')
+ print(json.dumps(out))
+except Exception:
+ print('{}')
+'''
+    (plugin / 'scope.py').write_text(wrapper)
+    command = ' '.join("'" + str(p).replace("'", "'\\''") + "'" for p in
+                      (binding['python'], '-I', '-B', plugin / 'scope.py'))
+    write_json(plugin / 'hooks' / 'hooks.json', {'hooks': {
+        event: [{'matcher': '^(spawn_agent|collaborationspawn_agent)$',
+                 'hooks': [{'type': 'command', 'command': command, 'timeout': 55}]}]
+        for event in ('PreToolUse', 'PostToolUse')}})
+    write_json(plugin / 'plugin.json', {'name': 'mrh-codex-app-c-check', 'version': '0.4.0',
+        'description': 'Original C and literal tasks only; existing real MRH runtime',
+        'extensions': {'com.openai': {'hooks': './hooks/hooks.json'}}})
+    market = root / '.agents' / 'plugins'; market.mkdir(parents=True)
+    write_json(market / 'marketplace.json', {'name': 'mrh-codex-app-c-check-local',
+        'plugins': [{'name': 'mrh-codex-app-c-check',
+        'source': {'source': 'local', 'path': './plugins/mrh-codex-app-c-check'},
+        'policy': {'installation': 'AVAILABLE', 'authentication': 'ON_USE'},
+        'category': 'Productivity'}]})
+    return {'status': 'real product scoped; not registered or trusted', 'fixture_only': False,
+        'root': str(root), 'runtime_sha256': binding['runtime_sha256'], 'task_names': tasks}
+
+
 def hook(scope_path, raw):
     # Malformed/unrelated inputs fail open. No task body or raw response is logged.
     try:
@@ -129,9 +202,19 @@ def main():
     p.add_argument('--cwd', type=Path, required=True)
     p = sub.add_parser('hook')
     p.add_argument('--scope', type=Path, required=True)
+    p = sub.add_parser('prepare-installed')
+    p.add_argument('--root', type=Path, required=True)
+    p.add_argument('--session-id', required=True)
+    p.add_argument('--cwd', type=Path, required=True)
+    p.add_argument('--artifact', type=Path, required=True)
+    p.add_argument('--settings', type=Path, required=True)
     args = parser.parse_args()
-    result = (prepare(args.root, args.session_id, args.cwd) if args.action == 'prepare'
-              else hook(args.scope, sys.stdin.buffer.read(MAX_BYTES + 1)))
+    if args.action == 'prepare':
+        result = prepare(args.root, args.session_id, args.cwd)
+    elif args.action == 'prepare-installed':
+        result = prepare_installed(args.root, args.session_id, args.cwd, args.artifact, args.settings)
+    else:
+        result = hook(args.scope, sys.stdin.buffer.read(MAX_BYTES + 1))
     print(json.dumps(result, separators=(',', ':')))
 
 

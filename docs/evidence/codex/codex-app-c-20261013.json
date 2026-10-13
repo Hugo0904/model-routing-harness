@@ -1,0 +1,152 @@
+{
+  "report_id": "CODEX-APP-C-20261013-001",
+  "status": "local bounded delivery; A acceptance pending",
+  "tested_commit": "fdb74284fa4846a8b2c740777a08442a49ee6704",
+  "tested_runtime_sha256": "1dbe183596a568034377b9f532e1c5e32d8528a28054c18cae8ff955cf004fcf",
+  "tested_runtime_all_mrh_sources_match_commit": true,
+  "advice_sha256": "8c1110de6fc2eab64bbe878f2db0e7479f0640f74f7b4ec3c409c0276e3f1717",
+  "parent_thread": "01a12b46-f59f-7cd3-88f3-43cf4116d603",
+  "parent_turn": "01a1349a-48f7-7472-b909-221a2ad69f87",
+  "parent": "gpt-6.1-sol/high",
+  "desktop": "26.1007.30912 build20156",
+  "desktop_backend": "0.162.0-alpha.17.2",
+  "review_cli": "0.162.1",
+  "method": "Original Desktop App native collaboration + real Jev + existing installed candidate in session/task-scoped external plugin",
+  "tested_settings": {
+    "candidate": "gpt-5.6-luna/low",
+    "threshold": 0.65
+  },
+  "summary": {
+    "all_app_trials": 11,
+    "prepared_profile_failure_trials": 1,
+    "valid_profile_trials": 10,
+    "advice_offered_trials": 8,
+    "low_confidence_preserve_trials": 2,
+    "jev_started": 10,
+    "children_started": 11,
+    "children_completed": 11,
+    "luna_low_metadata_children": 8,
+    "sol_high_preserved_children": 3,
+    "per_turn_actual_model_telemetry_available": false
+  },
+  "eligible_advice_following": "8/8",
+  "candidate_adoption_all_valid_trials": "8/10",
+  "candidate_adoption_all_trials": "8/11",
+  "preparation_error": "c01: unsupported workspace_allowlist_file:null in C-owned profile; omitted optional field for c02 onward; c01 kept in denominator with zero Jev calls",
+  "low_confidence": "c10/c11: true Jev result below existing threshold; original delegation preserved; not candidate adoption",
+  "model_evidence": "Native subAgentActivity model/effort are null in this App build. Official exact child thread/read confirms adopted model/effort metadata, paired with started/completed and literal response. Metadata is not per-turn provider execution telemetry.",
+  "restoration": {
+    "report_id": "CODEX-APP-C-20261013-001",
+    "normal_enabled_final": true,
+    "normal_hook_trust_matches_original": true,
+    "c_probe_absent": true,
+    "c_marketplace_absent": true,
+    "a_probe_absent": true,
+    "unrelated_plugins_unchanged": true,
+    "unrelated_hook_trust_unchanged": true,
+    "daily_settings_sha256_final": "94bffb11f2797846f36e062c7178605ccd1b299368728f741fe51ea1efaadafc",
+    "daily_user_tier_change_preserved": true,
+    "daily_other_settings_unchanged": true,
+    "claude_modified_by_c": false,
+    "review_cli_19687_exit_code": 0,
+    "c_owned_api_process_closed": true,
+    "a_old_process_unknown_not_killed": true
+  },
+  "user_setting_unit": {
+    "report_id": "CODEX-TIERS-C-20261013-001",
+    "status": "applied and read back via installed ctrl",
+    "human_turn": "01a134bd-1689-7ee1-a0ea-300fc1f9eae9",
+    "human_item": "01a134bd-1cb7-7ad3-82bc-a907ae015c57",
+    "settings_path": "/Users/shawn/Code/model-routing-harness/runtime/daily-cli/profile/settings.json",
+    "active_pointer_matches": true,
+    "daily_binding_matches": true,
+    "fields": {
+      "Light": [
+        {
+          "effort": "high",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "Small": [
+        {
+          "effort": "max",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "Mid": [
+        {
+          "effort": "high",
+          "model": "gpt-6.1-sol"
+        }
+      ]
+    },
+    "revision_before": 33,
+    "revision_after": 36,
+    "other_fields_unchanged": true,
+    "hook_or_runtime_changes_for_setting": false,
+    "model_trials_for_setting": 0,
+    "sha256_after": "94bffb11f2797846f36e062c7178605ccd1b299368728f741fe51ea1efaadafc"
+  },
+  "remaining": [
+    "A assessment of official adopted metadata paired with native started/completed; App per-turn model/effort telemetry unavailable",
+    "Only 8 candidate-adopted children; if criterion requires 10 adoption samples, two remain, rather than counting low-confidence preserves as adoption",
+    "New daily user candidates applied/read back only, not proven by this old-candidate batch",
+    "Current daily package includes subsequent 040b840 statistics changes in six source modules; test proves fdb7428, not those newer changes",
+    "A outbound report auto-review rejected; direct user transmission question pending",
+    "Overall MRH-001 acceptance remains original A responsibility"
+  ],
+  "subsequent_changes_preserved": {
+    "commit": "040b840626d6c69a4bf8abe09049af4f685ab3a5",
+    "modules": [
+      "mrh/routing/types.py",
+      "mrh/presentation/dashboard.py",
+      "mrh/advisory/store.py",
+      "mrh/presentation/report_html.py",
+      "mrh/advisory/engine.py",
+      "mrh/presentation/stats_view.py"
+    ],
+    "docs_reorganized_commit": "530c8431db29965b322d67592c0668a22f7ee028",
+    "test_runtime_not_replaced": true
+  },
+  "focused_preparation_verification": "unrelated session/cwd/task each returned {}, observation bytes unchanged (3/3); corrected owned profile read by real runtime in 10 trials; helper syntax valid",
+  "reused_without_rerun": [
+    "B CLI10/10; all launches10/12",
+    "unit343 original5fails",
+    "Claude smoke9/9"
+  ],
+  "other_surfaces": "No B source, ClaudeHost, Gemini, Canopy Core, credentials or unowned temp/ changes by C",
+  "process_limit": "Own review CLI19687 exit0 and latest owned API process closed. A old PTY inaccessible, exact scratch query empty; unknown processes not killed. First timed-out shim API PID was not recorded, so final OS process state unverified.",
+  "registry_anomaly": "Normal MRH re-enabled after official review session, cause unknown; serialized isolation fresh-read back before model calls; final normal true restored.",
+  "delivery": {
+    "status": "undelivered",
+    "rejected_action": "send_message_to_thread to original A",
+    "reason": "auto-review says current trusted human instruction lacks explicit authority for this concrete transmission",
+    "user_question_pending": true
+  },
+  "proofs": {
+    "app-batch-evidence.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/app-batch-evidence.json",
+      "sha256": "d27f27b6a50420ab7c533e6aeb41ca751633bc36427350fd1786f6ac1cde9aec"
+    },
+    "final-restoration.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/final-restoration.json",
+      "sha256": "3d469dacdabd4576088986f479d2f4f7797480f52bfa48a7c290632007279c92"
+    },
+    "tier-settings-applied.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/tier-settings-applied.json",
+      "sha256": "503ed98c83968646930ebbc41d84b06a93ea012ca3ee96a81fe99bb31152b5d0"
+    },
+    "normal-restoration.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/normal-restoration.json",
+      "sha256": "562e489fd45392f64cd57ff76b45519cebd9421f4fd4b2b3ac4bf79f23d81f63"
+    },
+    "isolation-readback.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/isolation-readback.json",
+      "sha256": "5efd09d1639ec5896be037df4c80f872711392e6f145e3332c2b14e148659ae8"
+    },
+    "trusted-probe.json": {
+      "path": "/Users/shawn/Code/model-routing-harness/runtime/codex-app-c-20261013/trusted-probe.json",
+      "sha256": "5d826c6c0ca1883200070afe18343f42fd006db840c0deb8cba97bd8ea08be43"
+    }
+  }
+}
