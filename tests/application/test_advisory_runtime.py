@@ -75,6 +75,14 @@ class RuntimeTests(unittest.TestCase):
         with sqlite3.connect(self.dir / "advice.sqlite3") as db:
             self.assertEqual(db.execute("SELECT followed FROM children").fetchall(), [(1,)])
 
+    def test_codex_encrypted_message_falls_back_to_the_readable_task_name(self):
+        token = "gAAAAABqzc6Q" + "A1b2C3d4_-" * 12
+        host = HOSTS["codex"]
+        seen = host.request(codex_pre(message=token, task_name="rename_variable"))
+        self.assertEqual(seen.task, "rename variable")                  # never send ciphertext to a classifier
+        self.assertIsNone(host.request(codex_pre(message=token)))        # nothing readable: leave the delegation alone
+        self.assertEqual(host.request(codex_pre(task_name="ignored")).task, "Rename cnt to count in utils.py")  # plain text wins
+
     def test_claude_code_real_event_shape(self):
         self.configure()
         pre = FIXTURE["PreToolUse"]

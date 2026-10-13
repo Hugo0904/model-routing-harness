@@ -6,6 +6,7 @@ and Claude Code 2.1.x (`Agent`, fixture tests/fixtures/claude_agent_events.json)
 from __future__ import annotations
 
 import json
+import re
 
 from mrh.advisory import advice_text
 from mrh.advisory.request import Advice, AdvisoryRequest, Child
@@ -13,6 +14,18 @@ from mrh.routing.types import safe_id, safe_model_id
 
 CODEX_TOOLS = ("spawn_agent", "collaborationspawn_agent")
 CLAUDE_TOOLS = ("Agent", "Task")
+
+
+# Codex 0.159.3 hands hooks the delegation `message` as an opaque Fernet token; only `task_name` is readable.
+_CIPHERTEXT = re.compile(r"gAAAA[A-Za-z0-9_\-]{60,}={0,2}")
+
+
+def _readable_task(data):
+    message = _text(data.get("message"))
+    if message is not None and not _CIPHERTEXT.fullmatch(message.strip()):
+        return message
+    name = data.get("task_name")
+    return re.sub(r"[_\-]+", " ", name).strip() if safe_id(name) else None
 
 
 def _text(value):
@@ -49,7 +62,7 @@ class CodexHost(_Host):
             return None
         data = event["tool_input"]
         ids = [event.get(k) for k in ("session_id", "turn_id", "tool_use_id")]
-        task = _text(data.get("message"))
+        task = _readable_task(data)
         if task is None or not all(safe_id(i) for i in ids):
             return None
         role = data.get("agent_type")
