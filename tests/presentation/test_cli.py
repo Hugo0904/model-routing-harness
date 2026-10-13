@@ -104,14 +104,6 @@ class TerminalTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
-    def test_demo_without_db_is_temporary_and_json_remains_synthetic(self) -> None:
-        output = io.StringIO()
-        with patch.object(cli, "_default_db", side_effect=AssertionError("live DB touched")):
-            self.assertEqual(cli.main(["demo", "--json"], stdout=output), 0)
-        stats = json.loads(output.getvalue())
-        self.assertEqual(stats["partition"], "synthetic")
-        self.assertEqual(stats["proposals"], 5)
-        self.assertEqual(stats["confirmed_children"], 0)
 
     def test_color_respects_tty_plain_and_no_color(self) -> None:
         class TTY:
@@ -124,127 +116,13 @@ class CliTests(unittest.TestCase):
         with patch.object(cli.sys, "stdout", TTY()), patch.dict(os.environ, {"TERM": "xterm", "NO_COLOR": "1"}, clear=True):
             self.assertFalse(cli._wants_color(types.SimpleNamespace(plain=False, color=None)))
 
-    def test_help_does_not_import_store(self) -> None:
-        output = io.StringIO()
-        with forbid_store_imports(), contextlib.redirect_stdout(output), self.assertRaises(SystemExit) as raised:
-            cli.main(["--help"])
-        self.assertEqual(raised.exception.code, 0)
 
-    def test_doctor_does_not_import_store_or_touch_external_services(self) -> None:
-        output, errors = io.StringIO(), io.StringIO()
-        with forbid_store_imports(), contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
-            result = cli.main(["doctor", "--plain"])
-        self.assertEqual(result, 0)
-        self.assertIn("TypeSafe Jev adapter: default-disabled; real provider unverified", output.getvalue())
-        self.assertIn("not probed", output.getvalue())
-        self.assertIn("Global hook activation: not checked", output.getvalue())
 
-    def test_stats_json_is_the_store_object_without_presentation_fields(self) -> None:
-        class FakeStore:
-            def __init__(self, path: str):
-                self.path = path
 
-            def stats(self, synthetic: bool = False):
-                self.synthetic = synthetic
-                return SAMPLE_STATS
 
-        output = io.StringIO()
-        with patch.dict(sys.modules, {"mrh.infrastructure.store": fake_module("mrh.infrastructure.store", Store=FakeStore)}):
-            result = cli.main(["stats", "--db", "/tmp/mrh-test.sqlite", "--json"], stdout=output)
-        self.assertEqual(result, 0)
-        self.assertEqual(json.loads(output.getvalue()), SAMPLE_STATS)
-        self.assertNotIn("\x1b", output.getvalue())
 
-    def test_synthetic_stats_are_requested_only_when_explicit(self) -> None:
-        seen: list[bool] = []
 
-        class FakeStore:
-            def __init__(self, path: str):
-                pass
 
-            def stats(self, synthetic: bool = False):
-                seen.append(synthetic)
-                return SAMPLE_STATS
-
-        output = io.StringIO()
-        with patch.dict(sys.modules, {"mrh.infrastructure.store": fake_module("mrh.infrastructure.store", Store=FakeStore)}):
-            cli.main(["stats", "--db", "/tmp/mrh-test.sqlite", "--json"], stdout=output)
-            cli.main(["stats", "--db", "/tmp/mrh-test.sqlite", "--synthetic", "--json"], stdout=output)
-        self.assertEqual(seen, [False, True])
-
-    def test_config_preview_uses_explicit_home_and_never_applies_by_default(self) -> None:
-        calls: list[tuple[Path, str, str]] = []
-        applied: list[object] = []
-
-        class Plan:
-            def public(self):
-                return {"action": "apply", "writes": []}
-
-        def prepare(home: Path, command: str, action: str = "apply"):
-            calls.append((home, command, action))
-            return Plan()
-
-        module = fake_module("mrh.infrastructure.installer", prepare=prepare, apply=lambda plan: applied.append(plan))
-        output = io.StringIO()
-        with tempfile.TemporaryDirectory() as tmp, patch.dict(sys.modules, {"mrh.infrastructure.installer": module}):
-            result = cli.main(["config", "--home", tmp, "--command", "mrh", "--plain"], stdout=output)
-        self.assertEqual(result, 0)
-        self.assertEqual(calls, [(Path(tmp), "mrh", "apply")])
-        self.assertEqual(applied, [])
-        self.assertIn("PREVIEW AND RESULT", output.getvalue())
-
-    def test_config_apply_requires_explicit_flag(self) -> None:
-        calls: list[str] = []
-
-        class Plan:
-            def public(self):
-                return {"action": "disable"}
-
-        module = fake_module(
-            "mrh.infrastructure.installer",
-            prepare=lambda home, command, action="apply": Plan(),
-            apply=lambda plan: calls.append("apply") or {"ok": True},
-        )
-        output = io.StringIO()
-        with tempfile.TemporaryDirectory() as tmp, patch.dict(sys.modules, {"mrh.infrastructure.installer": module}):
-            result = cli.main(["config", "--home", tmp, "--command", "mrh", "--action", "disable", "--apply", "--plain"], stdout=output)
-        self.assertEqual(result, 0)
-        self.assertEqual(calls, ["apply"])
-
-    def test_config_refused_preview_returns_nonzero_and_skips_apply(self) -> None:
-        calls: list[str] = []
-
-        class Plan:
-            def public(self):
-                return {"status": "refused", "reason": "safe_reason"}
-
-        module = fake_module(
-            "mrh.infrastructure.installer",
-            prepare=lambda home, command, action="apply": Plan(),
-            apply=lambda plan: calls.append("apply") or {"ok": True},
-        )
-        output, errors = io.StringIO(), io.StringIO()
-        with tempfile.TemporaryDirectory() as tmp, patch.dict(sys.modules, {"mrh.infrastructure.installer": module}):
-            result = cli.main(["config", "--home", tmp, "--command", "mrh", "--apply", "--plain"], stdout=output, stderr=errors)
-        self.assertNotEqual(result, 0)
-        self.assertEqual(errors.getvalue(), "mrh: config_refused\n")
-        self.assertEqual(calls, [])
-
-    def test_config_apply_refusal_returns_nonzero(self) -> None:
-        class Plan:
-            def public(self):
-                return {"status": "ready"}
-
-        module = fake_module(
-            "mrh.infrastructure.installer",
-            prepare=lambda home, command, action="apply": Plan(),
-            apply=lambda plan: {"ok": False, "status": "refused"},
-        )
-        output, errors = io.StringIO(), io.StringIO()
-        with tempfile.TemporaryDirectory() as tmp, patch.dict(sys.modules, {"mrh.infrastructure.installer": module}):
-            result = cli.main(["config", "--home", tmp, "--command", "mrh", "--apply", "--plain"], stdout=output, stderr=errors)
-        self.assertNotEqual(result, 0)
-        self.assertEqual(errors.getvalue(), "mrh: config_apply_refused\n")
 
     def test_hook_stdout_is_protocol_only_and_default_is_passthrough(self) -> None:
         seen: list[tuple[dict, object, bool, object]] = []

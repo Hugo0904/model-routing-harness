@@ -140,19 +140,6 @@ class AccountingTests(unittest.TestCase):
             self.assertFalse((self.path.parent / "events.sqlite3").exists())
         self.assertEqual(self.keys, 0)
 
-    def test_cli_json_and_human_read_same_corrected_stats_without_increment(self):
-        pre, post = saved_events(); self.admit(pre)
-        self.hook(pre); self.hook(post)
-        db = self.path.parent / "events.sqlite3"; store = Store(db); before = store.stats(True)
-        outputs = []
-        for options in (("--json",), ("--plain", "--details")):
-            out = io.StringIO()
-            self.assertEqual(cli.main(["stats", "--db", str(db), "--synthetic", *options], stdout=out, stderr=io.StringIO()), 0)
-            outputs.append(out.getvalue())
-        self.assertEqual(json.loads(outputs[0]), before)
-        self.assertIn("explicit_model: 1", outputs[1]); self.assertIn("Simulated children: 1", outputs[1])
-        self.assertEqual(store.stats(True), before)
-        self.assertEqual(self.keys, 0)
 
     def test_unowned_malformed_and_partition_mismatch_do_not_gain_facts(self):
         pre, _ = saved_events(); self.admit(pre)

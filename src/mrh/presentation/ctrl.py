@@ -140,11 +140,20 @@ class Session:
     def settings(self):
         return v2.read(self.path)
 
+    def _confirm_save(self):
+        """Esc here means 'not now': nothing is written and the previous screen stays."""
+        try:
+            ok = self.menu.pick("要儲存這項變更嗎？", [("儲存", True), ("取消", False)]) is True
+        except Back:
+            ok = False
+        if not ok:
+            self.menu.note("沒有儲存。")
+        return ok
+
     def save(self, changes, summary):
         current = self.settings()
         self.out.write(f"\n  變更內容：{summary}\n")
-        if self.menu.pick("要儲存這項變更嗎？", [("儲存", True), ("取消", False)]) is not True:
-            self.menu.note("沒有儲存。")
+        if not self._confirm_save():
             return False
         try:
             v2.update(self.path, expected_revision=current["revision"], **changes)
@@ -161,8 +170,8 @@ class Session:
             if key == "allowed_workspaces" and "workspace_allowlist_file" in current:
                 logic.changes_for(current, key, value)          # validate before asking
                 self.out.write(f"\n  變更內容：{summary}\n")
-                if self.menu.pick("要儲存這項變更嗎？", [("儲存", True), ("取消", False)]) is not True:
-                    self.menu.note("沒有儲存。"); return False
+                if not self._confirm_save():
+                    return False
                 self.menu.note(apply_set(self.path, current, key, value)); return True
             return self.save(logic.changes_for(current, key, value), summary)
         except logic.CtrlError as exc:
@@ -177,31 +186,50 @@ class Session:
         self.save({"enabled": on, **({"task_export_permitted": True} if on else {})}, f"路由 {'開啟' if on else '關閉'}")
 
     def classifier(self):
-        s = self.settings()["classifier"]
-        provider = self.menu.pick("分級器", [(registry.LABELS[p] + ("  （需要 API 金鑰）" if registry.NEEDS_KEY[p] else ""), p)
-                                                 for p in v2.PROVIDERS], s["provider"])
-        if provider != s["provider"]:
-            self.set_key("classifier.provider", provider, f"分級器 → {registry.LABELS[provider]}")
-        s = self.settings()["classifier"]
-        if s["provider"] != "jev":
-            platform = "codex" if s["provider"] == "codex_subscription" else "claude"
-            choices = [(f"{m}", m) for m, _ in self.models(platform)] + [("自己輸入模型名稱", None)]
-            model = self.menu.pick("分級器用的模型（小而快的最合適）", choices, s["model"])
-            model = model or self.menu.text("模型名稱")
-            if model != s["model"]:
-                self.set_key("classifier.model", model, f"分級器模型 → {model}")
-        timeout = self.menu.text(f"逾時秒數 1–30（目前 {s['timeout_seconds']:g}，直接按 Enter 保持不變）")
-        if timeout:
-            self.set_key("classifier.timeout", timeout, f"逾時 → {timeout} 秒")
+        step = 0
+        while True:
+            try:
+                s = self.settings()["classifier"]
+                if step == 0:
+                    provider = self.menu.pick("分級器", [(registry.LABELS[p] + ("  （需要 API 金鑰）" if registry.NEEDS_KEY[p] else ""), p)
+                                                         for p in v2.PROVIDERS], s["provider"])
+                    if provider != s["provider"]:
+                        self.set_key("classifier.provider", provider, f"分級器 → {registry.LABELS[provider]}")
+                    step = 1
+                elif step == 1:
+                    if s["provider"] == "jev":
+                        step = 2; continue
+                    platform = "codex" if s["provider"] == "codex_subscription" else "claude"
+                    choices = [(f"{m}", m) for m, _ in self.models(platform)] + [("自己輸入模型名稱", None)]
+                    model = self.menu.pick("分級器用的模型（小而快的最合適）", choices, s["model"])
+                    model = model or self.menu.text("模型名稱")
+                    if model != s["model"]:
+                        self.set_key("classifier.model", model, f"分級器模型 → {model}")
+                    step = 2
+                else:
+                    timeout = self.menu.text(f"逾時秒數 1–30（目前 {s['timeout_seconds']:g}，直接按 Enter 保持不變）")
+                    if timeout:
+                        self.set_key("classifier.timeout", timeout, f"逾時 → {timeout} 秒")
+                    return
+            except Back:
+                if step == 0:
+                    raise
+                step = 0 if step == 1 or self.settings()["classifier"]["provider"] == "jev" else 1
 
     def edit_list(self, scope, platform):
         s = self.settings()
         items = list((s["policy"]["fixed"] if scope == "Top" else s["policy"]["tiers"].get(scope, {})).get(platform, []))
+        original = list(items)
         key = f"fixed.{platform}" if scope == "Top" else f"tiers.{scope}.{platform}"
         while True:
             self.out.write(f"\n  {scope} / {platform}: {logic.format_candidates(items)}\n")
-            action = self.menu.pick("編輯候選清單", [("從已安裝工具的模型清單加入", "add"), ("直接輸入模型（模型 或 模型:推理強度）", "type"),
-                                    ("移除其中一個", "remove"), ("把其中一個移到最前面（最優先）", "top"), ("全部清空", "clear"), ("儲存並完成", "done")])
+            try:
+                action = self.menu.pick("編輯候選清單", [("從已安裝工具的模型清單加入", "add"), ("直接輸入模型（模型 或 模型:推理強度）", "type"),
+                                        ("移除其中一個", "remove"), ("把其中一個移到最前面（最優先）", "top"), ("全部清空", "clear"), ("儲存並完成", "done")])
+            except Back:
+                if items != original:
+                    self.menu.note("尚未儲存的修改已放棄。")
+                raise                                  # one step back: the platform choice
             try:
                 if action == "add":
                     models = self.models(platform)
@@ -218,20 +246,31 @@ class Session:
                 elif action == "clear":
                     items = []
                 elif action == "done":
-                    self.save(logic.changes_for(self.settings(), key, logic.format_candidates(items) if items else ""),
-                              f"{scope}/{platform} -> {logic.format_candidates(items)}")
-                    return
+                    if self.save(logic.changes_for(self.settings(), key, logic.format_candidates(items) if items else ""),
+                                 f"{scope}/{platform} -> {logic.format_candidates(items)}"):
+                        return
+                    continue
                 if len(items) > v2.MAX_CANDIDATES:
                     items = items[:v2.MAX_CANDIDATES]; self.menu.note(f"最多只保留前 {v2.MAX_CANDIDATES} 個。")
             except logic.CtrlError as exc:
                 self.menu.note(str(exc))
             except Back:
-                continue
+                continue                               # Esc inside a sub-step returns to this action menu
 
     def tiers(self):
-        scope = self.menu.pick("要設定哪個難度", [(t, t) for t in (*v2.TIERS, "Top")])
-        platform = self.menu.pick("主模型是在哪個工具裡執行（codex / claude / gemini）", [(p, p) for p in v2.PLATFORMS])
-        self.edit_list(scope, platform)
+        step, scope, platform = 0, None, None
+        while True:
+            try:
+                if step == 0:
+                    scope = self.menu.pick("要設定哪個難度", [(t, t) for t in (*v2.TIERS, "Top")]); step = 1
+                elif step == 1:
+                    platform = self.menu.pick("主模型是在哪個工具裡執行（codex / claude / gemini）", [(p, p) for p in v2.PLATFORMS]); step = 2
+                else:
+                    self.edit_list(scope, platform); return
+            except Back:
+                if step == 0:
+                    raise
+                step = step - 1 if step < 2 else 1
 
     def top(self):
         mode = self.menu.pick("Top 難度怎麼處理", [(f"Main：{TOP_HELP['Main']}", "Main"), (f"Fixed：{TOP_HELP['Fixed']}", "Fixed")], self.settings()["policy"]["top_mode"])
@@ -279,11 +318,14 @@ class Session:
             self.out.write("\n" + render(snapshot(self.settings(), self.path, self.secrets), self.menu.width))
             try:
                 screen = self.menu.pick("要調整什麼？", [*screens, ("離開", None)])
-                if screen is None:
-                    return 0
+            except (Back, Cancelled):
+                return 0                               # nothing above the main menu: Esc leaves
+            if screen is None:
+                return 0
+            try:
                 screen()
             except Back:
-                continue
+                continue                               # Esc inside a screen returns here
             except Cancelled:
                 return 0
 

@@ -57,20 +57,6 @@ class SubscriptionTests(unittest.TestCase):
         self.assertIsInstance(classifier_from_config(cfg(value)),CodexSubscriptionClassifier)
         with self.assertRaises(ClassifierFailure):classifier_from_config(cfg(value),credential_resolver=lambda:'not-used')
 
-    def test_provider_switch_preserves_permissions_policy_history_and_cas(self):
-        with tempfile.TemporaryDirectory() as root:
-            path=Path(root).resolve()/'state/settings.json';settings.init(path)
-            legacy=settings.update(path,provider='typesafe',classifier_model='jev-1.13.0',policy={'timeout_seconds':2,'top_mode':'Main'})
-            before=copy.deepcopy(legacy);history=path.parent/'events.sqlite3';Store(history);data=history.read_bytes()
-            output=io.StringIO()
-            with patch('sys.stdout',output):
-                self.assertEqual(cli.main(['settings','configure','--path',str(path),'--provider','codex_subscription',
-                    '--expected-revision',str(legacy['revision'])]),0)
-            current=settings.read(path)
-            for key in ('enabled','task_export_permitted','allowed_workspaces','policy'):self.assertEqual(current[key],before[key])
-            self.assertEqual(history.read_bytes(),data)
-            from mrh.infrastructure.settings_schema import SettingsError
-            with self.assertRaises(SettingsError):settings.update(path,expected_revision=legacy['revision'],enabled=True)
 
     def test_strict_final_answer_and_official_usage(self):
         c,u=parse_stream(stream());self.assertEqual((c.tier,c.confidence,c.reason_code),('Light',.9,'classified_subscription'))

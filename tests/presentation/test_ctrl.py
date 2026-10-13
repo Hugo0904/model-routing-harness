@@ -112,20 +112,6 @@ class CtrlTests(unittest.TestCase):
         self.assertEqual(v2.read(self.path)["revision"], revision)                 # settings untouched
         self.assertTrue(v2.workspace_allowed(v2.read(self.path), str(work)))
 
-    def test_plain_status_and_stats_show_the_current_data_while_legacy_flags_keep_the_old_path(self):
-        import os
-        from unittest.mock import patch
-        from mrh.presentation import cli
-        v2.update(self.path, enabled=True)
-        for command, expected in (("status", "WHERE 0 DELEGATIONS WENT"), ("stats", "MRH 統計")):
-            out, err = io.StringIO(), io.StringIO()
-            with patch.dict(os.environ, {"MRH_SETTINGS": str(self.path)}):
-                code = cli.main([command, "--plain"], stdin=io.StringIO(), stdout=out, stderr=err)
-            self.assertEqual(code, 0, err.getvalue())
-            self.assertIn(expected, out.getvalue())
-        legacy, err = io.StringIO(), io.StringIO()
-        cli.main(["stats", "--db", str(self.path.parent / "legacy.sqlite3"), "--plain"], stdin=io.StringIO(), stdout=legacy, stderr=err)
-        self.assertNotIn("MRH 統計", legacy.getvalue())          # explicit legacy flags still read the old event store
 
     def test_menu_never_starts_on_quit(self):
         from mrh.presentation.menu import initial_focus
@@ -142,3 +128,26 @@ class CtrlTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CommandListTests(unittest.TestCase):
+    def test_bare_mrh_and_help_print_the_chinese_command_list_without_touching_anything(self):
+        from mrh.presentation import cli
+        for argv in ([], ["--help"], ["help"]):
+            out = io.StringIO()
+            self.assertEqual(cli.main(argv, stdin=io.StringIO(), stdout=out, stderr=io.StringIO()), 0)
+            for expected in ("mrh ctrl", "mrh status", "mrh stats", "mrh key status jev", "mrh install claude"):
+                self.assertIn(expected, out.getvalue())
+
+    def test_status_and_stats_read_the_current_settings(self):
+        import os, tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from mrh.presentation import cli
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp).resolve() / "owned" / "settings.json"; v2.init(path)
+            for command, expected in (("status", "WHERE 0 DELEGATIONS WENT"), ("stats", "MRH 統計")):
+                out, err = io.StringIO(), io.StringIO()
+                with patch.dict(os.environ, {"MRH_SETTINGS": str(path)}):
+                    self.assertEqual(cli.main([command, "--plain"], stdin=io.StringIO(), stdout=out, stderr=err), 0, err.getvalue())
+                self.assertIn(expected, out.getvalue())

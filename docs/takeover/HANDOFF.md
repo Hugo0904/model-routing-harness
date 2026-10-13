@@ -78,6 +78,12 @@ mrh ctrl show     # 目前設定
 - Claude 真實環境測試（真實安裝的 hook）：輕量→改派 Haiku 5.5＋effort、平行 3 個、互動模式（fork 開啟）、Explore 不干預、中文、金鑰錯誤不擋工作且通知顯示給使用者；`scripts/verification/claude_smoke.py` 9/9。
 - 已部署最新程式（hooks.json 不變）。給 Codex 的交接：`CODEX-HANDOFF.md`。
 
+## 2026-10-13 深夜更新：指令統一為新版
+
+- 舊指令 `model`、`settings`、`config`、`doctor`、`demo` 與舊 `stats/status` 的舊參數已從 CLI 移除；`mrh status`／`mrh stats` 只剩新版。**留下的內部指令：`hook`**（兩邊 hook 靠它）。裸 `mrh` 列出中文指令清單。
+- 因此 `presentation/model_selector.py`、`settings_editor.py`、`infrastructure/bindings.py`、`installer.py`、`application/runtime.py` 等已成孤兒程式碼，可由 Codex 清理時一併刪除（刪前確認 Claude 路徑沒用到並跑回歸）。對應的舊測試已刪（test_model_selector、test_settings_cli、test_rebind 與零星案例）。
+- 控制中心 Esc／← = 返回上一步（多步驟畫面逐步返回，主選單按 Esc 才離開，Ctrl-C 直接離開）；`scripts/verification/terminal/verify_esc_back.py` 在偽終端驗證。
+
 ## 未完成／已知問題
 
 1. **Codex CLI 候選已驗證，尚待整體接受**：新文案明確要求以 `fork_turns=none` 重派。10 次有效隔離試跑均由真 Jev 建議並改派到原生讀回的 `gpt-5.6-luna / low`，且任務完成；全部 12 次啟動與兩次前置試跑均有記錄。證據：`docs/evidence/codex/l2-codex-advice-20261013.json`。不據此宣稱日常遵從率或省錢幅度。

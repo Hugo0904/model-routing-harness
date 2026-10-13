@@ -53,33 +53,6 @@ class SettingsRuntimeTests(unittest.TestCase):
         settings.update(self.path, enabled=True, task_export_permitted=True,
                         allowed_workspaces=[str(self.workspace)], **changes)
 
-    def test_public_configuration_and_enable_are_independent_idempotent_and_read_only_show(self):
-        initial = self.path.read_bytes()
-        self.assertEqual(self.cli(["settings", "init", "--path", str(self.path)])[0], 0)
-        self.assertEqual(self.path.read_bytes(), initial)
-        args = ["settings", "configure", "--path", str(self.path), "--provider", "typesafe",
-                "--allow-workspace", str(self.workspace), "--permit-task-export"]
-        self.assertEqual(self.cli(args)[0], 0)
-        self.assertFalse(settings.read(self.path)["enabled"])
-        before = {p.name: p.read_bytes() for p in self.path.parent.iterdir()}
-        with patch("mrh.adapters.providers.typesafe.environment_credential", side_effect=AssertionError("key read")):
-            code, output, _ = self.cli(["settings", "show", "--path", str(self.path)])
-            self.assertEqual(code, 0)
-            self.assertEqual(json.loads(output)["readiness_reason"], "missing_role_protection")
-            self.assertFalse(json.loads(output)["live_routing_ready"])
-            self.assertEqual(self.cli(["doctor", "--plain"])[0], 0)
-        self.assertEqual({p.name: p.read_bytes() for p in self.path.parent.iterdir()}, before)
-        settings.update(self.path, enabled=True)
-        saved = self.path.read_bytes()
-        settings.init(self.path)
-        self.assertEqual(self.path.read_bytes(), saved)
-        self.assertEqual(self.cli(["settings", "disable", "--path", str(self.path)])[0], 0)
-        self.assertFalse(settings.read(self.path)["enabled"])
-        self.assertTrue(settings.read(self.path)["task_export_permitted"])
-        revision = settings.read(self.path)["revision"]
-        with self.assertRaisesRegex(SettingsError, "settings_conflict"):
-            settings.update(self.path, expected_revision=revision-1, enabled=True)
-        self.assertFalse(settings.read(self.path)["enabled"])
 
     def test_each_export_gate_combination_has_zero_key_and_transport_until_all_true(self):
         for enabled in (False, True):

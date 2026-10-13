@@ -18,10 +18,10 @@
 所有設定都在一個地方：
 
 ```sh
-mrh ctrl                     # 互動選單（方向鍵、Enter、← 返回、Esc 取消）
+mrh                          # 什麼都不加：列出所有指令
+mrh ctrl                     # 互動選單（↑↓ 選擇、Enter 確認、Esc 或 ← 返回上一步、Ctrl-C 離開）
 mrh ctrl dashboard [--days N] # 終端儀表板：流程、難度表（含價格）、分段比例條、進度條（80–120 欄自適應）
 mrh ctrl stats [--days N]    # 中文統計
-mrh ctrl report [--days N]   # （選用）產生網頁報表檔
 mrh ctrl show [--json]       # 目前設定一覽
 mrh ctrl set KEY VALUE       # 腳本用；mrh ctrl keys 列出所有 KEY
 mrh key status jev           # 金鑰狀態（只顯示有沒有，不顯示內容）
@@ -46,8 +46,8 @@ mrh key set jev      # 由 macOS 提示輸入，金鑰不經過 MRH、不進任�
 ## 日常操作
 
 ```sh
-mrh status                             # = mrh ctrl dashboard（卡片儀表板，預設過去 7 天）
-mrh stats                              # = mrh ctrl stats（中文統計，預設過去 24 小時）
+mrh status                             # 卡片儀表板（預設過去 7 天）
+mrh stats                              # 中文統計（預設過去 24 小時）
 mrh ctrl show                          # 目前設定一覽（含難度表）
 mrh ctrl set enabled on                # 啟用路由（off 為停用；開新的 Claude Code／Codex 對話才會載入）
 mrh ctrl dashboard --days 7            # 儀表板

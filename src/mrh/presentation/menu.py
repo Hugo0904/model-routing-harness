@@ -73,7 +73,7 @@ class Menu:
                 self.stdout.write("\r\x1b[" + str(frame.count("\n")) + "A")
             self.stdout.write(frame); self.stdout.write("  > "); self.stdout.flush()
 
-        self.note("↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字")
+        self.note("↑↓ 選擇　Enter 確認　Esc 或 ← 返回上一步　Ctrl-C 離開　也可直接按數字")
         try:
             tty.setcbreak(fd); draw(); digits = ""
             while True:
@@ -93,9 +93,9 @@ class Menu:
                 if key != b"\x1b":
                     continue
                 if not io_select.select([fd], [], [], .15)[0]:
-                    raise Cancelled()
+                    raise Back()                      # a lone Esc: one step back
                 if os.read(fd, 1) not in (b"[", b"O") or not io_select.select([fd], [], [], .15)[0]:
-                    raise Cancelled()
+                    raise Back()
                 code = os.read(fd, 1)
                 if code == b"D":
                     raise Back()

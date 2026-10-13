@@ -38,19 +38,6 @@ class WorkspaceAllowlistTests(unittest.TestCase):
     def hook(self,event):
         return configured_event(event,self.path,host_resolver=Host(),subscription_runner=self.runner)
 
-    def test_explicit_cli_select_clear_and_legacy_settings_compatibility(self):
-        old=settings.read(self.path);self.assertNotIn('workspace_allowlist_file',old)
-        self.assertEqual(parse_settings(json.dumps(old).encode()),old)
-        self.assertFalse(settings.workspace_allowed(old,str(self.work)))
-        with patch('sys.stdout',io.StringIO()):
-            self.assertEqual(cli.main(['settings','configure','--path',str(self.path),'--workspace-allowlist-file',str(self.file)]),0)
-        current=settings.read(self.path)
-        self.assertEqual(current['allowed_workspaces'],old['allowed_workspaces'])
-        self.assertTrue(settings.workspace_allowed(current,str(self.work)))
-        with patch('sys.stdout',io.StringIO()):
-            self.assertEqual(cli.main(['settings','configure','--path',str(self.path),'--clear-workspace-allowlist-file']),0)
-        self.assertNotIn('workspace_allowlist_file',settings.read(self.path))
-        self.assertTrue(settings.workspace_allowed(settings.read(self.path),str(self.outside)))
 
     def test_root_descendant_sibling_symlink_escape_and_next_call_reload(self):
         settings.update(self.path,workspace_allowlist_file=str(self.file))

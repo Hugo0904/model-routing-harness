@@ -165,33 +165,6 @@ class FreshScopeTests(unittest.TestCase):
         self.assertFalse(settings.update(state,enabled=False)['enabled'])
         self.assertEqual(configured_event(self.event,state,scope_binding=binding),{})
 
-    def test_runtime_startup_protected_allowlist_and_decision_boundary(self):
-        state=self.profile/'state/settings.json'; settings.init(state)
-        value=settings.read(state)
-        value.update(enabled=True,task_export_permitted=True,provider='typesafe',classifier_model='jev-1.13.0',allowed_workspaces=[str(self.work)])
-        state.write_text(json.dumps(value))
-        missing=configured_event(self.event,state,scope_binding=self.binding)
-        self.assertIn('verified native startup is missing',missing.get('systemMessage',''))
-        import sqlite3
-        with sqlite3.connect((state.parent/'events.sqlite3').as_uri()+'?mode=ro',uri=True) as db:
-            self.assertEqual(db.execute('select count(*) from attempts').fetchone()[0],0)
-            self.assertEqual(db.execute("select json_extract(decision,'$.reason') from proposals").fetchone()[0],'scope_fresh_start_missing')
-        before=(state.parent/'events.sqlite3').read_bytes()
-        self.assertEqual(configured_event(self.start,state,scope_binding=self.binding),{})
-        self.assertEqual((state.parent/'events.sqlite3').read_bytes(),before)
-        from tests.adapters.test_typesafe import FakeTransport
-        transport=FakeTransport()
-        for index,fields in enumerate(({'model':'chosen'},{'reasoning_effort':'high'},{'agent_type':'explorer'})):
-            result=configured_event({**self.event,'tool_use_id':'protected-'+str(index),'tool_input':{**self.event['tool_input'],**fields}},
-                                    state,scope_binding=self.binding,transport=transport)
-            self.assertNotIn('hookSpecificOutput',result)
-        self.assertEqual(transport.calls,[])
-        value['allowed_workspaces']=[];state.write_text(json.dumps(value))
-        with patch('mrh.application.runtime.classifier_from_config',side_effect=AssertionError('no admission')):
-            self.assertEqual(configured_event(self.event,state,scope_binding=self.binding),{})
-        facts=self.facts(); self.config.write_text(self.config.read_text()+'personality="friendly"\n')
-        proposal=Proposal('codex','simulation','fresh-s','t','c',self.event['tool_input'],True)
-        self.assertEqual(facts.validation_reason(proposal),'scope_fresh_sources_changed')
 
     @unittest.skipUnless(sys.platform=='darwin','Darwin native process API')
     def test_kernel_process_metadata_direct_consumer(self):

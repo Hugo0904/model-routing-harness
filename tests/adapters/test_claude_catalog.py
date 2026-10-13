@@ -363,26 +363,7 @@ class ClaudeSelectorRoundTripTests(unittest.TestCase):
         )
         return code, stdout.getvalue(), stderr.getvalue()
 
-    def test_saves_actual_request_id_roundtrip_with_gates_off(self):
-        code, _, stderr = self.run_selector("1\n1\n1\n")
 
-        self.assertEqual((code, stderr), (0, ""))
-        saved = settings.read(self.settings_path)
-        self.assertEqual(saved["policy"]["tiers"]["Light"], {"model": "opus[1m]"})
-        self.assertFalse(saved["enabled"])
-        self.assertFalse(saved["task_export_permitted"])
-        self.assertEqual(saved["allowed_workspaces"], [])
-        self.assertEqual(self.provider.calls, 2)
-
-    def test_back_then_cancel_keeps_policy_bytes_unchanged(self):
-        before = self.settings_path.read_bytes()
-
-        code, stdout, stderr = self.run_selector("1\nback\n1\n1\ncancel\n")
-
-        self.assertEqual((code, stderr), (0, ""))
-        self.assertIn("Back. Draft retained", stdout)
-        self.assertEqual(self.settings_path.read_bytes(), before)
-        self.assertEqual(self.provider.calls, 2)
 
 
 if __name__ == "__main__":

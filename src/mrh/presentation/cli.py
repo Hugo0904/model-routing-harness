@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Sequence
 
-from mrh.presentation.terminal import render_report, render_stats, terminal_width
+from mrh.presentation.terminal import terminal_width
 
 
 def _default_db() -> Path:
@@ -39,14 +39,29 @@ def _add_display_options(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_stats_options(parser: argparse.ArgumentParser) -> None:
-    source = parser.add_mutually_exclusive_group()
-    source.add_argument("--db", type=Path, default=None, help="event database path")
-    source.add_argument("--settings", type=Path, help="owned settings and associated event store")
-    parser.add_argument("--synthetic", action="store_true", help="read the isolated synthetic partition")
-    parser.add_argument("--json", action="store_true", help="print the unmodified statistics object")
-    parser.add_argument("--details", action="store_true", help="show full statistics and telemetry")
+    parser.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
+    parser.add_argument("--json", action="store_true", help="print the statistics as JSON")
     parser.add_argument("--days", type=float, default=None, help="period in days (0 = all records)")
     _add_display_options(parser)
+
+
+COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
+
+日常使用
+  mrh ctrl               控制中心（互動選單：模型、分級器、信心門檻、適用範圍…）
+  mrh status             儀表板（流程、難度表、分段比例條）
+  mrh stats              文字統計（可加 --days N；0 = 全部）
+  mrh ctrl show          目前設定一覽
+  mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
+  mrh key status jev     金鑰狀態（set 存入、delete 刪除）
+
+安裝與維護
+  mrh plugin prepare --advisory …   準備 Codex／Claude Code 共用外掛
+  mrh install claude --artifact …   套用 Claude Code hook（預設只顯示差異，加 --apply 才寫入）
+
+說明
+  mrh <指令> --help      該指令的參數說明
+"""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -56,20 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
-    model = commands.add_parser('model', help='choose a tier model from a bound tool catalog')
-    model.add_argument('tier', nargs='?', type=str.lower, choices=('light','small','mid','top'),
-                       help='tier to configure (omit for a picker)')
-    model.add_argument('--root', type=Path, help='explicit MRH binding-state root for isolation')
-    model.add_argument('--bind', action='store_true', help='confirm association of another detected tool/profile')
-    model.add_argument('--associate-settings', type=Path, help='explicit known owned settings to associate (with --bind)')
-    _add_display_options(model)
-
-    for name, help_text in (
-        ("stats", "statistics in plain language (same as `mrh ctrl stats`)"),
-        ("status", "card dashboard (same as `mrh ctrl dashboard`)"),
-    ):
-        command = commands.add_parser(name, help=help_text)
-        _add_stats_options(command)
+    for name, help_text in (("status", "card dashboard"), ("stats", "statistics in plain language")):
+        _add_stats_options(commands.add_parser(name, help=help_text))
 
     ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
     ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
@@ -101,38 +104,6 @@ def build_parser() -> argparse.ArgumentParser:
     key.add_argument("action", choices=("status", "set", "delete"))
     key.add_argument("name", choices=("jev",))
 
-    doctor = commands.add_parser("doctor", help="show capability boundaries without probing services")
-    _add_display_options(doctor)
-
-    config = commands.add_parser("config", help="preview or explicitly apply a Codex hook configuration change")
-    config.add_argument("--home", type=Path, required=True, help="explicit Codex home to inspect")
-    config.add_argument("--command", dest="hook_command", required=True, help="explicit MRH executable command for the hook")
-    config.add_argument("--action", choices=("apply", "disable"), default="apply")
-    config.add_argument("--apply", dest="write", action="store_true", help="write the prepared change")
-    _add_display_options(config)
-
-    settings = commands.add_parser("settings", help="manage an explicit MRH-owned settings file")
-    actions = settings.add_subparsers(dest="settings_action", required=True)
-    for action in ("init", "show", "configure", "enable", "disable", "edit", "view"):
-        item = actions.add_parser(action)
-        item.add_argument("--path", required=True, type=Path, help="canonical absolute settings.json path")
-        if action in ("edit", "view"):
-            _add_display_options(item)
-        elif action not in ("init", "show"):
-            item.add_argument("--expected-revision", type=int)
-        if action == "configure":
-            item.add_argument("--provider", choices=("codex_subscription", "typesafe"),
-                              help="classifier source; separate from routed child models")
-            item.add_argument("--policy", type=Path, help="explicit policy JSON file; does not enable routing/export")
-            item.add_argument("--allow-workspace", action="append", default=None)
-            item.add_argument("--clear-workspaces", action="store_true")
-            allowlist = item.add_mutually_exclusive_group()
-            allowlist.add_argument("--workspace-allowlist-file", type=Path)
-            allowlist.add_argument("--clear-workspace-allowlist-file", action="store_true")
-            export = item.add_mutually_exclusive_group()
-            export.add_argument("--permit-task-export", dest="export_permission", action="store_true", default=None)
-            export.add_argument("--deny-task-export", dest="export_permission", action="store_false")
-
     plugin = commands.add_parser("plugin", help="prepare owned plugin files; native install and trust remain explicit")
     plugin_actions = plugin.add_subparsers(dest="plugin_action", required=True)
     prepare = plugin_actions.add_parser("prepare")
@@ -145,12 +116,6 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument('--advisory',action='store_true',help='advisory routing (settings v2): no scope binding; serves Codex and Claude Code')
     show = plugin_actions.add_parser("show")
     show.add_argument("--root", required=True, type=Path)
-
-    demo = commands.add_parser("demo", help="show isolated synthetic examples (temporary database by default)")
-    demo.add_argument("--db", type=Path, default=None, help="event database path")
-    demo.add_argument("--json", action="store_true", help="print the synthetic statistics object")
-    demo.add_argument("--details", action="store_true", help="show full statistics and telemetry")
-    _add_display_options(demo)
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
@@ -184,168 +149,6 @@ def _write_json(value: Any, stream: Any = None) -> None:
         stream = sys.stdout
     stream.write(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False, default=str))
     stream.write("\n")
-
-
-def _cmd_stats(args: argparse.Namespace) -> int:
-    configuration = None
-    database = args.db
-    if args.settings is not None:
-        from mrh.infrastructure import settings
-        from mrh.infrastructure.settings_schema import SettingsError
-        try:
-            configuration = settings.read(args.settings)
-        except SettingsError as exc:
-            sys.stderr.write("mrh: " + exc.reason + "\n")
-            return 2
-        database = args.settings.parent / "events.sqlite3"
-    stats = _store(database).stats(synthetic=args.synthetic)
-    if args.json:
-        _write_json(stats)
-    else:
-        width = args.width or terminal_width()
-        sys.stdout.write(render_stats(stats, width=width, color=_wants_color(args), details=args.details,
-                                     configuration=configuration))
-    return 0
-
-
-def _cmd_doctor(args: argparse.Namespace) -> int:
-    report = render_report(
-        "MRH  /  local capability check",
-        {
-            "Live classification": [
-                "Codex subscription classifier: default-disabled; existing ChatGPT login, no API key; isolation required",
-                "TypeSafe Jev adapter: retained for explicitly selected legacy profiles",
-                "Credentials and network: not probed",
-            ],
-            "Codex": [
-                "Candidate hook adapter: available for isolated use",
-                "Desktop and CLI adoption: unverified",
-                "Global hook activation: not checked",
-            ],
-            "Other CLIs": [
-                "Claude Code: unsupported",
-                "Gemini CLI: unsupported",
-            ],
-            "Data": [
-                "Statistics are read from the local event store when requested",
-                "Cost, token, quota, and actual model remain unavailable without evidence",
-            ],
-        },
-        width=args.width or terminal_width(),
-        color=_wants_color(args),
-    )
-    sys.stdout.write(report)
-    return 0
-
-
-def _public_plan(plan: Any) -> Any:
-    public = getattr(plan, "public", None)
-    if not callable(public):
-        raise TypeError("installer returned an invalid plan")
-    return public()
-
-
-def _status_refused(value: Any) -> bool:
-    if not isinstance(value, dict):
-        return False
-    status = value.get("status")
-    return isinstance(status, str) and status.strip().casefold() == "refused"
-
-
-def _cmd_config(args: argparse.Namespace) -> int:
-    try:
-        from mrh.infrastructure.installer import apply, prepare
-
-        plan = prepare(args.home, args.hook_command, action=args.action)
-        public = _public_plan(plan)
-        result: dict[str, Any] = {"plan": public}
-        failure_code = "mrh: config_refused" if _status_refused(public) else None
-        if args.write and failure_code is None:
-            apply_result = apply(plan)
-            result["apply_result"] = apply_result
-            if isinstance(apply_result, dict) and apply_result.get("ok") is False:
-                failure_code = "mrh: config_apply_refused"
-        report = render_report(
-            "MRH  /  Codex hook configuration",
-            {"Preview and result": result},
-            width=args.width or terminal_width(),
-            color=_wants_color(args),
-        )
-        sys.stdout.write(report)
-        if failure_code is not None:
-            sys.stderr.write(f"{failure_code}\n")
-            return 2
-        return 0
-    except Exception:
-        sys.stderr.write("mrh: config_error\n")
-        return 2
-
-
-def _cmd_demo(args: argparse.Namespace) -> int:
-    from mrh.application.simulation import demo_policy, run_demo
-
-    if args.db is None:
-        with tempfile.TemporaryDirectory(prefix="mrh-demo-") as temporary:
-            stats = run_demo(_store(Path(temporary) / "events.sqlite3"))
-    else:
-        stats = run_demo(_store(args.db))
-    if args.json:
-        _write_json(stats)
-    else:
-        sys.stdout.write(render_stats(stats, width=args.width or terminal_width(),
-                                      color=_wants_color(args), details=args.details,
-                                      demo_policy=demo_policy()))
-    return 0
-
-
-def _cmd_settings(args, stdin):
-    from mrh.infrastructure import settings
-    from mrh.infrastructure.settings_schema import SettingsError
-    try:
-        action = args.settings_action
-        if action == "edit":
-            from mrh.presentation.settings_editor import edit
-            return edit(args.path, stdin=stdin, stdout=sys.stdout, width=args.width or terminal_width(), color=_wants_color(args))
-        if action == "view":
-            from mrh.presentation.terminal import render_configuration
-            sys.stdout.write(render_configuration(settings.read(args.path), width=args.width or terminal_width(), color=_wants_color(args)))
-            return 0
-        if action == "init":
-            value = settings.init(args.path)
-        elif action == "show":
-            value = settings.read(args.path)
-        else:
-            changes = {}
-            if action in ("enable", "disable"):
-                changes["enabled"] = action == "enable"
-            else:
-                if args.provider is not None:
-                    changes["provider"] = args.provider
-                    from mrh.application.classifier import PROVIDERS
-                    changes['classifier_model'] = PROVIDERS[args.provider]
-                if args.export_permission is not None:
-                    changes["task_export_permitted"] = args.export_permission
-                if args.clear_workspaces and args.allow_workspace is not None:
-                    raise SettingsError("settings_conflict")
-                if args.allow_workspace is not None or args.clear_workspaces:
-                    changes["allowed_workspaces"] = args.allow_workspace or []
-                if args.workspace_allowlist_file is not None or args.clear_workspace_allowlist_file:
-                    changes["workspace_allowlist_file"] = args.workspace_allowlist_file
-                if args.policy is not None:
-                    from mrh.infrastructure.owned import read_regular
-                    from mrh.adapters.providers.typesafe import _no_duplicate_keys
-                    changes["policy"] = json.loads(read_regular(args.policy), object_pairs_hook=_no_duplicate_keys,
-                                                  parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
-            value = settings.update(args.path, expected_revision=args.expected_revision, **changes)
-        _write_json({"settings": value, "routing_enabled": value["enabled"],
-                     "live_routing_ready": False, "readiness_reason": "missing_role_protection",
-                     "installation_status": "not_inferred_from_settings", "credentials_probed": False})
-        return 0
-    except SettingsError as exc:
-        sys.stderr.write("mrh: " + exc.reason + "\n")
-    except Exception:
-        sys.stderr.write("mrh: settings_invalid\n")
-    return 2
 
 
 def _hook_failure(event, admitted):
@@ -435,8 +238,12 @@ def main(
     runtime_dependencies: dict | None = None,
     model_dependencies: dict | None = None,
 ) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if not arguments or arguments[0] in ("-h", "--help", "help"):
+        (stdout or sys.stdout).write(COMMAND_LIST)
+        return 0
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
     if stdin is None:
         stdin = sys.stdin
     if stdout is None:
@@ -460,23 +267,12 @@ def main(
     old_stdout, old_stderr = sys.stdout, sys.stderr
     sys.stdout, sys.stderr = stdout, stderr
     try:
-        if args.command == 'model':
-            from mrh.infrastructure.bindings import default_root
-            from mrh.presentation.model_selector import select
-            if args.associate_settings is not None and not args.bind:
-                stderr.write('mrh: --associate-settings requires --bind\n');return 2
-            return select(args.root or default_root(), args.tier.title() if args.tier else None,
-                          stdin=stdin, stdout=stdout, width=args.width or terminal_width(), color=_wants_color(args),
-                          bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
-            if args.db is None and args.settings is None and not args.synthetic and not args.details:
-                # Plain `mrh status` / `mrh stats` show the current advisory data. The flags above select the legacy event store.
-                from mrh.presentation import ctrl
-                args.ctrl_action = "dashboard" if args.command == "status" else "stats"
-                if args.days is None:
-                    args.days = 7 if args.command == "status" else 1
-                return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))
-            return _cmd_stats(args)
+            from mrh.presentation import ctrl
+            args.ctrl_action = "dashboard" if args.command == "status" else "stats"
+            if args.days is None:
+                args.days = 7 if args.command == "status" else 1
+            return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))
         if args.command == "install":
             from mrh.infrastructure import claude_hook as ch
             target = args.claude_settings or Path.home() / ".claude" / "settings.json"
@@ -498,12 +294,6 @@ def main(
         if args.command == "key":
             from mrh.presentation import key_cli
             return key_cli.run(args.action, args.name, stdout=stdout, stderr=stderr)
-        if args.command == "doctor":
-            return _cmd_doctor(args)
-        if args.command == "config":
-            return _cmd_config(args)
-        if args.command == "settings":
-            return _cmd_settings(args, stdin)
         if args.command == "plugin":
             from mrh.infrastructure import plugin
             from mrh.infrastructure.owned import OwnedError
@@ -515,8 +305,6 @@ def main(
             except (OwnedError,ScopeError) as exc:
                 stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")
                 return 2
-        if args.command == "demo":
-            return _cmd_demo(args)
         parser.error("unknown command")
     except Exception:
         stderr.write("mrh: cli_error\n")

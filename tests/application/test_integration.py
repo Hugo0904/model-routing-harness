@@ -20,24 +20,6 @@ class IntegrationTests(unittest.TestCase):
         self.path = Path(self.temp.name) / "events.sqlite3"
         self.store = Store(self.path)
 
-    def test_cli_json_and_text_share_stats_without_reclassification(self):
-        expected = run_demo(self.store)
-        self.assertEqual(expected["platforms"], [{"platform": "codex", "surface": "simulation", "proposals": 5}])
-        self.assertEqual(len(set(expected["event_ids"]["proposals"])), 5)
-        self.assertFalse(expected["event_ids_truncated"])
-        for _ in range(2):
-            output = io.StringIO()
-            self.assertEqual(main(["stats", "--db", str(self.path), "--synthetic", "--json"], stdout=output), 0)
-            self.assertEqual(json.loads(output.getvalue()), expected)
-            self.assertNotIn("\x1b", output.getvalue())
-        plain = io.StringIO()
-        main(["stats", "--db", str(self.path), "--synthetic", "--plain", "--details"], stdout=plain)
-        self.assertIn("Proposals: 5", plain.getvalue())
-        self.assertIn("Jev request attempts: 0", plain.getvalue())
-        self.assertIn("Top 2", plain.getvalue())
-        self.assertEqual(self.store.stats(True), expected)
-        self.assertEqual(run_demo(self.store), expected)
-        self.assertEqual(self.store.stats()["proposals"], 0)
 
     def test_cli_hook_default_and_explicit_simulation_end_to_end(self):
         event = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": "s",

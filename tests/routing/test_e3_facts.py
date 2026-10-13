@@ -149,20 +149,6 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(stats["requested_models"], {})
         self.assertEqual(stats["jev_attempts"], 0)
 
-    def test_cli_exports_same_v2_provider_stats_without_network(self):
-        proposal = self.proposal()
-        self.store.claim(proposal)
-        self.store.attempt(proposal.identity, "0", "synthetic", "requested", requested_model=PINNED_MODEL)
-        self.store.attempt(proposal.identity, "0", "synthetic", "started")
-        self.store.attempt(proposal.identity, "0", "synthetic", "returned", response_model=PINNED_MODEL,
-                           input_tokens=100, output_tokens=2)
-        self.store.complete(proposal.identity, Decision(reason="classifier_error", synthetic=True))
-        snapshot = self.store.stats(True)
-        stdout, stderr = io.StringIO(), io.StringIO()
-        self.assertEqual(main(["stats", "--db", str(self.path), "--synthetic", "--json"], stdout=stdout, stderr=stderr), 0)
-        self.assertEqual(json.loads(stdout.getvalue()), snapshot)
-        self.assertEqual(stderr.getvalue(), "")
-        self.assertEqual(self.store.stats(True), snapshot)
 
 
 if __name__ == "__main__":
