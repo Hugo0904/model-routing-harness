@@ -31,13 +31,13 @@ class Menu:
 
     def text(self, prompt):
         """One line of free text. `back` / `cancel` navigate."""
-        self.note(prompt + " [back / cancel]")
+        self.note(prompt + "（輸入 back 返回、cancel 取消）")
         self.stdout.write("  > "); self.stdout.flush()
         raw = self.stdin.readline(1026)
         self.stdout.write("\n")
-        if not raw or raw.strip().lower() == "cancel":
+        if not raw or raw.strip().lower() in ("cancel", "取消"):
             raise Cancelled()
-        if raw.strip().lower() == "back":
+        if raw.strip().lower() in ("back", "返回"):
             raise Back()
         return raw.strip()
 
@@ -53,27 +53,27 @@ class Menu:
         items = list(items)
         fd = self._tty_fd()
         if fd is None:
-            self.stdout.write(render_choices(title, [f"{i + 1}. {label}" + (" [current]" if current is not None and value == current else "")
-                                                     for i, (label, value) in enumerate(items)], width=self.width, color=self.color))
+            self.stdout.write(render_choices(title, [f"{i + 1}. {label}" + (" [目前]" if current is not None and value == current else "")
+                                                     for i, (label, value) in enumerate(items)], width=self.width, color=self.color, heading="控制中心"))
             while True:
-                answer = self.text("Choose a number")
+                answer = self.text("請輸入編號")
                 if answer.isdigit() and 1 <= int(answer) <= len(items):
                     return items[int(answer) - 1][1]
-                self.note("Choose one of the listed numbers.")
+                self.note("請輸入列表中的編號。")
         import termios
         import tty
         focus = initial_focus(items, current)
         before = termios.tcgetattr(fd)
 
         def draw(replace=False):
-            rows = [("> " if i == focus else "  ") + f"{i + 1}. {label}" + (" [current]" if current is not None and value == current else "")
+            rows = [("> " if i == focus else "  ") + f"{i + 1}. {label}" + (" [目前]" if current is not None and value == current else "")
                     for i, (label, value) in enumerate(items)]
-            frame = render_choices(title, rows, width=self.width, color=self.color)
+            frame = render_choices(title, rows, width=self.width, color=self.color, heading="控制中心")
             if replace:
                 self.stdout.write("\r\x1b[" + str(frame.count("\n")) + "A")
             self.stdout.write(frame); self.stdout.write("  > "); self.stdout.flush()
 
-        self.note("Up/Down: select. Enter: confirm. Left: back. Esc: cancel.")
+        self.note("↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字")
         try:
             tty.setcbreak(fd); draw(); digits = ""
             while True:

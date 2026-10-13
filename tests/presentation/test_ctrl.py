@@ -97,13 +97,13 @@ class CtrlTests(unittest.TestCase):
         self.assertFalse(session.set_key("threshold", "0.8", "x"))
         saved = v2.read(self.path)
         self.assertEqual((saved["enabled"], saved["policy"]["threshold"]), (True, 0.5))
-        self.assertIn("changed while you were editing", out.getvalue())
+        self.assertIn("被別處改過", out.getvalue())
 
     def test_scope_lives_in_the_allowlist_file_when_one_is_configured(self):
         allow = self.path.parent.parent / "allowlist.json"
         allow.write_text('{"schema_version": 1, "roots": ["/"]}')
         v2.update(self.path, workspace_allowlist_file=str(allow))
-        self.assertIn("Applies to    /", self.cli("show")[1])
+        self.assertIn("適用範圍      /", self.cli("show")[1])
         revision = v2.read(self.path)["revision"]
         work = self.path.parent.parent / "work"; work.mkdir()
         self.assertEqual(self.cli("set", "allowed_workspaces", str(work))[0], 0)

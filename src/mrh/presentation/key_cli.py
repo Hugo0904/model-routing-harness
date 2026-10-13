@@ -1,31 +1,31 @@
 """`mrh key`: manage the classifier credential without ever displaying it."""
 from mrh.infrastructure import secrets
 
-HELP = {"jev": "TypeSafe API key (Jev classifier)"}
+HELP = {"jev": "TypeSafe API 金鑰（Jev 分級器用）"}
 
 
 def run(action, name, *, stdout, stderr, secrets_module=secrets):
     if name not in HELP:
-        stderr.write("mrh: unknown key name\n")
+        stderr.write("mrh: 不認識這個金鑰名稱\n")
         return 2
     if action == "status":
         env = secrets.ENV_VARS[name]
         import os
         stdout.write(f"{name}: {HELP[name]}\n")
-        stdout.write(f"  environment {env}: {'set' if os.environ.get(env) else 'not set'}\n")
-        stdout.write(f"  Keychain: {'set' if secrets_module.is_set(name) else 'not set'}\n")
+        stdout.write(f"  環境變數 {env}：{'已設定' if os.environ.get(env) else '未設定'}\n")
+        stdout.write(f"  Keychain：{'已設定' if secrets_module.is_set(name) else '未設定'}\n")
         return 0
     if action == "set":
-        stdout.write("macOS will ask you to type the key (hidden). It is stored in your Keychain only.\n")
+        stdout.write("接下來由 macOS 請你輸入金鑰（輸入時不會顯示），只會存進你的 Keychain，不會經過 MRH。\n")
         stdout.flush()
         try:
             secrets_module.store_interactively(name)
         except secrets.SecretError:
-            stderr.write("mrh: key was not stored\n")
+            stderr.write("mrh: 金鑰沒有存入\n")
             return 2
-        stdout.write("Stored. Check with: mrh key status " + name + "\n")
+        stdout.write("已存入。可用這個指令確認：mrh key status " + name + "\n")
         return 0
     if action == "delete":
-        stdout.write("Deleted.\n" if secrets_module.delete(name) else "Nothing to delete.\n")
+        stdout.write("已刪除。\n" if secrets_module.delete(name) else "沒有可刪除的金鑰。\n")
         return 0
     return 2

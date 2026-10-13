@@ -6,7 +6,7 @@ from mrh.infrastructure import secrets
 from mrh.routing.core import ClassifierFailure
 
 # Provider -> (human label, needs a stored key). Models are listed by the tool catalogs.
-LABELS = {"jev": "Jev (TypeSafe API)", "codex_subscription": "Codex subscription", "claude_subscription": "Claude subscription"}
+LABELS = {"jev": "Jev（TypeSafe API）", "codex_subscription": "Codex 訂閱", "claude_subscription": "Claude 訂閱"}
 NEEDS_KEY = {"jev": True, "codex_subscription": False, "claude_subscription": False}
 DEFAULT_TIMEOUT = {"jev": 10, "codex_subscription": 20, "claude_subscription": 25}
 

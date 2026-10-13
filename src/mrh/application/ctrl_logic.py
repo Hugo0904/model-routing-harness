@@ -22,7 +22,7 @@ def parse_bool(value):
         return True
     if text in FALSE:
         return False
-    raise CtrlError("expected on/off")
+    raise CtrlError("請填 on 或 off")
 
 
 def parse_candidates(text):
@@ -31,10 +31,10 @@ def parse_candidates(text):
     for part in [p.strip() for p in str(text).split(",") if p.strip()]:
         model, _, effort = part.partition(":")
         if not safe_model_id(model) or (effort and not safe_id(effort)):
-            raise CtrlError(f"not a model entry: {part[:40]}")
+            raise CtrlError(f"不是有效的模型寫法：{part[:40]}（格式：模型 或 模型:推理強度）")
         result.append({"model": model, **({"effort": effort} if effort else {})})
     if len(result) > v2.MAX_CANDIDATES:
-        raise CtrlError(f"at most {v2.MAX_CANDIDATES} candidates per list")
+        raise CtrlError(f"每份清單最多 {v2.MAX_CANDIDATES} 個候選模型")
     return result
 
 
@@ -46,9 +46,9 @@ def _number(value, low, high, label):
     try:
         number = float(value)
     except ValueError:
-        raise CtrlError(f"{label} must be a number") from None
+        raise CtrlError(f"{label}必須是數字") from None
     if not low <= number <= high:
-        raise CtrlError(f"{label} must be between {low} and {high}")
+        raise CtrlError(f"{label}必須介於 {low} 到 {high}")
     return number
 
 
@@ -62,27 +62,27 @@ def changes_for(settings, key, value):
     if key == "classifier.provider":
         provider = str(value).strip().lower()
         if provider not in v2.PROVIDERS:
-            raise CtrlError("provider must be one of: " + ", ".join(v2.PROVIDERS))
+            raise CtrlError("分級器只能是：" + "、".join(v2.PROVIDERS))
         from mrh.adapters.providers.registry import DEFAULT_TIMEOUT
         return {"classifier": {"provider": provider, "model": v2.PROVIDERS[provider], "timeout_seconds": DEFAULT_TIMEOUT[provider]}}
     if key == "classifier.model":
         return {"classifier": {**classifier, "model": str(value).strip()}}
     if key == "classifier.timeout":
-        return {"classifier": {**classifier, "timeout_seconds": _number(value, 1, 30, "timeout")}}
+        return {"classifier": {**classifier, "timeout_seconds": _number(value, 1, 30, "逾時秒數")}}
     if key == "threshold":
-        return {"policy": {**policy, "threshold": _number(value, *v2.THRESHOLD_RANGE, "threshold")}}
+        return {"policy": {**policy, "threshold": _number(value, *v2.THRESHOLD_RANGE, "信心門檻")}}
     if key == "top_mode":
         mode = str(value).strip().title()
         if mode not in ("Main", "Fixed"):
-            raise CtrlError("top_mode must be Main or Fixed")
+            raise CtrlError("top_mode 只能是 Main 或 Fixed")
         if mode == "Fixed" and not any(policy["fixed"].values()):
-            raise CtrlError("set a Top list first, e.g. mrh ctrl set fixed.codex gpt-6.1-sol:high")
+            raise CtrlError("請先設定 Top 清單再改成 Fixed，例如：mrh ctrl set fixed.codex gpt-6.1-sol:high")
         return {"policy": {**policy, "top_mode": mode}}
     if key == "allowed_workspaces":
         raw = [p.strip() for p in str(value).split(",") if p.strip()]
         roots = [str(Path(p).resolve()) for p in raw if os.path.isabs(p)]
         if not raw or len(roots) != len(raw):
-            raise CtrlError("give one or more absolute paths, comma separated (/ means everywhere)")
+            raise CtrlError("請填一個或多個絕對路徑，用逗號分隔（/ 代表全部）")
         return {"allowed_workspaces": roots}
     parts = key.split(".")
     if len(parts) == 3 and parts[0] == "tiers" and parts[1].title() in v2.TIERS and parts[2] in v2.PLATFORMS:
@@ -94,9 +94,9 @@ def changes_for(settings, key, value):
     if len(parts) == 2 and parts[0] == "generic_roles" and parts[1] in v2.PLATFORMS:
         names = [r.strip() for r in str(value).split(",") if r.strip()]
         if len(names) > 8 or not all(safe_id(r) for r in names):
-            raise CtrlError("role names, comma separated (at most 8)")
+            raise CtrlError("請填角色名稱，用逗號分隔（最多 8 個）")
         return {"policy": {**policy, "generic_roles": {**policy.get("generic_roles", v2.DEFAULT_GENERIC_ROLES), parts[1]: names}}}
-    raise CtrlError("unknown key: " + key[:60])
+    raise CtrlError("沒有這個設定項目：" + key[:60] + "（可用 mrh ctrl keys 列出）")
 
 
 def key_names():

@@ -1,109 +1,111 @@
 
-MRH  /  control center
+MRH  /  控制中心
 
-  Routing       OFF   task text is NOT sent to the classifier
-  Classifier    Jev (TypeSafe API) · jev-1.13.0 · timeout 10s
-  Jev API key   set in Keychain
-  Confidence    advise at or above 0.50
-  Top tier      Main (the main model keeps Top-tier work)
-  Applies to    (nowhere)
+  路由          關閉   完全不碰子代理委派
+  分級器        Jev（TypeSafe API） · jev-1.13.0 · 逾時 10 秒
+  Jev 金鑰      已存在 Keychain
+  信心門檻      分級信心度達 0.50 以上才給建議
+  Top 難度      Main（Top 難度由主模型自己做）
+  適用範圍      （無）
 
-  Candidates, in order of preference
-    Light  (none)
-    Small  (none)
-    Mid    (none)
-    Top    (none)
+  候選模型（依優先順序，第一個最優先）
+    Light  （未設定）
+    Small  （未設定）
+    Mid    （未設定）
+    Top    （未設定）
 
-  Settings      /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpd38ztv9t/owned/settings.json  (revision 0)
-  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+  視為預設角色  codex: worker   （其他命名的專門角色一律不干預）
+  設定檔        /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpgu2bdfbh/owned/settings.json（版本 0）
+  ↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字
                                                                                                     
-  MRH  /  MODEL POLICY                                                                              
+  MRH  /  控制中心                                                                                  
                                                                                                     
-  What do you want to change?                                                                       
+  要調整什麼？                                                                                      
                                                                                                     
-  > 1. Routing on/off                                                                               
-    2. Classifier (Jev / Codex / Claude)                                                            
-    3. Tier models                                                                                  
-    4. Top tier mode                                                                                
-    5. Confidence threshold                                                                         
-    6. Where it applies                                                                             
-    7. API key status                                                                               
-    8. Statistics                                                                                   
-    9. Quit                                                                                         
+  > 1. 路由開關                                                                                     
+    2. 分級器（Jev / Codex 訂閱 / Claude 訂閱）                                                     
+    3. 各難度要用的模型                                                                             
+    4. Top 難度怎麼處理                                                                             
+    5. 信心門檻                                                                                     
+    6. 適用範圍（哪些資料夾）                                                                       
+    7. API 金鑰狀態                                                                                 
+    8. 統計                                                                                         
+    9. 離開                                                                                         
                                                                                                     
   > 
 <<< key: Routing screen >>>
 
-  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+  ↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字
                                                                                                     
-  MRH  /  MODEL POLICY                                                                              
+  MRH  /  控制中心                                                                                  
                                                                                                     
-  Routing                                                                                           
+  路由                                                                                              
                                                                                                     
-    1. ON: advise models for subagent delegations                                                   
-  > 2. OFF: never touch a delegation [current]                                                      
+    1. 開啟：派子代理時，給主模型模型建議                                                           
+  > 2. 關閉：完全不碰子代理委派 [目前]                                                              
                                                                                                     
   > 
 <<< key: Move to ON >>>
                                                                                                     
-  MRH  /  MODEL POLICY                                                                              
+  MRH  /  控制中心                                                                                  
                                                                                                     
-  Routing                                                                                           
+  路由                                                                                              
                                                                                                     
-  > 1. ON: advise models for subagent delegations                                                   
-    2. OFF: never touch a delegation [current]                                                      
+  > 1. 開啟：派子代理時，給主模型模型建議                                                           
+    2. 關閉：完全不碰子代理委派 [目前]                                                              
                                                                                                     
   > 
 <<< key: Choose ON >>>
 
-  Turning routing on sends each delegation's task text to Jev (TypeSafe API).
+  開啟後，每次派子代理，任務內容會送到「Jev（TypeSafe API）」判斷難度。
 
-  Change: routing ON
-  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+  變更內容：路由 開啟
+  ↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字
                                                                                                     
-  MRH  /  MODEL POLICY                                                                              
+  MRH  /  控制中心                                                                                  
                                                                                                     
-  Save this change?                                                                                 
+  要儲存這項變更嗎？                                                                                
                                                                                                     
-  > 1. Save                                                                                         
-    2. Cancel                                                                                       
+  > 1. 儲存                                                                                         
+    2. 取消                                                                                         
                                                                                                     
   > 
 <<< key: Save >>>
 
-  Saved.
+  已儲存。
 
-MRH  /  control center
+MRH  /  控制中心
 
-  Routing       ON   task text is sent to the classifier
-  Classifier    Jev (TypeSafe API) · jev-1.13.0 · timeout 10s
-  Jev API key   set in Keychain
-  Confidence    advise at or above 0.50
-  Top tier      Main (the main model keeps Top-tier work)
-  Applies to    (nowhere)
+  路由          開啟   每次派子代理，任務內容會送給分級器判斷難度
+  分級器        Jev（TypeSafe API） · jev-1.13.0 · 逾時 10 秒
+  Jev 金鑰      已存在 Keychain
+  信心門檻      分級信心度達 0.50 以上才給建議
+  Top 難度      Main（Top 難度由主模型自己做）
+  適用範圍      （無）
 
-  Candidates, in order of preference
-    Light  (none)
-    Small  (none)
-    Mid    (none)
-    Top    (none)
+  候選模型（依優先順序，第一個最優先）
+    Light  （未設定）
+    Small  （未設定）
+    Mid    （未設定）
+    Top    （未設定）
 
-  Settings      /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpd38ztv9t/owned/settings.json  (revision 1)
-  Up/Down: select. Enter: confirm. Left: back. Esc: cancel.
+  視為預設角色  codex: worker   （其他命名的專門角色一律不干預）
+  設定檔        /private/var/folders/ct/pyk46q_d07zbhx04mwl_g9hh0000gn/T/tmpgu2bdfbh/owned/settings.json（版本 1）
+  ↑↓ 選擇　Enter 確認　← 返回　Esc 取消　也可直接按數字
                                                                                                     
-  MRH  /  MODEL POLICY                                                                              
+  MRH  /  控制中心                                                                                  
                                                                                                     
-  What do you want to change?                                                                       
+  要調整什麼？                                                                                      
                                                                                                     
-  > 1. Routing on/off                                                                               
-    2. Classifier (Jev / Codex / Claude)                                                            
-    3. Tier models                                                                                  
-    4. Top tier mode                                                                                
-    5. Confidence threshold                                                                         
-    6. Where it applies                                                                             
-    7. API key status                                                                               
-    8. Statistics                                                                                   
-    9. Quit                                                                                         
+  > 1. 路由開關                                                                                     
+    2. 分級器（Jev / Codex 訂閱 / Claude 訂閱）                                                     
+    3. 各難度要用的模型                                                                             
+    4. Top 難度怎麼處理                                                                             
+    5. 信心門檻                                                                                     
+    6. 適用範圍（哪些資料夾）                                                                       
+    7. API 金鑰狀態                                                                                 
+    8. 統計                                                                                         
+    9. 離開                                                                                         
                                                                                                     
   > 
 <<< key: Quit (9) >>>
