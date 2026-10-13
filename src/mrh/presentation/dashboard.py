@@ -159,6 +159,8 @@ def _where(data, policy, inner, p, color):
     legend = "  ".join(f"{stats_view._swatch(t, color)} {t.lower()} {n}" for t, n in parts)
     left += ["", legend, "", p(f"{advised + main} 次由路由器處理（{advised} 次給建議、{main} 次留給主模型）", "text"),
              p(f"{kept} 次原樣放行", "dim")]
+    if data.get("reissues"):
+        left += ["", p(f"另有 {data['reissues']} 次是主模型照建議重派的後續呼叫（不重複計算）", "faint")]
     if data["kept_unchanged"]:
         left.append("")
         for reason, n in sorted(data["kept_unchanged"].items(), key=lambda x: -x[1])[:4]:
@@ -170,7 +172,7 @@ def _where(data, policy, inner, p, color):
         pb = stats_view.progress_bar(pct, right_w, color)
         return [pad(p(title, "text"), right_w - len(f"{pct}%")) + p(f"{pct}%", "text"), pb, p(note, "faint"), ""]
     right = (bar("主模型照建議改派", followed, advised, f"{followed} / {advised} 次建議") +
-             bar("有介入的比例", advised + main, total, f"{advised + main} / {total} 次委派") +
+             bar("路由器有出手的比例", advised + main, total, f"{advised + main} / {total} 次委派") +
              bar("信心足夠、可分級", total - data["kept_unchanged"].get("low_confidence", 0), total, f"信心門檻 {policy['threshold']:.2f}"))
     if not wide:
         return left + [""] + right, total

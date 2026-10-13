@@ -45,7 +45,8 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
     if stored:
         return _from_row(stored)
     if req.explicit_model is not None:
-        return finish(keep("explicit_model"))
+        reissue = store.advice_for_model(req.platform, req.session_id, req.explicit_model, now)
+        return finish(keep("advice_reissue" if reissue else "explicit_model"))
     if req.explicit_effort is not None:
         return finish(keep("explicit_effort"))
     if req.role is not None and req.role not in v2.generic_roles(settings["policy"], req.platform):

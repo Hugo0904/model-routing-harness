@@ -83,7 +83,7 @@ def render(settings, data, period_label, generated=None):
             return (f'<div class="bar"><div class="row"><span>{_e(title)}</span><span>{_pct(part, whole)}%</span></div>'
                     f'<div class="track"><div class="fill" style="width:{_pct(part, whole)}%"></div></div><div class="note">{_e(note)}</div></div>')
         right = (bar("主模型照建議改派", followed, advised, f"{followed} / {advised} 次建議") +
-                 bar("有介入的比例", advised + main, total, f"{advised + main} / {total} 次委派") +
+                 bar("路由器有出手的比例", advised + main, total, f"{advised + main} / {total} 次委派") +
                  bar("信心足夠、可分級的比例", total - data["kept_unchanged"].get("low_confidence", 0), total,
                      f"信心門檻 {policy['threshold']:.2f}"))
     else:

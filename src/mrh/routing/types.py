@@ -25,7 +25,7 @@ REASONS.update({"invalid_host_facts", "host_fact_scope_mismatch", "missing_role_
                 "missing_target_model", "missing_target_effort", "missing_effective_effort", "missing_original_baseline",
                 "cached_effect_mismatch"})
 REASONS.update({'catalog_model_unavailable', 'catalog_model_retired'})
-REASONS.update({'named_role', 'no_candidates_for_platform', 'advice_already_given', 'advice_given'})
+REASONS.update({'named_role', 'no_candidates_for_platform', 'advice_already_given', 'advice_given', 'advice_reissue'})
 REASONS.add('operator_stop_unavailable')
 REASONS.update({'claude_subscription_'+reason for reason in (
     'disabled','export_denied','recursion','malformed_response','process_failed','timeout','cli_not_found')})

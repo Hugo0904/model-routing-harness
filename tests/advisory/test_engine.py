@@ -64,6 +64,16 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(engine.decide(req("x", task="other", role="explorer"), custom, self.store, lambda: fake).action, "advise")
         self.assertEqual(engine.decide(req("y", task="other2", role="worker"), custom, self.store, lambda: fake).reason, "named_role")
 
+    def test_a_call_carrying_the_advised_model_is_a_reissue_not_a_new_delegation(self):
+        fake = Fake(Classification("Light", 0.9))
+        self.run_engine(req("c1"), fake)                                              # advises luna
+        same_session = self.run_engine(req("c2", task="again", explicit_model="luna"), fake)
+        self.assertEqual(same_session.reason, "advice_reissue")
+        other = self.run_engine(req("c3", task="x", explicit_model="some-other-model"), fake)
+        self.assertEqual(other.reason, "explicit_model")                              # a model nobody suggested is the parent's own choice
+        stats = self.store.stats(0)
+        self.assertEqual((stats["reissues"], stats["decisions"]), (1, {"advise": 1, "preserve": 1}))   # the re-issue is not counted twice
+
     def test_light_advice_lists_candidates_in_user_order_for_the_calling_platform(self):
         advice = self.run_engine(req(), Fake(Classification("Light", 0.9)))
         self.assertEqual((advice.action, advice.tier), ("advise", "Light"))

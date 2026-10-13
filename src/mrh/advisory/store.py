@@ -68,6 +68,13 @@ class AdviceStore:
                              (platform, session_id, thash, now - DEDUPE_SECONDS)).fetchone()
         return dict(row) if row else None
 
+    def advice_for_model(self, platform, session_id, model, now):
+        """Was `model` just suggested to this session? Then a call carrying it is the parent re-issuing, not a new delegation."""
+        with self.connect() as db:
+            rows = db.execute("SELECT candidates FROM advice WHERE platform=? AND session_id=? AND action='advise' AND ts>=?",
+                              (platform, session_id, now - FOLLOW_WINDOW_SECONDS)).fetchall()
+        return any(model in {c["model"] for c in json.loads(r["candidates"])} for r in rows)
+
     def save(self, rid, req, thash, advice, provider, now):
         with self.connect() as db:
             db.execute("INSERT OR IGNORE INTO advice VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -107,9 +114,11 @@ class AdviceStore:
         """Counts since `since` (epoch seconds), overall and per platform. No task text exists to return."""
         with self.connect() as db:
             q = lambda sql: db.execute(sql, (since,)).fetchall()
-            by_action = {r[0]: r[1] for r in q("SELECT action,COUNT(*) FROM advice WHERE ts>=? GROUP BY action")}
+            real = "AND reason!='advice_reissue'"   # a re-issue after advice is the same delegation, not a new one
+            by_action = {r[0]: r[1] for r in q(f"SELECT action,COUNT(*) FROM advice WHERE ts>=? {real} GROUP BY action")}
+            reissues = db.execute("SELECT COUNT(*) FROM advice WHERE ts>=? AND reason='advice_reissue'", (since,)).fetchone()[0]
             per_platform = {}
-            for platform, action, n in q("SELECT platform,action,COUNT(*) FROM advice WHERE ts>=? GROUP BY platform,action"):
+            for platform, action, n in q(f"SELECT platform,action,COUNT(*) FROM advice WHERE ts>=? {real} GROUP BY platform,action"):
                 per_platform.setdefault(platform, {})[action] = n
             reasons = {r[0]: r[1] for r in q("SELECT reason,COUNT(*) FROM advice WHERE action='preserve' AND ts>=? GROUP BY reason")}
             tiers = {r[0]: r[1] for r in q("SELECT tier,COUNT(*) FROM advice WHERE tier IS NOT NULL AND ts>=? GROUP BY tier")}
@@ -119,7 +128,7 @@ class AdviceStore:
             kids = db.execute("SELECT COUNT(*),COALESCE(SUM(followed),0) FROM children WHERE ts>=?", (since,)).fetchone()
             followed_models = {r[0]: r[1] for r in q("SELECT COALESCE(resolved_model, requested_model),COUNT(*) FROM children "
                                                      "WHERE followed=1 AND ts>=? GROUP BY 1")}
-        return {"since": since, "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
+        return {"since": since, "reissues": reissues, "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
                 "tiers": tiers, "classifier_usage": usage,
                 "classifier_calls": sum(u["calls"] for u in usage.values()),
                 "classifier_input_tokens": sum(u["input_tokens"] for u in usage.values()),

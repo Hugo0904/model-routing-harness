@@ -5,7 +5,7 @@ from mrh.presentation.terminal import cell_width
 
 PLATFORM = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
 REASON = {
-    "explicit_model": "主模型已自己指定模型",
+    "explicit_model": "主模型自己指定了模型（不干預）",
     "explicit_effort": "主模型已自己指定推理強度（effort）",
     "named_role": "專門角色、fork 或自訂子代理（不干預）",
     "advice_already_given": "同一任務 10 分鐘內已建議過（不重複攔）",
@@ -89,10 +89,12 @@ def render(data, period_label, threshold=None, color=False):
     platforms = "、".join(f"{PLATFORM.get(p, p)} {sum(v.values())}" for p, v in sorted(data["per_platform"].items()))
     handled = advised + main
     lines += [f"■ 子代理委派：共 {total} 次（{platforms}）",
-              f"    有介入的比例      {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）",
+              f"    路由器有出手的比例  {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）",
               "    " + _pad("給建議，請主模型改用你設定的模型", 40) + f"{advised:>4} 次",
               "    " + _pad("判定為 Top，請主模型自己做", 40) + f"{main:>4} 次",
               "    " + _pad("沒有介入，原樣放行", 40) + f"{kept:>4} 次", ""]
+    if data.get("reissues"):
+        lines += [f"    （另有 {data['reissues']} 次是主模型照建議重派的後續呼叫，已排除，不重複計算）", ""]
     if data["kept_unchanged"]:
         lines.append("■ 沒有介入的原因")
         for reason, n in sorted(data["kept_unchanged"].items(), key=lambda x: -x[1]):
