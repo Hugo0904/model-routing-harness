@@ -87,6 +87,18 @@ def stats_text(path, days, as_json=False):
     return stats_view.render(data, label, v2.read(path)["policy"]["threshold"])
 
 
+def report_html(path, days):
+    """Standalone dashboard page from the settings and the decision log."""
+    from mrh.advisory.store import AdviceStore
+    from mrh.presentation import report_html as page
+    since = 0 if days is None else time.time() - days * 86400
+    label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
+    db = path.parent / "advice.sqlite3"
+    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
+        "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    return page.render(v2.read(path), data, label)
+
+
 def list_models(platform, cache={}):
     """Models from the installed CLI's own catalog; empty means 'type it in'."""
     if platform in cache:
@@ -261,6 +273,16 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
         action = getattr(args, "ctrl_action", None)
         if action == "stats":
             stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json) + "\n"); return 0
+        if action == "report":
+            from pathlib import Path
+            out = Path(args.out) if args.out else Path.home() / ".local/state/model-routing-harness/report.html"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(report_html(path, None if args.days == 0 else args.days), encoding="utf-8")
+            stdout.write(f"報表已產生：{out}\n")
+            if args.open:
+                import webbrowser
+                webbrowser.open(out.as_uri())
+            return 0
         if action == "keys":
             stdout.write("\n".join(logic.key_names()) + "\n"); return 0
         if action == "show":
