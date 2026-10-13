@@ -67,6 +67,19 @@ def apply_set(path, settings, key, value):
     return f"{key} saved (revision {saved['revision']})"
 
 
+def stats_text(path, days, as_json=False):
+    from mrh.advisory.store import AdviceStore
+    from mrh.presentation import stats_view
+    since = 0 if days is None else time.time() - days * 86400
+    label = "全部紀錄" if days is None else ("過去 24 小時" if days == 1 else f"過去 {days:g} 天")
+    db = path.parent / "advice.sqlite3"
+    data = AdviceStore(db).stats(since) if db.exists() else {"decisions": {}, "per_platform": {}, "kept_unchanged": {},
+        "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}}
+    if as_json:
+        return json.dumps(data, indent=2, sort_keys=True)
+    return stats_view.render(data, label, v2.read(path)["policy"]["threshold"])
+
+
 def list_models(platform, cache={}):
     """Models from the installed CLI's own catalog; empty means 'type it in'."""
     if platform in cache:
@@ -204,20 +217,13 @@ class Session:
         self.menu.note("To store or replace it, run in a terminal:  mrh key set jev   (the key is typed into macOS, never into MRH).")
 
     def stats(self):
-        from mrh.advisory.store import AdviceStore
-        db = self.path.parent / "advice.sqlite3"
-        if not db.exists():
-            self.menu.note("No decisions recorded yet."); return
-        data = AdviceStore(db).stats(time.time() - 86400)
-        self.out.write("\n  Last 24 hours\n")
-        for key, value in data.items():
-            if key != "since":
-                self.out.write(f"    {key.replace('_', ' '):<28}{json.dumps(value) if isinstance(value, dict) else value}\n")
+        days = self.menu.pick("統計期間", [("過去 24 小時", 1), ("過去 7 天", 7), ("過去 30 天", 30), ("全部", None)])
+        self.out.write("\n" + stats_text(self.path, days) + "\n")
 
     def run(self):
         screens = [("Routing on/off", self.routing), ("Classifier (Jev / Codex / Claude)", self.classifier), ("Tier models", self.tiers),
                    ("Top tier mode", self.top), ("Confidence threshold", self.threshold), ("Where it applies", self.where),
-                   ("API key status", self.api_key), ("Statistics", self.stats)]
+                   ("API key status", self.api_key), ("Statistics 統計", self.stats)]
         while True:
             self.out.write("\n" + render(snapshot(self.settings(), self.path, self.secrets), self.menu.width))
             try:
@@ -246,6 +252,8 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
             v2.init(path)
         settings = v2.read(path)
         action = getattr(args, "ctrl_action", None)
+        if action == "stats":
+            stdout.write(stats_text(path, None if args.days == 0 else args.days, args.json) + "\n"); return 0
         if action == "keys":
             stdout.write("\n".join(logic.key_names()) + "\n"); return 0
         if action == "show":

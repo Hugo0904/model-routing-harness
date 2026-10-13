@@ -78,6 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
     ctrl_set = ctrl_actions.add_parser("set", help="change one setting (see `mrh ctrl keys`)")
     ctrl_set.add_argument("key"); ctrl_set.add_argument("value")
     ctrl_actions.add_parser("keys", help="list the settable keys")
+    ctrl_stats = ctrl_actions.add_parser("stats", help="statistics in plain language")
+    ctrl_stats.add_argument("--days", type=float, default=1, help="period in days (0 = all records; default 1)")
+    ctrl_stats.add_argument("--json", action="store_true")
     _add_display_options(ctrl)
 
     install = commands.add_parser("install", help="show (default) or apply the Claude Code hook")

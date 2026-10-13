@@ -104,13 +104,24 @@ class AdviceStore:
         return followed_id is not None
 
     def stats(self, since):
+        """Counts since `since` (epoch seconds), overall and per platform. No task text exists to return."""
         with self.connect() as db:
-            by_action = {r[0]: r[1] for r in db.execute("SELECT action,COUNT(*) FROM advice WHERE ts>=? GROUP BY action", (since,))}
-            reasons = {r[0]: r[1] for r in db.execute("SELECT reason,COUNT(*) FROM advice WHERE action='preserve' AND ts>=? GROUP BY reason", (since,))}
-            tiers = {r[0]: r[1] for r in db.execute("SELECT tier,COUNT(*) FROM advice WHERE tier IS NOT NULL AND ts>=? GROUP BY tier", (since,))}
-            usage = db.execute("SELECT COUNT(*),COALESCE(SUM(input_tokens),0),COALESCE(SUM(output_tokens),0) FROM attempts "
-                               "WHERE ts>=? AND outcome='returned'", (since,)).fetchone()
+            q = lambda sql: db.execute(sql, (since,)).fetchall()
+            by_action = {r[0]: r[1] for r in q("SELECT action,COUNT(*) FROM advice WHERE ts>=? GROUP BY action")}
+            per_platform = {}
+            for platform, action, n in q("SELECT platform,action,COUNT(*) FROM advice WHERE ts>=? GROUP BY platform,action"):
+                per_platform.setdefault(platform, {})[action] = n
+            reasons = {r[0]: r[1] for r in q("SELECT reason,COUNT(*) FROM advice WHERE action='preserve' AND ts>=? GROUP BY reason")}
+            tiers = {r[0]: r[1] for r in q("SELECT tier,COUNT(*) FROM advice WHERE tier IS NOT NULL AND ts>=? GROUP BY tier")}
+            usage = {r[0]: {"calls": r[1], "input_tokens": r[2], "output_tokens": r[3]}
+                     for r in q("SELECT kind,COUNT(*),COALESCE(SUM(input_tokens),0),COALESCE(SUM(output_tokens),0) "
+                                "FROM attempts WHERE ts>=? AND outcome='returned' GROUP BY kind")}
             kids = db.execute("SELECT COUNT(*),COALESCE(SUM(followed),0) FROM children WHERE ts>=?", (since,)).fetchone()
-        return {"since": since, "decisions": by_action, "kept_unchanged": reasons, "tiers": tiers,
-                "classifier_calls": usage[0], "classifier_input_tokens": usage[1], "classifier_output_tokens": usage[2],
-                "children_started": kids[0], "children_following_advice": kids[1]}
+            followed_models = {r[0]: r[1] for r in q("SELECT COALESCE(resolved_model, requested_model),COUNT(*) FROM children "
+                                                     "WHERE followed=1 AND ts>=? GROUP BY 1")}
+        return {"since": since, "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
+                "tiers": tiers, "classifier_usage": usage,
+                "classifier_calls": sum(u["calls"] for u in usage.values()),
+                "classifier_input_tokens": sum(u["input_tokens"] for u in usage.values()),
+                "classifier_output_tokens": sum(u["output_tokens"] for u in usage.values()),
+                "children_started": kids[0], "children_following_advice": kids[1], "followed_models": followed_models}
