@@ -90,10 +90,18 @@ class RuntimeTests(unittest.TestCase):
         out, _ = self.handle(pre, "claude")
         reason = out["hookSpecificOutput"]["permissionDecisionReason"]
         self.assertIn("model=haiku", reason)
-        self.assertNotIn("reasoning_effort", reason)                 # the Agent tool has no such parameter
+        self.assertNotIn("reasoning_effort", reason)                 # Claude's parameter is called `effort`
         post = FIXTURE["PostToolUse"]
         child = HOSTS["claude"].child(post)
         self.assertEqual((child.agent_id, child.resolved_model), (post["tool_response"]["agentId"], "claude-haiku-4-5-20251001"))
+
+    def test_claude_effort_is_advised_and_a_parent_chosen_effort_is_respected(self):
+        self.configure(policy={"tiers": {"Light": {"claude": [{"model": "haiku", "effort": "medium"}]}}})
+        out, _ = self.handle(FIXTURE["PreToolUse"], "claude")
+        self.assertIn("model=haiku effort=medium", out["hookSpecificOutput"]["permissionDecisionReason"])
+        chosen = json.loads(json.dumps(FIXTURE["PreToolUse"])); chosen["tool_use_id"] = "toolu_other"; chosen["tool_input"]["effort"] = "low"
+        out, fake = self.handle(chosen, "claude")
+        self.assertEqual((out, fake.calls), ({}, 0))
 
     def test_claude_default_agent_is_classified_but_a_named_one_is_respected(self):
         self.configure()

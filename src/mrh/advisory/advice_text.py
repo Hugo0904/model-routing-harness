@@ -1,6 +1,6 @@
 """The words the parent model reads. Kept short, deterministic and free of task text."""
 
-EFFORT_PARAM = {"codex": "reasoning_effort"}  # Claude Code's Agent tool has no effort parameter
+EFFORT_PARAM = {"codex": "reasoning_effort", "claude": "effort"}  # Claude Code gained an Agent `effort` parameter in 2.1.292
 
 
 def _entry(platform, number, candidate):

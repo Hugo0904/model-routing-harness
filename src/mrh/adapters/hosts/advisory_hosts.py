@@ -100,7 +100,8 @@ class ClaudeHost(_Host):
         if task is None or not all(safe_id(i) for i in (session, turn, call)):
             return None
         role = data.get("subagent_type")
-        return AdvisoryRequest("claude", session, turn, call, task, data.get("model"), None,
+        effort = data.get("effort")
+        return AdvisoryRequest("claude", session, turn, call, task, data.get("model"), effort if safe_id(effort) else None,
                                None if role in (None, "general-purpose") else str(role), event.get("cwd"))
 
     def child(self, event):
@@ -111,8 +112,9 @@ class ClaudeHost(_Host):
         if not all(safe_id(event.get(k)) for k in ("session_id", "tool_use_id")):
             return None
         agent, resolved = response.get("agentId"), response.get("resolvedModel")
-        return Child("claude", event["session_id"], event["tool_use_id"], _model(data.get("model")), None,
-                     _model(resolved), agent if safe_id(agent) else None)
+        effort = data.get("effort")
+        return Child("claude", event["session_id"], event["tool_use_id"], _model(data.get("model")),
+                     effort if safe_id(effort) else None, _model(resolved), agent if safe_id(agent) else None)
 
 
 HOSTS = {"codex": CodexHost(), "claude": ClaudeHost()}
