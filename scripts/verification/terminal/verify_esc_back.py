@@ -34,9 +34,9 @@ def main():
             return seen[-1]
 
         read(1.5)
-        steps = [("3\r", "要設定哪個難度"), ("\r", "主模型是在哪個工具"), (ESC, "要設定哪個難度"),   # platform -> back to tier
-                 ("\r", "主模型是在哪個工具"), ("\r", "編輯候選清單"), (ESC, "主模型是在哪個工具"),    # list editor -> back to platform
-                 (ESC, "要設定哪個難度"), (ESC, "要調整什麼？")]                                   # tier -> back to main menu
+        steps = [("3\r", "主模型是哪一家"), ("\r", "要設定哪個難度"), (ESC, "主模型是哪一家"),     # tier -> back to platform
+                 ("\r", "要設定哪個難度"), ("\r", "編輯候選清單"), (ESC, "要設定哪個難度"),       # list editor -> back to tier
+                 (ESC, "主模型是哪一家"), (ESC, "要調整什麼？")]                                  # platform -> back to main menu
         ok = True
         for keys, expect in steps:
             os.write(fd, keys if isinstance(keys, bytes) else keys.encode())

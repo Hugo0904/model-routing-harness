@@ -73,7 +73,7 @@ class CtrlTests(unittest.TestCase):
 
     def test_interactive_flow_enables_routing_and_edits_a_list(self):
         script = "\n".join(["1", "1", "1",                         # Routing -> ON -> Save
-                            "3", "1", "1", "2", "gpt-5.6-luna:low", "6", "1",   # Tier models -> Light -> codex -> type -> done -> Save
+                            "3", "2", "1", "2", "gpt-5.6-luna:low", "6", "1",   # Tier models -> codex -> Light -> type -> done -> Save
                             "9"]) + "\n"                          # Quit
         out, err = io.StringIO(), io.StringIO()
         args = Namespace(settings=self.path, width=100, json=False, ctrl_action=None)

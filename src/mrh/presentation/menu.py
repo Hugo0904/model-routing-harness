@@ -29,8 +29,14 @@ class Menu:
         self.stdout.write(textwrap.fill(sanitize_text(text), width=self.width - 4,
                                         initial_indent="  ", subsequent_indent="  ") + "\n")
 
-    def text(self, prompt):
+    def path(self, trail):
+        """Breadcrumb above a prompt: where you are, e.g. `codex > light > effort`."""
+        if trail:
+            self.note("路徑：" + " > ".join(str(t) for t in trail))
+
+    def text(self, prompt, trail=None):
         """One line of free text. `back` / `cancel` navigate."""
+        self.path(trail)
         self.note(prompt + "（輸入 back 返回、cancel 取消）")
         self.stdout.write("  > "); self.stdout.flush()
         raw = self.stdin.readline(1026)
@@ -48,9 +54,10 @@ class Menu:
             return None
         return fd if os.isatty(fd) else None
 
-    def pick(self, title, items, current=None):
+    def pick(self, title, items, current=None, trail=None):
         """Return the value of the chosen (label, value) pair."""
         items = list(items)
+        self.path(trail)
         fd = self._tty_fd()
         if fd is None:
             self.stdout.write(render_choices(title, [f"{i + 1}. {label}" + (" [目前]" if current is not None and value == current else "")

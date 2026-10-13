@@ -223,9 +223,10 @@ class Session:
         key = f"fixed.{platform}" if scope == "Top" else f"tiers.{scope}.{platform}"
         while True:
             self.out.write(f"\n  {scope} / {platform}: {logic.format_candidates(items)}\n")
+            trail = [platform, scope.lower()]
             try:
                 action = self.menu.pick("編輯候選清單", [("從已安裝工具的模型清單加入", "add"), ("直接輸入模型（模型 或 模型:推理強度）", "type"),
-                                        ("移除其中一個", "remove"), ("把其中一個移到最前面（最優先）", "top"), ("全部清空", "clear"), ("儲存並完成", "done")])
+                                        ("移除其中一個", "remove"), ("把其中一個移到最前面（最優先）", "top"), ("全部清空", "clear"), ("儲存並完成", "done")], trail=trail)
             except Back:
                 if items != original:
                     self.menu.note("尚未儲存的修改已放棄。")
@@ -235,13 +236,13 @@ class Session:
                     models = self.models(platform)
                     if not models:
                         self.menu.note("這個工具沒有可用的模型清單，請改用「直接輸入模型」。"); continue
-                    model, efforts = models[self.menu.pick("模型", [(m, n) for n, (m, _) in enumerate(models)])]
-                    effort = self.menu.pick("推理強度（effort）", [("不指定推理強度", None), *[(e, e) for e in efforts]]) if efforts else None
+                    model, efforts = models[self.menu.pick("模型", [(m, n) for n, (m, _) in enumerate(models)], trail=[*trail, "模型"])]
+                    effort = self.menu.pick("推理強度（effort）", [("不指定推理強度", None), *[(e, e) for e in efforts]], trail=[*trail, model, "effort"]) if efforts else None
                     items.append({"model": model, **({"effort": effort} if effort else {})})
                 elif action == "type":
-                    items += logic.parse_candidates(self.menu.text("模型，例如 gpt-5.6-luna:low"))
+                    items += logic.parse_candidates(self.menu.text("模型，例如 gpt-5.6-luna:low", trail=[*trail, "模型"]))
                 elif action in ("remove", "top") and items:
-                    index = self.menu.pick("要選哪一個", [(logic.format_candidates([c]), n) for n, c in enumerate(items)])
+                    index = self.menu.pick("要選哪一個", [(logic.format_candidates([c]), n) for n, c in enumerate(items)], trail=trail)
                     items.insert(0, items.pop(index)) if action == "top" else items.pop(index)
                 elif action == "clear":
                     items = []
@@ -258,19 +259,23 @@ class Session:
                 continue                               # Esc inside a sub-step returns to this action menu
 
     def tiers(self):
-        step, scope, platform = 0, None, None
+        """Platform first (which vendor runs the main model), then tier, then the list; a path is shown at every step."""
+        names = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini（尚未支援 hook）"}
+        step, platform, scope = 0, None, None
         while True:
             try:
                 if step == 0:
-                    scope = self.menu.pick("要設定哪個難度", [(t, t) for t in (*v2.TIERS, "Top")]); step = 1
+                    platform = self.menu.pick("主模型是哪一家的工具？（要設定這一家的各難度模型）",
+                                              [(f"{names[p]}（{p}）", p) for p in ("claude", "codex", "gemini")]); step = 1
                 elif step == 1:
-                    platform = self.menu.pick("主模型是在哪個工具裡執行（codex / claude / gemini）", [(p, p) for p in v2.PLATFORMS]); step = 2
+                    scope = self.menu.pick("要設定哪個難度", [(f"{t.lower():<6}{report_html.TIER_WHEN[t]}" + ("　（只在 Top 設為 Fixed 時使用）" if t == "Top" else ""), t)
+                                                              for t in (*v2.TIERS, "Top")], trail=[platform]); step = 2
                 else:
                     self.edit_list(scope, platform); return
             except Back:
                 if step == 0:
                     raise
-                step = step - 1 if step < 2 else 1
+                step = 0 if step == 1 else 1
 
     def top(self):
         mode = self.menu.pick("Top 難度怎麼處理", [(f"Main：{TOP_HELP['Main']}", "Main"), (f"Fixed：{TOP_HELP['Fixed']}", "Fixed")], self.settings()["policy"]["top_mode"])
