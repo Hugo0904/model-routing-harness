@@ -48,7 +48,7 @@ def _matches(row, model, effort):
 
 
 def _links(rows):
-    """Validate recorded links without guessing or rewriting historical rows."""
+    """Validate links recorded at hook time. Same platform, session and turn; the re-issued model/effort must match a suggestion."""
     by_id = {r["request_id"]: r for r in rows}
     links, claims = {}, {}
     for replacement in rows:
@@ -58,13 +58,35 @@ def _links(rows):
         original = by_id.get(link.get("advice_request_id"))
         if (link.get("version") != 1 or not original or original["action"] != "advise"
                 or replacement["action"] != "preserve" or replacement["reason"] != "advice_reissue"
-                or any(original[k] != replacement[k] for k in ("platform", "session_id", "turn_id", "task_hash"))
+                or any(original[k] != replacement[k] for k in ("platform", "session_id", "turn_id"))
                 or not 0 <= replacement["ts"] - original["ts"] <= FOLLOW_WINDOW_SECONDS
                 or not _matches(original, link.get("model"), link.get("effort"))):
             continue
         claims.setdefault(original["request_id"], []).append(replacement["request_id"])
         links[replacement["request_id"]] = (original, link)
     return {rid: link for rid, link in links.items() if len(claims[link[0]["request_id"]]) == 1}
+
+
+def _inferred(rows, children, links):
+    """Older rows carry no recorded link. Pair each re-issued child with the earliest unclaimed suggestion of the same
+    platform, session and turn whose model/effort it matches, within the follow window. One suggestion is used once."""
+    by_call = {(r["platform"], r["session_id"], r["call_id"]): r for r in rows}
+    taken = {original["request_id"] for original, _ in links.values()}
+    found = {}
+    for child in sorted(children, key=lambda c: c["ts"]):
+        pre = by_call.get((child["platform"], child["session_id"], child["call_id"]))
+        if (not pre or pre["request_id"] in links or pre["action"] != "preserve" or not child["requested_model"]
+                or pre["reason"] not in ("explicit_model", "advice_reissue")):
+            continue
+        eligible = sorted((r for r in rows if r["action"] == "advise" and r["request_id"] not in taken
+                           and all(r[k] == pre[k] for k in ("platform", "session_id", "turn_id"))
+                           and 0 <= pre["ts"] - r["ts"] <= FOLLOW_WINDOW_SECONDS
+                           and _matches(r, child["requested_model"], child["requested_effort"])), key=lambda r: r["ts"])
+        if eligible:
+            taken.add(eligible[0]["request_id"])
+            found[pre["request_id"]] = (eligible[0], {"version": 1, "advice_request_id": eligible[0]["request_id"],
+                                                     "model": child["requested_model"], "effort": child["requested_effort"]})
+    return found
 
 
 def task_hash(platform, session_id, task):
@@ -124,11 +146,12 @@ class AdviceStore:
             # Historical claimed children are left untouched, but are not claimed again.
             taken.update(r[0] for r in db.execute("SELECT advice_request_id FROM children WHERE platform=? AND session_id=?",
                                                  (req.platform, req.session_id)) if r[0])
-            eligible = [r for r in rows if r["action"] == "advise" and r["turn_id"] == req.turn_id
-                        and r["task_hash"] == thash and now - FOLLOW_WINDOW_SECONDS <= r["ts"] <= now
-                        and r["request_id"] not in taken and _matches(r, req.explicit_model, req.explicit_effort)]
+            eligible = sorted((r for r in rows if r["action"] == "advise" and r["turn_id"] == req.turn_id
+                               and now - FOLLOW_WINDOW_SECONDS <= r["ts"] <= now
+                               and r["request_id"] not in taken and _matches(r, req.explicit_model, req.explicit_effort)),
+                              key=lambda r: r["ts"])
             data, reason = [], "explicit_model"
-            if len(eligible) == 1:
+            if eligible:                       # parallel spawns with the same suggestion are paired one-to-one, oldest first
                 reason = "advice_reissue"
                 data = {"candidates": [], "correlation": {"version": 1, "advice_request_id": eligible[0]["request_id"],
                         "model": req.explicit_model, "effort": req.explicit_effort}}
@@ -179,8 +202,11 @@ class AdviceStore:
             db.execute("BEGIN")
             rows = db.execute("SELECT * FROM advice").fetchall()
             attempts = db.execute("SELECT * FROM attempts WHERE ts>=?", (since,)).fetchall()
-            children = db.execute("SELECT * FROM children WHERE ts>=?", (since,)).fetchall()
+            every_child = db.execute("SELECT * FROM children").fetchall()
+        children = [c for c in every_child if c["ts"] >= since]
         links = _links(rows)
+        inferred = _inferred(rows, every_child, links)
+        links.update(inferred)
         by_call = {}
         for row in rows:
             by_call.setdefault((row["platform"], row["session_id"], row["call_id"]), []).append(row)
@@ -214,7 +240,7 @@ class AdviceStore:
                 inc(observed_models, child["resolved_model"])
             pre = by_call.get((child["platform"], child["session_id"], child["call_id"]), [])
             link = links.get(pre[0]["request_id"]) if len(pre) == 1 else None
-            valid = (link and child["ts"] >= pre[0]["ts"] and child["followed"] and child["agent_id"] and child["advice_request_id"] == link[0]["request_id"]
+            valid = (link and child["ts"] >= pre[0]["ts"]
                      and child["requested_model"] == link[1]["model"] and child["requested_effort"] == link[1]["effort"])
             if valid:
                 if link[0]["ts"] < since:
@@ -226,6 +252,7 @@ class AdviceStore:
             elif child["followed"]:
                 unverified += 1
         return {"since": since, "reissues": sum(r["request_id"] in links for r in recent),
+                "inferred_links": sum(r["request_id"] in inferred for r in recent),
                 "unverified_reissues": sum(r["reason"] == "advice_reissue" for r in counted),
                 "unverified_followed_children": unverified,
                 "children_following_prior_advice": prior,

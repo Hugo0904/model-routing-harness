@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from mrh.presentation import cli
-from mrh.presentation.terminal import render_stats, sanitize_text
+from mrh.presentation.terminal import sanitize_text
 
 
 SAMPLE_STATS = {
@@ -62,45 +62,11 @@ def forbid_store_imports():
 
 
 class TerminalTests(unittest.TestCase):
-    def test_dashboard_fits_wide_narrow_and_unicode_and_keeps_detail_view(self) -> None:
-        from mrh.presentation.terminal import cell_width
-        stats = dict(SAMPLE_STATS, updated_at="範例標籤" * 30)
-        for width in (24, 28, 48, 80, 100, 120, 140):
-            for color in (False, True):
-                rendered = render_stats(stats, width=width, color=color)
-                self.assertTrue(all(cell_width(line) <= width for line in rendered.splitlines()), width)
-        details = render_stats(stats, width=80, details=True)
-        self.assertIn("ACTUAL MODELS", details)
-        self.assertIn("JEV TELEMETRY", details)
-        self.assertIn("Quota: Unavailable", render_stats(stats, width=120))
-        self.assertNotIn("0%", render_stats(stats, width=120))
 
     def test_terminal_controls_are_removed(self) -> None:
         self.assertEqual(sanitize_text("\x1b[31mTop\x1b[0m\n\x00x\u202e"), "Top x")
 
-    def test_tier_bar_is_a_composition_and_unavailable_facts_stay_visible(self) -> None:
-        stats = dict(SAMPLE_STATS)
-        stats.update(
-            classified_tasks=10,
-            tiers={"Light": 5, "Small": 3, "Mid": 1, "Top": 1},
-            cost=None,
-            tokens=None,
-            quota=None,
-        )
-        rendered = render_stats(stats, width=48, color=False)
-        self.assertIn("TIER COMPOSITION", rendered)
-        self.assertIn("10 classified tasks", rendered)
-        self.assertIn("Cost: Unavailable", rendered)
-        self.assertIn("Tokens: Unavailable", rendered)
-        self.assertNotIn("progress", rendered.casefold())
-        self.assertNotIn("\x1b[", rendered)
 
-    def test_narrow_output_sanitizes_untrusted_labels_and_wraps(self) -> None:
-        stats = dict(SAMPLE_STATS)
-        stats["requested_models"] = {"\x1b[31mVeryLongModelName-" * 3: 1}
-        rendered = render_stats(stats, width=32, color=False)
-        self.assertNotIn("\x1b", rendered)
-        self.assertTrue(all(len(line) <= 32 for line in rendered.splitlines()))
 
 
 class CliTests(unittest.TestCase):

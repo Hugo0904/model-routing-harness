@@ -24,8 +24,9 @@ class CorrelationTests(unittest.TestCase):
         self.now = 1000
 
     def request(self, call, **changes):
-        return AdvisoryRequest(**dict(platform="codex", session_id="s", turn_id="t", call_id=call,
-                                      task="sort three words", **changes))
+        values = dict(platform="codex", session_id="s", turn_id="t", call_id=call, task="sort three words")
+        values.update(changes)
+        return AdvisoryRequest(**values)
 
     def decide(self, request):
         return engine.decide(request, settings(**LISTS), self.store,
@@ -63,7 +64,7 @@ class CorrelationTests(unittest.TestCase):
 
     def test_different_task_turn_session_platform_effort_or_window_is_not_reissue(self):
         self.seed()
-        for n, changes in enumerate((dict(task="another job"), dict(turn_id="other"), dict(session_id="other"),
+        for n, changes in enumerate((dict(turn_id="other"), dict(session_id="other"),
                                      dict(platform="claude"), dict(explicit_effort="high"), dict(explicit_effort=None))):
             with self.subTest(changes=changes):
                 # Construct without duplicate keyword keys.
@@ -76,6 +77,15 @@ class CorrelationTests(unittest.TestCase):
         self.now = 1600
         self.assertEqual(self.decide(self.replacement("boundary")).reason, "advice_reissue")
 
+    def test_reworded_task_still_counts_and_parallel_spawns_pair_one_to_one(self):
+        self.seed(); self.decide(self.request("second", task="another parallel job"))
+        for n, task in enumerate(("sort the three words please", "another parallel job, tidied")):
+            self.assertEqual(self.decide(self.replacement(f"r{n}", task=task)).reason, "advice_reissue")
+        self.assertEqual(self.decide(self.replacement("r2")).reason, "explicit_model")     # both suggestions are used up
+        for n in range(2):
+            self.assertTrue(self.store.record_child(Child("codex", "s", f"r{n}", "luna", "low", None, f"a{n}"), self.now))
+        self.assertEqual(self.store.stats(0)["children_following_advice"], 2)
+
     def test_two_replacements_compete_atomically_and_only_one_claims(self):
         self.seed(); barrier = threading.Barrier(2)
         def run(n):
@@ -84,22 +94,21 @@ class CorrelationTests(unittest.TestCase):
             self.assertCountEqual(list(pool.map(run, [1, 2])), ["advice_reissue", "explicit_model"])
         self.assertEqual(self.store.stats(0)["decisions"], {"advise": 1, "preserve": 1})
 
-    def test_ambiguous_history_and_old_followed_rows_are_not_repaired_or_confirmed(self):
-        first = self.seed(); req = self.request("duplicate")
+    def test_older_rows_without_a_recorded_link_are_inferred_by_turn_and_model_without_rewriting_them(self):
+        self.seed(); req = self.request("duplicate")
         self.store.save("duplicate", req, task_hash("codex", "s", req.task), Advice("advise", "advice_given", "Light", .9, ({"model": "luna", "effort": "low"},)), "jev", self.now)
-        self.assertEqual(self.decide(self.replacement()).reason, "explicit_model")
+        self.assertEqual(self.decide(self.replacement()).reason, "advice_reissue")            # claims the oldest of the two
         old = self.request("old")
         self.store.save("old", old, task_hash("codex", "s", old.task), Advice("preserve", "advice_reissue"), "jev", self.now)
         with self.store.connect() as db:
-            db.execute("INSERT INTO children VALUES(?,?,?,?,?,?,?,?,?,?)", ("old", "codex", "s", self.now, "luna", "low", "real-luna", "old-agent", first.request_id, 1))
+            db.execute("INSERT INTO children VALUES(?,?,?,?,?,?,?,?,?,?)", ("old", "codex", "s", self.now, "luna", "low", "real-luna", "old-agent", None, 0))
             before = [tuple(r) for r in db.execute("SELECT * FROM children")]
         data = self.store.stats(0)
-        self.assertEqual((data["reissues"], data["unverified_reissues"], data["children_following_advice"], data["unverified_followed_children"]), (0, 1, 0, 1))
-        self.assertEqual(data["observed_models"], {"real-luna": 1})
-        self.assertEqual(sum(data["kept_unchanged"].values()), data["decisions"]["preserve"])
+        self.assertEqual((data["reissues"], data["inferred_links"], data["unverified_reissues"]), (2, 1, 0))
+        self.assertEqual((data["children_following_advice"], data["followed_models"]), (1, {"real-luna": 1}))
+        self.assertEqual(data["decisions"], {"advise": 2})                                    # re-issues are not separate delegations
         with self.store.connect() as db:
-            self.assertEqual([tuple(r) for r in db.execute("SELECT * FROM children")], before)
-            self.assertEqual({r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}, {"advice", "attempts", "notices", "children"})
+            self.assertEqual([tuple(r) for r in db.execute("SELECT * FROM children")], before)   # nothing is rewritten
 
     def test_failure_and_replayed_attempts_count_without_fabricating_cost(self):
         bad = Fake(error=ClassifierFailure("typesafe_missing_credentials"))

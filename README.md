@@ -122,17 +122,37 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 
 預設**停用**。用 `mrh ctrl` 開啟；開啟代表把子代理任務文字送給你選的分級器。停用：`mrh ctrl set enabled off`；移除 Claude hook：`mrh install claude --artifact … --remove --apply`。
 
-## 現況與誠實的限制
+## 現況與限制
 
-已接受的原候選證據：Codex CLI 10 次有效試跑均按建議改派並完成；App 的 10 次有效試次中，8 次收到建議後改派、2 次因低信心保留原委派，全部完成。詳見 [CLI 紀錄](docs/evidence/codex/l2-codex-advice-20261013.json) 與 [App 紀錄](docs/evidence/codex/codex-app-c-20261013.json)。Claude 的既有紀錄也包含改派與 Top 由主模型自行完成。這些結果只適用於各自測過的版本與設定，**不代表日常長期遵從率**；統計中的請求模型、已回報模型與未知紀錄仍須分開看。
+**實測結果**（證據在 `docs/evidence/`，樣本數仍少，長期請看 `mrh stats`）：
+- Jev：輕量、中等、頂級三個樣本都分對，約 0.4 秒。
+- Claude Code：輕量任務被建議後，主模型改派 Haiku 5.5 並帶 effort；Top 由主模型自己做；內建 Explore 不被干預；Jev 金鑰錯誤時委派照常執行。
+- Codex CLI：10 次有效試跑全部照建議改派；桌面 App：10 次中 8 次改派、2 次因信心不足而保留原委派。
 
-- 設定檔 v2；舊 v1 讀取時自動遷移，第一次用 `mrh ctrl` 存檔時才改寫。
-- **Codex 的限制**：Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱；含糊的標籤信心度低，會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
+**統計怎麼算「照建議改派」**：同一平台、同一對話、同一回合內，主模型改派的模型與推理強度符合當次建議就算；不比對任務文字。舊紀錄依同一規則推定。目前只能顯示「改派幾次、用了哪些模型」，**算不出省下多少錢**，因為 hook 拿不到子代理實際用了多少 token，也不知道主模型原本會用什麼。
+
+**限制**：
+- 設定檔是 v2；舊 v1 讀取時自動遷移，第一次用 `mrh ctrl` 存檔時才改寫。
+- Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱，含糊的標籤信心度低會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
+- 你的 Router 技能若已替子代理指定模型與推理強度，MRH 依「明示就尊重」讓開，所以只有沒指定時才會輪到 MRH。
 - Claude Code 的子代理 `effort` 參數需 2.1.292 以上，`haiku`／`sonnet` 別名要 2.1.293 以上才對應到 5.5 系列（Homebrew 請用 `claude-code@latest`）。
-- Gemini CLI 未接 Hook；Canopy live 選配接入未完成。
-- 本輪原始碼清理已完成必要範圍，候選 `19f5021` 的 153 項單元測試全過並已由督導接受；剩餘舊 renderer 屬可選瘦身，不再追加清理。同版封裝已本機安裝，48 個產品模組一致，15 項已安裝指令與 Hook／設定保留比對已接受。本次同版 Claude／Jev 回歸 9/9 通過，成功 scratch 已清除，日常設定與 Hook 定義雜湊保持原值；整體最後驗收仍由督導確認。詳見 [HANDOFF](docs/takeover/HANDOFF.md) 與 [CODEX-CLEANUP](docs/takeover/CODEX-CLEANUP.md)。
-- 本次 Claude 回歸涵蓋 Light 建議後重派、Haiku 5.5 的宿主模型回報與 medium 請求、Explore 保留、明示 Sonnet／medium 保留，以及 Jev 金鑰被拒絕時原委派仍完成。Light 的 `followed=1` 有同任務／回合／呼叫的關聯欄位配對；獨立的實際推理強度回讀未提供，不把請求值當作供應商遙測。
-- 新 Codex 候選 `gpt-6-luna/high`、`gpt-6-luna/max`、`gpt-6.1-sol/high` 的三組明示參數已被原生工具接受，各建立一個子代理並由官方回讀確認完成排序。宿主回報沒有實際模型／推理強度欄位，這兩欄仍未知；不能拿請求值、主模型或原 `gpt-5.6-luna/low` 結果代替實際模型回讀，也不延伸成新版 Hook 端到端驗證。
+- Gemini CLI 只有模型清單，尚未接 Hook。
+
+## 維護注意事項（改程式前必讀）
+
+**同一份程式碼同時服務 Claude Code 與 Codex**：兩邊的 hook 都執行 `runtime.pyz`，共用檔案一改，部署後兩邊同時受影響。
+
+| 範圍 | 注意 |
+|---|---|
+| 共用核心：`advisory/*`、`settings_v2.py`、`advisory_runtime.py`、`plugin.py` 的 `LAUNCHER`、`adapters/providers/*` | 改動兩邊都吃到；`engine.py` 不要寫平台特例 |
+| `advisory_hosts.py` | `ClaudeHost` 與 `CodexHost` 各自獨立，不要一般化；建議文字的推理強度參數名不同（Codex 為 `reasoning_effort`、Claude 為 `effort`），不要統一 |
+| `advisory/store.py` | 資料庫 schema 只能加表／欄位，統計與儀表板都讀它 |
+| 路徑不可搬、不可改名 | `~/.local/share/model-routing-harness/app`、`runtime/daily-cli/artifact`（`launcher.py`、`binding.json`、`runtime.pyz`）。Claude 的 hook 在 `~/.claude/settings.json`，指向這些檔案 |
+| Codex `hooks.json` | 內容或命令一變，Codex 會要求在 `/hooks` 重新信任 |
+
+改完後：`PYTHONPATH=src python3 -m unittest discover -s tests -t .`，再依「安裝」一節的升級流程部署，最後跑回歸檢查 `python3 scripts/verification/claude_smoke.py --yes`（**會真的呼叫 Claude 與 Jev，約 $0.3，須明確同意**）。
+
+金鑰只放 macOS Keychain 或環境變數，不進任何檔案、報告或 commit。分級器預設是 Jev。
 
 ## 開發
 
@@ -140,6 +160,4 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 PYTHONPATH=src python3 -m unittest discover -s tests -t .
 ```
 
-原始碼 153 項、已安裝指令／保留比對 15 項與同版 Claude 回歸 9/9 的證據分開記錄，見 [PLAN](docs/takeover/PLAN.md) 與 [HANDOFF](docs/takeover/HANDOFF.md)。使用者已授權必要的 Claude／Jev 真服務回歸，不逐項詢問；按固定收尾清單與單一執行者安排，不擴項或重跑有效證據。可用 `MRH_SMOKE_EVIDENCE_DIR` 指定本機 smoke 報告目錄；腳本只保存必要的結果與關聯欄位，成功刪除自有 scratch，失敗則保留供判讀。
-
-需求：`REQUIREMENTS.md`。接手與驗證紀錄：`docs/`（見 `docs/README.md`）。舊階段文件已刪除，需要追查歷史請用 `git log`。
+需求在 `REQUIREMENTS.md`；驗證證據在 `docs/evidence/`（見 `docs/README.md`）；測試用固定資料在 `tests/fixtures/`。需要追查歷史請用 `git log`。

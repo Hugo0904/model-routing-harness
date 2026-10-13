@@ -84,6 +84,8 @@ def accounting_notes(data):
     notes = []
     if data.get("children_following_prior_advice"):
         notes.append(f"本期 {data['children_following_prior_advice']} 次採用較早的建議，另列，不混入本期建議比例。")
+    if data.get("inferred_links"):
+        notes.append(f"其中 {data['inferred_links']} 筆是較早的紀錄，依「同一回合、模型與推理強度相符」推定")
     if data.get("unverified_reissues") or data.get("unverified_followed_children"):
         notes.append(f"舊紀錄關聯未確認：重派 {data.get('unverified_reissues', 0)}、跟隨 {data.get('unverified_followed_children', 0)}；不推定成功。")
     if data.get("followed_requested_models"):

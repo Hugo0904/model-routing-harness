@@ -197,12 +197,4 @@ def show(root):
                 ["codex", "plugin", "remove", PLUGIN_ID, "--json"]],
             "next_trust_step": "Review the current definitions in the native /hooks UI",
             "removal_state_policy": "Native uninstall preserves separate MRH settings and telemetry; no automatic deletion"}
-    if artifact.get('codex_scope') is not None:
-        from mrh.adapters.hosts.codex_scope import check, ScopeError
-        try:
-            result['configuration_scope']=check(artifact['codex_scope'])
-            result['readiness_reason']='native_trust_and_activation_unverified'
-        except (ScopeError,OSError,ValueError):
-            result['configuration_scope']={'status':'invalidated'}
-            result['readiness_reason']='scope_changed'
     return result

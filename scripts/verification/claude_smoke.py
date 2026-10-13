@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Claude Code regression check. Run after ANY change to shared MRH code; costs about $0.3 and needs a Jev key and a Claude login.
 
-  python3 scripts/verification/claude_smoke.py
+  python3 scripts/verification/claude_smoke.py --yes
+
+It really calls Claude Code, Codex-free, and Jev with your login and key, so it refuses to run without --yes.
 
 Uses an isolated scratch artifact + settings + database (never the daily ones), through the *installed* `mrh`
 (~/.local/bin/mrh), so rebuild and `install_local.py` first if you changed code. Also statically checks the real
@@ -123,6 +125,8 @@ def run_scenarios(tmp):
     check("D. a rejected Jev key never blocks the delegation", code == 0 and dec == [("preserve", "typesafe_http_401")], str(dec))
 
 def main():
+    if "--yes" not in sys.argv[1:]:
+        raise SystemExit("This check makes real Claude Code and Jev calls (about $0.3). Re-run with --yes to confirm.")
     tmp = None
     try:
         static_install_check()

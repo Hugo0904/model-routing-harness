@@ -18,7 +18,6 @@ from mrh.adapters.providers.codex_subscription import (CodexSubscriptionClassifi
 from mrh.routing.core import ClassifierFailure
 from mrh.infrastructure.settings_schema import default_settings, validate_settings
 from mrh.adapters.providers.typesafe import TypesafeClassifier
-from mrh.presentation.terminal import render_configuration, render_details
 
 
 def stream(answer='{"tier":"Light","confidence":0.9}',usage=None):
