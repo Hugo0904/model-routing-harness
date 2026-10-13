@@ -1,0 +1,42 @@
+{
+  "PostToolUse": {
+    "cwd": "/work/project",
+    "duration_ms": 6,
+    "hook_event_name": "PostToolUse",
+    "permission_mode": "bypassPermissions",
+    "prompt_id": "bd35cb66-7ccb-400e-8b91-a43bdc22ff72",
+    "session_id": "a124574d-71de-41d3-8dc5-d6005fd6b7c1",
+    "tool_input": {
+      "description": "Answer the single word PONG",
+      "prompt": "Answer the single word PONG.",
+      "subagent_type": "general-purpose"
+    },
+    "tool_name": "Agent",
+    "tool_response": {
+      "agentId": "ae6badb94b262c2e5",
+      "canReadOutputFile": true,
+      "description": "Answer the single word PONG",
+      "isAsync": true,
+      "prompt": "Answer the single word PONG.",
+      "resolvedModel": "claude-haiku-4-5-20251001",
+      "status": "async_launched"
+    },
+    "tool_use_id": "toolu_01216F1s7fENr5SS1s8W57uU",
+    "transcript_path": "/work/transcript.jsonl"
+  },
+  "PreToolUse": {
+    "cwd": "/work/project",
+    "hook_event_name": "PreToolUse",
+    "permission_mode": "bypassPermissions",
+    "prompt_id": "bd35cb66-7ccb-400e-8b91-a43bdc22ff72",
+    "session_id": "a124574d-71de-41d3-8dc5-d6005fd6b7c1",
+    "tool_input": {
+      "description": "Answer the single word PONG",
+      "prompt": "Answer the single word PONG.",
+      "subagent_type": "general-purpose"
+    },
+    "tool_name": "Agent",
+    "tool_use_id": "toolu_01216F1s7fENr5SS1s8W57uU",
+    "transcript_path": "/work/transcript.jsonl"
+  }
+}

@@ -126,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
+    hook.add_argument("--platform", choices=("codex", "claude"), help="advisory routing for this host (settings v2)")
     hook.add_argument('--scope-binding',type=Path,help=argparse.SUPPRESS)
     hook.add_argument("--db", type=Path, default=None, help="event database path")
     hook.add_argument("--candidate", action="store_true", help="enable the isolated candidate adapter")
@@ -416,6 +417,14 @@ def main(
         stderr = sys.stderr
 
     # The hook path owns explicit streams because Codex consumes stdout as protocol.
+    if args.command == "hook" and args.platform:
+        from mrh.application import advisory_runtime
+        from mrh.infrastructure.settings_v2 import resolve_settings_path
+        try:
+            path = resolve_settings_path(args.settings)
+        except Exception:
+            stderr.write("mrh: settings_path_invalid\n"); stdout.write("{}\n"); return 0
+        return advisory_runtime.run(args.platform, path, stdin, stdout, stderr)
     if args.command == "hook":
         return _cmd_hook(args, stdin, stdout, stderr, runtime_dependencies)
 
