@@ -80,6 +80,13 @@ def build_parser() -> argparse.ArgumentParser:
     ctrl_actions.add_parser("keys", help="list the settable keys")
     _add_display_options(ctrl)
 
+    install = commands.add_parser("install", help="show (default) or apply the Claude Code hook")
+    install.add_argument("host", choices=("claude",))
+    install.add_argument("--artifact", type=Path, required=True, help="prepared advisory artifact root (mrh plugin prepare --advisory)")
+    install.add_argument("--claude-settings", type=Path, default=None, help="default: ~/.claude/settings.json")
+    install.add_argument("--remove", action="store_true", help="take MRH's hook out again")
+    install.add_argument("--apply", action="store_true", help="write the change (a timestamped backup is kept)")
+
     key = commands.add_parser("key", help="manage the classifier API key (stored in the macOS Keychain)")
     key.add_argument("action", choices=("status", "set", "delete"))
     key.add_argument("name", choices=("jev",))
@@ -453,6 +460,21 @@ def main(
                           bind=args.bind, associate=args.associate_settings, **(model_dependencies or {}))
         if args.command in {"stats", "status"}:
             return _cmd_stats(args)
+        if args.command == "install":
+            from mrh.infrastructure import claude_hook as ch
+            target = args.claude_settings or Path.home() / ".claude" / "settings.json"
+            try:
+                before = target.read_text() if target.exists() else ""
+                after = ch.plan(before, ch.command_for(args.artifact), remove=args.remove)
+            except (ch.ClaudeHookError, OSError, ValueError) as exc:
+                stderr.write("mrh: " + str(exc) + "\n"); return 2
+            if after == before:
+                stdout.write("Nothing to change.\n"); return 0
+            stdout.write(ch.diff(before, after, str(target)))
+            if not args.apply:
+                stdout.write("\nDry run. Add --apply to write this change.\n"); return 0
+            backup = ch.apply(target, after)
+            stdout.write(f"\nApplied. Backup: {backup}\n" if backup else "\nApplied (new file).\n"); return 0
         if args.command == "ctrl":
             from mrh.presentation import ctrl
             return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))

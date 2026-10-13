@@ -1,0 +1,37 @@
+{
+  "level": "L1",
+  "provider": "jev",
+  "date": "2026-10-13",
+  "samples": [
+    {
+      "expected": "Light",
+      "tier": "Light",
+      "confidence": 0.96,
+      "latency_ms": 447,
+      "input_tokens": 435,
+      "output_tokens": 45,
+      "model": "jev-1.13.0"
+    },
+    {
+      "expected": "Mid",
+      "tier": "Mid",
+      "confidence": 1.0,
+      "latency_ms": 443,
+      "input_tokens": 442,
+      "output_tokens": 45,
+      "model": "jev-1.13.0"
+    },
+    {
+      "expected": "Top",
+      "tier": "Top",
+      "confidence": 1.0,
+      "latency_ms": 405,
+      "input_tokens": 448,
+      "output_tokens": 45,
+      "model": "jev-1.13.0"
+    }
+  ],
+  "input_tokens_total": 1325,
+  "estimated_cost_usd": 5.6e-05,
+  "note": "direct provider call via registry.build with the Keychain credential; sample tasks are synthetic"
+}

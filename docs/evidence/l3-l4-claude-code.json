@@ -1,0 +1,62 @@
+{
+  "level": "L3+L4",
+  "host": "Claude Code 2.1.287 (headless, scratch directory, scratch settings)",
+  "parent_model": "sonnet",
+  "classifier": "jev-1.13.0",
+  "decisions": [
+    {
+      "platform": "claude",
+      "action": "advise",
+      "reason": "advice_given",
+      "tier": "Light",
+      "confidence": 0.91,
+      "provider": "jev",
+      "candidates": "[{\"model\": \"haiku\"}]"
+    },
+    {
+      "platform": "claude",
+      "action": "preserve",
+      "reason": "explicit_model",
+      "tier": null,
+      "confidence": null,
+      "provider": "jev",
+      "candidates": "[]"
+    },
+    {
+      "platform": "claude",
+      "action": "continue_main",
+      "reason": "top_main_requested",
+      "tier": "Top",
+      "confidence": 1.0,
+      "provider": "jev",
+      "candidates": "[]"
+    }
+  ],
+  "children": [
+    {
+      "platform": "claude",
+      "requested_model": "haiku",
+      "resolved_model": "claude-haiku-4-5-20251001",
+      "followed": 1
+    }
+  ],
+  "classifier_calls": [
+    {
+      "kind": "jev",
+      "outcome": "returned",
+      "input_tokens": 428,
+      "output_tokens": 45
+    },
+    {
+      "kind": "jev",
+      "outcome": "returned",
+      "input_tokens": 552,
+      "output_tokens": 45
+    }
+  ],
+  "observed": [
+    "L3: Light/0.91 -> parent re-issued Agent with model=haiku -> child ran as claude-haiku-4-5 -> recorded followed=1 -> parent finished",
+    "L4: Top/1.0 with top_mode=Main -> continue_main -> parent did the work itself, no subagent started"
+  ],
+  "limits": "single samples; says nothing about how often a parent follows advice"
+}

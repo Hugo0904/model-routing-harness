@@ -1,6 +1,16 @@
 # 開發目標：獨立、多 CLI 相容的子代理分級器
 目標 ID：MRH-001
 
+## 2026-10-13 修正：Jev 為預設分級器、分級器可切換、控制中心（Claude 接手）
+
+本段取代下方 2026-10-11「使用者明確改定分級來源」一段中「取代分級必須呼叫 Jev 的原約定」的部分；該段是對使用者提問的誤解（使用者問的是 Jev 能否透過 OpenAI／Claude 訂閱使用，答案是不行，Jev 只能用 TypeSafe API key）。歷史成果保留。
+
+- 預設分級器是 **Jev**（TypeSafe API key，存 macOS Keychain 或 `TYPESAFE_API_KEY`）。**可切換**為 Codex 訂閱或 Claude 訂閱；不自動跨分級器 fallback，分級失敗一律放行原呼叫並提示一次。
+- 所有設定集中於 `mrh ctrl`（設定檔 v2）：分級器與模型、四級各平台有序候選清單、Top Main／Fixed、信心門檻 0.50–0.99、生效範圍。
+- 路由為**建議式**（承 2026-10-12 修正）：PreToolUse deny＋建議，主模型自己重派；明示模型／推理／角色一律放行；同任務 10 分鐘只建議一次。
+- 支援 Codex、Claude Code；Gemini 僅模型清單。
+- 施工與驗證紀錄：`docs/takeover/PLAN.md`、`docs/takeover/HANDOFF.md`、`docs/evidence/l1-jev.json`、`docs/evidence/l3-l4-claude-code.json`。
+
 ## 2026-10-12 最新人類修正：共用分級建議，由主模型執行
 
 本段是目前施工基準；下文較早的直接改寫／失敗保留 spawn／不可用即等候操作者規則，與本段衝突時由本段取代，歷史成果保留。各家委派前 Hook 呼叫同一個分級器；每等級可設定 Codex、Claude、Gemini 等各家的模型／推理清單。分級器回傳等級與清單，由原主模型選自己的平台配置並建立子代理，做不到就由主模型繼續。保留明示模型、推理設定與專門角色，不保證主模型必然採用建議或每次必省成本。四級、0.5門檻、Main／Fixed設定、外送範圍、登入隔離與真實紀錄仍保留。分級失敗或沒有可用選項時回原主模型，不替使用者暗選其他平台。
