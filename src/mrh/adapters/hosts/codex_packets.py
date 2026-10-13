@@ -1,8 +1,7 @@
 """Codex-only, opt-in full-task packets. Native dispatch and queries stay distinct.
 
-The caller obtains session/turn from native host metadata. CLI arguments declare
-that scope; the hook verifies it against its actual native event, never treating
-the random packet identifier as a native request identifier.
+The hook binds the first valid native query event once. Preparation needs no
+host identity; the random packet identifier is never a native request identifier.
 """
 from __future__ import annotations
 
@@ -22,7 +21,7 @@ import uuid
 
 from mrh.advisory import engine
 from mrh.advisory.request import AdvisoryRequest
-from mrh.advisory.store import AdviceStore
+from mrh.advisory.store import PacketStore, candidates
 from mrh.infrastructure import owned, settings_v2 as v2
 from mrh.routing.types import safe_id, safe_model_id
 
@@ -125,20 +124,13 @@ def _lock(directory):
         os.close(fd)
 
 
-def prepare(settings_path, task, session, turn, workspace, *, user_model=None, user_effort=None, clock=time.time):
+def prepare(settings_path, task, workspace, *, user_model=None, user_effort=None, clock=time.time):
     settings = v2.read(settings_path)
     if not settings["enabled"] or not settings["task_export_permitted"]:
         raise PacketError("packet_export_not_permitted")
     workspace = str(owned.canonical_path(workspace))
     if not v2.workspace_allowed(settings, workspace):
         raise PacketError("packet_workspace_denied")
-    # Native identity must come from supported host metadata, not task text or a
-    # generated identifier. Strict UUID syntax is necessary but not authenticity.
-    try:
-        if str(uuid.UUID(session)) != session or str(uuid.UUID(turn)) != turn:
-            raise ValueError()
-    except (ValueError, TypeError, AttributeError):
-        raise PacketError("packet_native_scope_required") from None
     if (not isinstance(task, str) or not task.strip() or len(task.encode()) > MAX_TASK_BYTES
             or any(ord(c) < 32 and c not in "\n\r\t" for c in task)):
         raise PacketError("packet_task_invalid")
@@ -146,14 +138,14 @@ def prepare(settings_path, task, session, turn, workspace, *, user_model=None, u
         raise PacketError("packet_user_profile_invalid")
     identifier, now = uuid.uuid4().hex, clock()
     directory = _directory(settings_path, identifier, create=True)
-    scope = {"session": session, "turn": turn, "workspace": workspace, "revision": settings["revision"]}
-    packet = {"version": 1, "id": identifier, "scope": scope, "sha256": _hash(task.encode()),
+    scope = {"workspace": workspace, "revision": settings["revision"]}
+    packet = {"version": 2, "id": identifier, "scope": scope, "sha256": _hash(task.encode()),
               "length": len(task.encode()), "expires": now + TTL_SECONDS, "task": task,
               "user_profile": {"model": user_model, "effort": user_effort}}
     _write(directory / "packet.json", packet)
     os.chmod(directory / "packet.json", 0o400)
     receipt = {k: packet[k] for k in ("version", "id", "scope", "sha256", "length", "expires", "user_profile")}
-    receipt.update(state="prepared", created=now)
+    receipt.update(state="prepared", created=now, binding=None)
     _write(directory / "receipt.json", receipt)
     return {"packet_id": identifier, "sha256": packet["sha256"], "length": packet["length"],
             "query_task_name": PREFIXES["query"] + identifier, "release_task_name": PREFIXES["release"] + identifier,
@@ -162,7 +154,7 @@ def prepare(settings_path, task, session, turn, workspace, *, user_model=None, u
 
 def _receipt(directory, identifier):
     row = _read(directory / "receipt.json")
-    if (row.get("version") != 1 or row.get("id") != identifier or row.get("state") not in STATES
+    if (row.get("version") not in (1, 2) or row.get("id") != identifier or row.get("state") not in STATES
             or not isinstance(row.get("scope"), dict) or not isinstance(row.get("expires"), (float, int))):
         raise PacketError("packet_receipt_invalid")
     return row
@@ -180,16 +172,54 @@ def _packet(directory, row, event, settings, now):
             or _hash(task.encode()) != row["sha256"] or len(task.encode()) != row["length"]):
         raise PacketError("packet_hash_invalid")
     scope = row["scope"]
-    if (scope != {"session": event.get("session_id"), "turn": event.get("turn_id"),
-                  "workspace": str(owned.canonical_path(event.get("cwd"))), "revision": settings["revision"]}
-            or not safe_id(event.get("tool_use_id"))):
+    expected = {"workspace": str(owned.canonical_path(event.get("cwd"))), "revision": settings["revision"]}
+    if row['version'] == 1:
+        expected.update(session=event.get('session_id'), turn=event.get('turn_id'))
+    if scope != expected:
         raise PacketError("packet_scope_invalid")
+    _native_scope(event)
+    bound = row.get('binding')
+    if bound and (bound.get('session') != event.get('session_id') or bound.get('turn') != event.get('turn_id')):
+        raise PacketError('packet_scope_invalid')
     if not now < row["expires"] <= row["created"] + TTL_SECONDS:
         row.update(state="expired")
         _write(directory / "receipt.json", row)
         (directory / "packet.json").unlink()
         raise PacketError("packet_expired")
     return task
+
+
+def _native_scope(event):
+    try:
+        if any(str(uuid.UUID(event.get(k))) != event.get(k) for k in ('session_id','turn_id')) or not safe_id(event.get('tool_use_id')):
+            raise ValueError()
+    except (ValueError, TypeError, AttributeError):
+        raise PacketError('packet_native_scope_required') from None
+
+
+def _store(settings_path, identifier, phase='query'):
+    db = Path(settings_path).parent / 'advice.sqlite3'
+    if db.exists() or db.is_symlink():
+        _private(db)
+    return PacketStore(db, identifier, phase)
+
+
+def _classification(query):
+    if query is None:
+        raise PacketError('packet_classification_record_missing; explicit legacy import may be required')
+    return {k:query[k] for k in ('action','reason','tier','confidence')} | {'candidates':list(candidates(query)), 'query_request_id':query['request_id']}
+
+
+def _query(store, row):
+    with store.connect() as db:
+        link = store.link(db)
+    binding = row.get('binding') or row['scope']
+    if (link['session_id'] != binding.get('session') or link['turn_id'] != binding.get('turn')
+            or link['query_call_id'] != row.get('query_call')
+            or any(link[k] != row[v] for k,v in (('body_sha256','sha256'),('body_length','length')))
+            or link['workspace'] != row['scope']['workspace'] or link['revision'] != row['scope']['revision']):
+        raise PacketError('packet_binding_conflict')
+    return store.query_row()
 
 
 def _deny(reason):
@@ -249,9 +279,13 @@ def handle(event, settings_path, settings, host, factory, clock=time.time):
                 child = host.child(event)
                 if (phase != "release" or row["state"] != "released" or child is None or child.agent_id is None
                         or row.get("release_call") != event.get("tool_use_id")
-                        or row["scope"]["session"] != event.get("session_id")
-                        or row["scope"]["turn"] != event.get("turn_id")):
+                        or (row.get('binding') or row['scope']).get('session') != event.get('session_id')
+                        or (row.get('binding') or row['scope']).get('turn') != event.get('turn_id')
+                        or row['scope']['workspace'] != str(owned.canonical_path(event.get('cwd')))):
                     return {}  # unknown spawn result remains released/unknown, not a retry
+                _native_scope(event)
+                store = _store(settings_path, identifier, 'release')
+                store.record_packet_child(child, clock())
                 row.update(state="completed", completion="native_spawn_result_observed", child_id=child.agent_id,
                            requested_model=child.requested_model, requested_effort=child.requested_effort,
                            observed_model=child.resolved_model, completed=clock())
@@ -260,7 +294,7 @@ def handle(event, settings_path, settings, host, factory, clock=time.time):
                 # a child to read the packet after its native spawn acknowledges.
                 _private(directory / "packet.json")
                 (directory / "packet.json").unlink()
-                AdviceStore(Path(settings_path).parent / "advice.sqlite3").record_child(child, clock())
+                store.maintain(v2.retention_days(settings), clock())
                 return {}
             if event.get("hook_event_name") != "PreToolUse":
                 return {}
@@ -280,40 +314,45 @@ def handle(event, settings_path, settings, host, factory, clock=time.time):
             actual = replace(actual, task=task)  # keep every protected execution field
             if phase == "query":
                 if row["state"] == "classified":
-                    return _advice(row)
+                    return _advice({**row, 'classification':_classification(_query(_store(settings_path,identifier),row))})
                 if row["state"] != "prepared":
                     return _deny("packet_" + row["state"] + "; do not retry classification")
-                row.update(state="classifying", query_call="packet_query_" + identifier, message_visibility="opaque" if opaque else "plaintext_matched")
+                if row.get('binding') is None:
+                    row['binding'] = {'session':actual.session_id, 'turn':actual.turn_id, 'query_call':actual.call_id}
+                binding = row['binding']
+                row.update(state="classifying", query_call=binding['query_call'], message_visibility="opaque" if opaque else "plaintext_matched")
                 _write(directory / "receipt.json", row)
-                db = directory / "query.sqlite3"
-                if db.exists() or db.is_symlink():
-                    _private(db)
-                    owned.read_regular(db, 4_000_000)
-                query = AdvisoryRequest("codex", actual.session_id, actual.turn_id, row["query_call"], task, cwd=actual.cwd)
+                query = AdvisoryRequest("codex", binding['session'], binding['turn'], binding['query_call'], task, cwd=actual.cwd)
+                store = _store(settings_path,identifier)
+                store.bind(query,row['sha256'],row['length'],row['scope']['workspace'],row['scope']['revision'],clock())
                 observation = {}
                 # Only an OS file lock spans the network; engine opens/closes its
                 # ordinary DB operations without an enclosing SQL transaction.
                 with _observe_http(observation):
-                    advice = engine.decide(query, settings, AdviceStore(db), factory, clock)
+                    advice = engine.decide(query, settings, store, factory, clock)
                 row["transport_observation"] = observation
-                row["classification"] = {"action": advice.action, "reason": advice.reason, "tier": advice.tier,
-                                          "confidence": advice.confidence, "candidates": list(advice.candidates),
-                                          "query_request_id": advice.request_id}
                 row["state"] = "classified" if advice.reason in {"advice_given", "top_main_requested", "low_confidence", "no_candidates_for_platform"} else "failed"
                 _write(directory / "receipt.json", row)
-                return _advice(row) if row["state"] == "classified" else _deny("packet_classification_failed: " + advice.reason)
+                return _advice({**row,'classification':_classification(_query(store,row))}) if row["state"] == "classified" else _deny("packet_classification_failed: " + advice.reason)
             if row["state"] != "classified":
                 return _deny("packet_not_classified")
+            if row['version'] == 2 and not row.get('binding'):
+                return _deny('packet_query_unbound')
+            store = _store(settings_path,identifier,'release')
+            classification = _classification(_query(store,row))
+            with store.connect() as db:
+                if store.link(db)['release_request_id']:
+                    return _deny('packet_spawn_outcome_unknown')
             user = row["user_profile"]
             if any(user.get(k) is not None and user[k] != getattr(actual, "explicit_" + k) for k in ("model", "effort")):
                 return _deny("packet_user_profile_must_be_preserved")
-            if row["classification"]["action"] == "continue_main" and not any(user.values()):
+            if classification['action'] == "continue_main" and not any(user.values()):
                 return _deny("packet_top_main_continue_in_parent")
             if actual.explicit_model is None:
                 return _deny("packet_selected_model_required")
             # Preserve real worker/profile protection and ordinary real-spawn
-            # statistics; the independently classified query stays elsewhere.
-            engine.decide(actual, settings, AdviceStore(Path(settings_path).parent / "advice.sqlite3"), factory, clock)
+            # statistics, with an exact link to the independent query.
+            engine.decide(actual, settings, store, factory, clock)
             row.update(state="released", release_call=actual.call_id, released=clock(),
                        requested_model=actual.explicit_model, requested_effort=actual.explicit_effort, role=actual.role)
             _write(directory / "receipt.json", row)
@@ -329,7 +368,7 @@ def status(settings_path, identifier, *, finish=False, clock=time.time):
     directory = _directory(settings_path, identifier)
     with _lock(directory):
         row = _receipt(directory, identifier)
-        if finish or clock() >= row["expires"]:
+        if finish:
             if row["state"] == "released" and clock() < row["expires"]:
                 raise PacketError("packet_spawn_outcome_unknown")
             packet = directory / "packet.json"

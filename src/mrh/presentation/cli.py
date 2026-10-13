@@ -132,14 +132,13 @@ def build_parser() -> argparse.ArgumentParser:
     actions = packet.add_subparsers(dest="packet_action", required=True)
     prep = actions.add_parser("prepare")
     prep.add_argument("--body-file", type=Path, required=True)
-    prep.add_argument("--session", required=True, help="verified native host session UUID; never generate")
-    prep.add_argument("--turn", required=True, help="verified native host turn UUID; never generate")
     prep.add_argument("--workspace", type=Path, required=True)
     prep.add_argument("--user-model", help="only an explicit human choice, not the skill baseline")
     prep.add_argument("--user-effort", help="only an explicit human choice, not the skill baseline")
     for action in ("status", "finish"):
         p = actions.add_parser(action)
         p.add_argument("--id", required=True)
+    actions.add_parser('import-history', help='explicit idempotent import of owned legacy packet history into the shared statistics DB')
     return parser
 
 
@@ -244,8 +243,11 @@ def main(
             try:
                 if args.packet_action == "prepare":
                     task = owned.read_regular(args.body_file, packets.MAX_TASK_BYTES).decode("utf-8")
-                    result = packets.prepare(args.settings, task, args.session, args.turn, args.workspace,
+                    result = packets.prepare(args.settings, task, args.workspace,
                                              user_model=args.user_model, user_effort=args.user_effort)
+                elif args.packet_action == 'import-history':
+                    from mrh.adapters.hosts.codex_packet_import import import_history
+                    result = import_history(args.settings)
                 else:
                     result = packets.status(args.settings, args.id, finish=args.packet_action == "finish")
                 _write_json(result)

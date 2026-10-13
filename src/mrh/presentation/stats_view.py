@@ -82,6 +82,8 @@ def _pct(part, whole):
 def accounting_notes(data):
     """One explanation of evidence limits for every statistics consumer."""
     notes = []
+    if data.get('packet_classifications') or data.get('packet_releases'):
+        notes.append(f"完整任務：已分級 {data.get('packet_classifications',0)} 次、已確認派工 {data.get('packet_children_started',0)} 次；其中請求設定符合建議 {data.get('packet_children_following_advice',0)} 次。")
     if data.get("children_following_prior_advice"):
         notes.append(f"本期 {data['children_following_prior_advice']} 次採用較早的建議，另列，不混入本期建議比例。")
     if data.get("inferred_links"):

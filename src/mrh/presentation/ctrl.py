@@ -103,7 +103,8 @@ def statistics(path, days):
     data = AdviceStore.read_stats(db, since) if db.exists() else {"since": since, "decisions": {}, "per_platform": {}, "kept_unchanged": {},
         "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}, "followed_requested_models": {},
         "reissues": 0, "unverified_reissues": 0, "unverified_followed_children": 0, "classifier_calls": 0, "classifier_requests": 0,
-        "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0}
+        "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0,
+        "packet_classifications": 0, "packet_releases": 0, "packet_children_started": 0, "packet_children_following_advice": 0}
     return data, label
 
 

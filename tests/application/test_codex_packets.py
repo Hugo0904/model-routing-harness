@@ -34,10 +34,10 @@ class PacketTests(unittest.TestCase):
                   policy={"tiers": {"Light": {"codex": [{"model": "gpt-6-luna", "effort": "high"}]}}})
         self.fake = Classifier()
     def prep(self, **kwargs):
-        return p.prepare(self.settings, TASK, SESSION, TURN, self.root, clock=lambda: 1000, **kwargs)
+        return p.prepare(self.settings, TASK, self.root, clock=lambda: 1000, **kwargs)
     def event(self, packet, release=False, **change):
         return {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": SESSION,
-                "turn_id": TURN, "tool_use_id": "release1" if release else "query1", "cwd": str(self.root),
+                "turn_id": TURN, "tool_use_id": ('release_' if release else 'query_')+packet['packet_id'], "cwd": str(self.root),
                 "tool_input": {"message": "gAAAA" + "A" * 100,
                   "task_name": packet["release_task_name" if release else "query_task_name"],
                   "agent_type": "luna_worker", "model": "gpt-6-luna", "reasoning_effort": "max"}, **change}
@@ -52,7 +52,8 @@ class PacketTests(unittest.TestCase):
         packet = self.prep()
         self.assertIn("classification ready", self.reason(self.run_hook(self.event(packet))))
         self.assertEqual(self.fake.tasks, [TASK])
-        self.assertFalse((self.settings.parent / "advice.sqlite3").exists())
+        self.assertTrue((self.settings.parent / "advice.sqlite3").exists())
+        self.assertFalse((Path(packet['body_path']).parent/'query.sqlite3').exists())
         self.assertIn("classification ready", self.reason(self.run_hook(self.event(packet, tool_use_id="query2"))))
         self.assertEqual(self.fake.calls, 1)
         release = self.event(packet, True)
@@ -73,14 +74,16 @@ class PacketTests(unittest.TestCase):
         for kind in ("scope", "revision", "hash"):
             with self.subTest(kind=kind):
                 packet = self.prep(); event = self.event(packet)
-                if kind == "scope": event["session_id"] = TURN
+                if kind == "scope":
+                    self.run_hook(event)
+                    event["session_id"] = TURN
                 elif kind == "revision": v2.update(self.settings, policy={"threshold":.7})
                 else:
                     f=Path(packet["body_path"]); os.chmod(f, 0o600)
                     d=json.loads(f.read_text()); d["task"] += "tampered"; f.write_text(json.dumps(d))
                     os.chmod(f,0o400)
                 self.assertIn("packet_hash_invalid" if kind=="hash" else "packet_scope_invalid", self.reason(self.run_hook(event)))
-        self.assertEqual(self.fake.calls, 0)
+        self.assertEqual(self.fake.calls, 1)
 
     def test_expiry_cleans_body_preserves_receipt(self):
         packet = self.prep()
@@ -90,9 +93,11 @@ class PacketTests(unittest.TestCase):
         self.assertFalse(Path(packet["body_path"]).exists())
         self.assertEqual(p.status(self.settings, packet["packet_id"], clock=lambda: 1601)["state"], "expired")
 
-    def test_no_scope_no_export_and_size_bound(self):
-        with self.assertRaises(p.PacketError): p.prepare(self.settings,TASK,"guessed",TURN,self.root)
-        with self.assertRaises(p.PacketError): p.prepare(self.settings,"a"*(p.MAX_TASK_BYTES+1),SESSION,TURN,self.root)
+    def test_no_caller_scope_no_export_and_size_bound(self):
+        packet=self.prep();self.assertIsNone(p.status(self.settings,packet['packet_id'],clock=lambda:1001)['binding'])
+        self.assertIn('native_scope_required',self.reason(self.run_hook(self.event(packet,session_id=None))))
+        self.assertEqual(self.fake.calls,0)
+        with self.assertRaises(p.PacketError): p.prepare(self.settings,"a"*(p.MAX_TASK_BYTES+1),self.root)
         v2.update(self.settings,task_export_permitted=False)
         with self.assertRaises(p.PacketError): self.prep()
 

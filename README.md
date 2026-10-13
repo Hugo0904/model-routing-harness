@@ -53,7 +53,7 @@ mrh key set jev      # 由 macOS 提示輸入，金鑰不經過 MRH、不進任�
 
 ## 日常操作
 
-Codex 可選用[完整子任務 packet 接入](docs/codex/full-task-packets.md)，讓 Hook 在委派前讀取已定的 child brief；需要獨立 Codex artifact 與明確 opt-in。此協定不套用 Claude／Gemini，不改共用分級與動態 worker 選型核心；啟用與實測狀態依本次接入報告採認。
+Codex 可選用[完整子任務 packet 接入](docs/codex/full-task-packets.md)，讓 Hook 在委派前讀取已定的 child brief；需要獨立 Codex artifact 與明確 opt-in。父 AI 只保存完整 brief、workspace 與唯一 ID，session／turn 由第一次有效 query 的原生 Hook 自行綁定，無須 Monitor。分類、release 與 child 用明確關聯統一進同一份 `mrh status`／`stats`，不再另計 per-packet DB。舊資料在升級時明確執行 `mrh codex-task --settings <同一設定檔> import-history`，可重跑且不重複計數；原件保留，無法核對的歷史列為 unknown。此協定不套用 Claude／Gemini，不改共用分級與動態 worker 選型核心；啟用與實測狀態依接入報告採認。
 
 ```sh
 mrh status                             # 卡片儀表板（預設過去 7 天）
@@ -143,7 +143,7 @@ mrh hook --platform claude --settings <settings.json 絕對路徑>
 - Claude Code：輕量任務被建議後，主模型改派 Haiku 5.5 並帶 effort；Top 由主模型自己做；內建 Explore 不被干預；Jev 金鑰錯誤時委派照常執行。
 - Codex CLI：10 次有效試跑全部照建議改派；桌面 App：10 次中 8 次改派、2 次因信心不足而保留原委派。
 
-**統計怎麼算「照建議改派」**：同一平台、同一對話、同一回合內，主模型改派的模型與推理強度符合當次建議就算；不比對任務文字。舊紀錄依同一規則推定。目前只能顯示「改派幾次、用了哪些模型」，**算不出省下多少錢**，因為 hook 拿不到子代理實際用了多少 token，也不知道主模型原本會用什麼。
+**統計怎麼算「照建議改派」**：普通 Codex／Claude 保留既有同平台／對話／回合的已記錄關聯與舊紀錄推定語義。Codex packet 必須有同 scope／hash 的精確 query→release→child 關聯，且 child 的請求模型與推理強度符合該 query 建議才算；不以同回合剛好相同模型推定。選其他合適 profile 仍列「有分類且已確認派工」，採用為 false。只能顯示已觀測的派工與模型；**算不出省下多少錢**，未回報的實際模型、tokens 與成本仍未知。
 
 **限制**：
 - 設定檔是 v2；舊 v1 讀取時自動遷移，第一次用 `mrh ctrl` 存檔時才改寫。

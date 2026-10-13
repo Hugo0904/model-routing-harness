@@ -60,7 +60,7 @@ class AdvisoryPluginTests(unittest.TestCase):
         self.assertIs(binding["codex_packets"],True)
         body=self.root.parent/"task.txt";body.write_text("Entire child brief, not opaque token.")
         result=subprocess.run([sys.executable,"-I","-B",str(self.launcher.parent/"runtime.pyz"),"codex-task","--settings",str(self.settings),
-                   "prepare","--body-file",str(body),"--session",str(uuid.uuid4()),"--turn",str(uuid.uuid4()),
+                   "prepare","--body-file",str(body),
                    "--workspace",str(self.root.parent)],capture_output=True,text=True,timeout=5)
         self.assertEqual(result.returncode,0,result.stderr)
         packet=json.loads(result.stdout);self.assertTrue(Path(packet["body_path"]).is_file())
