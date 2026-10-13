@@ -121,4 +121,12 @@ MRH-CLOSE-R1-B-002：只補互動新增准入與 status 公開設定出口。準
 - B002 兩處修正保留於 `ae95efd`；第一層五個孤立模組與專屬消費者已直接刪除，`455054f`，268 unit／原4 fail、無新增失敗。
 - 第二層 Hook 分支移除工作保存為 `803b843`（WIP）：首次245 unit／7 fail＋4 error；含原4 fail、舊流程測試與 CLI façade 轉接問題。已修轉接、保留新 `--settings`／platform protocol並移除專屬舊案例，**尚未補驗**，不是接受候選。
 - B002＋本次驗證含失敗判讀共273.618秒／210秒，超63.618秒；停止所有後續層級與檢查。舊 prepare、第二層模組／core／types／scope、剩餘混合測試、完整文件與最終命令／Hook比對尚未完成。
-- 未建置部署、未呼叫模型／Jev、未改日常設定／DB、未知temp保留。Claude smoke需新的人類同意，不能沿舊授權執行。
+- 未建置部署、未呼叫模型／Jev、未改日常設定／DB、未知temp保留。A已同步最新人類授權：原範圍內必要 Claude／Jev 測試不再逐項詢問；仍由原 owner 在固定候選與既有總配額內執行，不得雙跑。
+
+## MRH-CLEANUP-R2-B 停點
+
+- `c4a062e`：保留新 launcher 故障保護，改測 active advisory 模組；242 unit／原4 fail，無新增失敗。
+- `74d0951`：舊非 advisory prepare／launcher codex_scope 分支移除；240 unit／原4 fail，無新增失敗。
+- `36283d8`：舊 routing／store／binding／scope 模組及專屬測試已刪，必要 provider primitives、v1/v2 相容、新 UI／資料與摘要 DTO 保留；**整層尚未通過**。unit在FIFO config讀取阻塞，已停止；改用既有非阻塞普通檔案讀取後 FIFO 回歸1/1通過，但完整unit、剩餘舊render/tests、文件及終驗未完成。
+- 本次R2驗證517.133秒／500秒，超17.133秒；下一gate前已攔下，沒有啟動。已回報總累計1706.860／1800秒，不自行借C/A配額。
+- source尚未凍結、建置或部署；原CLI/App有效證據與日常設定保留。README由C專屬，不由B編輯。
