@@ -3,16 +3,26 @@
 > 本檔由 Claude 執行者在 P6 填完 `<!-- 待填 -->`。完成後把「貼給 Codex 的訊息」整段貼到 Codex「Canopy 子代理分級器 督導」對話。
 
 
-## MRH-CLOSE-R1 六項收尾狀態
+## MRH-FINAL-B-INSTALL-001 最新收尾狀態
+
+人類已選「按固定清單完成，解除時間硬上限」；之前各次時間配額、超支與停止記錄保留為歷史，不再限制本次收尾。B 是唯一封裝／日常安裝 owner，C 是唯一最後 Claude／Jev smoke 與 README owner，A 接受整體成果。
 
 | 項目 | 目前狀態 | 尚缺 |
 |---|---|---|
-| 統計 | 局部 source 候選：精確關聯、舊資料未知、失敗呼叫計數；不新增表或歷史回填 | B 已檢查：完整 295 項／4 既有失敗，無新增失敗；待 A 接受 |
-| 設定操作 | 清單來源／更新失敗與 effort 依據可辨；已宣告失效不得新增，現有設定保留 | 原隔離來源／下架／取消證據保留；B-002 禁止互動新增未確認選項，尚待新檢查 |
+| 統計 | 精確關聯、舊資料未知、失敗呼叫計數；不新增表或歷史回填。A 已接受 `19f5021`／153 unit 全過 | 最後 Claude 實測由 C 執行；不得以 requested 冒充 actual |
+| 設定操作 | 清單來源／更新失敗與 effort 依據可辨；已宣告失效或未確認選項不得新增，現有設定保留。原來源／下架／取消證據沿用 | 日常設定 SHA 與安裝前完全相同 |
 | 實際委派 | 原 fdb7428 CLI 10/10、App 10 有效＝8 採用＋2 低信心保留且全完成，已接受 | 新候選與新日常設定由 C 驗證，不補舊 App 2 次 |
-| Monitor 出口 | `mrh status --json` 共用 CLI 統計，只讀 MRH 資料 | 原 JSON／唯讀證據保留；B-002 補公开 status 設定共用組裝，尚待新檢查 |
+| Monitor 出口 | 已安裝版 `mrh status` 卡片與 JSON 公開設定組裝一致，`stats --json` 原平面契約保留；只讀 MRH 資料 | 未接 Monitor App／私人 DB |
 | Canopy 選配 | `ContextSummary`／provider 摘要介面保留；advisory 傳 None，未接 live Canopy | live 接入未證，不修改 Core／新增 Hook |
-| 最終交付 | B source 候選、本地檢查已交付；耗時 343.109 秒，超出 300 秒 43.109 秒，補驗停止；未建置部署，原設定／歷史保留 | A 凍結一次版本，再封裝／安裝、C 同版本 gate、A 最終接受 |
+| 最終交付 | 固定候選已封裝、安裝至既有 app 路徑、更新既有 daily artifact 與官方外掛副本；設定／歷史保留 | C 同版本 Claude／Jev gate 與 README 結果段、A 最終接受 |
+
+封裝為 `dist/model-routing-harness-0.4.0-final-19f5021`，archive SHA `4d27132d334483a9d72db58c47e5454c6256520424bfd64a8f9862b7f32937a5`，manifest SHA `9e0638fdc1e0ad8eec4a6f4da958696be28453642ffcda8146cdbef8df5f646a`。manifest 記錄建置時 HEAD `a696116`（C 的 README-only 提交）；產品 48 個 Python 模組逐一與 A 接受的 `19f5021`、封裝、installed、daily runtime 及官方 cache 相同，刪除的舊模組無殘留。installed 的全部 2060 個檔案／連結與封裝相符。
+
+既有 `~/.local/bin/mrh` 與 active-settings 指標、binding 平台／路徑／欄位保留。Codex hooks SHA 仍 `926e854e7e24770b7ef1712e1899a9da493eab46174007cdfd47277733205a07`；官方 `plugin list` 讀回同一外掛 enabled，官方 `hooks/list` 讀回兩個 MRH hooks 均 trusted。daily settings SHA 仍 `94bffb11f2797846f36e062c7178605ccd1b299368728f741fe51ea1efaadafc`，Claude settings SHA 仍 `3f4f398f4f8c8a4626515f94b83e171e3f7c7e1c196c00dce5d11c677bea08d7`，兩個 Claude MRH commands 完全相同，其他設定／Hook 一併保留。沒有清空、復原或測試寫入 daily DB。
+
+已安裝版指令檢查通過：裸 `mrh`／help、ctrl show（人用與 JSON）、status／stats（人用與 JSON）、key status jev（只查存在，Keychain 已設定）、隔離 `plugin prepare --advisory`、Claude 安裝預設 dry diff、Codex／Claude 非委派 hook noop。卡片與 JSON 一致、stats 平面契約不變、缺失設定與 DB 不被讀取建立、dry diff 不修改 Claude 目標、noop 不分級或建立 DB；scratch 已清除。153 unit 與原 CLI／App 有效證據沒有重跑，B 未呼叫模型／Jev。
+
+非敏感證據與恢復副本：`runtime/MRH-FINAL-B-INSTALL-001/`（build、installed-checks、install-parity、preservation、trust-readback、report JSON）。舊 app／daily artifact 副本保留，未知 `temp/` 未動。bundle 內歷史 `README.txt` 尚提及已移除的 doctor／model；本次操作依 C 維護的根 README 新指令。`plugin prepare` 的一般 readiness 文案不是實際信任／實測證據，以上官方讀回與 C 最後 gate 分開採認。
 
 ## 貼給 Codex 的訊息
 

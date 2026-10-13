@@ -7,6 +7,12 @@
 
 本文件是本輪唯一施工依據。與 `REQUIREMENTS.md` 衝突時以本文件為準；舊階段文件（含原 `MRH-001.md`）已於 2026-10-13 刪除，需要追查歷史請用 `git log`。
 
+## 最新固定收尾清單（MRH-FINAL-B-INSTALL-001）
+
+人類已解除之前全部工程驗證時間硬上限，保留原 2366.633 秒與超支歷史，改按固定清單完成即停：既定指令／Hook 與設定比對、一次固定候選封裝安裝、既定 Claude／Jev 回歸與結果文件。不擴矩陣、不重跑有效結果、不 push；原較早階段的配額與待同意事項是歷史，不能重新作為本輪停止或逐階段批准條件。
+
+B 的前兩項已完成：A 接受的 `19f5021` 產品 source（153 unit 全過，沿用）已安裝至原固定路徑，原 mrh／App 接頭路徑、日常 settings、Claude settings、兩邊 Hook 定義與 Codex trusted／enabled 保留；48 個產品模組與封裝、installed、daily runtime、官方 cache 同源。已安裝版 commands、JSON／卡片同組裝、stats 原契約、缺失設定／DB 唯讀、隔離 prepare、Claude dry diff 與兩平台 noop 均通過。B 不呼叫 Claude／Jev；C 是唯一最後 smoke／README owner，A 是整體接受 owner。精確來源、SHA、比對與恢復副本见 [HANDOFF](HANDOFF.md) 最新段及 `runtime/MRH-FINAL-B-INSTALL-001/`，最後 smoke 與整體接受仍待完成。
+
 ---
 
 ## 0. 使用者要的產品（一句話）
@@ -272,7 +278,7 @@ s.append_entry("TK20261013-133016-B15B", thread_id="claude-code-desktop:<session
 
 ## 15. P0 結果（2026-10-13）
 
-2026-10-13 清理續接：原既有失敗已保留於歷史logs；相關舊core/e3/dispatched-Gemini測試已隨功能清理移除，但當時新版unit未完成；R3修正canonical fixture後153 unit全綠（source-only），不能當installed接受。最新停點與精確gate／時間見HANDOFF。原範圍內必要Claude/Jev呼叫現已有人類持續授權；仍受owner、固定版本及總驗證時間限制。
+2026-10-13 清理續接：原既有失敗已保留於歷史 logs；相關舊 core/e3/dispatched-Gemini 測試已隨功能清理移除。R3 修正 canonical fixture 後 153 unit 全綠並由 A 接受；B 後續完成同版安裝與固定本機檢查，不能代替 C 最後 Claude／Jev gate。必要服務呼叫已有人類持續授權；沿原 owner、固定版本與最新固定清單執行，總時間硬上限已解除。
 
 
 - Branch `mrh-002-ctrl`；baseline 291 tests、5 failures，皆為 HEAD 既有的過時斷言，非本輪造成：
