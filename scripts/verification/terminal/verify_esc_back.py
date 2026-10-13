@@ -52,5 +52,40 @@ def main():
         return 0 if ok and done else 1
 
 
+def ctrl_c(keys_before):
+    """Ctrl-C after `keys_before` must end the process without a traceback."""
+    with tempfile.TemporaryDirectory() as tmp:
+        settings = Path(tmp).resolve() / "owned" / "settings.json"
+        v2.init(settings)
+        pid, fd = pty.fork()
+        if pid == 0:
+            os.environ.update({"TERM": "xterm-256color", "PYTHONPATH": str(ROOT / "src")})
+            os.execvp(sys.executable, [sys.executable, "-m", "mrh", "ctrl", "--settings", str(settings), "--width", "100"])
+        fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 60, 110, 0, 0))
+        text = ""
+
+        def drain(wait):
+            nonlocal text
+            end = time.time() + wait
+            while time.time() < end:
+                if select.select([fd], [], [], 0.1)[0]:
+                    try:
+                        text += os.read(fd, 65536).decode("utf-8", "replace")
+                    except OSError:
+                        return
+
+        drain(1.5)
+        for keys in keys_before:
+            os.write(fd, keys.encode()); drain(0.8)
+        os.write(fd, b"\x03"); drain(1.5)
+        _, status = os.waitpid(pid, 0)
+        quiet = "Traceback" not in text and "KeyboardInterrupt" not in text
+        print(("PASS " if quiet and os.WIFEXITED(status) else "FAIL ") + f"Ctrl-C after {keys_before!r}: quiet={quiet}, exited={os.WIFEXITED(status)}")
+        return quiet and os.WIFEXITED(status)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    ok = main() == 0
+    for before in ([], ["3\r"], ["3\r", "2\r", "\r"], ["5\r"]):   # main menu, platform, edit list, free-text prompt
+        ok &= ctrl_c(before)
+    sys.exit(0 if ok else 1)

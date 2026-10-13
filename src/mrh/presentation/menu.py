@@ -39,7 +39,10 @@ class Menu:
         self.path(trail)
         self.note(prompt + "（輸入 back 返回、cancel 取消）")
         self.stdout.write("  > "); self.stdout.flush()
-        raw = self.stdin.readline(1026)
+        try:
+            raw = self.stdin.readline(1026)
+        except KeyboardInterrupt:
+            raw = ""                                   # Ctrl-C at a prompt leaves quietly
         self.stdout.write("\n")
         if not raw or raw.strip().lower() in ("cancel", "取消"):
             raise Cancelled()
@@ -107,6 +110,8 @@ class Menu:
                     raise Back()
                 if code in (b"A", b"B"):
                     focus = (focus + (-1 if code == b"A" else 1)) % len(items); draw(True)
+        except KeyboardInterrupt:
+            raise Cancelled() from None                # Ctrl-C arrives as a signal in this mode
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, before)
             self.stdout.write("\n")

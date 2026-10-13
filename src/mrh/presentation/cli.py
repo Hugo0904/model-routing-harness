@@ -306,6 +306,9 @@ def main(
                 stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")
                 return 2
         parser.error("unknown command")
+    except KeyboardInterrupt:
+        stdout.write("\n")
+        return 130                                     # the usual exit status for Ctrl-C; no traceback
     except Exception:
         stderr.write("mrh: cli_error\n")
         return 2
