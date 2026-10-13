@@ -65,7 +65,7 @@ try:
     binding=json.loads((root/"binding.json").read_bytes())
     base={"schema_version","python","settings_path","runtime_sha256"}
     if set(binding) not in (base,base|{"codex_scope"},base|{"platform"}) or binding["schema_version"]!=1:raise ValueError()
-    platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform")
+    platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform","codex")
     if platform not in (None,"codex","claude"):raise ValueError()
     runtime=root/"runtime.pyz"
     reason="runtime_integrity"

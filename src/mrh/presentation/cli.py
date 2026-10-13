@@ -14,8 +14,6 @@ from typing import Any, Sequence
 from mrh.presentation.terminal import terminal_width
 
 
-def _default_db() -> Path:
-    return Path.home() / ".local" / "state" / "model-routing-harness" / "events.sqlite3"
 
 
 def _wants_color(args: argparse.Namespace) -> bool:
@@ -119,29 +117,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
-    hook.add_argument("--platform", choices=("codex", "claude"), help="advisory routing for this host (settings v2)")
-    hook.add_argument('--scope-binding',type=Path,help=argparse.SUPPRESS)
-    hook.add_argument("--db", type=Path, default=None, help="event database path")
-    hook.add_argument("--candidate", action="store_true", help="enable the isolated candidate adapter")
-    hook.add_argument(
-        "--simulate-tier",
-        choices=("Light", "Small", "Mid", "Top"),
-        help="inject a synthetic classification for an isolated candidate run",
-    )
-    hook.add_argument(
-        "--simulate-confidence",
-        type=float,
-        default=None,
-        help="synthetic confidence (default: 0.9 when --simulate-tier is set)",
-    )
+    hook.add_argument("--platform", choices=("codex", "claude"), required=True, help="advisory routing for this host (settings v2)")
     return parser
 
 
-def _store(path: Path | None) -> Any:
-    # Importing the CLI, --help, doctor, and config preview must stay side-effect free.
-    from mrh.infrastructure.store import Store
-
-    return Store(str(path or _default_db()))
 
 
 def _write_json(value: Any, stream: Any = None) -> None:
@@ -151,82 +130,8 @@ def _write_json(value: Any, stream: Any = None) -> None:
     stream.write("\n")
 
 
-def _hook_failure(event, admitted):
-    if (admitted and isinstance(event, dict) and event.get('hook_event_name') == 'PreToolUse' and
-            event.get('tool_name') in ('spawn_agent','collaborationspawn_agent') and isinstance(event.get('tool_input'), dict)):
-        from mrh.routing.faults import warning
-        return warning('runtime_error')
-    return {}
 
 
-def _cmd_hook(args: argparse.Namespace, stdin: Any, stdout: Any, stderr: Any, runtime_dependencies=None) -> int:
-    event, exit_code = None, 0
-    if args.settings is not None:
-        if args.candidate or args.simulate_tier is not None or args.simulate_confidence is not None or args.db is not None:
-            stderr.write("mrh: settings_candidate_conflict\n")
-            stdout.write("{}\n")
-            return 0
-        try:
-            payload = stdin.read(2_000_001)
-            if len(payload.encode()) > 2_000_000:
-                raise ValueError()
-            event = json.loads(payload)
-            from mrh.application.runtime import configured_event
-            dependencies=dict(runtime_dependencies or {})
-            if args.scope_binding is not None:dependencies['scope_binding']=args.scope_binding
-            response = configured_event(event, args.settings, **dependencies)
-            encoded = json.dumps(response, separators=(",", ":"), allow_nan=False)
-        except Exception:
-            stderr.write("mrh: configured_hook_error\n")
-            try:
-                encoded = json.dumps(_hook_failure(event, True), separators=(',', ':'))
-            except Exception:
-                # The independent launcher must be able to detect that even
-                # the shared warning module could not load. Never mask it with
-                # a successful empty response or forward an import traceback.
-                encoded, exit_code = '{}', 1
-        stdout.write(encoded + "\n")
-        return exit_code
-    simulation_requested = args.simulate_tier is not None or args.simulate_confidence is not None
-    simulation = None
-    if simulation_requested:
-        if not args.candidate:
-            stderr.write("mrh: simulation_requires_candidate\n")
-            stdout.write("{}\n")
-            return 0
-        if args.db is None:
-            stderr.write("mrh: simulation_requires_explicit_db\n")
-            stdout.write("{}\n")
-            return 0
-        if args.simulate_tier is None:
-            stderr.write("mrh: simulation_requires_tier\n")
-            stdout.write("{}\n")
-            return 0
-        confidence = 0.9 if args.simulate_confidence is None else args.simulate_confidence
-        if not math.isfinite(confidence) or not 0 <= confidence <= 1:
-            stderr.write("mrh: invalid_simulation_confidence\n")
-            stdout.write("{}\n")
-            return 0
-        simulation = {"tier": args.simulate_tier, "confidence": confidence}
-    try:
-        event = json.load(stdin)
-        if not isinstance(event, dict):
-            raise ValueError("hook event must be a JSON object")
-        from mrh.adapters.hosts.codex import handle_event
-
-        store = _store(args.db) if args.candidate else None
-        response = handle_event(event, store=store, candidate=args.candidate, simulation=simulation)
-        if not isinstance(response, dict):
-            raise TypeError("hook adapter response must be an object")
-        encoded = json.dumps(response, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
-    except Exception:
-        stderr.write("mrh: hook_error\n")
-        try:
-            encoded = json.dumps(_hook_failure(event, args.candidate), separators=(',', ':'))
-        except Exception:
-            encoded, exit_code = '{}', 1
-    stdout.write(encoded + "\n")
-    return exit_code
 
 
 def main(
@@ -235,8 +140,6 @@ def main(
     stdin: Any = None,
     stdout: Any = None,
     stderr: Any = None,
-    runtime_dependencies: dict | None = None,
-    model_dependencies: dict | None = None,
 ) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     if not arguments or arguments[0] in ("-h", "--help", "help"):
@@ -252,7 +155,7 @@ def main(
         stderr = sys.stderr
 
     # The hook path owns explicit streams because Codex consumes stdout as protocol.
-    if args.command == "hook" and args.platform:
+    if args.command == "hook":
         from mrh.application import advisory_runtime
         from mrh.infrastructure.settings_v2 import resolve_settings_path
         try:
@@ -260,8 +163,6 @@ def main(
         except Exception:
             stderr.write("mrh: settings_path_invalid\n"); stdout.write("{}\n"); return 0
         return advisory_runtime.run(args.platform, path, stdin, stdout, stderr)
-    if args.command == "hook":
-        return _cmd_hook(args, stdin, stdout, stderr, runtime_dependencies)
 
     # Keep command output directed through the caller-provided streams as well.
     old_stdout, old_stderr = sys.stdout, sys.stderr

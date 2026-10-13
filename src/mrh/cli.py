@@ -10,11 +10,8 @@ def main(
     stdin: Any = None,
     stdout: Any = None,
     stderr: Any = None,
-    runtime_dependencies: dict | None = None,
-    model_dependencies: dict | None = None,
 ) -> int:
     from mrh.presentation.cli import main as command_main
     return command_main(
         argv, stdin=stdin, stdout=stdout, stderr=stderr,
-        runtime_dependencies=runtime_dependencies, model_dependencies=model_dependencies,
     )

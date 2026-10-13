@@ -194,20 +194,6 @@ class FaultNoticesTests(unittest.TestCase):
         self.assertNotIn('CANARY', json.dumps(out)); self.assertFalse(path.parent.exists())
         self.assertEqual(configured_event(dict(event, hook_event_name='PostToolUse'), path), {})
 
-    def test_cli_outer_import_error_is_visible_and_warning_module_failure_is_not_success(self):
-        for missing_warning in (False, True):
-            with self.subTest(missing_warning=missing_warning):
-                unavailable = {'mrh.application.runtime': None}
-                if missing_warning:
-                    unavailable['mrh.routing.faults'] = None
-                out, err = io.StringIO(), io.StringIO()
-                with patch.dict('sys.modules', unavailable):
-                    code = cli.main(['hook', '--settings', str(self.root / 'missing/settings.json')],
-                                    stdin=io.StringIO(json.dumps(self.event())), stdout=out, stderr=err)
-                self.assertEqual(code, 1 if missing_warning else 0)
-                value = json.loads(out.getvalue())
-                self.assertEqual(value, {} if missing_warning else warning('runtime_error'))
-                self.assertNotIn('CANARY', out.getvalue() + err.getvalue())
 
     def test_known_operator_stop_write_fault_warns_without_weakening_deny(self):
         from tests.routing.test_operator_stop import OperatorStopTests

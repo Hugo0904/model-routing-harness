@@ -124,84 +124,9 @@ class CliTests(unittest.TestCase):
 
 
 
-    def test_hook_stdout_is_protocol_only_and_default_is_passthrough(self) -> None:
-        seen: list[tuple[dict, object, bool, object]] = []
 
-        def handle_event(event, store=None, candidate=False, simulation=None):
-            seen.append((event, store, candidate, simulation))
-            return {}
 
-        module = fake_module("mrh.adapters.hosts.codex", handle_event=handle_event)
-        stdin, stdout, stderr = io.StringIO('{"hook_event_name":"Other"}'), io.StringIO(), io.StringIO()
-        with patch.dict(sys.modules, {"mrh.adapters.hosts.codex": module}):
-            result = cli.main(["hook"], stdin=stdin, stdout=stdout, stderr=stderr)
-        self.assertEqual(result, 0)
-        self.assertEqual(stdout.getvalue(), "{}\n")
-        self.assertEqual(stderr.getvalue(), "")
-        self.assertEqual(seen, [({"hook_event_name": "Other"}, None, False, None)])
 
-    def test_hook_adapter_errors_return_empty_json_and_safe_error_code(self) -> None:
-        def handle_event(*args, **kwargs):
-            raise RuntimeError("private prompt and secret")
-
-        stdin, stdout, stderr = io.StringIO("{}"), io.StringIO(), io.StringIO()
-        with patch.dict(sys.modules, {"mrh.adapters.hosts.codex": fake_module("mrh.adapters.hosts.codex", handle_event=handle_event)}):
-            result = cli.main(["hook", "--candidate"], stdin=stdin, stdout=stdout, stderr=stderr)
-        self.assertEqual(result, 0)
-        self.assertEqual(stdout.getvalue(), "{}\n")
-        self.assertEqual(stderr.getvalue(), "mrh: hook_error\n")
-        self.assertNotIn("secret", stderr.getvalue())
-
-    def test_hook_simulation_requires_candidate_and_explicit_database(self) -> None:
-        calls: list[object] = []
-        codex = fake_module("mrh.adapters.hosts.codex", handle_event=lambda *args, **kwargs: calls.append(kwargs) or {})
-        with tempfile.TemporaryDirectory() as tmp:
-            cases = (
-                (["hook", "--simulate-tier", "Top"], "mrh: simulation_requires_candidate\n"),
-                (["hook", "--candidate", "--simulate-tier", "Top"], "mrh: simulation_requires_explicit_db\n"),
-                (["hook", "--candidate", "--db", str(Path(tmp) / "events.sqlite3"), "--simulate-confidence", "0.8"], "mrh: simulation_requires_tier\n"),
-            )
-            for argv, expected_error in cases:
-                stdout, stderr = io.StringIO(), io.StringIO()
-                with patch.dict(sys.modules, {"mrh.adapters.hosts.codex": codex}):
-                    result = cli.main(argv, stdin=io.StringIO("{}"), stdout=stdout, stderr=stderr)
-                self.assertEqual(result, 0)
-                self.assertEqual(stdout.getvalue(), "{}\n")
-                self.assertEqual(stderr.getvalue(), expected_error)
-        self.assertEqual(calls, [])
-
-    def test_hook_simulation_passes_synthetic_tier_and_default_confidence(self) -> None:
-        seen: list[dict] = []
-
-        class FakeStore:
-            def __init__(self, path: str):
-                self.path = path
-
-        def handle_event(event, store=None, candidate=False, simulation=None):
-            seen.append({"event": event, "store": store, "candidate": candidate, "simulation": simulation})
-            return {}
-
-        modules = {
-            "mrh.infrastructure.store": fake_module("mrh.infrastructure.store", Store=FakeStore),
-            "mrh.adapters.hosts.codex": fake_module("mrh.adapters.hosts.codex", handle_event=handle_event),
-        }
-        with tempfile.TemporaryDirectory() as tmp, patch.dict(sys.modules, modules):
-            db_path = str(Path(tmp) / "events.sqlite3")
-            for confidence_args, confidence in (([], 0.9), (["--simulate-confidence", "0.62"], 0.62)):
-                output, errors = io.StringIO(), io.StringIO()
-                result = cli.main(
-                    ["hook", "--candidate", "--db", db_path, "--simulate-tier", "Mid", *confidence_args],
-                    stdin=io.StringIO('{"hook_event_name":"PreToolUse"}'),
-                    stdout=output,
-                    stderr=errors,
-                )
-                self.assertEqual(result, 0)
-                self.assertEqual(output.getvalue(), "{}\n")
-                self.assertEqual(errors.getvalue(), "")
-                self.assertEqual(seen[-1]["simulation"], {"tier": "Mid", "confidence": confidence})
-                self.assertTrue(seen[-1]["candidate"])
-                self.assertEqual(seen[-1]["store"].path, db_path)
-        self.assertEqual(len(seen), 2)
 
 
 if __name__ == "__main__":
