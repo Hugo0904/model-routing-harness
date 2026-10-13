@@ -99,6 +99,18 @@ class CtrlTests(unittest.TestCase):
         self.assertEqual((saved["enabled"], saved["policy"]["threshold"]), (True, 0.5))
         self.assertIn("changed while you were editing", out.getvalue())
 
+    def test_scope_lives_in_the_allowlist_file_when_one_is_configured(self):
+        allow = self.path.parent.parent / "allowlist.json"
+        allow.write_text('{"schema_version": 1, "roots": ["/"]}')
+        v2.update(self.path, workspace_allowlist_file=str(allow))
+        self.assertIn("Applies to    /", self.cli("show")[1])
+        revision = v2.read(self.path)["revision"]
+        work = self.path.parent.parent / "work"; work.mkdir()
+        self.assertEqual(self.cli("set", "allowed_workspaces", str(work))[0], 0)
+        self.assertEqual(json.loads(allow.read_text())["roots"], [str(work)])     # the file the hook really reads
+        self.assertEqual(v2.read(self.path)["revision"], revision)                 # settings untouched
+        self.assertTrue(v2.workspace_allowed(v2.read(self.path), str(work)))
+
     def test_menu_never_starts_on_quit(self):
         from mrh.presentation.menu import initial_focus
         items = [("Routing", object()), ("Quit", None)]

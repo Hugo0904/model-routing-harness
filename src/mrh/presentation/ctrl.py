@@ -25,7 +25,8 @@ def snapshot(settings, path, secrets_module=secrets):
             "task_export_permitted": settings["task_export_permitted"], "classifier": settings["classifier"],
             "api_key": {"jev": key_state("jev", secrets_module)},
             "threshold": settings["policy"]["threshold"], "top_mode": settings["policy"]["top_mode"],
-            "allowed_workspaces": settings["allowed_workspaces"], "tiers": settings["policy"]["tiers"],
+            "applies_to": v2.effective_roots(settings)[0], "applies_to_source": v2.effective_roots(settings)[1],
+            "tiers": settings["policy"]["tiers"],
             "fixed": settings["policy"]["fixed"],
             "generic_roles": settings["policy"].get("generic_roles", v2.DEFAULT_GENERIC_ROLES)}
 
@@ -35,12 +36,13 @@ def render(snap, width=100):
     key = snap["api_key"]["jev"]
     key_text = "set in Keychain" if key["keychain"] else "set in environment" if key["environment"] else "NOT SET (mrh key set jev)"
     lines = ["MRH  /  control center", "",
-             f"  Routing       {'ON' if snap['enabled'] else 'OFF'}   task text {'is' if snap['task_export_permitted'] else 'is NOT'} sent to the classifier",
+             f"  Routing       " + ("ON    each delegation's task text is sent to the classifier" if snap["enabled"] and snap["task_export_permitted"]
+                                    else "OFF   delegations are never touched"),
              f"  Classifier    {registry.LABELS[c['provider']]} · {c['model']} · timeout {c['timeout_seconds']:g}s",
              f"  Jev API key   {key_text}",
              f"  Confidence    advise at or above {snap['threshold']:.2f}",
              f"  Top tier      {snap['top_mode']} ({TOP_HELP[snap['top_mode']]})",
-             f"  Applies to    {', '.join(snap['allowed_workspaces']) or '(nowhere)'}", "", "  Candidates, in order of preference"]
+             f"  Applies to    {', '.join(snap['applies_to']) or '(nowhere)'}" + ("" if snap["applies_to_source"] == "settings" else f"   (list in {snap['applies_to_source']})"), "", "  Candidates, in order of preference"]
     def rows(label, lists):
         shown = [f"{p}: {logic.format_candidates(lists[p])}" for p in v2.PLATFORMS if lists.get(p)]
         lines.append(f"    {label:<6} " + ("  |  ".join(shown) if shown else "(none)"))
@@ -53,6 +55,16 @@ def render(snap, width=100):
     lines += ["", f"  Treated as default roles   {roles}   (any other named role is left alone)"]
     lines += ["", f"  Settings      {snap['settings_path']}  (revision {snap['revision']})"]
     return "\n".join(sanitize_text(line) if i else line for i, line in enumerate(lines)) + "\n"
+
+
+def apply_set(path, settings, key, value):
+    """One write path for scripted and interactive changes. Returns a short confirmation."""
+    if key == "allowed_workspaces" and "workspace_allowlist_file" in settings:
+        roots = logic.changes_for(settings, key, value)["allowed_workspaces"]
+        v2.write_allowlist_file(settings["workspace_allowlist_file"], roots)
+        return f"{key} saved to {settings['workspace_allowlist_file']}"
+    saved = v2.update(path, expected_revision=settings["revision"], **logic.changes_for(settings, key, value))
+    return f"{key} saved (revision {saved['revision']})"
 
 
 def list_models(platform, cache={}):
@@ -98,7 +110,14 @@ class Session:
 
     def set_key(self, key, value, summary):
         try:
-            return self.save(logic.changes_for(self.settings(), key, value), summary)
+            current = self.settings()
+            if key == "allowed_workspaces" and "workspace_allowlist_file" in current:
+                logic.changes_for(current, key, value)          # validate before asking
+                self.out.write(f"\n  Change: {summary}\n")
+                if self.menu.pick("Save this change?", [("Save", True), ("Cancel", False)]) is not True:
+                    self.menu.note("Not saved."); return False
+                self.menu.note(apply_set(self.path, current, key, value)); return True
+            return self.save(logic.changes_for(current, key, value), summary)
         except logic.CtrlError as exc:
             self.menu.note(str(exc)); return False
 
@@ -234,9 +253,7 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
             stdout.write(json.dumps(snap, indent=2, sort_keys=True) + "\n" if args.json else render(snap))
             return 0
         if action == "set":
-            changes = logic.changes_for(settings, args.key, args.value)
-            saved = v2.update(path, expected_revision=settings["revision"], **changes)
-            stdout.write(f"{args.key} saved (revision {saved['revision']})\n"); return 0
+            stdout.write(apply_set(path, settings, args.key, args.value) + "\n"); return 0
         if not getattr(stdin, "isatty", lambda: False)():
             return _fail(stderr, "the interactive control center needs a terminal; use `mrh ctrl show` or `mrh ctrl set KEY VALUE`")
         menu = Menu(stdin, stdout, args.width or terminal_width(), color)

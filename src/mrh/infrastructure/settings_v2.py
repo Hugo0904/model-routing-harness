@@ -246,6 +246,27 @@ def update(path, *, expected_revision=None, **changes):
 workspace_allowed = legacy.workspace_allowed
 
 
+def effective_roots(settings):
+    """Where routing applies and where that list lives: the allowlist file wins when one is set."""
+    if "workspace_allowlist_file" not in settings:
+        return list(settings["allowed_workspaces"]), "settings"
+    path = settings["workspace_allowlist_file"]
+    try:
+        roots = json.loads(Path(path).read_text(encoding="utf-8"))["roots"]
+        return [r for r in roots if isinstance(r, str)], path
+    except (OSError, ValueError, KeyError, TypeError):
+        return [], path
+
+
+def write_allowlist_file(path, roots):
+    """Atomic rewrite of the operator's (unversioned) allowlist file."""
+    path = Path(path)
+    data = json.dumps({"schema_version": 1, "roots": list(roots)}, indent=2) + "\n"
+    tmp = path.with_name("." + path.name + ".mrh-tmp")
+    tmp.write_text(data, encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def resolve_settings_path(explicit=None, environ=None, home=None):
     """--settings > MRH_SETTINGS > ~/.config/model-routing-harness/active-settings."""
     environ = os.environ if environ is None else environ
