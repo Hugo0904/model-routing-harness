@@ -125,6 +125,7 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument('--scope-workspace',type=Path,help='inspect a finite official CLI generic-routing scope; preserves default-off')
     prepare.add_argument('--codex-binary',type=Path,help='optional exact official native CLI; default uses installed discovery')
     prepare.add_argument('--scope-contract',choices=['fresh-root-cli'],help='explicit fresh root native CLI contract; requires --scope-workspace')
+    prepare.add_argument('--advisory',action='store_true',help='advisory routing (settings v2): no scope binding; serves Codex and Claude Code')
     show = plugin_actions.add_parser("show")
     show.add_argument("--root", required=True, type=Path)
 
@@ -470,7 +471,7 @@ def main(
             from mrh.adapters.hosts.codex_scope import ScopeError
             try:
                 _write_json(plugin.prepare(args.root, args.settings, args.python,scope_workspace=args.scope_workspace,
-                                         codex_binary=args.codex_binary,scope_contract=args.scope_contract) if args.plugin_action == "prepare" else plugin.show(args.root))
+                                         codex_binary=args.codex_binary,scope_contract=args.scope_contract,advisory=args.advisory) if args.plugin_action == "prepare" else plugin.show(args.root))
                 return 0
             except (OwnedError,ScopeError) as exc:
                 stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")

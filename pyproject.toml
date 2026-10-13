@@ -5,7 +5,7 @@ backend-path = ["."]
 
 [project]
 name = "model-routing-harness"
-version = "0.3.0"
+version = "0.4.0"
 description = "Independent task routing candidate with explicit evidence boundaries"
 requires-python = ">=3.11"
 dependencies = []

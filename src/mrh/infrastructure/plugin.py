@@ -53,7 +53,7 @@ from pathlib import Path
 event=None
 reason="runtime_load"
 def failed():
-    if isinstance(event,dict) and event.get("hook_event_name")=="PreToolUse" and event.get("tool_name") in ("spawn_agent","collaborationspawn_agent") and isinstance(event.get("tool_input"),dict):
+    if isinstance(event,dict) and event.get("hook_event_name")=="PreToolUse" and event.get("tool_name") in ("spawn_agent","collaborationspawn_agent","Agent","Task") and isinstance(event.get("tool_input"),dict):
         description="runtime integrity verification failed" if reason=="runtime_integrity" else "the Hook runtime could not be loaded or completed"
         return {"systemMessage":"MRH: "+description+"; original tool call preserved. Use mrh stats --details with this profile's --settings or --db. Recording and warning deduplication are unavailable; this fault may be absent from history."}
     return {}
@@ -64,7 +64,9 @@ try:
     root=Path(__file__).resolve().parent
     binding=json.loads((root/"binding.json").read_bytes())
     base={"schema_version","python","settings_path","runtime_sha256"}
-    if set(binding) not in (base,base|{"codex_scope"}) or binding["schema_version"]!=1:raise ValueError()
+    if set(binding) not in (base,base|{"codex_scope"},base|{"platform"}) or binding["schema_version"]!=1:raise ValueError()
+    platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform")
+    if platform not in (None,"codex","claude"):raise ValueError()
     runtime=root/"runtime.pyz"
     reason="runtime_integrity"
     if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
@@ -75,7 +77,8 @@ try:
     # bounds readback without holding arbitrary failed-runtime output in memory.
     with tempfile.TemporaryFile() as output:
         args=[python,"-I","-B",str(runtime),"hook","--settings",settings]
-        if "codex_scope" in binding:args += ["--scope-binding",str(root/"binding.json")]
+        if platform:args += ["--platform",platform]
+        elif "codex_scope" in binding:args += ["--scope-binding",str(root/"binding.json")]
         process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=output,stderr=subprocess.DEVNULL,start_new_session=True)
         try:
             process.communicate(data,timeout=48)
@@ -123,7 +126,7 @@ def _old_artifact(root):
         raise owned.OwnedError("owned_source_changed") from None
 
 
-def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_binary=None, scope_contract=None):
+def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_binary=None, scope_contract=None, advisory=False):
     root = owned.canonical_path(root)
     settings_path = owned.canonical_path(settings_path)
     if root == settings_path.parent or root in settings_path.parents or settings_path.parent in root.parents:
@@ -131,7 +134,9 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
     # Reject unknown target contents before touching either root.
     old_artifact = _old_artifact(root) if root.exists() and any(root.iterdir()) else None
     python = str(Path(python or sys.executable).resolve())
-    scope=old_artifact.get('codex_scope') if old_artifact is not None else None
+    scope=old_artifact.get('codex_scope') if old_artifact is not None and not advisory else None
+    if advisory and (scope_workspace is not None or scope_contract is not None):
+        raise owned.OwnedError("advisory_has_no_scope")
     if scope_workspace is not None:
         from mrh.adapters.hosts.codex_scope import prepare as prepare_scope, ScopeError
         from mrh.adapters.catalogs.catalog import discover
@@ -166,7 +171,7 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
     except metadata.PackageNotFoundError:
         # Development callers are explicitly labeled; host proof uses installed
         # wheel metadata and records the packaged bytes independently.
-        version = "0.3.0"
+        version = "0.4.0"
     runtime = _runtime_archive()
     prefix = "plugins/" + NAME + "/"
     command = shlex.quote(python) + ' -I -B "${PLUGIN_ROOT}/launcher.py"'
@@ -182,7 +187,7 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         prefix + "launcher.py": LAUNCHER,
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
-                                         "runtime_sha256": _hash(runtime)}),
+                                         "runtime_sha256": _hash(runtime), **({"platform": "codex"} if advisory else {})}),
     }
     if scope is not None:
         from mrh.adapters.hosts.fresh_cli_scope import CONTRACT as fresh_contract
