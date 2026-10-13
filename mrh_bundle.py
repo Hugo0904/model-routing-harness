@@ -45,12 +45,17 @@ exec "$mrh_dir/runtime/bin/python3.11" -I -B "$mrh_dir/app/mrh.pyz" "$@"
 README = '''MRH local macOS arm64 candidate
 
 Extract this directory and choose a stable location. Run ./mrh --help,
-./mrh doctor, then ./mrh model. Only MRH and your selected vendor CLI are
+then ./mrh ctrl. Use ./mrh status for the dashboard, ./mrh stats for the
+text summary, and ./mrh key status jev to check whether a key is configured.
+Only MRH and your selected vendor CLI are
 needed; MRH includes its own CPython. No separate Python, SDK, Node or bridge
 is required by MRH. Vendor CLI prerequisites remain that CLI's responsibility.
-Use the arrow keys and Enter to choose your tool, model and reasoning effort,
-review and save. Cancel preserves the policy. Routing/export remain off until
-separately configured under the existing authorization contract.
+Use the arrow keys and Enter in ./mrh ctrl to choose the classifier and each
+tier's ordered platform-specific model and reasoning-effort candidates, then
+review and save. Top Main asks the parent to do the work; Top Fixed recommends
+the configured Top candidates. Cancel preserves the current policy. Routing
+and export require explicit configuration under the existing authorization
+contract; opening the control center does not change their current settings.
 
 Optional short command: create a symlink named mrh in your own PATH directory
 pointing to this directory's mrh file. Do not modify system directories.
