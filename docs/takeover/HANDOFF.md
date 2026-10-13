@@ -65,6 +65,12 @@ mrh ctrl          # 控制中心
 mrh ctrl show     # 目前設定
 ```
 
+## 2026-10-13 晚間更新：Claude Code 升級與 effort
+
+- Claude Code 由 stable 2.1.287 換成 `claude-code@latest` cask（2.1.296；先 `brew uninstall --cask claude-code` 再 `brew install --cask claude-code@latest`，兩者衝突）。`~/.claude` 設定未動。
+- 2.1.296 實測：子代理 `haiku` → `claude-haiku-5-5`、`sonnet` → `claude-sonnet-5-5`（2.1.287 的 `haiku` 是 Haiku 4.5）；Agent 工具新增 `effort` 參數，建議文字已帶出 `effort=…`，主模型自選 effort 視為明示。實測：Light/0.91 → 主模型改派 haiku＋effort=medium → 子代理 claude-haiku-5-5 → followed=1。
+- 使用者設定（Claude）：Light `haiku:medium`、Small `haiku:xhigh`、Mid `sonnet:medium`；Codex 三級仍為 `gpt-5.6-luna:low`；Top 為 Main。路由仍停用。
+
 ## 未完成／已知問題
 
 1. **Codex 主模型不照建議改派**（L2 兩次）：功能上 Hook→建議→主模型繼續做都通，但省錢取決於主模型是否改派。可試：調整建議措辭、或改以統計累積觀察再決定。
