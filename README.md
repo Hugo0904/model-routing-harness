@@ -53,6 +53,8 @@ mrh key set jev      # 由 macOS 提示輸入，金鑰不經過 MRH、不進任�
 
 ## 日常操作
 
+Codex 可選用[完整子任務 packet 接入](docs/codex/full-task-packets.md)，讓 Hook 在委派前讀取已定的 child brief；需要獨立 Codex artifact 與明確 opt-in。此協定不套用 Claude／Gemini，不改共用分級與動態 worker 選型核心；啟用與實測狀態依本次接入報告採認。
+
 ```sh
 mrh status                             # 卡片儀表板（預設過去 7 天）
 mrh stats                              # 中文統計（預設過去 24 小時）

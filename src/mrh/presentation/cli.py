@@ -119,12 +119,27 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--settings", required=True, type=Path, help="separate absolute MRH settings.json path")
     prepare.add_argument("--python", type=Path, help="installed Python 3.11+ interpreter")
     prepare.add_argument('--advisory',action='store_true',required=True,help='advisory routing (settings v2): no scope binding; serves Codex and Claude Code')
+    prepare.add_argument('--codex-packets', action='store_true', help='Codex-only full-task packet artifact; use a separate root, never replace an active Claude artifact')
     show = plugin_actions.add_parser("show")
     show.add_argument("--root", required=True, type=Path)
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
     hook.add_argument("--platform", choices=("codex", "claude"), required=True, help="advisory routing for this host (settings v2)")
+    hook.add_argument("--codex-packets", action="store_true", help=argparse.SUPPRESS)
+    packet = commands.add_parser("codex-task", help="opt-in Codex full-task packet preparation and receipt")
+    packet.add_argument("--settings", type=Path, required=True)
+    actions = packet.add_subparsers(dest="packet_action", required=True)
+    prep = actions.add_parser("prepare")
+    prep.add_argument("--body-file", type=Path, required=True)
+    prep.add_argument("--session", required=True, help="verified native host session UUID; never generate")
+    prep.add_argument("--turn", required=True, help="verified native host turn UUID; never generate")
+    prep.add_argument("--workspace", type=Path, required=True)
+    prep.add_argument("--user-model", help="only an explicit human choice, not the skill baseline")
+    prep.add_argument("--user-effort", help="only an explicit human choice, not the skill baseline")
+    for action in ("status", "finish"):
+        p = actions.add_parser(action)
+        p.add_argument("--id", required=True)
     return parser
 
 
@@ -168,8 +183,20 @@ def main(
         try:
             path = resolve_settings_path(args.settings)
         except Exception:
-            stderr.write("mrh: settings_path_invalid\n"); stdout.write("{}\n"); return 0
-        return advisory_runtime.run(args.platform, path, stdin, stdout, stderr)
+            stderr.write("mrh: settings_path_invalid\n")
+            response = {}
+            if args.platform == "codex" and args.codex_packets:
+                from mrh.adapters.hosts import codex_packets as packets
+                try:
+                    event = json.loads(stdin.read(advisory_runtime.MAX_EVENT_BYTES + 1))
+                    if packets.marked(event) and event.get("hook_event_name") == "PreToolUse":
+                        response = packets._deny("packet_settings_path_invalid")
+                except Exception:
+                    pass
+            stdout.write(json.dumps(response) + "\n"); return 0
+        if args.codex_packets and args.platform != "codex":
+            stderr.write("mrh: codex_packets_platform_invalid\n"); stdout.write("{}\n"); return 2
+        return advisory_runtime.run(args.platform, path, stdin, stdout, stderr, codex_packets=args.codex_packets)
 
     # Keep command output directed through the caller-provided streams as well.
     old_stdout, old_stderr = sys.stdout, sys.stderr
@@ -206,10 +233,25 @@ def main(
             from mrh.infrastructure import plugin
             from mrh.infrastructure.owned import OwnedError
             try:
-                _write_json(plugin.prepare(args.root, args.settings, args.python,advisory=args.advisory) if args.plugin_action == "prepare" else plugin.show(args.root))
+                _write_json(plugin.prepare(args.root, args.settings, args.python,advisory=args.advisory,codex_packets=args.codex_packets) if args.plugin_action == "prepare" else plugin.show(args.root))
                 return 0
             except OwnedError as exc:
                 stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")
+                return 2
+        if args.command == "codex-task":
+            from mrh.adapters.hosts import codex_packets as packets
+            from mrh.infrastructure import owned
+            try:
+                if args.packet_action == "prepare":
+                    task = owned.read_regular(args.body_file, packets.MAX_TASK_BYTES).decode("utf-8")
+                    result = packets.prepare(args.settings, task, args.session, args.turn, args.workspace,
+                                             user_model=args.user_model, user_effort=args.user_effort)
+                else:
+                    result = packets.status(args.settings, args.id, finish=args.packet_action == "finish")
+                _write_json(result)
+                return 0
+            except (packets.PacketError, owned.OwnedError) as exc:
+                stderr.write("mrh: " + exc.reason + "\n")
                 return 2
         parser.error("unknown command")
     except KeyboardInterrupt:

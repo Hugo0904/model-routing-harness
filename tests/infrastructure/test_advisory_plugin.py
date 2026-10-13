@@ -53,5 +53,30 @@ class AdvisoryPluginTests(unittest.TestCase):
         self.assertIn("original tool call preserved", out["systemMessage"])
 
 
+    def test_codex_packet_binding_and_public_prep_cli(self):
+        import uuid
+        plugin.prepare(self.root,self.settings,sys.executable,advisory=True,codex_packets=True)
+        binding=json.loads((self.launcher.parent/"binding.json").read_text())
+        self.assertIs(binding["codex_packets"],True)
+        body=self.root.parent/"task.txt";body.write_text("Entire child brief, not opaque token.")
+        result=subprocess.run([sys.executable,"-I","-B",str(self.launcher.parent/"runtime.pyz"),"codex-task","--settings",str(self.settings),
+                   "prepare","--body-file",str(body),"--session",str(uuid.uuid4()),"--turn",str(uuid.uuid4()),
+                   "--workspace",str(self.root.parent)],capture_output=True,text=True,timeout=5)
+        self.assertEqual(result.returncode,0,result.stderr)
+        packet=json.loads(result.stdout);self.assertTrue(Path(packet["body_path"]).is_file())
+        self.assertNotIn("Entire child",result.stdout)
+        event={"hook_event_name":"PreToolUse","tool_name":"spawn_agent","tool_input":{"task_name":"mrh_packet_"+"f"*32,"message":"gAAAA"+"A"*100},
+               "session_id":"s","turn_id":"t","tool_use_id":"c","cwd":str(self.root.parent)}
+        self.assertEqual(self.launch(event)["hookSpecificOutput"]["permissionDecision"],"deny")
+        claude={"hook_event_name":"PreToolUse","tool_name":"Agent","tool_input":{"prompt":"unchanged"}}
+        self.assertNotIn("hookSpecificOutput",self.launch(claude,"claude"))
+
+    def test_packet_launcher_runtime_fault_stops_only_opt_in_codex(self):
+        plugin.prepare(self.root,self.settings,sys.executable,advisory=True,codex_packets=True)
+        (self.launcher.parent/"runtime.pyz").write_bytes(b"corrupted")
+        event={"hook_event_name":"PreToolUse","tool_name":"spawn_agent","tool_input":{"task_name":"mrh_packet_"+"f"*32}}
+        self.assertEqual(self.launch(event)["hookSpecificOutput"]["permissionDecision"],"deny")
+
+
 if __name__ == "__main__":
     unittest.main()
