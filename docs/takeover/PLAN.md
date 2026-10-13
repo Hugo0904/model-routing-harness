@@ -13,6 +13,8 @@
 
 B 的前兩項已完成：A 接受的 `19f5021` 產品 source（153 unit 全過，沿用）已安裝至原固定路徑，原 mrh／App 接頭路徑、日常 settings、Claude settings、兩邊 Hook 定義與 Codex trusted／enabled 保留；48 個產品模組與封裝、installed、daily runtime、官方 cache 同源。已安裝版 commands、JSON／卡片同組裝、stats 原契約、缺失設定／DB 唯讀、隔離 prepare、Claude dry diff 與兩平台 noop 均通過。B 不呼叫 Claude／Jev；C 是唯一最後 smoke／README owner，A 是整體接受 owner。精確來源、SHA、比對與恢復副本见 [HANDOFF](HANDOFF.md) 最新段及 `runtime/MRH-FINAL-B-INSTALL-001/`，最後 smoke 與整體接受仍待完成。
 
+A 已接受上述安裝單元；`MRH-FINAL-B-BUNDLE-DOCS-002` 接續僅修 `mrh_bundle.py` README 常數與封裝／installed README、manifest、tar，於既有 `main` 提交 `b89a764`。只更新說明與 source_commit／builder hash／README hash-size 索引；runtime／pyz 不變，沒有重建、重安裝、prepare 或 registry 更新。文件同版、索引及 tar 讀回通過；新 SHA 與恢復副本見 HANDOFF／該單 runtime 證據，不覆寫原有效實測證據。
+
 ---
 
 ## 0. 使用者要的產品（一句話）

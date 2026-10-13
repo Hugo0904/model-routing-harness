@@ -16,13 +16,13 @@
 | Canopy 選配 | `ContextSummary`／provider 摘要介面保留；advisory 傳 None，未接 live Canopy | live 接入未證，不修改 Core／新增 Hook |
 | 最終交付 | 固定候選已封裝、安裝至既有 app 路徑、更新既有 daily artifact 與官方外掛副本；設定／歷史保留 | C 同版本 Claude／Jev gate 與 README 結果段、A 最終接受 |
 
-封裝為 `dist/model-routing-harness-0.4.0-final-19f5021`，archive SHA `4d27132d334483a9d72db58c47e5454c6256520424bfd64a8f9862b7f32937a5`，manifest SHA `9e0638fdc1e0ad8eec4a6f4da958696be28453642ffcda8146cdbef8df5f646a`。manifest 記錄建置時 HEAD `a696116`（C 的 README-only 提交）；產品 48 個 Python 模組逐一與 A 接受的 `19f5021`、封裝、installed、daily runtime 及官方 cache 相同，刪除的舊模組無殘留。installed 的全部 2060 個檔案／連結與封裝相符。
+封裝為 `dist/model-routing-harness-0.4.0-final-19f5021`。A 已接受原同版安裝及 48 模組／2060 檔案比對證據；後續 `MRH-FINAL-B-BUNDLE-DOCS-002` 只修封裝說明，現 archive SHA `b87f087e1262ac0072ec49eb0c6a89a8807ad08e41b8b2994bb491b986f7d4ee`、manifest SHA `8b69f07536029081327f7b732e73c9d124c484cc04f97b2fde34f75b150b2e0f`。manifest 的 source_commit 與 builder hash 指向 `b89a764` 的 README 常數修正；原建置時 HEAD `a696116` 與原 archive／manifest 保存為歷史證據。產品 source 仍是 A 接受的 `19f5021`，未重建、重裝或替換 runtime。封裝與 installed 的 README／manifest 相同，tar 讀回相符，其餘 provenance 不变；installed pyz SHA 仍 `bc82051fa4bea596995305fca518928624599a3df18c682ab3bc128a5b4714c8`，daily pyz SHA 仍 `05c60025ee2c207124c8a496add3a3d95f71f16174468610426e6bf242fb3b77`。
 
 既有 `~/.local/bin/mrh` 與 active-settings 指標、binding 平台／路徑／欄位保留。Codex hooks SHA 仍 `926e854e7e24770b7ef1712e1899a9da493eab46174007cdfd47277733205a07`；官方 `plugin list` 讀回同一外掛 enabled，官方 `hooks/list` 讀回兩個 MRH hooks 均 trusted。daily settings SHA 仍 `94bffb11f2797846f36e062c7178605ccd1b299368728f741fe51ea1efaadafc`，Claude settings SHA 仍 `3f4f398f4f8c8a4626515f94b83e171e3f7c7e1c196c00dce5d11c677bea08d7`，兩個 Claude MRH commands 完全相同，其他設定／Hook 一併保留。沒有清空、復原或測試寫入 daily DB。
 
 已安裝版指令檢查通過：裸 `mrh`／help、ctrl show（人用與 JSON）、status／stats（人用與 JSON）、key status jev（只查存在，Keychain 已設定）、隔離 `plugin prepare --advisory`、Claude 安裝預設 dry diff、Codex／Claude 非委派 hook noop。卡片與 JSON 一致、stats 平面契約不變、缺失設定與 DB 不被讀取建立、dry diff 不修改 Claude 目標、noop 不分級或建立 DB；scratch 已清除。153 unit 與原 CLI／App 有效證據沒有重跑，B 未呼叫模型／Jev。
 
-非敏感證據與恢復副本：`runtime/MRH-FINAL-B-INSTALL-001/`（build、installed-checks、install-parity、preservation、trust-readback、report JSON）。舊 app／daily artifact 副本保留，未知 `temp/` 未動。bundle 內歷史 `README.txt` 尚提及已移除的 doctor／model；本次操作依 C 維護的根 README 新指令。`plugin prepare` 的一般 readiness 文案不是實際信任／實測證據，以上官方讀回與 C 最後 gate 分開採認。
+非敏感證據與恢復副本：`runtime/MRH-FINAL-B-INSTALL-001/`（原 build、installed-checks、install-parity、preservation、trust-readback、report JSON）。舊 app／daily artifact 副本保留，未知 `temp/` 未動。封裝說明已於 `MRH-FINAL-B-BUNDLE-DOCS-002` 改用 --help、ctrl、status、stats／key status jev，說明各級候選、Main／Fixed、保存與取消；保留 runtime／憑證／正式發布界線。該單證據及舊 README／manifest／archive 位於 `runtime/MRH-FINAL-B-BUNDLE-DOCS-002/`，臨時原子替換檔已清除，沒有重跑有效指令／153／模型檢查。`plugin prepare` 的一般 readiness 文案不是實際信任／實測證據，以上官方讀回與 C 最後 gate 分開採認。
 
 ## 貼給 Codex 的訊息
 
