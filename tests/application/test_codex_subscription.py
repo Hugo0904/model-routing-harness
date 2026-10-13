@@ -58,9 +58,9 @@ class SubscriptionTests(unittest.TestCase):
 
     def test_auth_source_fault_before_any_process_or_attempt(self):
         with tempfile.TemporaryDirectory() as root:
-            home=Path(root);(home/'AGENTS.md').write_text('owned canary')
+            home=Path(root).resolve();(home/'AGENTS.md').write_text('owned canary')
             events=[];rec=GuardedAttempts(2,lambda *a,**k:events.append(a))
-            with patch.dict(os.environ,{'CODEX_HOME':root}),patch('mrh.adapters.catalogs.catalog.discover',return_value=[{'tool':'codex','executable':'/official'}]),\
+            with patch.dict(os.environ,{'CODEX_HOME':str(home)}),patch('mrh.adapters.catalogs.catalog.discover',return_value=[{'tool':'codex','executable':'/official'}]),\
                  patch('mrh.adapters.catalogs.catalog.executable_hash',return_value='4d210f7c5a18fd0386434df23b5bdbb8c0e7257d3e8a2b30b0769c8bbe99a878'),\
                  patch('subprocess.Popen',side_effect=AssertionError('started')):
                 with self.assertRaises(ClassifierFailure) as caught:CodexSubscriptionClassifier(enabled=True,task_export_permitted=True).classify('literal',None,rec)
