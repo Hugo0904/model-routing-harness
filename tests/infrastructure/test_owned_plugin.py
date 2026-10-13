@@ -6,7 +6,7 @@ import tempfile
 import unittest
 import zipfile
 from unittest.mock import patch
-from mrh.infrastructure import owned; from mrh.infrastructure import plugin; from mrh.infrastructure import settings
+from mrh.infrastructure import owned; from mrh.infrastructure import plugin; from mrh.infrastructure import settings_v2 as settings
 
 
 class OwnedPluginTests(unittest.TestCase):
@@ -18,19 +18,19 @@ class OwnedPluginTests(unittest.TestCase):
         self.path = self.root / "state/settings.json"
 
     def test_preparation_repeat_and_updated_code_preserve_settings_and_standalone_default_off(self):
-        first = plugin.prepare(self.bundle, self.path)
+        first = plugin.prepare(self.bundle, self.path, advisory=True)
         self.assertEqual(first["status"], "prepared")
         self.assertEqual(first["native_registration"], "unverified")
         settings.update(self.path, task_export_permitted=True, allowed_workspaces=[str(self.root)])
         state = self.path.read_bytes()
-        second = plugin.prepare(self.bundle, self.path)
+        second = plugin.prepare(self.bundle, self.path, advisory=True)
         self.assertEqual(second["artifact"], first["artifact"])
         self.assertEqual(self.path.read_bytes(), state)
         # A new owned artifact replaces only verified old code, preserving
         # external settings and permissions instead of restoring a snapshot.
         archive = plugin._runtime_archive() + b"\nowned-upgrade-fixture"
         with patch("mrh.infrastructure.plugin._runtime_archive", return_value=archive):
-            upgraded = plugin.prepare(self.bundle, self.path)
+            upgraded = plugin.prepare(self.bundle, self.path, advisory=True)
         self.assertNotEqual(upgraded["artifact"]["files"], first["artifact"]["files"])
         self.assertEqual(self.path.read_bytes(), state)
         self.assertFalse(settings.read(self.path)["enabled"])
@@ -56,23 +56,23 @@ class OwnedPluginTests(unittest.TestCase):
 
     def test_nonowned_symlink_modified_artifact_and_binding_conflict_refuse_preserving_files(self):
         self.bundle.mkdir(); foreign = self.bundle / "third-party"; foreign.write_bytes(b"preserve")
-        with self.assertRaises(owned.OwnedError): plugin.prepare(self.bundle, self.path)
+        with self.assertRaises(owned.OwnedError): plugin.prepare(self.bundle, self.path, advisory=True)
         self.assertEqual(list(self.bundle.iterdir()), [foreign]); self.assertFalse(self.path.parent.exists())
         foreign.unlink(); self.bundle.rmdir()
-        plugin.prepare(self.bundle, self.path)
+        plugin.prepare(self.bundle, self.path, advisory=True)
         with self.assertRaisesRegex(owned.OwnedError, "registered_settings_conflict"):
-            plugin.prepare(self.bundle, self.root / "other-state/settings.json")
+            plugin.prepare(self.bundle, self.root / "other-state/settings.json", advisory=True)
         target = self.bundle / "plugins/model-routing-harness/launcher.py"
         target.write_bytes(b"external changed owned code")
         before = target.read_bytes()
         with self.assertRaisesRegex(owned.OwnedError, "owned_source_changed"):
-            plugin.prepare(self.bundle, self.path)
+            plugin.prepare(self.bundle, self.path, advisory=True)
         self.assertEqual(target.read_bytes(), before)
         link = self.root / "symlink"; link.symlink_to(self.bundle)
-        with self.assertRaises(owned.OwnedError): plugin.prepare(link, self.path)
+        with self.assertRaises(owned.OwnedError): plugin.prepare(link, self.path, advisory=True)
 
     def test_tampered_runtime_launcher_is_neutral_and_unknown_native_state_stays_unknown(self):
-        result = plugin.prepare(self.bundle, self.path)
+        result = plugin.prepare(self.bundle, self.path, advisory=True)
         folder = self.bundle / "plugins/model-routing-harness"
         (folder / "runtime.pyz").write_bytes(b"modified")
         run = subprocess.run([result["artifact"]["python"], "-I", str(folder / "launcher.py")],

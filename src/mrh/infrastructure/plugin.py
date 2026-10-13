@@ -9,7 +9,7 @@ import shlex
 import subprocess
 import sys
 import zipfile
-from mrh.infrastructure import owned; from mrh.infrastructure import settings
+from mrh.infrastructure import owned
 
 NAME = "model-routing-harness"
 MARKETPLACE = "model-routing-harness-local"
@@ -55,7 +55,7 @@ reason="runtime_load"
 def failed():
     if isinstance(event,dict) and event.get("hook_event_name")=="PreToolUse" and event.get("tool_name") in ("spawn_agent","collaborationspawn_agent","Agent","Task") and isinstance(event.get("tool_input"),dict):
         description="runtime integrity verification failed" if reason=="runtime_integrity" else "the Hook runtime could not be loaded or completed"
-        return {"systemMessage":"MRH: "+description+"; original tool call preserved. Use mrh stats --details with this profile's --settings or --db. Recording and warning deduplication are unavailable; this fault may be absent from history."}
+        return {"systemMessage":"MRH: "+description+"; original tool call preserved. Use mrh stats with this profile's --settings. Recording and warning deduplication are unavailable; this fault may be absent from history."}
     return {}
 try:
     data=sys.stdin.buffer.read(1048577)
@@ -64,7 +64,7 @@ try:
     root=Path(__file__).resolve().parent
     binding=json.loads((root/"binding.json").read_bytes())
     base={"schema_version","python","settings_path","runtime_sha256"}
-    if set(binding) not in (base,base|{"codex_scope"},base|{"platform"}) or binding["schema_version"]!=1:raise ValueError()
+    if set(binding) not in (base,base|{"platform"}) or binding["schema_version"]!=1:raise ValueError()
     platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform","codex")
     if platform not in (None,"codex","claude"):raise ValueError()
     runtime=root/"runtime.pyz"
@@ -78,7 +78,6 @@ try:
     with tempfile.TemporaryFile() as output:
         args=[python,"-I","-B",str(runtime),"hook","--settings",settings]
         if platform:args += ["--platform",platform]
-        elif "codex_scope" in binding:args += ["--scope-binding",str(root/"binding.json")]
         process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=output,stderr=subprocess.DEVNULL,start_new_session=True)
         try:
             process.communicate(data,timeout=48)
@@ -126,7 +125,9 @@ def _old_artifact(root):
         raise owned.OwnedError("owned_source_changed") from None
 
 
-def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_binary=None, scope_contract=None, advisory=False):
+def prepare(root, settings_path, python=None, *, advisory=False):
+    if not advisory:
+        raise owned.OwnedError("advisory_required")
     root = owned.canonical_path(root)
     settings_path = owned.canonical_path(settings_path)
     if root == settings_path.parent or root in settings_path.parents or settings_path.parent in root.parents:
@@ -134,33 +135,6 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
     # Reject unknown target contents before touching either root.
     old_artifact = _old_artifact(root) if root.exists() and any(root.iterdir()) else None
     python = str(Path(python or sys.executable).resolve())
-    scope=old_artifact.get('codex_scope') if old_artifact is not None and not advisory else None
-    if advisory and (scope_workspace is not None or scope_contract is not None):
-        raise owned.OwnedError("advisory_has_no_scope")
-    if scope_workspace is not None:
-        from mrh.adapters.hosts.codex_scope import prepare as prepare_scope, ScopeError
-        from mrh.adapters.catalogs.catalog import discover
-        if codex_binary is None:
-            found=next((c['executable'] for c in discover() if c['tool']=='codex'),None)
-            if found is None:raise ScopeError('scope_unsupported')
-            codex_binary=found
-        if scope_contract == 'fresh-root-cli':
-            from mrh.adapters.hosts.fresh_cli_scope import prepare as prepare_fresh
-            # Settings has a strict file-only ownership boundary. Session
-            # records live in a separate owned sibling, never inside it.
-            sessions=settings_path.parent.with_name(settings_path.parent.name+'-fresh-cli-sessions')
-            if sessions == root or root in sessions.parents or sessions in root.parents:
-                raise owned.OwnedError('settings_code_overlap')
-            scope=prepare_fresh(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),
-                                scope_workspace,sessions,python)
-        else:
-            scope=prepare_scope(codex_binary,Path(os.environ.get('CODEX_HOME',Path.home()/'.codex')),scope_workspace)
-    elif scope_contract is not None:
-        from mrh.adapters.hosts.codex_scope import ScopeError
-        raise ScopeError('scope_unsupported')
-    elif scope is not None:
-        from mrh.adapters.hosts.codex_scope import check
-        check(scope)
     python = str(Path(python or sys.executable).resolve())
     check = subprocess.run([python, "-I", "-B", "-c", "import sys; print('%d.%d'%sys.version_info[:2])"],
                            env={"PATH": os.defpath}, capture_output=True, text=True, timeout=5, check=True)
@@ -187,26 +161,15 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         prefix + "launcher.py": LAUNCHER,
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
-                                         "runtime_sha256": _hash(runtime), **({"platform": "codex"} if advisory else {})}),
+                                         "runtime_sha256": _hash(runtime), "platform": "codex"}),
     }
-    if scope is not None:
-        from mrh.adapters.hosts.fresh_cli_scope import CONTRACT as fresh_contract
-        if scope['contract'] == fresh_contract:
-            hooks=json.loads(files[prefix+'hooks/hooks.json'])
-            hooks['hooks']['SessionStart']=[{'matcher':'.*','hooks':[{'type':'command','command':command,'timeout':50}]}]
-            files[prefix+'hooks/hooks.json']=_json(hooks)
-        files[prefix+'binding.json']=_json({'schema_version':1,'python':python,'settings_path':str(settings_path),
-                                         'runtime_sha256':_hash(runtime),'codex_scope':scope})
     root = owned.initialize(root, "bundle")
     with owned.locked(root, "bundle"):
         old = _old_artifact(root)
         if old is not None and old.get("settings_path") != str(settings_path):
             raise owned.OwnedError("registered_settings_conflict")
-        if advisory:
-            from mrh.infrastructure import settings_v2
-            settings_v2.init(settings_path)  # reads v1 or v2; never rewrites an existing file
-        else:
-            settings.init(settings_path)  # Non-overwriting, separate writable state.
+        from mrh.infrastructure import settings_v2
+        settings_v2.init(settings_path)  # v1/v2 read compatibility, no existing-file rewrite
         for name, data in files.items():
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -216,7 +179,6 @@ def prepare(root, settings_path, python=None, *, scope_workspace=None, codex_bin
         artifact = {"schema_version": 1, "owner": owned.OWNER, "version": version,
                     "plugin_id": PLUGIN_ID, "python": python, "python_version": check.stdout.strip(),
                     "settings_path": str(settings_path), "files": {name: _hash(data) for name, data in files.items()}}
-        if scope is not None:artifact['codex_scope']=scope
         encoded = _json(artifact)
         if not (root / "artifact.json").exists() or owned.read_regular(root / "artifact.json") != encoded:
             owned.replace_owned(root / "artifact.json", encoded)

@@ -235,7 +235,7 @@ class InstalledLauncherFaultTests(unittest.TestCase):
     def test_installed_launcher_integrity_and_runtime_load_faults_preserve_safe_call(self):
         with tempfile.TemporaryDirectory(prefix='mrh-e14-launcher-') as directory:
             root = Path(directory).resolve(); bundle = root / 'bundle'; state = root / 'state/settings.json'
-            prepared = plugin.prepare(bundle, state)
+            prepared = plugin.prepare(bundle, state, advisory=True)
             folder = bundle / 'plugins/model-routing-harness'
             event = {'hook_event_name': 'PreToolUse', 'tool_name': 'spawn_agent',
                      'session_id': 's', 'turn_id': 't', 'tool_use_id': 'c', 'tool_input': {'message': CANARY}}

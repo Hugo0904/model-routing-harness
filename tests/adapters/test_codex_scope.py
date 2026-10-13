@@ -149,16 +149,6 @@ class ScopeTests(unittest.TestCase):
         decision=route(self.proposal,self.policy,assurance,Changing([Classification('Top',.9)]))
         self.assertEqual(decision.reason,'scope_changed');self.assertEqual(decision.patch,{})
 
-    def test_scope_preparation_update_preserves_disabled_export_and_user_models(self):
-        descriptor=self.descriptor();root=self.root/'bundle';path=self.root/'state/settings.json'
-        with patch('mrh.adapters.hosts.codex_scope.prepare',return_value=descriptor):
-            first=plugin.prepare(root,path,scope_workspace=self.work,codex_binary=self.exe)
-        settings.update(path,policy=self.policy,task_export_permitted=True,allowed_workspaces=[str(self.work)])
-        before=path.read_bytes();again=plugin.prepare(root,path)
-        self.assertEqual(again['artifact']['codex_scope'],first['artifact']['codex_scope'])
-        self.assertEqual(path.read_bytes(),before);self.assertFalse(settings.read(path)['enabled'])
-        self.assertEqual(again['configuration_scope']['assurance'],'inspected-configuration')
-        self.assertFalse(again['live_routing_ready'])
 
 
 if __name__=='__main__':unittest.main()
