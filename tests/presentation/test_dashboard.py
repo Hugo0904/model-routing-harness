@@ -39,7 +39,7 @@ class DashboardTests(unittest.TestCase):
 
     def test_numbers_and_choices_appear(self):
         text = ANSI.sub("", dashboard.render(settings(), DATA, "過去 7 天", 110, True))
-        for expected in ("haiku:medium", "sonnet:high", "0.10 / 0.50", "留給主模型自己做", "WHERE 65 DELEGATIONS WENT", "29%", "57%", "23 / 40 次建議"):
+        for expected in ("haiku:medium", "sonnet:high", "0.10 / 0.50", "主模型自己做", "WHERE 65 DELEGATIONS WENT", "29%", "57%", "23 / 40 次建議"):
             self.assertIn(expected, text)
 
     def test_empty_period_says_so_instead_of_drawing_empty_bars(self):

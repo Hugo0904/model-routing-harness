@@ -65,8 +65,8 @@ def card(title, body, width, p, tone="border"):
     return [top, *rows, p("╰" + "─" * (width - 2) + "╯", tone)]
 
 
-def box(title, descs, width, p, highlight=False):
-    tone = "lav" if highlight else "border"
+def box(title, descs, width, p):
+    tone = "border"
     inner = width - 4
     rows = [p(clip(title, inner), "text", True), *[p(clip(d, inner), "dim") for d in descs]]
     return [p("╭" + "─" * (width - 2) + "╮", tone),
@@ -81,7 +81,7 @@ def _flow(settings, per_call, inner, p):
              ("模型", ["依你設定的表格", "各工具各一份"])]
     arrow_w = 3
     bw = (inner - arrow_w * 3) // 4
-    cols = [box(t, d, bw, p, highlight=(i == 1)) for i, (t, d) in enumerate(boxes)]
+    cols = [box(t, d, bw, p) for t, d in boxes]
     lines = []
     for row in range(5):
         parts = []
@@ -97,7 +97,11 @@ def _table(settings, inner, p):
     policy = settings["policy"]
     platforms = [x for x in ("claude", "codex", "gemini") if any(policy["tiers"].get(t, {}).get(x) for t in ("Light", "Small", "Mid")) or policy["fixed"].get(x)] or ["claude"]
 
+    top_main = policy["top_mode"] == "Main"
+
     def models(tier, plat):
+        if tier == "Top" and top_main:
+            return "主模型自己做"
         pool = policy["fixed"] if tier == "Top" else policy["tiers"].get(tier, {})
         return logic.format_candidates(pool.get(plat, [])) if pool.get(plat) else "—"
 
@@ -116,13 +120,11 @@ def _table(settings, inner, p):
         row += pad(p(tier.lower(), "text", True), tier_w)
         for x, w in zip(platforms, widths):
             cell = models(tier, x)
-            row += pad(p(cell, "text" if cell != "—" else "faint"), w)
+            row += pad(p(cell, "lav" if top and top_main else "text" if cell != "—" else "faint"), w)
         if show_price:
             row += pad(p(stats_view.claude_price(claude[0]["model"]) if claude else "—", "dim"), price_w)
         row += p(clip(TIER_WHEN[tier], when_w), "dim")
         lines.append(row)
-        if top and policy["top_mode"] == "Main":
-            lines.append("  " + pad("", tier_w) + p("留給主模型自己做", "lav"))
         lines.append(p("─" * inner, "border") if not top else "")
     return lines[:-1]
 
