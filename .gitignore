@@ -9,6 +9,7 @@ node_modules/
 runtime/
 state/
 *.sqlite*
+!/packaging/macos-arm64/license-snapshot/licenses/LICENSE.sqlite.txt
 *.db
 *.log
 *.key

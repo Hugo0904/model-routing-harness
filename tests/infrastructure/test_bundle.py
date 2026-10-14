@@ -3,6 +3,7 @@ import copy
 import io
 import json
 from pathlib import Path
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -106,6 +107,20 @@ class BundleTests(unittest.TestCase):
             self.assertTrue(any(n.endswith('/METADATA') for n in z.namelist()))
             self.assertFalse(any(n.endswith(('.js', '.mjs')) or n.startswith('mrh_bundle') for n in z.namelist()))
             self.assertEqual(set(hashes), set(z.namelist()))
+
+    def test_locked_runtime_notices_are_present_in_git_source(self):
+        # A working-tree build can see ignored files that a clean clone cannot.
+        relative = 'packaging/macos-arm64/license-snapshot'
+        source = bundle.ROOT / relative
+        value = json.loads((source / 'snapshot.json').read_bytes())
+        tracked = set(subprocess.check_output(
+            ['git', '-C', str(bundle.ROOT), 'ls-files', '-z', '--', relative]
+        ).decode().strip('\0').split('\0'))
+        expected = {relative + '/' + name for name in value['files']} | {relative + '/snapshot.json'}
+        self.assertEqual(tracked, expected, 'Every locked public notice must survive a clean clone')
+        for name, info in value['files'].items():
+            self.assertEqual(bundle.sha256(source / name), info['sha256'])
+            self.assertEqual((source / name).stat().st_size, info['size'])
 
 
 class LicensingSnapshotTests(unittest.TestCase):
