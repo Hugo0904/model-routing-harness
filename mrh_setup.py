@@ -256,8 +256,26 @@ class CodexInstaller:
 
 
 class ClaudeInstaller:
-    def __init__(self, path):
+    def __init__(self, path, executable=None):
         self.path = canonical(path)
+        from mrh.adapters.catalogs.catalog import discover,describe_tool,CatalogError
+        if executable is None:
+            candidate=next((x for x in discover() if x['tool']=='claude' and x['supported']),None)
+            source='catalog_discovery'
+        else:
+            candidate={'tool':'claude','executable':str(canonical(executable)),'supported':True}
+            source='explicit_cli_override'
+        if candidate is None:
+            raise SetupError('claude_cli_missing')
+        try:
+            # Reuse the catalog's existing executable/working/version contract.
+            # describe performs --version metadata only, not initialize/login/model.
+            binding=describe_tool(candidate)
+        except CatalogError as exc:
+            raise SetupError('claude_cli_unavailable:'+str(exc)) from None
+        except (OSError,subprocess.SubprocessError):
+            raise SetupError('claude_cli_unavailable') from None
+        self.cli={'executable':binding['executable'],'version':binding['version'],'source':source}
 
     def preflight(self, settings, packets=False):
         before = snapshot(self.path)
@@ -421,6 +439,15 @@ def readiness(args, state, paths, hosts=None):
               'enabled': False, 'export_permitted': False, 'credential_present': None, 'policy_ready': False,
               'trust': 'unverified', 'last_real_dispatch': None, 'last_real_dispatch_status': 'not_probed',
               'provider_probe_performed': False, 'hosts': {}, 'pending': []}
+    selected=hosts or args.host or list((state or {}).get('hosts',{}))
+    claude_adapter=None
+    if 'claude' in selected:
+        try:
+            claude_adapter=ClaudeInstaller(args.claude_settings or Path.home()/'.claude/settings.json',args.claude_cli)
+            result['hosts']['claude']={'configured':False,'trust':'unverified','cli_available':True,'cli':claude_adapter.cli}
+        except (ValueError,OSError) as exc:
+            result['hosts']['claude']={'configured':False,'trust':'unverified','cli_available':False,'reason':str(exc)}
+            result['pending'].append('claude_cli')
     if state:
         root = control / 'generations' / state['current']
         verify_bundle(root, state['generations'][state['current']])
@@ -429,7 +456,6 @@ def readiness(args, state, paths, hosts=None):
     if settings.exists():
         value = settings_v2.read(settings)
         result.update(configured=True, enabled=value['enabled'], export_permitted=value['task_export_permitted'])
-        selected = hosts or list((state or {}).get('hosts', {})) or args.host
         p = value['policy']
         complete = bool(selected) and all(p.get('tiers', {}).get(t, {}).get(h) for h in selected for t in ('Light', 'Small', 'Mid')) and (p.get('top_mode', 'Main') == 'Main' or all(p.get('fixed', {}).get(h) for h in selected))
         result['policy_configured']=complete
@@ -438,6 +464,9 @@ def readiness(args, state, paths, hosts=None):
         if complete:
             from mrh.adapters.catalogs.catalog import public_models,CatalogError
             for host in selected:
+                if host=='claude' and claude_adapter is None:
+                    valid=False;result['policy_validation'][host]={'compatible':None,'reason':'claude_cli_unavailable','account_availability':'not_probed'}
+                    continue
                 try:
                     catalog=public_models(host)
                     candidates=[c for tier in ('Light','Small','Mid') for c in p['tiers'][tier][host]]
@@ -455,6 +484,7 @@ def readiness(args, state, paths, hosts=None):
     else:
         result['workspace_ready'] = False
     for h, info in (state or {}).get('hosts', {}).items():
+        if h not in selected:continue
         if h == 'codex':
             try:
                 adapter=CodexInstaller(args.codex_cli);observed=adapter.observe()
@@ -462,10 +492,11 @@ def readiness(args, state, paths, hosts=None):
             except (ValueError, OSError):
                 result['hosts'][h] = {'configured': False, 'trust': 'unverified', 'reason': 'native_readback_unavailable'}
         else:
+            if claude_adapter is None:continue
             cp = Path(info['config'])
             text = regular(cp).decode() if cp.exists() else ''
             expected = claude_hook.plan(text, claude_hook.command_for(info['artifact']))
-            result['hosts'][h] = {'configured': text == expected, 'trust': 'not_applicable_native_settings'}
+            result['hosts'][h] = {**result['hosts'][h],'configured': text == expected, 'trust': 'not_applicable_native_settings'}
     for key in ('installed', 'configured', 'enabled', 'export_permitted', 'credential_present', 'policy_ready', 'workspace_ready'):
         if not result[key]: result['pending'].append(key)
     if any(not x['configured'] for x in result['hosts'].values()): result['pending'].append('host_configuration')
@@ -504,7 +535,7 @@ def install(args, *, build=bundle.build):
     pending_current = {'symlink':str(control/'generations'/pending['target'])} if pending and pending.get('phase')=='committing' and pending.get('target') else None
     if before_current and before_current != pending_current and (not state or before_current != {'symlink': str(control / 'generations' / state['current'])}):
         raise SetupError('current_generation_conflict')
-    adapters = {h: CodexInstaller(args.codex_cli) if REGISTRATIONS[h].installation == 'official-plugin' else ClaudeInstaller(args.claude_settings or Path.home() / '.claude/settings.json') for h in hosts}
+    adapters = {h: CodexInstaller(args.codex_cli) if REGISTRATIONS[h].installation == 'official-plugin' else ClaudeInstaller(args.claude_settings or Path.home() / '.claude/settings.json',args.claude_cli) for h in hosts}
     if args.dry_run:
         for h, adapter in adapters.items(): adapter.preflight(settings, (state or {}).get('hosts',{}).get(h,{}).get('packets',False) if args.rollback else args.codex_packets if h == 'codex' else False)
         return {'status': 'planned', 'writes': False, 'downloads': False, 'hosts': hosts, 'settings': str(settings), 'packet_opt_in': args.codex_packets, 'rollback': args.rollback}
@@ -626,7 +657,7 @@ def parser():
     p.add_argument('--host',action='append',choices=tuple(REGISTRATIONS),default=[])
     mode=p.add_mutually_exclusive_group();mode.add_argument('--check',action='store_true');mode.add_argument('--dry-run',action='store_true');mode.add_argument('--rollback',action='store_true')
     p.add_argument('--json',action='store_true');p.add_argument('--codex-packets',action='store_true',help='explicit optional full-task packet artifact/skill; not default')
-    for name in ('prefix','config-root','bin-dir','cache-root','settings','codex-cli','claude-settings'):
+    for name in ('prefix','config-root','bin-dir','cache-root','settings','codex-cli','claude-cli','claude-settings'):
         p.add_argument('--'+name,type=Path)
     p.add_argument('--workspace',action='append',type=Path,default=[]);p.add_argument('--enable',action='store_true')
     return p

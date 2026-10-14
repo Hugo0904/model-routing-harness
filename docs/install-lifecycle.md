@@ -10,6 +10,11 @@ transport and child contracts do not depend on the installer.
 1. Resolve explicit roots and the existing active-settings pointer. Refuse a
    different pointer, foreign bin entry, unknown settings owner, unsupported
    platform/host or conflicting native plugin name/source.
+   Selected Claude installations first use the existing catalog discovery and
+   version metadata contract to require a working supported CLI. An explicit
+   `--claude-cli` provides the same bounded override as `--codex-cli`; Codex-only
+   operations never probe or execute Claude. Check reports an unmet prerequisite
+   without treating a settings merge as an available host.
 2. Lock the owner-marked `setup-state/` directory. Recheck mutable targets.
 3. Build and verify the complete manifest in private staging. Prepare selected
    artifacts there with final generation paths, include the optional skill only

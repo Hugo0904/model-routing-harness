@@ -24,7 +24,7 @@ for mrh_candidate in "$mrh_prefix/current/runtime/bin/python3.11" "$mrh_prefix/a
 done
 if [ -n "$mrh_python" ]; then exec "$mrh_python" -I -B "$mrh_source/mrh_setup.py" "$@"; fi
 if [ "$mrh_help" = true ]; then
-    printf '%s\n' 'Usage: ./setup --host codex [--host claude] [--check|--dry-run|--rollback] [--json]' 'Optional: --codex-packets, --prefix, --config-root, --bin-dir, --cache-root, --settings, --codex-cli, --claude-settings, --enable --workspace PATH'
+    printf '%s\n' 'Usage: ./setup --host codex [--host claude] [--check|--dry-run|--rollback] [--json]' 'Optional: --codex-packets, --prefix, --config-root, --bin-dir, --cache-root, --settings, --codex-cli, --claude-cli, --claude-settings, --enable --workspace PATH'
     exit 0
 fi
 if [ "$(/usr/bin/uname -s)" != Darwin ] || [ "$(/usr/bin/uname -m)" != arm64 ]; then

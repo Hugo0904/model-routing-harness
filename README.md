@@ -12,7 +12,7 @@
 
 ## 最短安裝路徑
 
-目前安裝套件範圍為 **macOS arm64**。先有你選的官方 vendor CLI；安裝器不升級它、不替你登入。MRH 自帶鎖定版本的私有 Python，不需要 Homebrew、SDK 或額外 Python。缺少可用 Python 時，只會下載、核對固定官方 runtime 的大小與 SHA-256，再執行它。
+目前安裝套件範圍為 **macOS arm64**。先有你選的官方 vendor CLI；安裝器不升級它、不替你登入。選 Claude 時，寫入 profile、建置或修改原生設定前會沿既有 catalog metadata 契約核對 CLI 是否可執行與版本受支援；缺少或不支援就退出，check 則明列先決條件未滿。MRH 自帶鎖定版本的私有 Python，不需要 Homebrew、SDK 或額外 Python。缺少可用 Python 時，只會下載、核對固定官方 runtime 的大小與 SHA-256，再執行它。
 
 ```sh
 git clone <repository來源> model-routing-harness
@@ -70,7 +70,7 @@ mrh ctrl set enabled off          # 停用路由
 
 預設 CLI 是 `~/.local/bin/mrh`；安裝代位於 `~/.local/share/model-routing-harness/setup-state/generations/`，`current` 指向啟用的代。新 profile 位於 `~/.config/model-routing-harness/profile/`，與 `advice.sqlite3` 都獨立於 clone／程式代。有既有 active-settings pointer 時沿用它；若舊 pointer 指向 clone 內的 profile，更新不會擅自搬移，刪除該舊 clone 前仍須另行遷移資料。
 
-舊的 `app/` 目錄會保留作為既有 interpreter／Claude 命令的錨點，不會為更新 Codex 而替換共享 runtime。所選宿主的新 wiring 指向完整、獨立的代；未選宿主保持原樣。隔離驗證可明確指定 `--prefix`、`--config-root`、`--bin-dir`、`--cache-root`、`--settings`、`--codex-cli` 或 `--claude-settings`，不必改 HOME/CODEX_HOME。更多恢復細節見[安裝生命週期](docs/install-lifecycle.md)。舊 `install_local.py` 入口已停止危險的共享 app 替換，請用 `setup`。
+舊的 `app/` 目錄會保留作為既有 interpreter／Claude 命令的錨點，不會為更新 Codex 而替換共享 runtime。所選宿主的新 wiring 指向完整、獨立的代；未選宿主保持原樣。隔離驗證可明確指定 `--prefix`、`--config-root`、`--bin-dir`、`--cache-root`、`--settings`、`--codex-cli`、`--claude-cli` 或 `--claude-settings`，不必改 HOME/CODEX_HOME；CLI override 的來源會明列，並沿相同 metadata 檢查，不代表真正 vendor／帳號驗收。更多恢復細節見[安裝生命週期](docs/install-lifecycle.md)。舊 `install_local.py` 入口已停止危險的共享 app 替換，請用 `setup`。
 
 ## 支援與證據邊界
 
@@ -78,7 +78,7 @@ mrh ctrl set enabled off          # 停用路由
 |---|---|---|
 | Codex CLI | 官方 marketplace/plugin 命令；隔離生命週期與公開 consumer 驗證 | 沿用既有 packet／核心證據，本輪不啟動付費模型 |
 | Codex Desktop App | 同一官方插件；仍需原生信任審閱 | 此候選的新 App 畫面／派工驗收尚未完成 |
-| Claude Code CLI | 選配設定合併；本輪只驗隔離 fixture | 現用 Claude 完整保留，未部署或重跑 smoke |
+| Claude Code CLI | 選配 CLI 先決條件與設定合併 | 本候選只驗隔離 fixture；現用 Claude 設定保留與實機驗收尚未完成 |
 | Claude Desktop Code | 同宿主接頭的預定 surface；不含 Chat／Cowork | 尚未另做本候選實機驗收 |
 
 Gemini 僅有既有 catalog，沒有 Hook 或 setup adapter。加入宿主需要明確註冊、安裝 adapter 與原生證據；見[最小擴充點](docs/host-extension.md)。不會靠放一個檔案就自動支援第三家。

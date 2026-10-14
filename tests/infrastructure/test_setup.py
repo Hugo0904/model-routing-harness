@@ -4,6 +4,7 @@ No model, login, HOME/CODEX_HOME substitution, or real host configuration writes
 The tiny interpreter wrapper is a fixture; the standalone build has its own proof.
 """
 import copy
+from contextlib import contextmanager
 import hashlib
 import io
 import json
@@ -58,6 +59,18 @@ if action:
 print(json.dumps(out))
 ''')
         self.cli.chmod(0o700)
+        from mrh.adapters.catalogs.claude_catalog import TESTED_VERSION
+        self.claude=self.root/'claude-cli'
+        self.claude.write_text('#!'+sys.executable+'\nimport sys\nif sys.argv[1:] != ["--version"]: raise SystemExit(9)\nprint('+repr(TESTED_VERSION)+')\n')
+        self.claude.chmod(0o700)
+        @contextmanager
+        def fixture_isolation(executable):
+            # Exercise the real describe/version parser on an owned executable,
+            # without executing a live CLI or substituting HOME/CODEX_HOME.
+            self.assertTrue(Path(executable).is_relative_to(self.root),'live Claude CLI forbidden in fixture')
+            with tempfile.TemporaryDirectory(dir=self.root) as tmp:
+                yield Path(tmp),dict(os.environ),[str(executable)],None,None
+        p=patch('mrh.adapters.catalogs.claude_catalog.isolated_cli',fixture_isolation);p.start();self.addCleanup(p.stop)
         self.revision='one'
         for target,value in [('mrh_setup.platform.system','Darwin'),('mrh_setup.platform.machine','arm64'),('mrh_setup.secrets.is_set',False)]:
             p=patch(target,return_value=value);p.start();self.addCleanup(p.stop)
@@ -183,7 +196,7 @@ print(json.dumps(out))
 
     def test_dual_hosts_merge_only_selected_configuration_and_keep_exact_backup(self):
         cp=self.root/'claude/settings.json';cp.parent.mkdir();before=b'{"custom": 1, "hooks":{"PreToolUse":[{"matcher":"Other","hooks":[{"command":"other-hook"}]}]}}\n';cp.write_bytes(before)
-        args=self.args('--host','claude','--claude-settings',str(cp));self.run_setup(args)
+        args=self.args('--host','claude','--claude-settings',str(cp),'--claude-cli',str(self.claude));self.run_setup(args)
         after=json.loads(cp.read_text());self.assertEqual(after['custom'],1)
         self.assertEqual(after['hooks']['PreToolUse'][0]['hooks'][0]['command'],'other-hook')
         self.assertEqual(len(after['hooks']['PreToolUse']),2)
@@ -291,6 +304,69 @@ print(json.dumps(out))
         self.native_change(root=str(self.root/'external-source'))
         with self.assertRaisesRegex(setup.SetupError,'native_registration_concurrent_change'):self.run_setup()
         self.assertFalse((self.prefix/'current').exists());self.assertFalse((self.bin/'mrh').exists())
+
+    def test_selected_claude_missing_broken_or_unsupported_cli_refuses_before_any_install_write(self):
+        cp=self.root/'selected-claude/settings.json'
+        def arguments(path=None):
+            args=self.args('--claude-settings',str(cp),*(['--claude-cli',str(path)] if path else []));args.host=['claude'];return args
+        with patch('mrh.adapters.catalogs.catalog.discover',return_value=[]):
+            with self.assertRaisesRegex(setup.SetupError,'claude_cli_missing'):
+                self.run_setup(arguments(),build=lambda *a,**k:self.fail('build before prerequisite'))
+        for label,body in [('missing',None),('broken','raise SystemExit(7)'),('unsupported','print("0.0.0 (Claude Code)")')]:
+            with self.subTest(label=label):
+                cli=self.root/('claude-'+label)
+                if body is not None:cli.write_text('#!'+sys.executable+'\n'+body+'\n');cli.chmod(0o700)
+                with self.assertRaisesRegex(setup.SetupError,'claude_cli_unavailable'):
+                    self.run_setup(arguments(cli),build=lambda *a,**k:self.fail('build before prerequisite'))
+                self.assertFalse(self.prefix.exists());self.assertFalse(self.config.exists());self.assertFalse(cp.exists())
+
+    def test_selected_claude_valid_version_fixture_installs_without_live_cli(self):
+        cp=self.root/'selected-claude/settings.json'
+        args=self.args('--claude-settings',str(cp),'--claude-cli',str(self.claude));args.host=['claude']
+        out=self.run_setup(args)
+        self.assertTrue(out['hosts']['claude']['cli_available'])
+        self.assertEqual(out['hosts']['claude']['cli']['source'],'explicit_cli_override')
+        self.assertTrue(out['hosts']['claude']['configured']);self.assertTrue(cp.exists())
+        self.assertEqual(json.loads(self.native.read_text())['mutations'],0)
+
+    def test_claude_prerequisite_check_and_dryrun_are_readonly(self):
+        cp=self.root/'selected-claude/settings.json';before=self.disk()
+        args=self.args('--check','--claude-settings',str(cp),'--claude-cli',str(self.root/'absent'));args.host=['claude']
+        out=self.run_setup(args)
+        self.assertEqual(out['status'],'pending');self.assertFalse(out['hosts']['claude']['cli_available']);self.assertIn('claude_cli',out['pending'])
+        args=self.args('--dry-run','--claude-settings',str(cp),'--claude-cli',str(self.claude));args.host=['claude']
+        self.assertEqual(self.run_setup(args)['status'],'planned');self.assertEqual(self.disk(),before)
+        args=self.args('--check','--claude-settings',str(cp),'--claude-cli',str(self.claude));args.host=['claude']
+        self.assertTrue(self.run_setup(args)['hosts']['claude']['cli_available']);self.assertEqual(self.disk(),before)
+
+    def test_codex_only_does_not_discover_or_execute_claude_override(self):
+        marker=self.root/'forbidden-claude-launch'
+        bomb=self.root/'claude-bomb';bomb.write_text('#!'+sys.executable+'\nfrom pathlib import Path\nPath('+repr(str(marker))+').write_text("unexpected")\nraise SystemExit(9)\n');bomb.chmod(0o700)
+        with patch('mrh.adapters.catalogs.catalog.describe_tool',side_effect=AssertionError('Claude metadata must not run')):
+            self.run_setup(self.args('--claude-cli',str(bomb)))
+            self.run_setup(self.args('--check','--claude-cli',str(bomb)))
+        self.assertFalse(marker.exists())
+
+    def test_codex_only_update_does_not_probe_an_existing_managed_claude_host(self):
+        cp=self.root/'selected-claude/settings.json'
+        both=self.args('--host','claude','--claude-settings',str(cp),'--claude-cli',str(self.claude));self.run_setup(both)
+        before=cp.read_bytes();profile=self.profile().read_bytes()
+        with patch('mrh.adapters.catalogs.catalog.describe_tool',side_effect=AssertionError('unselected Claude probe')):
+            out=self.run_setup(self.args('--claude-cli',str(self.root/'absent')))
+            checked=self.run_setup(self.args('--check','--claude-cli',str(self.root/'absent')))
+        self.assertEqual(set(out['hosts']),{'codex'})
+        self.assertEqual(set(checked['hosts']),{'codex'})
+        self.assertEqual(cp.read_bytes(),before);self.assertEqual(self.profile().read_bytes(),profile)
+        self.assertIn('claude',self.state()['hosts'])
+
+    def test_missing_claude_cli_check_does_not_fall_back_to_model_metadata(self):
+        cp=self.root/'selected-claude/settings.json'
+        args=self.args('--claude-settings',str(cp),'--claude-cli',str(self.claude));args.host=['claude'];self.run_setup(args)
+        settings_v2.update(self.profile(),policy={'tiers':{t:{'claude':[{'model':'fixture-model','effort':'high'}]} for t in ('Light','Small','Mid')}})
+        before=self.disk();args=self.args('--check','--claude-settings',str(cp),'--claude-cli',str(self.root/'absent'));args.host=['claude']
+        with patch('mrh.adapters.catalogs.catalog.public_models',side_effect=AssertionError('model metadata must not run without prerequisite')):
+            out=self.run_setup(args)
+        self.assertFalse(out['hosts']['claude']['cli_available']);self.assertFalse(out['policy_ready']);self.assertEqual(self.disk(),before)
 
     def test_bootstrap_readonly_and_bad_pinned_asset_do_not_initialize_installation(self):
         env={**os.environ,'PATH':'/bin'}
