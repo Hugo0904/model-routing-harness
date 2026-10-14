@@ -117,4 +117,8 @@ class ClaudeHost(_Host):
                      effort if safe_id(effort) else None, _model(resolved), agent if safe_id(agent) else None)
 
 
-HOSTS = {"codex": CodexHost(), "claude": ClaudeHost()}
+def __getattr__(name):
+    if name == 'HOSTS':  # compatibility for existing consumers; one registration owner
+        from mrh.adapters.hosts.registry import HOSTS
+        return HOSTS
+    raise AttributeError(name)

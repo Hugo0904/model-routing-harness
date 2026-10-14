@@ -64,11 +64,15 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
 
 
 def build_parser() -> argparse.ArgumentParser:
+    from mrh.adapters.hosts.registry import REGISTRATIONS
     parser = argparse.ArgumentParser(
         prog="mrh",
         description="Inspect local model-routing candidate statistics and integration status.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
+    models = commands.add_parser('models', help='current host-advertised model declarations; no paid account probe')
+    models.add_argument('--host',choices=tuple(REGISTRATIONS),required=True)
+    models.add_argument('--json',action='store_true')
 
     for name, help_text in (("status", "card dashboard"), ("stats", "statistics in plain language")):
         parser_for = commands.add_parser(name, help=help_text)
@@ -125,7 +129,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     hook = commands.add_parser("hook", help="read one Codex hook JSON event from stdin")
     hook.add_argument("--settings", type=Path, help="explicit registered MRH-owned settings.json; default off")
-    hook.add_argument("--platform", choices=("codex", "claude"), required=True, help="advisory routing for this host (settings v2)")
+    hook.add_argument("--platform", choices=tuple(REGISTRATIONS), required=True, help="advisory routing for this host (settings v2)")
     hook.add_argument("--codex-packets", action="store_true", help=argparse.SUPPRESS)
     packet = commands.add_parser("codex-task", help="opt-in Codex full-task packet preparation and receipt")
     packet.add_argument("--settings", type=Path, required=True)
@@ -201,6 +205,20 @@ def main(
     old_stdout, old_stderr = sys.stdout, sys.stderr
     sys.stdout, sys.stderr = stdout, stderr
     try:
+        if args.command == 'models':
+            from mrh.adapters.catalogs.catalog import discover, describe_tool, ToolCatalog, CatalogError
+            try:
+                found = next((x for x in discover() if x['tool']==args.host and x['supported']),None)
+                if found is None:raise CatalogError('host_unavailable')
+                data=ToolCatalog().refresh({**describe_tool(found),'id':'mrh-models-'+args.host}).public()
+                if args.json:_write_json(data)
+                else:
+                    stdout.write(f"{data['tool']} · {data['version']} · {data['source']} ({data['assurance']})\n")
+                    for m in data['models']:stdout.write(m['id']+' · '+m['label']+' · '+', '.join(m['efforts'])+' · '+m['state']+'\n')
+                return 0
+            except CatalogError as exc:
+                _write_json({'host':args.host,'models':[],'assurance':'unknown','error':str(exc)})
+                return 2
         if args.command in {"stats", "status"}:
             from mrh.presentation import ctrl
             args.ctrl_action = "reset" if getattr(args, "stats_action", None) == "reset" else "dashboard" if args.command == "status" else "stats"

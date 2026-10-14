@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from mrh.adapters.hosts.advisory_hosts import HOSTS
+from mrh.adapters.hosts.registry import HOSTS
 from mrh.adapters.providers.registry import build
 from mrh.advisory import engine
 from mrh.advisory.store import AdviceStore
