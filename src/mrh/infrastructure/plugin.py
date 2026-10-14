@@ -34,7 +34,7 @@ def _runtime_archive():
             name = prefix + resource.name
             if resource.is_dir():
                 collect(resource, name + "/")
-            elif resource.is_file() and resource.name.endswith(".py"):
+            elif resource.is_file() and (resource.name.endswith(".py") or prefix.startswith('mrh/resources/')):
                 files[name] = resource.read_bytes()
 
     collect(package, "mrh/")
@@ -141,7 +141,6 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
     # Reject unknown target contents before touching either root.
     old_artifact = _old_artifact(root) if root.exists() and any(root.iterdir()) else None
     python = str(Path(python or sys.executable).resolve())
-    python = str(Path(python or sys.executable).resolve())
     check = subprocess.run([python, "-I", "-B", "-c", "import sys; print('%d.%d'%sys.version_info[:2])"],
                            env={"PATH": os.defpath}, capture_output=True, text=True, timeout=5, check=True)
     if tuple(map(int, check.stdout.strip().split("."))) < (3, 11):
@@ -159,7 +158,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
         ".agents/plugins/marketplace.json": _json({"name": MARKETPLACE, "plugins": [{"name": NAME,
             "source": {"source": "local", "path": "./plugins/" + NAME},
             "policy": {"installation": "AVAILABLE", "authentication": "ON_USE"}, "category": "Productivity"}]}),
-        prefix + "plugin.json": _json({"name": NAME, "version": version,
+        prefix + "plugin.json": _json({"$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json", "name": NAME, "version": version,
             "description": "Default-off model routing with explicit workspace export permission",
             "extensions": {"com.openai": {"hooks": "./hooks/hooks.json"}}}),
         prefix + "hooks/hooks.json": _json({"hooks": {event: [{"matcher": "^(spawn_agent|collaborationspawn_agent)$", "hooks": [
@@ -170,6 +169,9 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
                                          "runtime_sha256": _hash(runtime), "platform": "codex",
                                          **({"codex_packets": True} if codex_packets else {})}),
     }
+    if codex_packets:
+        skill = resources.files('mrh').joinpath('resources/skills/mrh-codex-packet/SKILL.md').read_bytes()
+        files[prefix+'skills/mrh-codex-packet/SKILL.md'] = skill
     root = owned.initialize(root, "bundle")
     with owned.locked(root, "bundle"):
         old = _old_artifact(root)

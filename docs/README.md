@@ -1,5 +1,7 @@
 # docs 目錄說明
 
+安裝與維護入口： [安裝生命週期](install-lifecycle.md)、[最小宿主擴充點](host-extension.md)、[可選 packet skill 邊界](codex/packet-skill.md)。
+
 | 資料夾 | 內容 |
 |---|---|
 | `codex/` | Codex 桌面 App 接入的筆記與保存點 |

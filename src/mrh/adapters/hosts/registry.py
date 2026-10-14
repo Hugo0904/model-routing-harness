@@ -17,7 +17,7 @@ class Registration:
 
     def public(self):
         return {'host':self.name, 'tools':list(self.adapter.tools), 'installation':self.installation,
-                'surfaces':list(self.surfaces), 'codex_packet':self.packet, 'hook_ready':True}
+                'surfaces':list(self.surfaces), 'codex_packet':self.packet, 'hook_supported':True}
 
 
 REGISTRATIONS = {

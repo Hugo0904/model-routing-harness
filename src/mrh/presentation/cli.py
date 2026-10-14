@@ -57,6 +57,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
 安裝與維護
   mrh plugin prepare --advisory …   準備 Codex／Claude Code 共用外掛
   mrh install claude --artifact …   套用 Claude Code hook（預設只顯示差異，加 --apply 才寫入）
+  mrh models --host codex --json    CLI 宣告的模型／effort／來源；不代表帳號可用性
 
 說明
   mrh <指令> --help      該指令的參數說明
@@ -206,11 +207,9 @@ def main(
     sys.stdout, sys.stderr = stdout, stderr
     try:
         if args.command == 'models':
-            from mrh.adapters.catalogs.catalog import discover, describe_tool, ToolCatalog, CatalogError
+            from mrh.adapters.catalogs.catalog import public_models, CatalogError
             try:
-                found = next((x for x in discover() if x['tool']==args.host and x['supported']),None)
-                if found is None:raise CatalogError('host_unavailable')
-                data=ToolCatalog().refresh({**describe_tool(found),'id':'mrh-models-'+args.host}).public()
+                data=public_models(args.host).public()
                 if args.json:_write_json(data)
                 else:
                     stdout.write(f"{data['tool']} · {data['version']} · {data['source']} ({data['assurance']})\n")

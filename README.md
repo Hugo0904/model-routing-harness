@@ -1,177 +1,96 @@
 # Model Routing Harness（MRH）
 
-**Route the task, not the session.** 主模型要派子代理時，MRH 先請一個便宜的「分級器」判斷這件工作多難（Light／Small／Mid／Top），再把你為該等級設定的模型清單**以建議的方式**交回主模型；由主模型自己挑、自己重派。做不到就由主模型繼續做。
+**Route the task, not the session.** MRH 在主 AI 準備派子任務時提供 Light／Small／Mid／Top 分級與候選 profile 建議；主 AI 保留選型決定。明確指定的模型、推理強度或專門角色優先，分類失敗則沿原宿主契約處理。主視窗模型不會被切換。
 
-```
-主模型要派子代理 ─▶ Hook ─▶ 分級器（Jev／Codex 訂閱／Claude 訂閱）─▶ 等級＋信心度
-      ▲                                                              │
-      └──── 建議：「請改用 haiku／gpt-5.6-luna:low…，否則自己做」 ◀───┘
-```
+## 交給 AI 安裝
 
-- 是**建議**，不是強制改寫。主模型沒有照做，MRH 不會再攔第二次（同一任務 10 分鐘內只建議一次）。
-- 你或主模型已經明確指定模型、推理強度或專門角色 → 一律尊重，不分級。
-- 分級失敗（沒額度、逾時、金鑰錯誤）→ 原呼叫照常放行，只提示一次原因。
-- 不改任何廠商本體，只用各家原生 Hook。目前支援：**Codex**、**Claude Code**。Gemini CLI 只有模型清單，尚未接 Hook。
+把下面這句連同 repository 來源及你要使用的宿主交給 AI：
 
-## 控制中心
+> 請 clone 這個 repository 到新目錄，先讀 README.md，依我選的宿主執行 `./setup --host codex`（Claude Code 則選 `--host claude`），再執行 `./setup --check --json`。保留既有設定、金鑰、統計與其他 Hook，告訴我尚缺的原生信任、金鑰、模型政策或工作區設定；不要呼叫模型來測試安裝。
 
-所有設定都在一個地方：
+本分支是**尚未 push 的本機候選**；乾淨驗收可 clone 含此候選的本機 repository。遠端尚未包含這個 revision 時，不能把遠端 clone 當成已可安裝的證據。
+
+## 最短安裝路徑
+
+目前安裝套件範圍為 **macOS arm64**。先有你選的官方 vendor CLI；安裝器不升級它、不替你登入。MRH 自帶鎖定版本的私有 Python，不需要 Homebrew、SDK 或額外 Python。缺少可用 Python 時，只會下載、核對固定官方 runtime 的大小與 SHA-256，再執行它。
 
 ```sh
-mrh                          # 什麼都不加：列出所有指令
-mrh ctrl                     # 互動選單（↑↓ 選擇、Enter 確認、Esc 或 ← 返回上一步、Ctrl-C 離開）
-mrh status [--days N]         # 終端儀表板：流程、難度表（含價格）、分段比例條、進度條（80–120 欄自適應）
-mrh stats [--days N]          # 中文統計
-mrh ctrl show [--json]       # 目前設定一覽
-mrh ctrl set KEY VALUE       # 腳本用；mrh ctrl keys 列出所有 KEY
-mrh key status jev           # 金鑰狀態（只顯示有沒有，不顯示內容）
+git clone <repository來源> model-routing-harness
+cd model-routing-harness
+./setup --host codex
+./setup --check --json
 ```
 
-可設定：路由開關、分級器（Jev／Codex 訂閱／Claude 訂閱）與模型與逾時、四級各平台的候選模型（有序，可帶推理強度，如 `gpt-5.6-luna:low`）、Top 交回主模型（Main）或用固定清單（Fixed）、信心門檻（0.50–0.99）、生效資料夾（`/` 代表全部）。
+同時選兩個宿主可用 `./setup --host codex --host claude`。只選 Codex 不會修改 Claude 設定、artifact 或 interpreter。正式安裝前可先看 `./setup --host codex --dry-run --json`；dry-run 不寫入、不下載。`--check` 不初始化缺少的設定或資料庫。
 
-模型清單會標明 CLI 宣告來源與更新時間；宣告不等於帳號實際可用。清單更新失敗時，快取或內建參考會標成未確認，可查看但不可從互動選單新增；離線不當作下架，原有候選仍可保留、排序或移除。工具已明確宣告失效的項目不能新增，原設定與歷史保留。明確使用者的 `ctrl set` 腳本配置沿原契約，不因此增加帳號探測。
-
-統計只把能對上同任務、回合與工具呼叫的後續委派列為已確認採用；請求模型與已回報執行模型分開，舊紀錄缺少關聯時明示未知。分級失敗仍列入分級嘗試／已開始呼叫，沒有回報用量時不當作零成本。
-
-Monitor 的資料出口是 `mrh status --json --days 7`（`--days 0` 為全部）。終端卡片與 JSON 使用同一份統計及公開設定組裝；JSON 保留統計欄位，另有 `status.format_version`、`status.generated_at`、路由開關、`status.classifier` 與 `status.policy`（門檻、Top 模式、各級及 Fixed 候選）。`mrh stats --json` 保留原統計契約。同版已安裝指令比對已確認這份組裝與唯讀行為。Monitor 只需讀這份出口，不另存快照、不存取 Monitor DB，也不做 App 畫面；統計出口不建立缺少的設定或 DB。
-
-Canopy 保留既有 `ContextSummary` 與分級器 `context_summary` 的選配介面；目前 advisory 入口傳入 `None`，尚未接上 live Canopy。此輪不讀私人記憶、Hook 暫存或對話，也不修改 Canopy Core。
-
-## 分級器與費用
-
-| 分級器 | 需要 | 費用 | 速度 |
-|---|---|---|---|
-| **Jev**（預設，TypeSafe） | TypeSafe API key（存 macOS Keychain） | 每百萬 input token $0.042、output 免費；一次分級約 440 token，**約 $0.02／千次** | 約 0.4 秒 |
-| Codex 訂閱 | 已登入的 Codex CLI | 用訂閱額度 | 數秒 |
-| Claude 訂閱 | 已登入的 Claude Code | 用訂閱額度 | 約 5–10 秒 |
-
-Jev 回傳每一級的機率；訂閱分級的信心度是模型自評，沒有校準，兩者不等價。金鑰設定：
+`setup` 安裝的是**目前 checkout**，不執行 git pull/reset。更新 repository 到你要的 revision 後，重跑同一條 `./setup --host ...` 即可更新；相同內容重跑不會重複加入 Hook 或 skill。
 
 ```sh
-mrh key set jev      # 由 macOS 提示輸入，金鑰不經過 MRH、不進任何檔案
+./setup --host codex                 # 安裝／更新目前 checkout
+./setup --check --json               # 分開讀回安裝與就緒狀態
+./setup --rollback                   # 回上一個已管理、reader 相容的代
 ```
 
-## 日常操作
+第一次安裝還沒有 rollback 歷史。Rollback 只切回程式與所選宿主 wiring，**不還原舊設定或統計資料**；未知或不相容的 reader 會拒絕降版。中斷後保留回執，修正原因，再以相同參數重跑。原生註冊分步完成，不宣稱多宿主一起原子切換。
 
-Codex 可選用[完整子任務 packet 接入](docs/codex/full-task-packets.md)，讓 Hook 在委派前讀取已定的 child brief；需要獨立 Codex artifact 與明確 opt-in。父 AI 只保存完整 brief、workspace 與唯一 ID，session／turn 由第一次有效 query 的原生 Hook 自行綁定，無須 Monitor。分類、release 與 child 用明確關聯統一進同一份 `mrh status`／`stats`，不再另計 per-packet DB。舊資料在升級時明確執行 `mrh codex-task --settings <同一設定檔> import-history`，可重跑且不重複計數；原件保留，無法核對的歷史列為 unknown。此協定不套用 Claude／Gemini，不改共用分級與動態 worker 選型核心；啟用與實測狀態依接入報告採認。
+## 完成設定
+
+新 profile 預設停用，任務外送也為 false。既有 active-settings pointer、profile、統計與金鑰沿用；沒有明確指定的設定不會被重設。
+
+1. 在 Codex 的原生 `/hooks` 介面審閱 MRH Hook；安裝器不代寫信任資料。Hook 定義改變後需要重新審閱。被你在原生介面停用的既有插件會保留停用並要求先處理該選擇。
+2. 用 `mrh key set jev` 由 macOS Keychain 提示輸入金鑰；`mrh key status jev` 只顯示是否存在。也可由你自己的安全環境提供 `TYPESAFE_API_KEY`。金鑰不放進 repository 或設定檔。
+3. 用 `mrh models --host codex --json`（或 `claude`）查看目前 CLI 宣告的模型、effort、來源、時間和 assurance。這份清單不是帳號可用性或付費探測。
+4. 執行 `mrh ctrl`，為每個所選宿主填妥 Light／Small／Mid 的完整 model＋effort profile，選擇 Top Main 或完整 Fixed profile。依當前能力與角色限制選擇，不從模型名字推定強弱或價格。空的或無法驗證的政策不算 ready。
+5. 確認允許外送的工作區後，才明確啟用。例如 `./setup --host codex --enable --workspace /absolute/approved/project`。這一步會讓該 profile 允許任務外送；請依自己的資料範圍決定。單純安裝、check 或開啟控制中心不會啟用。
+
+`--check --json` 分開列出 installed、configured、trust、credential_present、policy_ready、workspace_ready 與 enabled/export_permitted。政策驗證只對照 CLI 宣告；帳號可用性、實際模型、最後真實派工及未取得的用量仍標成未知或未探測。安裝成功不代表分級器、子代理或節費已實跑。需要真實模型／Jev 驗證時，另外確認目的、資料與費用；歷史 smoke 的一次性授權不適用之後每次安裝。
+
+如果 `mrh` 不在你既有的 PATH，直接用 `~/.local/bin/mrh`；安裝器不改全域 PATH。
+
+## 可選 Codex 完整任務 packet
+
+普通 Codex Hook 可能只取得 `task_name`，完整 `message` 由宿主加密。可選 packet 協定讓父 AI 在派工前保存完整 brief，由 Hook 綁定原生回合後分類。**這個能力仍待比較評估，不是一般安裝的預設或正式採用結論。**
 
 ```sh
-mrh status                             # 卡片儀表板（預設過去 7 天）
-mrh stats                              # 中文統計（預設過去 24 小時）
-mrh ctrl show                          # 目前設定一覽（含難度表）
-mrh ctrl set enabled on                # 路由開關；off 為停用
-mrh ctrl dashboard --days 7            # 儀表板
-mrh ctrl stats --days 1                # 文字統計（--days 0 為全部）
-mrh key status jev                     # 金鑰狀態；mrh key set jev 存入／更換
+./setup --host codex --codex-packets
 ```
 
-**設定各難度用的模型**（格式 `模型:推理強度`，多個以逗號分隔，越前面越優先，每格最多 5 個）：
+只有這個明確選項會提供 packet artifact 與自足的 `mrh-codex-packet` skill。更新既有 packet 安裝時保留相同選項；普通安裝不會默默開啟或取代它。若已安裝 Router bridge，同一任務只能有一個 packet 協定 owner，不能分類兩次。原文保護、Top Main、未知結果與清理規則見[完整協定](docs/codex/full-task-packets.md)及[skill 邊界](docs/codex/packet-skill.md)。沒有獨立外送許可時不呼叫分級器。
+
+## 日常操作與資料
 
 ```sh
-mrh ctrl set tiers.Light.claude "haiku:medium"
-mrh ctrl set tiers.Small.claude "haiku:xhigh"
-mrh ctrl set tiers.Mid.claude   "sonnet:high"
-mrh ctrl set tiers.Light.codex "gpt-6-luna:high"
-mrh ctrl set tiers.Small.codex "gpt-6-luna:max"
-mrh ctrl set tiers.Mid.codex   "gpt-6.1-sol:high"
+mrh ctrl                          # 互動設定；取消不保存
+mrh ctrl show --json              # 公開設定
+mrh status --json                 # 唯讀狀態／Monitor 出口
+mrh stats                        # 分級、回退、派工與已觀測採用
+mrh stats reset --days 7          # 預覽，確認後才刪統計
+mrh ctrl set enabled off          # 停用路由
 ```
 
-Claude 可用 `low／medium／high／xhigh／max`，別名 `haiku`、`sonnet`、`opus`。Codex 的模型與推理強度以 `mrh ctrl` 選單列出的清單為準。
+預設 CLI 是 `~/.local/bin/mrh`；安裝代位於 `~/.local/share/model-routing-harness/setup-state/generations/`，`current` 指向啟用的代。新 profile 位於 `~/.config/model-routing-harness/profile/`，與 `advice.sqlite3` 都獨立於 clone／程式代。有既有 active-settings pointer 時沿用它；若舊 pointer 指向 clone 內的 profile，更新不會擅自搬移，刪除該舊 clone 前仍須另行遷移資料。
 
-**其他設定項目**（`mrh ctrl keys` 會列出全部）：
+舊的 `app/` 目錄會保留作為既有 interpreter／Claude 命令的錨點，不會為更新 Codex 而替換共享 runtime。所選宿主的新 wiring 指向完整、獨立的代；未選宿主保持原樣。隔離驗證可明確指定 `--prefix`、`--config-root`、`--bin-dir`、`--cache-root`、`--settings`、`--codex-cli` 或 `--claude-settings`，不必改 HOME/CODEX_HOME。更多恢復細節見[安裝生命週期](docs/install-lifecycle.md)。舊 `install_local.py` 入口已停止危險的共享 app 替換，請用 `setup`。
 
-| 想做的事 | 指令 |
-|---|---|
-| 換分級器 | `mrh ctrl set classifier.provider jev`（或 `codex_subscription`、`claude_subscription`） |
-| 調整信心門檻 | `mrh ctrl set threshold 0.65`（0.50–0.99，越高越保守） |
-| Top 難度交回主模型／改用固定清單 | `mrh ctrl set top_mode Main`（或 `Fixed`，需先設 `fixed.<平台>`） |
-| 限制只在某些資料夾生效 | `mrh ctrl set allowed_workspaces "/Users/me/專案A,/Users/me/專案B"`（`/` 代表全部） |
-| 視為預設角色（不當成專門角色） | `mrh ctrl set generic_roles.codex worker` |
+## 支援與證據邊界
 
-**清除統計**（只清統計資料，不碰設定與金鑰；刪除前一定先預覽，並要你輸入確認）：
+| Surface | 此候選的安裝邊界 | 實際派工驗收 |
+|---|---|---|
+| Codex CLI | 官方 marketplace/plugin 命令；隔離生命週期與公開 consumer 驗證 | 沿用既有 packet／核心證據，本輪不啟動付費模型 |
+| Codex Desktop App | 同一官方插件；仍需原生信任審閱 | 此候選的新 App 畫面／派工驗收尚未完成 |
+| Claude Code CLI | 選配設定合併；本輪只驗隔離 fixture | 現用 Claude 完整保留，未部署或重跑 smoke |
+| Claude Desktop Code | 同宿主接頭的預定 surface；不含 Chat／Cowork | 尚未另做本候選實機驗收 |
 
-```sh
-mrh stats reset --today        # 今天
-mrh stats reset --days 7       # 最近 7 天內（30、或任意天數都可以）
-mrh stats reset --all          # 全部
-```
+Gemini 僅有既有 catalog，沒有 Hook 或 setup adapter。加入宿主需要明確註冊、安裝 adapter 與原生證據；見[最小擴充點](docs/host-extension.md)。不會靠放一個檔案就自動支援第三家。
 
-互動時預覽後要輸入「刪除 N」（N 是預覽顯示的總筆數）才會真的刪除，輸入其他內容就取消；在腳本中沒加 `--yes` 只會顯示預覽。`mrh ctrl` 選單的「清除統計」也是同樣流程。範圍內所有統計資料表（委派、分級器呼叫、子代理、通知）一起清除，**包含除錯用的分級器呼叫紀錄**。
-
-**統計保留期限**：預設保留 365 天，超過的紀錄會自動刪除（每天最多整理一次，由 hook 在記錄子代理時順便做，不拖慢派工）。調整：`mrh ctrl set stats.retention_days 180`（`0` 代表永久保留）；選單「統計保留天數」也可以改。每次委派約佔 1 KB，所以即使每天 200 次，一年也只有約 70 MB。
-
-**資料放哪裡**：設定檔 `settings.json` 與統計資料庫 `advice.sqlite3` 在同一個資料夾（路徑見 `mrh ctrl show` 最後一行）。資料庫只存次數、等級、模型等，**不存任務內容**。想清空統計請用上面的 `mrh stats reset`。
-
-**出問題時**：
-1. `mrh ctrl show`：路由是否開啟、適用範圍是否包含目前資料夾、金鑰是否已設定。
-2. `mrh key status jev`：注意環境變數 `TYPESAFE_API_KEY` 的優先順序比 Keychain 高，過期的環境變數會蓋掉正確的金鑰。
-3. `mrh ctrl stats`：看「沒有介入的原因」，例如金鑰無效、信心低於門檻、專門角色。
-4. Codex 沒作用：在 Codex 輸入 `/hooks`，確認 `model-routing-harness` 的 hook 已信任。
-5. Claude Code 沒作用：確認版本（見下方限制）與 `~/.claude/settings.json` 內有 MRH 的 hook。`python3 scripts/verification/claude_smoke.py` 會真的呼叫 Claude 與 Jev（約 $0.3）；本輪必要回歸已獲使用者授權，等候選固定後統一安排，沿用有效結果，不無故重複呼叫。
-
-## 安裝（macOS arm64）
-
-封裝內含私有 Python，不需另外安裝 SDK。安裝位置固定；Codex 是否需要重新信任，取決於 Hook 定義是否改變：
-
-```sh
-python3 scripts/packaging/build_standalone.py --cache build/e15-public-assets --output dist/<名稱> --archive dist/<名稱>.tar.gz
-python3 scripts/packaging/install_local.py --bundle dist/<名稱> --settings <settings.json 絕對路徑>
-#   → ~/.local/share/model-routing-harness/app、~/.local/bin/mrh、~/.config/model-routing-harness/active-settings
-mrh plugin prepare --advisory --root <artifact 目錄> --settings <settings.json> --python ~/.local/share/model-routing-harness/app/runtime/bin/python3.11
-# Codex：codex plugin marketplace add <artifact 目錄>（首次）→ codex plugin add model-routing-harness@model-routing-harness-local → Codex 內 /hooks 信任
-mrh install claude --artifact <artifact 目錄>            # 只顯示差異
-mrh install claude --artifact <artifact 目錄> --apply    # 套用（自動備份，保留其他 hook）
-```
-
-升級：重建封裝 → `install_local.py` → `mrh plugin prepare --advisory …`（同參數）→ `codex plugin add …`。只有 Codex `hooks.json` 定義雜湊不變，才沿用原信任；有變更時需在 `/hooks` 重新審閱。Claude 的 `~/.claude/settings.json` 命令必須保留固定 Python 與同一個 `launcher.py claude` 入口，不能省略尾端的 `claude` 參數。
-
-內部 Hook 入口由宿主透過 stdin 傳入事件；目前保留的形式為：
-
-```sh
-mrh hook --platform codex --settings <settings.json 絕對路徑>
-mrh hook --platform claude --settings <settings.json 絕對路徑>
-```
-
-`plugin prepare --advisory` 產生供兩邊共用的 `launcher.py`、`binding.json` 與 `runtime.pyz`。日常接入使用 `runtime/daily-cli/artifact`，兩邊讀同一份 `runtime/daily-cli/profile/settings.json`；升級時保留這些路徑。舊 `hook --candidate`、`--simulate-tier`、`--simulate-confidence`、`--scope-binding`、`--db` 分支、非 advisory prepare 模式及其舊 scope 綁定已從原始碼移除。
-
-預設**停用**。用 `mrh ctrl` 開啟；開啟代表把子代理任務文字送給你選的分級器。停用：`mrh ctrl set enabled off`；移除 Claude hook：`mrh install claude --artifact … --remove --apply`。
-
-## 現況與限制
-
-**實測結果**（證據在 `docs/evidence/`，樣本數仍少，長期請看 `mrh stats`）：
-- Jev：輕量、中等、頂級三個樣本都分對，約 0.4 秒。
-- Claude Code：輕量任務被建議後，主模型改派 Haiku 5.5 並帶 effort；Top 由主模型自己做；內建 Explore 不被干預；Jev 金鑰錯誤時委派照常執行。
-- Codex CLI：10 次有效試跑全部照建議改派；桌面 App：10 次中 8 次改派、2 次因信心不足而保留原委派。
-
-**統計怎麼算「照建議改派」**：普通 Codex／Claude 保留既有同平台／對話／回合的已記錄關聯與舊紀錄推定語義。Codex packet 必須有同 scope／hash 的精確 query→release→child 關聯，且 child 的請求模型與推理強度符合該 query 建議才算；不以同回合剛好相同模型推定。選其他合適 profile 仍列「有分類且已確認派工」，採用為 false。只能顯示已觀測的派工與模型；**算不出省下多少錢**，未回報的實際模型、tokens 與成本仍未知。
-
-**限制**：
-- 設定檔是 v2；舊 v1 讀取時自動遷移，第一次用 `mrh ctrl` 存檔時才改寫。
-- Codex 0.159.3 把委派內文（`message`）加密後才交給 Hook，MRH 只能讀到主模型取的短標籤 `task_name`（如 `rename_variable`），分級依據較弱，含糊的標籤信心度低會自動放行。Codex 主模型常帶 `agent_type: worker`，MRH 預設視同預設角色；你自訂的角色（如 `luna_worker`）一律不干預（`mrh ctrl set generic_roles.codex worker`）。
-- 你的 Router 技能若已替子代理指定模型與推理強度，MRH 依「明示就尊重」讓開，所以只有沒指定時才會輪到 MRH。
-- Claude Code 的子代理 `effort` 參數需 2.1.292 以上，`haiku`／`sonnet` 別名要 2.1.293 以上才對應到 5.5 系列（Homebrew 請用 `claude-code@latest`）。
-- Gemini CLI 只有模型清單，尚未接 Hook。
-
-## 維護注意事項（改程式前必讀）
-
-**同一份程式碼同時服務 Claude Code 與 Codex**：兩邊的 hook 都執行 `runtime.pyz`，共用檔案一改，部署後兩邊同時受影響。
-
-| 範圍 | 注意 |
-|---|---|
-| 共用核心：`advisory/*`、`settings_v2.py`、`advisory_runtime.py`、`plugin.py` 的 `LAUNCHER`、`adapters/providers/*` | 改動兩邊都吃到；`engine.py` 不要寫平台特例 |
-| `advisory_hosts.py` | `ClaudeHost` 與 `CodexHost` 各自獨立，不要一般化；建議文字的推理強度參數名不同（Codex 為 `reasoning_effort`、Claude 為 `effort`），不要統一 |
-| `advisory/store.py` | 資料庫 schema 只能加表／欄位，統計與儀表板都讀它 |
-| 路徑不可搬、不可改名 | `~/.local/share/model-routing-harness/app`、`runtime/daily-cli/artifact`（`launcher.py`、`binding.json`、`runtime.pyz`）。Claude 的 hook 在 `~/.claude/settings.json`，指向這些檔案 |
-| Codex `hooks.json` | 內容或命令一變，Codex 會要求在 `/hooks` 重新信任 |
-
-改完後：`PYTHONPATH=src python3 -m unittest discover -s tests -t .`，再依「安裝」一節的升級流程部署，最後跑回歸檢查 `python3 scripts/verification/claude_smoke.py --yes`（**會真的呼叫 Claude 與 Jev，約 $0.3，須明確同意**）。
-
-金鑰只放 macOS Keychain 或環境變數，不進任何檔案、報告或 commit。分級器預設是 Jev。
+MRH 提供建議與可追溯統計，沒有證據時不宣稱實際模型、節省費用或帳號額度。Canopy 背景與 Monitor 顯示皆為選配，安裝器不依賴它們、不讀私人記憶或 Monitor DB。
 
 ## 開發
 
+直接驗證安裝路徑：
+
 ```sh
-PYTHONPATH=src python3 -m unittest discover -s tests -t .
+PYTHONPATH=src python3 -B -m unittest tests.infrastructure.test_setup tests.infrastructure.test_bundle tests.infrastructure.test_advisory_plugin tests.infrastructure.test_owned_plugin
 ```
 
-需求在 `REQUIREMENTS.md`；驗證證據在 `docs/evidence/`（見 `docs/README.md`）；測試用固定資料在 `tests/fixtures/`。需要追查歷史請用 `git log`。
+只對變動影響到的保證補必要檢查。需要整個 repository gate 時可用 `PYTHONPATH=src python3 -B -m unittest discover -s tests -t .`；涉及真實 provider 的腳本須另有當次授權。本機候選不是已發布、簽署或 notarize 的多平台版本，repository 也未因此取得新的公開散布授權。

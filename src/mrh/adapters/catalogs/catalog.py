@@ -256,3 +256,11 @@ class ToolCatalog:
             from mrh.adapters.catalogs.claude_catalog import ClaudeCatalog
             return ClaudeCatalog().refresh(binding)
         raise CatalogError('tool_catalog_unsupported')
+
+
+def public_models(host):
+    """Public, credential-free declarations; never account availability or policy mutation."""
+    found = next((x for x in discover() if x['tool'] == host and x['supported']), None)
+    if found is None:
+        raise CatalogError('host_unavailable')
+    return ToolCatalog().refresh({**describe_tool(found), 'id': 'mrh-models-' + host})

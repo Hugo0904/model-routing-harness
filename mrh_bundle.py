@@ -42,40 +42,21 @@ mrh_dir=$(CDPATH= cd -P "$(/usr/bin/dirname "$mrh_entry")" && pwd)
 exec "$mrh_dir/runtime/bin/python3.11" -I -B "$mrh_dir/app/mrh.pyz" "$@"
 '''
 
-README = '''MRH local macOS arm64 candidate
+README = """MRH macOS arm64 code asset
 
-Extract this directory and choose a stable location. Run ./mrh --help,
-then ./mrh ctrl. Use ./mrh status for the dashboard, ./mrh stats for the
-text summary, and ./mrh key status jev to check whether a key is configured.
-Only MRH and your selected vendor CLI are
-needed; MRH includes its own CPython. No separate Python, SDK, Node or bridge
-is required by MRH. Vendor CLI prerequisites remain that CLI's responsibility.
-Use the arrow keys and Enter in ./mrh ctrl to choose the classifier and each
-tier's ordered platform-specific model and reasoning-effort candidates, then
-review and save. Top Main asks the parent to do the work; Top Fixed recommends
-the configured Top candidates. Cancel preserves the current policy. Routing
-and export require explicit configuration under the existing authorization
-contract; opening the control center does not change their current settings.
+Normally installed and retained by the checkout's ./setup --host command.
+The private runtime and its complete notices are included. No vendor CLI,
+credentials, profile or statistics are embedded in this directory.
+Do not replace a shared interpreter or move an active managed generation.
+Settings and statistics live at the separately selected persistent profile.
+Native installation and trust are separate; preparing or checking these files
+makes no model/classifier call and grants no permission to export a task.
 
-Optional short command: create a symlink named mrh in your own PATH directory
-pointing to this directory's mrh file. Do not modify system directories.
-Settings/history use the existing external profile paths, never this bundle.
-
-Plugin preparation uses this bundle's private interpreter. Choose a stable
-application location first; if moved after preparation, prepare again against
-the same external settings path and review native registration/trust separately.
-Moving the application never resets settings or automatically changes Hooks.
-
-No runtime download, provider login, credential copy or formal Hook enablement
-is performed by this entry. This is a local candidate, not a signed/notarized
-published all-platform release. Follow normal macOS security decisions.
-
-manifest.json records source/runtime provenance and file hashes. Runtime
-licensing metadata and linked-library notices are in notices/runtime; the
-runtime retains its CPython, pip/setuptools and vendored dependency notices.
-MRH source has no publication license declaration; no public release rights
-are asserted by this local candidate.
-'''
+This is an unsigned local candidate, not a notarized public multi-platform
+release. manifest.json records source/runtime provenance and file hashes;
+notices/runtime retains the runtime metadata and required notices.
+No additional publication license is asserted by this build.
+"""
 
 
 class BundleError(ValueError):
@@ -108,7 +89,7 @@ def read_lock(path=LOCK):
     return value
 
 
-def fixed_assets(cache, lock, *, download=False):
+def asset_cache(cache, lock):
     cache = Path(cache).absolute()
     if cache.is_symlink():
         raise BundleError('cache_unowned')
@@ -121,6 +102,11 @@ def fixed_assets(cache, lock, *, download=False):
     allowed = {CACHE_MARKER} | {lock[k]['name'] for k in ('runtime', 'licensing_source')}
     if any(p.name not in allowed or p.is_symlink() for p in cache.iterdir()):
         raise BundleError('cache_unowned')
+    return cache
+
+
+def fixed_assets(cache, lock, *, download=False):
+    cache = asset_cache(cache, lock)
     result = {}
     for key in ('runtime', 'licensing_source'):
         asset = lock[key]; path = cache / asset['name']
@@ -129,9 +115,9 @@ def fixed_assets(cache, lock, *, download=False):
                 raise BundleError('fixed_asset_missing')
             with tempfile.TemporaryDirectory(prefix='mrh-runtime-download-', dir=cache.parent) as tmp:
                 staged = Path(tmp) / asset['name']
-                subprocess.run(['/usr/bin/curl', '--fail', '--silent', '--show-error', '--location', '--proto', '=https',
+                subprocess.run(['/usr/bin/curl', '--disable', '--fail', '--silent', '--show-error', '--location', '--proto', '=https', '--proto-redir', '=https',
                                 '--max-time', '120', asset['url'], '-o', str(staged)], check=True,
-                               env={'PATH': '/usr/bin:/bin', 'HOME': tmp, 'TMPDIR': tmp})
+                               env={'PATH': '/usr/bin:/bin', 'TMPDIR': tmp})
                 if staged.stat().st_size != asset['size'] or sha256(staged) != asset['sha256']:
                     raise BundleError('fixed_asset_hash_mismatch')
                 staged.replace(path)
@@ -257,8 +243,7 @@ def licensing(full_archive, destination, lock, runtime):
 
 def application_archive(path):
     _, _, _, files = mrh_build.metadata()
-    files.update({p.relative_to(ROOT / 'src').as_posix(): p.read_bytes()
-                  for p in (ROOT / 'src/mrh').rglob('*.py')})
+    files.update(mrh_build.package_files())
     files['__main__.py'] = b'from mrh.cli import main\nraise SystemExit(main())\n'
     path.parent.mkdir()
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:

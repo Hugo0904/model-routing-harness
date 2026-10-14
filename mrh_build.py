@@ -10,6 +10,13 @@ import zipfile
 ROOT = Path(__file__).resolve().parent
 
 
+def package_files():
+    source = ROOT / 'src'
+    paths = list((source/'mrh').rglob('*.py'))
+    paths += [p for p in (source/'mrh/resources').rglob('*') if p.is_file()]
+    return {p.relative_to(source).as_posix():p.read_bytes() for p in paths}
+
+
 def metadata():
     p = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
     name = p["name"].replace("-", "_")
@@ -37,9 +44,7 @@ def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     name, version, dist, files = metadata()
-    source = ROOT / "src"
-    for p in sorted((source / "mrh").rglob("*.py")):
-        files[p.relative_to(source).as_posix()] = p.read_bytes()
+    files.update(package_files())
     record = io.StringIO(newline="")
     writer = csv.writer(record, lineterminator="\n")
     for filename, data in sorted(files.items()):
