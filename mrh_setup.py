@@ -111,6 +111,7 @@ def source_fingerprint(hosts, packets, settings):
     files = list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*'))
     files += [ROOT / n for n in ('setup', 'mrh_setup.py', 'mrh_bundle.py', 'mrh_build.py', 'pyproject.toml')]
     files += [bundle.LOCK]
+    files += [p for p in (ROOT/'packaging/macos-arm64/license-snapshot').rglob('*') if p.is_file()]
     h = hashlib.sha256()
     for p in sorted(set(p for p in files if p.is_file())):
         h.update(p.relative_to(ROOT).as_posix().encode() + b'\0' + p.read_bytes())

@@ -17,5 +17,6 @@
     "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261009/cpython-3.11.17%2B20261009-aarch64-apple-darwin-pgo%2Blto-full.tar.zst",
     "size": 41284022,
     "sha256": "a9c2933a3846c44daa7168dc3ee31a6c6b254964451f113bbff1e87cfa8146af"
-  }
+  },
+  "licensing_snapshot_sha256": "c0aa98ce64756c24f411e2c0a52f197a643b6c882be2d3d2670b8108f8e08d55"
 }

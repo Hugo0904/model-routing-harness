@@ -1,0 +1,165 @@
+{
+  "files": {
+    "PYTHON.json": {
+      "sha256": "9dedd9f408f39ae4a21741106c52891850ed2feb16a24f941188be2c559e64a8",
+      "size": 107474
+    },
+    "licenses/LICENSE.bdb.txt": {
+      "sha256": "3bdff06e69991c94664f2ef5c5f8096f60b7dbec071756ea6cc26b445e06ec5b",
+      "size": 7293
+    },
+    "licenses/LICENSE.bzip2.txt": {
+      "sha256": "1f38bbc7caacafd65169276d759c0d88c991b753b643ce35d0e45ea1971dd441",
+      "size": 1743
+    },
+    "licenses/LICENSE.cpython.txt": {
+      "sha256": "86e61415828a8b5b06ec8d024e6f086ce155a8b85fd0c419c0ba4dc004e74fdd",
+      "size": 36164
+    },
+    "licenses/LICENSE.expat.txt": {
+      "sha256": "122f2c27000472a201d337b9b31f7eb2b52d091b02857061a8880371612d9534",
+      "size": 1144
+    },
+    "licenses/LICENSE.libX11.txt": {
+      "sha256": "2daec087a88e7c9b8082557cdeebad5bbb8155a4137472f0b22e269cd99d0c1e",
+      "size": 47018
+    },
+    "licenses/LICENSE.libXau.txt": {
+      "sha256": "56abe29bb1d9806a9e04fa9f80fed2c0f18027594df3f098148d814aef6bddfa",
+      "size": 1148
+    },
+    "licenses/LICENSE.libedit.txt": {
+      "sha256": "29cea33c32bbc9785142386377915612a2fa786482c46843383384aded2e09b1",
+      "size": 1614
+    },
+    "licenses/LICENSE.libffi.txt": {
+      "sha256": "deaf3a42effb551a5b140fa9afefed183a27f1341c6d1bf430d106a5e6931fc0",
+      "size": 1132
+    },
+    "licenses/LICENSE.liblzma.txt": {
+      "sha256": "9a4062de0a2c388a98cf35a35d348b62fa97c838a71c3c28ee1a2d7d0a565b02",
+      "size": 660
+    },
+    "licenses/LICENSE.libuuid.txt": {
+      "sha256": "122ee1f7e258f2c3c0e538a75c037684f420454bf3850ddc74ce750bbf5fe86b",
+      "size": 1432
+    },
+    "licenses/LICENSE.libxcb.txt": {
+      "sha256": "c5ffbfeaa501071ceeb97b7de2c0d703fdaa35de01c0fb6cbac1c28453a3e9fd",
+      "size": 1337
+    },
+    "licenses/LICENSE.mpdecimal.txt": {
+      "sha256": "669512af7219f58be03a398766d7c9da11a3b3df9d3f05cb74c5ceca25c8da3b",
+      "size": 1284
+    },
+    "licenses/LICENSE.ncurses.txt": {
+      "sha256": "87a4c4442337b8968ef956031c406b74f9cb7149b7ba87311bdaba534816201c",
+      "size": 1447
+    },
+    "licenses/LICENSE.openssl-1.1.txt": {
+      "sha256": "9c04cce50c4989d5601dd8b07f6ab922c40388b66ac736c9007cb1ed9d9dd560",
+      "size": 6120
+    },
+    "licenses/LICENSE.openssl-3.txt": {
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+      "size": 10175
+    },
+    "licenses/LICENSE.sqlite.txt": {
+      "sha256": "38bef3d28b24f145ea293bd3b6eb4b20396982abc8303128fb493986ea5bc719",
+      "size": 1481
+    },
+    "licenses/LICENSE.tcl.txt": {
+      "sha256": "c0a69a2bfd757361ec7e6143973b103c90409316b49e9c88db26ad6388e79f16",
+      "size": 2255
+    },
+    "licenses/LICENSE.tix.txt": {
+      "sha256": "3ac5cdd0bef6c43ce34c6a7ced452081d9e5a0bf94082b9f9147d23ec9e214f5",
+      "size": 2826
+    },
+    "licenses/LICENSE.zlib.txt": {
+      "sha256": "818922b2620f12801a12bf78e399644a30990e66824abd8ca8ec24d451d6f92c",
+      "size": 995
+    }
+  },
+  "runtime_binary": {
+    "path": "bin/python3.11",
+    "sha256": "bfb00f17c254d903fac15265ad47653724c3a753d2c36414062fa2025b9ac523",
+    "verification": "otool -L on the exact binary extracted from the pinned runtime archive",
+    "verified_system_libraries": [
+      "/usr/lib/libz.1.dylib"
+    ]
+  },
+  "schema_version": 1,
+  "source": {
+    "licensing_sha256": "a9c2933a3846c44daa7168dc3ee31a6c6b254964451f113bbff1e87cfa8146af",
+    "provider": "astral-sh/python-build-standalone",
+    "release": "20261009",
+    "runtime_sha256": "7b6068989d9b6a0e2a883352b7d0d141ce8670a61360bf4ddabac0e046a08e10"
+  },
+  "summary": {
+    "build_options": "pgo+lto",
+    "copied_notices": {
+      "licenses/LICENSE.bdb.txt": "3bdff06e69991c94664f2ef5c5f8096f60b7dbec071756ea6cc26b445e06ec5b",
+      "licenses/LICENSE.bzip2.txt": "1f38bbc7caacafd65169276d759c0d88c991b753b643ce35d0e45ea1971dd441",
+      "licenses/LICENSE.cpython.txt": "86e61415828a8b5b06ec8d024e6f086ce155a8b85fd0c419c0ba4dc004e74fdd",
+      "licenses/LICENSE.expat.txt": "122f2c27000472a201d337b9b31f7eb2b52d091b02857061a8880371612d9534",
+      "licenses/LICENSE.libX11.txt": "2daec087a88e7c9b8082557cdeebad5bbb8155a4137472f0b22e269cd99d0c1e",
+      "licenses/LICENSE.libXau.txt": "56abe29bb1d9806a9e04fa9f80fed2c0f18027594df3f098148d814aef6bddfa",
+      "licenses/LICENSE.libedit.txt": "29cea33c32bbc9785142386377915612a2fa786482c46843383384aded2e09b1",
+      "licenses/LICENSE.libffi.txt": "deaf3a42effb551a5b140fa9afefed183a27f1341c6d1bf430d106a5e6931fc0",
+      "licenses/LICENSE.liblzma.txt": "9a4062de0a2c388a98cf35a35d348b62fa97c838a71c3c28ee1a2d7d0a565b02",
+      "licenses/LICENSE.libuuid.txt": "122ee1f7e258f2c3c0e538a75c037684f420454bf3850ddc74ce750bbf5fe86b",
+      "licenses/LICENSE.libxcb.txt": "c5ffbfeaa501071ceeb97b7de2c0d703fdaa35de01c0fb6cbac1c28453a3e9fd",
+      "licenses/LICENSE.mpdecimal.txt": "669512af7219f58be03a398766d7c9da11a3b3df9d3f05cb74c5ceca25c8da3b",
+      "licenses/LICENSE.ncurses.txt": "87a4c4442337b8968ef956031c406b74f9cb7149b7ba87311bdaba534816201c",
+      "licenses/LICENSE.openssl-1.1.txt": "9c04cce50c4989d5601dd8b07f6ab922c40388b66ac736c9007cb1ed9d9dd560",
+      "licenses/LICENSE.openssl-3.txt": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+      "licenses/LICENSE.sqlite.txt": "38bef3d28b24f145ea293bd3b6eb4b20396982abc8303128fb493986ea5bc719",
+      "licenses/LICENSE.tcl.txt": "c0a69a2bfd757361ec7e6143973b103c90409316b49e9c88db26ad6388e79f16",
+      "licenses/LICENSE.tix.txt": "3ac5cdd0bef6c43ce34c6a7ced452081d9e5a0bf94082b9f9147d23ec9e214f5",
+      "licenses/LICENSE.zlib.txt": "818922b2620f12801a12bf78e399644a30990e66824abd8ca8ec24d451d6f92c"
+    },
+    "deployment_target": "11.0",
+    "metadata_sha256": "9dedd9f408f39ae4a21741106c52891850ed2feb16a24f941188be2c559e64a8",
+    "metadata_source": {
+      "name": "cpython-3.11.17+20261009-aarch64-apple-darwin-pgo+lto-full.tar.zst",
+      "sha256": "a9c2933a3846c44daa7168dc3ee31a6c6b254964451f113bbff1e87cfa8146af",
+      "size": 41284022,
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261009/cpython-3.11.17%2B20261009-aarch64-apple-darwin-pgo%2Blto-full.tar.zst"
+    },
+    "missing_nonredistributed_alternative": {
+      "licenses/LICENSE.zlib-ng.txt": {
+        "actual_system_library": "/usr/lib/libz.1.dylib",
+        "metadata": [
+          {
+            "links": [
+              {
+                "name": "z",
+                "system": true
+              }
+            ],
+            "module": "zlib"
+          }
+        ],
+        "reason": "metadata alternative; zlib-ng not redistributed"
+      }
+    },
+    "required_license_paths": [
+      "licenses/LICENSE.bzip2.txt",
+      "licenses/LICENSE.cpython.txt",
+      "licenses/LICENSE.expat.txt",
+      "licenses/LICENSE.libedit.txt",
+      "licenses/LICENSE.libffi.txt",
+      "licenses/LICENSE.liblzma.txt",
+      "licenses/LICENSE.libuuid.txt",
+      "licenses/LICENSE.mpdecimal.txt",
+      "licenses/LICENSE.ncurses.txt",
+      "licenses/LICENSE.openssl-1.1.txt",
+      "licenses/LICENSE.openssl-3.txt",
+      "licenses/LICENSE.sqlite.txt",
+      "licenses/LICENSE.tcl.txt",
+      "licenses/LICENSE.zlib-ng.txt",
+      "licenses/LICENSE.zlib.txt"
+    ]
+  }
+}

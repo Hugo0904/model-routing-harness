@@ -67,3 +67,8 @@ shell script is executed. Existing build assets and licensing metadata are
 reused. The bootstrap never overrides HOME/CODEX_HOME or installs a vendor CLI.
 Explicit root arguments support isolated fixtures without pretending they are a
 normal-account native installation. This is an unsigned local candidate.
+
+Public runtime notices and metadata are shipped as a hash-locked source snapshot
+with original archive provenance and exact runtime-binary dependency proof; see
+[`packaging/macos-arm64/LICENSES.md`](../packaging/macos-arm64/LICENSES.md).
+Consumer builds need no external zstd/otool executable to deliver those notices.

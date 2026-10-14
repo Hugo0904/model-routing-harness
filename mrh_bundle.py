@@ -86,6 +86,9 @@ def read_lock(path=LOCK):
                 type(a['size']) is not int or not 0 < a['size'] < MAX_UNPACKED or
                 len(a['sha256']) != 64 or any(c not in '0123456789abcdef' for c in a['sha256'])):
             raise BundleError('runtime_lock_invalid')
+    snapshot = value.get('licensing_snapshot_sha256')
+    if snapshot is not None and (not isinstance(snapshot,str) or len(snapshot)!=64 or any(c not in '0123456789abcdef' for c in snapshot)):
+        raise BundleError('runtime_lock_invalid')
     return value
 
 
@@ -186,9 +189,56 @@ def extract_runtime(archive, destination, *, prefix='python'):
                 raise BundleError('unsafe_archive_link')
 
 
+def licensing_snapshot(destination, lock, runtime):
+    """Ship reviewed public notices without an undeclared tar/zstd/otool dependency."""
+    source=ROOT/'packaging/macos-arm64/license-snapshot'
+    try:
+        if source.is_symlink() or sha256(source/'snapshot.json')!=lock['licensing_snapshot_sha256']:
+            raise ValueError()
+        value=json.loads((source/'snapshot.json').read_bytes())
+        if value['schema_version']!=1 or value['source']!={'provider':lock['provider'],'release':lock['release'],
+                'runtime_sha256':lock['runtime']['sha256'],'licensing_sha256':lock['licensing_source']['sha256']}:
+            raise ValueError()
+        files=value['files']
+        actual={p.relative_to(source).as_posix() for p in source.rglob('*') if p.is_file()}
+        if actual!=set(files)|{'snapshot.json'} or any(p.is_symlink() for p in source.rglob('*')):
+            raise ValueError()
+        for name,info in files.items():
+            relative=_relative('python/'+name)
+            p=source/relative
+            if p.stat().st_size!=info['size'] or sha256(p)!=info['sha256']:
+                raise ValueError()
+        metadata=json.loads((source/'PYTHON.json').read_bytes());summary=value['summary']
+        if metadata['python_version']!=lock['python_version'] or metadata['target_triple']!=lock['target']:
+            raise ValueError()
+        if summary['metadata_sha256']!=files['PYTHON.json']['sha256'] or summary['metadata_source']!=lock['licensing_source']:
+            raise ValueError()
+        if summary['copied_notices']!={n:info['sha256'] for n,info in files.items() if n!='PYTHON.json'}:
+            raise ValueError()
+        binary=value['runtime_binary'];binary_path=Path(runtime)/_relative('python/'+binary['path'])
+        if sha256(binary_path)!=binary['sha256']:
+            raise ValueError()
+        missing=set(summary['required_license_paths'])-set(summary['copied_notices'])
+        if missing!=set(summary['missing_nonredistributed_alternative']) or missing-{'licenses/LICENSE.zlib-ng.txt'}:
+            raise ValueError()
+        if missing and '/usr/lib/libz.1.dylib' not in binary['verified_system_libraries']:
+            raise ValueError()
+    except (KeyError,TypeError,ValueError,OSError):
+        raise BundleError('licensing_snapshot_invalid') from None
+    destination=Path(destination)
+    if destination.exists():raise BundleError('output_exists')
+    destination.mkdir(parents=True)
+    for name in files:
+        p=destination/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes((source/name).read_bytes())
+    return {**summary,'snapshot_verification':{'sha256':lock['licensing_snapshot_sha256'],
+            'runtime_binary_sha256':binary['sha256'],'source':'locked public notice snapshot; exact pinned runtime binary'}}
+
+
 def licensing(full_archive, destination, lock, runtime):
-    # macOS's system libarchive handles zstd. Only fixed metadata/notices are
-    # read from the hash-verified full asset; no build scripts are executed.
+    if lock.get('licensing_snapshot_sha256'):
+        return licensing_snapshot(destination,lock,runtime)
+    # Compatibility for old lock files. The maintainer path may require zstd;
+    # current consumer builds use the locked public notice snapshot above.
     listing = subprocess.run(['/usr/bin/tar', '-tf', str(full_archive)], capture_output=True, text=True, check=True).stdout.splitlines()
     read = lambda name: subprocess.run(['/usr/bin/tar', '-xOf', str(full_archive), name], capture_output=True, check=True).stdout
     metadata_bytes = read('python/PYTHON.json'); metadata = json.loads(metadata_bytes)

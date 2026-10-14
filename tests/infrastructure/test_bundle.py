@@ -108,4 +108,48 @@ class BundleTests(unittest.TestCase):
             self.assertEqual(set(hashes), set(z.namelist()))
 
 
+class LicensingSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(prefix='mrh-notice-check-');self.addCleanup(self.temp.cleanup)
+        self.root=Path(self.temp.name).resolve();self.source=self.root/'packaging/macos-arm64/license-snapshot';self.source.mkdir(parents=True)
+        self.runtime=self.root/'runtime';(self.runtime/'bin').mkdir(parents=True)
+        binary=self.runtime/'bin/python3.11';binary.write_bytes(b'synthetic pinned binary')
+        self.lock=bundle.read_lock()
+        metadata=self.source/'PYTHON.json';metadata.write_text(json.dumps({'python_version':self.lock['python_version'],'target_triple':self.lock['target']}))
+        notice=self.source/'licenses/LICENSE.fixture.txt';notice.parent.mkdir();notice.write_text('Synthetic license fixture\n')
+        files={p.relative_to(self.source).as_posix():{'sha256':bundle.sha256(p),'size':p.stat().st_size} for p in (metadata,notice)}
+        self.value={'schema_version':1,'source':{'provider':self.lock['provider'],'release':self.lock['release'],'runtime_sha256':self.lock['runtime']['sha256'],'licensing_sha256':self.lock['licensing_source']['sha256']},'files':files,'runtime_binary':{'path':'bin/python3.11','sha256':bundle.sha256(binary),'verified_system_libraries':[]},'summary':{'metadata_sha256':files['PYTHON.json']['sha256'],'metadata_source':self.lock['licensing_source'],'required_license_paths':['licenses/LICENSE.fixture.txt'],'copied_notices':{'licenses/LICENSE.fixture.txt':files['licenses/LICENSE.fixture.txt']['sha256']},'missing_nonredistributed_alternative':{}}}
+        self.save_snapshot()
+
+    def save_snapshot(self):
+        (self.source/'snapshot.json').write_text(json.dumps(self.value))
+        self.lock['licensing_snapshot_sha256']=bundle.sha256(self.source/'snapshot.json')
+
+    def test_locked_snapshot_copies_notices_without_external_decompressor_or_otool(self):
+        destination=self.root/'out'
+        with patch('mrh_bundle.ROOT',self.root),patch('mrh_bundle.subprocess.run',side_effect=AssertionError('external licensing command forbidden')):
+            result=bundle.licensing(self.root/'unused.tar.zst',destination,self.lock,self.runtime)
+        self.assertEqual((destination/'licenses/LICENSE.fixture.txt').read_bytes(),(self.source/'licenses/LICENSE.fixture.txt').read_bytes())
+        self.assertEqual(result['snapshot_verification']['runtime_binary_sha256'],bundle.sha256(self.runtime/'bin/python3.11'))
+
+    def test_modified_notice_or_binary_fails_before_output(self):
+        for target in (self.source/'licenses/LICENSE.fixture.txt',self.runtime/'bin/python3.11'):
+            original=target.read_bytes();target.write_bytes(b'changed')
+            with patch('mrh_bundle.ROOT',self.root):
+                with self.assertRaisesRegex(bundle.BundleError,'licensing_snapshot_invalid'):
+                    bundle.licensing(self.root/'unused',self.root/'out',self.lock,self.runtime)
+            self.assertFalse((self.root/'out').exists());target.write_bytes(original)
+
+    def test_unknown_notice_or_wrong_provenance_fails_closed(self):
+        (self.source/'unknown').write_bytes(b'not declared')
+        with patch('mrh_bundle.ROOT',self.root):
+            with self.assertRaisesRegex(bundle.BundleError,'licensing_snapshot_invalid'):
+                bundle.licensing(self.root/'unused',self.root/'out',self.lock,self.runtime)
+        (self.source/'unknown').unlink();self.value['source']['release']='not-pinned';self.save_snapshot()
+        with patch('mrh_bundle.ROOT',self.root):
+            with self.assertRaisesRegex(bundle.BundleError,'licensing_snapshot_invalid'):
+                bundle.licensing(self.root/'unused',self.root/'out',self.lock,self.runtime)
+        self.assertFalse((self.root/'out').exists())
+
+
 if __name__ == '__main__': unittest.main()
