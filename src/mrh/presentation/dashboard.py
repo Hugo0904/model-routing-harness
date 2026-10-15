@@ -183,7 +183,17 @@ def _where(data, policy, inner, p, color):
     role_list = "、".join(f"{r} {n}" for r, n in sorted(skill.items(), key=lambda x: -x[1]))
     right = bar("有改派（MRH＋skill）", *stats_view.rerouted(data),
                 f"照 MRH 建議 {followed} / {advised} 次 · skill 自選 {skill_total} 次", role_list)
-    right += bar("信心足夠、可分級", total - data["kept_unchanged"].get("low_confidence", 0), total, f"信心門檻 {policy['threshold']:.2f}")
+    if data.get("children_started"):
+        matched, started = stats_view.tier_model_children(data, policy)
+        right += bar("子代理用了分級表的模型", matched, started, f"{matched} / {started} 個子代理，其餘沿用主模型或其他模型")
+    conf = data.get("confidence") or {}
+    for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
+        c = conf.get(key) or {}
+        if c.get("avg") is None:
+            right += [p(f"平均信心度 · {label}：沒有分級紀錄", "faint"), ""]
+        else:
+            right += bar(f"平均信心度 · {label}", round(c["avg"] * 100), 100,
+                         f"{c['avg']:.2f}（{c['n']} 次分級）" + (f" · 門檻 {policy['threshold']:.2f}" if key == "total" else ""))
     if not wide:
         return left + [""] + right, total
     height = max(len(left), len(right))

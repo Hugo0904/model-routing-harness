@@ -30,7 +30,7 @@ class StatsViewTests(unittest.TestCase):
     def test_readable_summary_answers_what_why_effect_and_cost(self):
         text = stats_view.render(self.store.stats(0), "全部紀錄", 0.65)
         for expected in ("共 5 次（Claude Code 4、Codex 1）", "專門角色、fork 或自訂子代理", "分級信心低於門檻（門檻 0.65）",
-                         "1 / 2 次（50%）", "claude-haiku-5-5 1 次",
+                         "1 / 5 次委派（20%）", "其中照 MRH 建議 1 / 2 次", "claude-haiku-5-5 1 次", "分級信心：24 小時內 0.90（4 次）、總平均 0.90（4 次）；門檻 0.65",
                          "light 1（25%）", "Jev：呼叫 1 次，輸入 440 tokens，估計 < $0.0001"):
             self.assertIn(expected, text)
         counts = [l for l in text.splitlines() if l.rstrip().endswith(" 次") and l.startswith("    ") and "→" not in l and "：" not in l]

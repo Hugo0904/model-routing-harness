@@ -105,11 +105,19 @@ def kept_without_skill(data):
 
 
 def rerouted(data):
-    """(re-routed, decided): MRH advice the parent followed plus every skill delegation, over advice given plus skill delegations.
-    A skill delegation is a re-route by definition: the skill picked the model itself."""
-    skill = sum(skill_roles(data).values())
-    advised = data["decisions"].get("advise", 0)
-    return data["children_following_advice"] + skill, advised + skill
+    """(re-routed, all delegations): MRH advice the parent followed plus every skill delegation, over every delegation counted.
+    A skill delegation is a re-route by definition: the skill picked the model itself. The rest is "not re-routed", and the
+    reasons for it are the unchanged-reasons list."""
+    d = data["decisions"]
+    total = d.get("advise", 0) + d.get("continue_main", 0) + d.get("preserve", 0)
+    return data["children_following_advice"] + sum(skill_roles(data).values()), total
+
+
+def confidence_text(data, threshold=None):
+    c = data.get("confidence") or {}
+    parts = [f"{label} {c[key]['avg']:.2f}（{c[key]['n']} 次）" for key, label in (("last_24h", "24 小時內"), ("total", "總平均"))
+             if c.get(key, {}).get("avg") is not None]
+    return "、".join(parts) + (f"；門檻 {threshold:.2f}" if parts and threshold is not None else "") if parts else None
 
 
 def _alias_match(candidate, model):
@@ -190,7 +198,7 @@ def render(data, period_label, threshold=None, color=False, policy=None):
     followed = data["children_following_advice"]
     moved, decided = rerouted(data)
     lines += ["■ 改派的效果",
-              f"    有改派（MRH＋skill）  {progress_bar(moved * 100 // decided if decided else 0, 24, color)}  {moved} / {decided} 次（{_pct(moved, decided)}）",
+              f"    有改派（MRH＋skill）  {progress_bar(moved * 100 // decided if decided else 0, 24, color)}  {moved} / {decided} 次委派（{_pct(moved, decided)}）",
               f"    其中照 MRH 建議 {followed} / {advised} 次；skill 自選 {skill_total} 次" +
               ("（" + "、".join(f"{r} {n}" for r, n in sorted(skill_roles(data).items(), key=lambda x: -x[1])) + "）" if skill_total else "")]
     if data["followed_models"]:
@@ -204,7 +212,10 @@ def render(data, period_label, threshold=None, color=False, policy=None):
         tsum = sum(n for _, n in parts)
         lines += ["■ 分級結果（分級器判定的難度）",
                   "    " + stacked_bar(parts, 48, color),
-                  "    " + "   ".join(f"{_swatch(t, color)} {t.lower()} {n}（{_pct(n, tsum)}）" for t, n in parts), ""]
+                  "    " + "   ".join(f"{_swatch(t, color)} {t.lower()} {n}（{_pct(n, tsum)}）" for t, n in parts)]
+        if confidence_text(data, threshold):
+            lines.append("    分級信心：" + confidence_text(data, threshold))
+        lines.append("")
     lines.append("■ 分級器用量")
     if not data["classifier_usage"]:
         lines.append("    沒有呼叫分級器。")

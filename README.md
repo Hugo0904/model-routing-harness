@@ -64,7 +64,7 @@ mrh ctrl                          # 互動設定；取消不保存
 mrh ctrl show --json              # 公開設定
 mrh status --json                 # 唯讀狀態／Monitor 出口
 mrh stats                        # 分級、回退、派工與已觀測採用
-mrh stats reset --days 7          # 預覽，確認後才刪統計
+mrh stats reset --hours 24        # 預覽，確認後才刪統計（另有 --today、--days N、--all）
 mrh ctrl set enabled off          # 停用路由
 ```
 

@@ -50,6 +50,18 @@ class ResetTests(unittest.TestCase):
         self.store.save("again", AdvisoryRequest("claude", "s", "t", "x", "task"), "h", Advice("preserve", "named_role"), "jev", NOW)
         self.assertEqual(self.rows()["advice"], 3)
 
+    def test_last_24_hours_removes_only_the_newest_delegation_and_is_described_in_hours(self):
+        cutoff = stats_reset.cutoff_for("hours", 24, NOW)
+        self.assertEqual(cutoff, NOW - DAY)
+        self.assertEqual(stats_reset.describe("hours", 24), "最近 24 小時內")
+        self.assertEqual(self.store.preview_since(cutoff)["delete"], {t: 1 for t in AdviceStore.TABLES})   # only the 0.5-day-old one
+        out, err = io.StringIO(), io.StringIO()
+        code = ctrl.main(Namespace(settings=self.path, width=100, json=False, ctrl_action="reset", all=False, today=False,
+                                   reset_hours=24, reset_days=None, yes=False), stdin=io.StringIO(), stdout=out, stderr=err)
+        self.assertEqual(code, 0, err.getvalue())
+        self.assertIn("最近 24 小時內", out.getvalue())
+        self.assertEqual(self.rows(), {t: 4 for t in AdviceStore.TABLES})              # no --yes: preview only
+
     def test_today_starts_at_local_midnight_and_all_removes_everything(self):
         midnight = stats_reset.cutoff_for("today", None, NOW)
         local = time.localtime(NOW)
@@ -77,7 +89,7 @@ class ResetTests(unittest.TestCase):
         before = self.path.read_bytes()
         total = sum(self.rows().values())
         out, err = io.StringIO(), io.StringIO()
-        script = "\n".join(["10", "5", f"刪除 {total}", "13"]) + "\n"                # menu: clear stats -> all -> confirm -> quit
+        script = "\n".join(["10", "6", f"刪除 {total}", "13"]) + "\n"                # menu: clear stats -> all -> confirm -> quit
         code = ctrl.main(Namespace(settings=self.path, width=100, json=False, ctrl_action=None), stdin=Tty(script), stdout=out, stderr=err)
         self.assertEqual(code, 0, err.getvalue())
         self.assertEqual(sum(self.rows().values()), 0)

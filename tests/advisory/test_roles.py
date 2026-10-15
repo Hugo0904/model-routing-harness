@@ -68,6 +68,9 @@ class RoleRecordingTests(unittest.TestCase):
         self.assertEqual(data["explicit_without_role"], 1)
         self.assertEqual(data["role_recorded"], 4)
         self.assertEqual(data["children_inherited"], 1)
+        self.assertEqual(stats_view.rerouted(data), (2, 5))               # 2 skill picks of 5 delegations; the advice was not followed
+        self.assertAlmostEqual(data["confidence"]["total"]["avg"], .9); self.assertEqual(data["confidence"]["total"]["n"], 1)
+        self.assertEqual(data["confidence"]["last_24h"], data["confidence"]["total"])
         self.assertEqual(data["children_models"], {"codex": {"gpt-6-luna": 1, "gpt-6.1-sol": 1}, "claude": {"haiku": 1}})
         policy = settings()["policy"]                                     # tiers: haiku, gpt-5.6-luna, sonnet
         self.assertEqual(stats_view.tier_model_children(data, policy), (1, 4))
@@ -83,7 +86,7 @@ class RoleRecordingTests(unittest.TestCase):
             for color in (False, True):
                 with self.subTest(width=width, color=color):
                     text = ANSI.sub("", dashboard.render(settings(), data, "過去 7 天", width, color, today="2026-10-15"))
-                    for expected in ("有改派（MRH＋skill）", "skill 自選 1 次", "luna_worker 1", "由 Router skill 自己選模型派工"):
+                    for expected in ("有改派（MRH＋skill）", "skill 自選 1 次", "luna_worker 1", "由 Router skill 自己選模型派工", "子代理用了分級表的模型", "平均信心度 · 24 小時內", "平均信心度 · 總平均", "0.90"):
                         self.assertIn(expected, text)
                     card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
                     self.assertEqual({cell_width(l) for l in card}, {width})

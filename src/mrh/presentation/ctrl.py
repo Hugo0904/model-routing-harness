@@ -386,7 +386,7 @@ class Session:
             self.set_key("stats.retention_days", value, f"統計保留 → {'永久' if value == '0' else value + ' 天'}")
 
     def reset(self):
-        scope, days = self.menu.pick("要清除哪個範圍的統計？", [("今天", ("today", None)), ("最近 7 天內", ("days", 7)), ("最近 30 天內", ("days", 30)),
+        scope, days = self.menu.pick("要清除哪個範圍的統計？", [("最近 24 小時內", ("hours", 24)), ("今天（從 00:00 起）", ("today", None)), ("最近 7 天內", ("days", 7)), ("最近 30 天內", ("days", 30)),
                                                               ("自己輸入天數", ("custom", None)), ("全部", ("all", None))])
         if scope == "custom":
             raw = self.menu.text("最近幾天內的紀錄要清除？（輸入正整數）")
@@ -452,10 +452,12 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
                 scope, days = "all", None
             elif args.today:
                 scope, days = "today", None
+            elif args.reset_hours:
+                scope, days = "hours", args.reset_hours
             elif args.reset_days:
                 scope, days = "days", args.reset_days
             else:
-                return _fail(stderr, "請指定範圍：--today、--days N 或 --all（再加 --yes 才會真的刪除，不加只顯示預覽）")
+                return _fail(stderr, "請指定範圍：--hours N、--today、--days N 或 --all（再加 --yes 才會真的刪除，不加只顯示預覽）")
             return reset_stats(path, scope, days, yes=args.yes, stdin=stdin, stdout=stdout)
         if action == "dashboard":
             if getattr(args, "json", False):

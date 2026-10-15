@@ -52,6 +52,12 @@ def candidates(row):
     return tuple(payload(row).get("candidates", ()))
 
 
+def _average(rows, since):
+    """{"avg": mean confidence or None, "n": classifications} for rows at or after `since`."""
+    values = [r["confidence"] for r in rows if r["confidence"] is not None and r["ts"] >= since]
+    return {"avg": sum(values) / len(values) if values else None, "n": len(values)}
+
+
 def _encode(req, data):
     """New rows always carry the spawn's role key (None when there was none): its presence marks rows that recorded it."""
     from mrh.routing.types import safe_id
@@ -432,6 +438,7 @@ class AdviceStore:
                 "children_started": len(children), "children_following_advice": followed,
                 "followed_models": followed_models, "followed_requested_models": requested_models,
                 "observed_models": observed_models,
+                "confidence": {"last_24h": _average(rows, time.time() - 86400), "total": _average(rows, 0)},
                 "roles": roles, "role_reasons": role_reasons, "role_recorded": role_recorded, "explicit_without_role": explicit_without_role,
                 "children_models": child_models, "children_inherited": inherited,
                 "packet_classifications": sum(r['request_id'] in packet_queries and r['tier'] is not None for r in recent),

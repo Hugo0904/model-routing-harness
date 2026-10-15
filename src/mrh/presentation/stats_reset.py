@@ -15,6 +15,8 @@ def cutoff_for(scope, days, now):
     if scope == "today":
         local = time.localtime(now)
         return time.mktime((local.tm_year, local.tm_mon, local.tm_mday, 0, 0, 0, 0, 0, -1))
+    if scope == "hours":                      # `days` carries the number of hours for this scope
+        return now - days * 3600
     return now - days * 86400
 
 
@@ -23,6 +25,8 @@ def describe(scope, days):
         return "全部紀錄"
     if scope == "today":
         return "今天（從今天 00:00 起）"
+    if scope == "hours":
+        return f"最近 {days:g} 小時內"
     return f"最近 {days:g} 天內"
 
 
