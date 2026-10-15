@@ -10,6 +10,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -142,6 +143,49 @@ print(json.dumps(out))
         with self.assertRaisesRegex(setup.SetupError,'reader_incompatible'):self.run_setup(self.args('--rollback'))
         self.assertEqual(json.loads(self.native.read_text())['mutations'],before)
         self.assertEqual(self.state()['current'],state['current'])
+
+    def test_codex_hook_bytes_stay_stable_and_execute_selected_generation_after_update_and_rollback(self):
+        trace=self.root/'interpreter-trace.jsonl'
+        def traced_build(*args,**kwargs):
+            self.fake_build(*args,**kwargs)
+            stage=Path(args[1]);python=stage/'runtime/bin/python3.11'
+            python.write_text('#!'+sys.executable+'\n'+
+                'import json,os,sys\nfrom pathlib import Path\n'+
+                'with Path('+repr(str(trace))+').open("a") as log:\n'+
+                ' log.write(json.dumps({"python":str(Path(__file__).resolve()),"args":sys.argv[1:]})+"\\n")\n'+
+                'os.execv(sys.executable,[sys.executable,*sys.argv[1:]])\n')
+            manifest=setup.document(stage/'manifest.json');manifest['files']=bundle.file_manifest(stage)
+            (stage/'manifest.json').write_text(json.dumps(manifest))
+        def current_hooks():
+            root=Path(self.state()['hosts']['codex']['artifact'])/'plugins/model-routing-harness'
+            return root,(root/'hooks/hooks.json').read_bytes()
+        def exercise(root,raw):
+            generation=(self.prefix/'current').resolve()
+            for event in ('PreToolUse','PostToolUse'):
+                command=json.loads(raw)['hooks'][event][0]['hooks'][0]['command']
+                self.assertIn('"${PLUGIN_ROOT}/launcher.py"',command)
+                self.assertEqual(shlex.split(command)[0],str(self.prefix/'current/runtime/bin/python3.11'))
+                trace.write_text('')
+                run=subprocess.run(command,shell=True,env={**os.environ,'PLUGIN_ROOT':str(root)},
+                    input=json.dumps({'hook_event_name':event,'tool_name':'Bash','tool_input':{'command':'ls'},'cwd':str(self.root)}),
+                    capture_output=True,text=True,timeout=10)
+                self.assertEqual(run.returncode,0,run.stderr);self.assertEqual(json.loads(run.stdout),{})
+                calls=[json.loads(line) for line in trace.read_text().splitlines()]
+                self.assertEqual([c['python'] for c in calls],[str(generation/'runtime/bin/python3.11')]*2)
+                self.assertEqual(calls[0]['args'],['-I','-B',str(root/'launcher.py')])
+                self.assertIn(str(root/'runtime.pyz'),calls[1]['args'])
+        self.run_setup(self.args('--codex-packets'),build=traced_build)
+        first=self.state()['current'];first_root,first_hooks=current_hooks()
+        self.revision='two';self.run_setup(self.args('--codex-packets'),build=traced_build)
+        second=self.state()['current'];second_root,second_hooks=current_hooks()
+        self.assertNotEqual(first,second)
+        self.assertEqual(hashlib.sha256(first_hooks).hexdigest(),hashlib.sha256(second_hooks).hexdigest())
+        self.assertEqual(first_hooks,second_hooks)
+        exercise(second_root,second_hooks)
+        self.run_setup(self.args('--rollback'))
+        self.assertEqual(self.state()['current'],first)
+        self.assertEqual(current_hooks(),(first_root,first_hooks))
+        exercise(first_root,first_hooks)
 
     def test_bin_conflict_and_foreign_marketplace_reject_before_profile_or_build(self):
         self.bin.mkdir();(self.bin/'mrh').write_text('user file')

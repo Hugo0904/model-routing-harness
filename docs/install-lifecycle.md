@@ -37,6 +37,24 @@ an interpreter/artifact still referenced by Claude. Nonselected hosts are not
 rewired. A generation is retained while any configured host can reference it;
 this installer does not automatically reclaim old generations.
 
+Codex hook commands use `<prefix>/current/runtime/bin/python3.11` and the
+unchanged `${PLUGIN_ROOT}/launcher.py`. Only the Codex `hooks.json` uses that
+stable interpreter path; each launcher's binding keeps its own generation's
+interpreter and runtime. Setup switches both native registration and `current`
+on update or rollback. Hooks from two generations built with this scheme have
+identical bytes for the same prefix and hook definitions, so a generation change
+alone does not change the trusted command. Migrating from the older absolute
+generation commands requires one native `/hooks` review of PreToolUse and
+PostToolUse. Later changes to the command, matcher, timeout or installation prefix
+may still require another review. Rolling back to a generation predating this
+scheme restores its old command and may also require review; retained generations
+are never rewritten to avoid that review.
+
+Registration precedes the atomic `current` switch. During that short transition,
+the new launcher can start under the previous generation's compatible Python,
+then uses its immutable binding to run its own runtime. After completion, both
+the interpreter entry and registered launcher select the intended generation.
+
 ## Failure and recovery
 
 There is no atomic transaction across native hosts. Registration may complete

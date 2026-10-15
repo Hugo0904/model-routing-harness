@@ -411,7 +411,7 @@ def compatible(generation, settings):
     return metadata
 
 
-def finish_generation(stage, destination, settings, selected, fingerprint):
+def finish_generation(stage, destination, settings, selected, fingerprint, prefix):
     """Prepare inside private staging; publish only the complete final-path artifact."""
     for h, info in selected.items():
         artifact = stage / 'hosts' / h
@@ -422,6 +422,11 @@ def finish_generation(stage, destination, settings, selected, fingerprint):
         for p in artifact.rglob('*.json'):
             if p.name == 'artifact.json': continue
             data = p.read_bytes().replace(str(stage).encode(), str(destination).encode())
+            if h == 'codex' and p == artifact / 'plugins' / plugin.NAME / 'hooks/hooks.json':
+                # Native trust covers this command. Keep it stable across updates;
+                # PLUGIN_ROOT and binding.json still select the registered artifact.
+                # Do not resolve current: it may point to the previous generation.
+                data = data.replace(str(destination).encode(), str(prefix / 'current').encode())
             p.write_bytes(data); p.chmod(0o600)
         meta = document(artifact/'artifact.json')
         meta['python'] = str(destination/'runtime/bin/python3.11')
@@ -609,7 +614,7 @@ def install(args, *, build=bundle.build):
                     build(cache, stage, temporary / 'bundle.tar.gz', download=True)
                     verify_bundle(stage)
                     prepare_profile()
-                    finish_generation(stage,generation,settings,selected,fingerprint)
+                    finish_generation(stage,generation,settings,selected,fingerprint,prefix)
                     stage.rename(generation)
             else:
                 verify_bundle(generation)
