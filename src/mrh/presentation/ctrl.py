@@ -104,7 +104,8 @@ def statistics(path, days):
         "tiers": {}, "classifier_usage": {}, "children_following_advice": 0, "followed_models": {}, "followed_requested_models": {},
         "reissues": 0, "unverified_reissues": 0, "unverified_followed_children": 0, "classifier_calls": 0, "classifier_requests": 0,
         "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0,
-        "packet_classifications": 0, "packet_releases": 0, "packet_children_started": 0, "packet_children_following_advice": 0}
+        "packet_classifications": 0, "packet_releases": 0, "packet_children_started": 0, "packet_children_following_advice": 0,
+        "roles": {}, "role_recorded": 0, "explicit_without_role": 0, "children_models": {}, "children_inherited": 0}
     return data, label
 
 
@@ -112,7 +113,8 @@ def stats_text(path, days, as_json=False, color=False):
     data, label = statistics(path, days)
     if as_json:
         return json.dumps(data, indent=2, sort_keys=True)
-    return stats_view.render(data, label, v2.read(path)["policy"]["threshold"], color)
+    policy = v2.read(path)["policy"]
+    return stats_view.render(data, label, policy["threshold"], color, policy)
 
 
 def report_html_page(path, days):

@@ -52,6 +52,13 @@ def candidates(row):
     return tuple(payload(row).get("candidates", ()))
 
 
+def _encode(req, data):
+    """New rows always carry the spawn's role key (None when there was none): its presence marks rows that recorded it."""
+    from mrh.routing.types import safe_id
+    role = req.role if req.role is None or safe_id(req.role) else "other"
+    return json.dumps({**({"candidates": data} if isinstance(data, list) else data), "role": role})
+
+
 def _matches(row, model, effort):
     return any(c.get("model") == model and (not c.get("effort") or c["effort"] == effort)
                for c in candidates(row))
@@ -285,14 +292,14 @@ class AdviceStore:
                         "model": req.explicit_model, "effort": req.explicit_effort}}
             db.execute("INSERT INTO advice VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        (rid, now, req.platform, req.session_id, req.turn_id, req.call_id, thash,
-                        "preserve", reason, None, None, provider, json.dumps(data)))
+                        "preserve", reason, None, None, provider, _encode(req, data)))
             return {**dict(db.execute("SELECT * FROM advice WHERE request_id=?", (rid,)).fetchone()), "_replayed": False}
 
     def save(self, rid, req, thash, advice, provider, now):
         with self.connect() as db:
             db.execute("INSERT OR IGNORE INTO advice VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        (rid, now, req.platform, req.session_id, req.turn_id, req.call_id, thash, advice.action,
-                        advice.reason, advice.tier, advice.confidence, provider, json.dumps(list(advice.candidates))))
+                        advice.reason, advice.tier, advice.confidence, provider, _encode(req, list(advice.candidates))))
 
     def attempt(self, rid, kind, outcome, now, **meta):
         values = {k: v for k, v in meta.items() if k in _META}
@@ -347,13 +354,21 @@ class AdviceStore:
         packet_releases = {p['release_request_id'] for p in packets if p['release_request_id']}
         packet_queries = {p['query_request_id'] for p in packets}
         counted = [r for r in recent if r["request_id"] not in links and r['request_id'] not in packet_releases]
-        by_action, per_platform, reasons, tiers = {}, {}, {}, {}
+        by_action, per_platform, reasons, tiers, roles = {}, {}, {}, {}, {}
+        role_recorded, explicit_without_role = 0, 0
         def inc(mapping, key):
             mapping[key] = mapping.get(key, 0) + 1
         for row in counted:
             inc(by_action, row["action"]); inc(per_platform.setdefault(row["platform"], {}), row["action"])
             if row["action"] == "preserve": inc(reasons, row["reason"])
             if row["tier"] is not None: inc(tiers, row["tier"])
+            meta = payload(row)
+            if "role" in meta:                      # older rows never recorded the role; they stay unknown
+                role_recorded += 1
+                if meta["role"]:
+                    inc(roles, meta["role"])
+                elif row["reason"] in ("explicit_model", "explicit_effort"):
+                    explicit_without_role += 1
         usage, grouped = {}, {}
         for row in attempts:
             grouped.setdefault((row["request_id"], row["kind"]), []).append(row)
@@ -370,10 +385,14 @@ class AdviceStore:
                 u[field] += max((e[field] for e in events if e[field] is not None), default=0)
             u["usage_unknown_calls"] += int(entered and not any(e["input_tokens"] is not None for e in events))
         followed_models, requested_models, observed_models, followed, unverified, prior = {}, {}, {}, 0, 0, 0
-        packet_started, packet_followed = 0, 0
+        packet_started, packet_followed, child_models, inherited = 0, 0, {}, 0
         for child in children:
             if child["resolved_model"]:
                 inc(observed_models, child["resolved_model"])
+            if child["resolved_model"] or child["requested_model"]:
+                inc(child_models.setdefault(child["platform"], {}), child["resolved_model"] or child["requested_model"])
+            else:
+                inherited += 1
             pre = by_call.get((child["platform"], child["session_id"], child["call_id"]), [])
             link = links.get(pre[0]["request_id"]) if len(pre) == 1 else None
             packet_link = packet_links.get(pre[0]['request_id']) if len(pre) == 1 else None
@@ -413,6 +432,8 @@ class AdviceStore:
                 "children_started": len(children), "children_following_advice": followed,
                 "followed_models": followed_models, "followed_requested_models": requested_models,
                 "observed_models": observed_models,
+                "roles": roles, "role_recorded": role_recorded, "explicit_without_role": explicit_without_role,
+                "children_models": child_models, "children_inherited": inherited,
                 "packet_classifications": sum(r['request_id'] in packet_queries and r['tier'] is not None for r in recent),
                 "packet_releases": sum(r['request_id'] in packet_links for r in recent),
                 "packet_children_started": packet_started, "packet_children_following_advice": packet_followed}

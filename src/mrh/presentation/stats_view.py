@@ -22,6 +22,10 @@ REASON = {
 }
 PROVIDER = {"jev": "Jev", "codex_subscription": "Codex 訂閱", "claude_subscription": "Claude 訂閱", "synthetic": "測試資料"}
 JEV_USD_PER_INPUT_TOKEN = 0.042 / 1_000_000
+# Codex roles installed by the engineering-workflow-router skill (~/.codex/agents/*.toml). Only that skill spawns them,
+# so a delegation with one of these roles is the skill choosing its own model. Claude has no equivalent marker.
+ROUTER_SKILL_ROLES = ("luna_worker", "sol_worker", "lean_explorer", "risk_reviewer", "architecture_analyst",
+                      "principal_analyst", "expert_council")
 # Official list prices per million tokens (input, output), checked 2026-10. Display only; nothing is billed from this table.
 CLAUDE_PRICES = (("haiku", (0.10, 0.50)), ("sonnet", (2, 10)), ("opus", (4, 20)), ("fable", (10, 50)))
 
@@ -79,6 +83,35 @@ def _pct(part, whole):
     return f"{part * 100 // whole}%" if whole else "—"
 
 
+def skill_roles(data):
+    """{role: count} of delegations the Router skill made with its own roles."""
+    return {r: n for r, n in data.get("roles", {}).items() if r in ROUTER_SKILL_ROLES}
+
+
+def _alias_match(candidate, model):
+    return model == candidate or (candidate.isalpha() and candidate in model)   # "haiku" ~ "claude-haiku-5-5"
+
+
+def tier_model_children(data, policy):
+    """How many started subagents ran on a model from your Light/Small/Mid table, and how many reported a model at all."""
+    matched = 0
+    for platform, models in data.get("children_models", {}).items():
+        table = {c["model"] for tier in ("Light", "Small", "Mid") for c in policy["tiers"].get(tier, {}).get(platform, [])}
+        matched += sum(n for m, n in models.items() if any(_alias_match(c, m) for c in table))
+    return matched, data.get("children_started", 0)
+
+
+def skill_notes(data, total):
+    """Caveats shared by every consumer of the skill bar."""
+    notes = []
+    if data.get("explicit_without_role"):
+        notes.append(f"另有 {data['explicit_without_role']} 次主模型自選（非 skill 角色）")
+    unknown = total - data.get("role_recorded", 0)
+    if unknown > 0:
+        notes.append(f"之前 {unknown} 次未記錄角色，無法分辨")
+    return notes
+
+
 def accounting_notes(data):
     """One explanation of evidence limits for every statistics consumer."""
     notes = []
@@ -97,7 +130,7 @@ def accounting_notes(data):
     return notes
 
 
-def render(data, period_label, threshold=None, color=False):
+def render(data, period_label, threshold=None, color=False, policy=None):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
     total = advised + main + kept
@@ -121,6 +154,23 @@ def render(data, period_label, threshold=None, color=False):
             if reason == "low_confidence" and threshold is not None:
                 label += f"（門檻 {threshold:.2f}）"
             lines.append("    " + _pad(label, 52) + f"{n:>4} 次")
+        lines.append("")
+    skill = skill_roles(data)
+    skill_total = sum(skill.values())
+    lines += ["■ 誰決定子代理的模型",
+              f"    Router skill 自己派工  {progress_bar(skill_total * 100 // total, 24, color)}  {skill_total} / {total} 次（{_pct(skill_total, total)}）",
+              f"    MRH 分級後出手        {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）"]
+    if skill:
+        lines.append("    skill 角色：" + "、".join(f"{r} {n} 次" for r, n in sorted(skill.items(), key=lambda x: -x[1])))
+    lines += ["    " + note for note in skill_notes(data, total)] + [""]
+    if policy is not None and data.get("children_started"):
+        matched, started = tier_model_children(data, policy)
+        lines += ["■ 子代理實際用的模型",
+                  f"    用了分級表的模型  {progress_bar(matched * 100 // started, 24, color)}  {matched} / {started} 個子代理（{_pct(matched, started)}）"]
+        for platform, models in sorted(data.get("children_models", {}).items()):
+            lines.append(f"    {PLATFORM.get(platform, platform)}：" + "、".join(f"{m} {n}" for m, n in sorted(models.items(), key=lambda x: -x[1])))
+        if data.get("children_inherited"):
+            lines.append(f"    沿用主模型（沒指定模型）：{data['children_inherited']} 個")
         lines.append("")
     followed = data["children_following_advice"]
     lines += ["■ 建議的效果",
