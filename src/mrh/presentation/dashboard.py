@@ -153,7 +153,9 @@ def _where(data, policy, inner, p, color):
     if not total:
         return [p("這段期間還沒有子代理委派經過 MRH。", "dim"),
                 *[p(clip(note, inner), "faint") for note in stats_view.accounting_notes(data)]], 0
-    parts = [(t, data["tiers"][t]) for t in TIERS if data["tiers"].get(t)]
+    skill = stats_view.skill_roles(data)
+    skill_total = sum(skill.values())
+    parts = [(t, data["tiers"][t]) for t in TIERS if data["tiers"].get(t)] + ([("Skill", skill_total)] if skill_total else [])
     wide = inner >= 96
     left_w = (inner * 11) // 20 if wide else inner
     right_w = inner - left_w - 4 if wide else inner
@@ -161,12 +163,14 @@ def _where(data, policy, inner, p, color):
     left = [p(_pct_row(parts, bw), "text"), stats_view.stacked_bar(parts, bw, color)]
     legend = "  ".join(f"{stats_view._swatch(t, color)} {t.lower()} {n}" for t, n in parts)
     left += ["", legend, "", p(f"{advised + main} 次由路由器處理（{advised} 次給建議、{main} 次留給主模型）", "text"),
-             p(f"{kept} 次原樣放行", "dim")]
+             *([p(f"{skill_total} 次由 Router skill 自己選模型派工", "text")] if skill_total else []),
+             p(f"{kept - skill_total} 次原樣放行", "dim")]
     if data.get("reissues"):
         left += ["", p(f"另有 {data['reissues']} 次是主模型照建議重派的後續呼叫（不重複計算）", "faint")]
-    if data["kept_unchanged"]:
+    kept_reasons = stats_view.kept_without_skill(data)
+    if kept_reasons:
         left.append("")
-        for reason, n in sorted(data["kept_unchanged"].items(), key=lambda x: -x[1])[:4]:
+        for reason, n in sorted(kept_reasons.items(), key=lambda x: -x[1])[:4]:
             left.append(p("· " + clip(stats_view.REASON.get(reason, reason), left_w - 8) + f"  {n}", "dim"))
     followed = data["children_following_advice"]
     left += [p(clip(note, left_w), "faint") for note in stats_view.accounting_notes(data)]
@@ -176,16 +180,9 @@ def _where(data, policy, inner, p, color):
         pb = stats_view.progress_bar(pct, right_w, color)
         return [pad(p(title, "text"), right_w - len(f"{pct}%")) + p(f"{pct}%", "text"), pb,
                 *[p(clip(n, right_w), "faint") for n in notes if n], ""]
-    skill = stats_view.skill_roles(data)
-    skill_total = sum(skill.values())
     role_list = "、".join(f"{r} {n}" for r, n in sorted(skill.items(), key=lambda x: -x[1]))
-    right = (bar("Router skill 自己派工", skill_total, total, f"{skill_total} / {total} 次委派" + (f" · {role_list}" if role_list else ""),
-                 *stats_view.skill_notes(data, total)) +
-             bar("MRH 分級後出手", advised + main, total, f"{advised + main} / {total} 次委派（建議或留給主模型）") +
-             bar("主模型照建議改派", followed, advised, f"{followed} / {advised} 次建議"))
-    if data.get("children_started"):
-        matched, started = stats_view.tier_model_children(data, policy)
-        right += bar("子代理用了分級表的模型", matched, started, f"{matched} / {started} 個子代理，其餘沿用主模型或其他模型")
+    right = bar("有改派（MRH＋skill）", *stats_view.rerouted(data),
+                f"照 MRH 建議 {followed} / {advised} 次 · skill 自選 {skill_total} 次", role_list)
     right += bar("信心足夠、可分級", total - data["kept_unchanged"].get("low_confidence", 0), total, f"信心門檻 {policy['threshold']:.2f}")
     if not wide:
         return left + [""] + right, total

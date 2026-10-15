@@ -39,8 +39,9 @@ def claude_price(model):
 
 
 # ---- terminal bars
-TIER_RGB = {"Light": (75, 80, 168), "Small": (100, 105, 201), "Mid": (169, 174, 245), "Top": (232, 234, 252)}
-TIER_GLYPH = {"Light": "░", "Small": "▒", "Mid": "▓", "Top": "█"}
+TIER_RGB = {"Light": (75, 80, 168), "Small": (100, 105, 201), "Mid": (169, 174, 245), "Top": (232, 234, 252),
+            "Skill": (94, 196, 182)}
+TIER_GLYPH = {"Light": "░", "Small": "▒", "Mid": "▓", "Top": "█", "Skill": "▚"}
 
 
 def stacked_bar(parts, width, color):
@@ -88,6 +89,29 @@ def skill_roles(data):
     return {r: n for r, n in data.get("roles", {}).items() if r in ROUTER_SKILL_ROLES}
 
 
+def skill_reasons(data):
+    """{reason: count} behind the skill's delegations, so they are not listed again as "kept unchanged"."""
+    out = {}
+    for role, reasons in data.get("role_reasons", {}).items():
+        if role in ROUTER_SKILL_ROLES:
+            for reason, n in reasons.items():
+                out[reason] = out.get(reason, 0) + n
+    return out
+
+
+def kept_without_skill(data):
+    skill = skill_reasons(data)
+    return {r: n - skill.get(r, 0) for r, n in data["kept_unchanged"].items() if n - skill.get(r, 0) > 0}
+
+
+def rerouted(data):
+    """(re-routed, decided): MRH advice the parent followed plus every skill delegation, over advice given plus skill delegations.
+    A skill delegation is a re-route by definition: the skill picked the model itself."""
+    skill = sum(skill_roles(data).values())
+    advised = data["decisions"].get("advise", 0)
+    return data["children_following_advice"] + skill, advised + skill
+
+
 def _alias_match(candidate, model):
     return model == candidate or (candidate.isalpha() and candidate in model)   # "haiku" ~ "claude-haiku-5-5"
 
@@ -101,14 +125,11 @@ def tier_model_children(data, policy):
     return matched, data.get("children_started", 0)
 
 
-def skill_notes(data, total):
+def skill_notes(data):
     """Caveats shared by every consumer of the skill bar."""
     notes = []
     if data.get("explicit_without_role"):
         notes.append(f"另有 {data['explicit_without_role']} 次主模型自選（非 skill 角色）")
-    unknown = total - data.get("role_recorded", 0)
-    if unknown > 0:
-        notes.append(f"之前 {unknown} 次未記錄角色，無法分辨")
     return notes
 
 
@@ -140,29 +161,23 @@ def render(data, period_label, threshold=None, color=False, policy=None):
                                   "  （路由關閉、不在生效範圍，或主模型沒有派子代理時都不會有紀錄。）", *accounting_notes(data), ""])
     platforms = "、".join(f"{PLATFORM.get(p, p)} {sum(v.values())}" for p, v in sorted(data["per_platform"].items()))
     handled = advised + main
+    skill_total = sum(skill_roles(data).values())
     lines += [f"■ 子代理委派：共 {total} 次（{platforms}）",
               f"    路由器有出手的比例  {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）",
               "    " + _pad("給建議，請主模型改用你設定的模型", 40) + f"{advised:>4} 次",
               "    " + _pad("判定為 Top，請主模型自己做", 40) + f"{main:>4} 次",
-              "    " + _pad("沒有介入，原樣放行", 40) + f"{kept:>4} 次", ""]
+              "    " + _pad("Router skill 自己選模型派工", 40) + f"{skill_total:>4} 次",
+              "    " + _pad("沒有介入，原樣放行", 40) + f"{kept - skill_total:>4} 次", ""]
     if data.get("reissues"):
         lines += [f"    （另有 {data['reissues']} 次是主模型照建議重派的後續呼叫，已排除，不重複計算）", ""]
-    if data["kept_unchanged"]:
+    if kept_without_skill(data):
         lines.append("■ 沒有介入的原因")
-        for reason, n in sorted(data["kept_unchanged"].items(), key=lambda x: -x[1]):
+        for reason, n in sorted(kept_without_skill(data).items(), key=lambda x: -x[1]):
             label = REASON.get(reason, f"其他（{reason}）")
             if reason == "low_confidence" and threshold is not None:
                 label += f"（門檻 {threshold:.2f}）"
             lines.append("    " + _pad(label, 52) + f"{n:>4} 次")
         lines.append("")
-    skill = skill_roles(data)
-    skill_total = sum(skill.values())
-    lines += ["■ 誰決定子代理的模型",
-              f"    Router skill 自己派工  {progress_bar(skill_total * 100 // total, 24, color)}  {skill_total} / {total} 次（{_pct(skill_total, total)}）",
-              f"    MRH 分級後出手        {progress_bar(handled * 100 // total, 24, color)}  {handled} / {total} 次（{_pct(handled, total)}）"]
-    if skill:
-        lines.append("    skill 角色：" + "、".join(f"{r} {n} 次" for r, n in sorted(skill.items(), key=lambda x: -x[1])))
-    lines += ["    " + note for note in skill_notes(data, total)] + [""]
     if policy is not None and data.get("children_started"):
         matched, started = tier_model_children(data, policy)
         lines += ["■ 子代理實際用的模型",
@@ -173,8 +188,11 @@ def render(data, period_label, threshold=None, color=False, policy=None):
             lines.append(f"    沿用主模型（沒指定模型）：{data['children_inherited']} 個")
         lines.append("")
     followed = data["children_following_advice"]
-    lines += ["■ 建議的效果",
-              f"    主模型照建議改派  {progress_bar(followed * 100 // advised if advised else 0, 24, color)}  {followed} / {advised} 次（{_pct(followed, advised)}）"]
+    moved, decided = rerouted(data)
+    lines += ["■ 改派的效果",
+              f"    有改派（MRH＋skill）  {progress_bar(moved * 100 // decided if decided else 0, 24, color)}  {moved} / {decided} 次（{_pct(moved, decided)}）",
+              f"    其中照 MRH 建議 {followed} / {advised} 次；skill 自選 {skill_total} 次" +
+              ("（" + "、".join(f"{r} {n}" for r, n in sorted(skill_roles(data).items(), key=lambda x: -x[1])) + "）" if skill_total else "")]
     if data["followed_models"]:
         lines.append("    已回報的執行模型：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["followed_models"].items())))
     if advised > followed:

@@ -71,9 +71,9 @@ class RoleRecordingTests(unittest.TestCase):
         self.assertEqual(data["children_models"], {"codex": {"gpt-6-luna": 1, "gpt-6.1-sol": 1}, "claude": {"haiku": 1}})
         policy = settings()["policy"]                                     # tiers: haiku, gpt-5.6-luna, sonnet
         self.assertEqual(stats_view.tier_model_children(data, policy), (1, 4))
-        notes = " ".join(stats_view.skill_notes(data, 5))
+        notes = " ".join(stats_view.skill_notes(data))
         self.assertIn("另有 1 次主模型自選", notes)
-        self.assertIn("之前 1 次未記錄角色", notes)
+        self.assertNotIn("未記錄角色", notes)
 
     def test_status_card_shows_both_bars_and_keeps_its_width(self):
         self.explicit("w1", "gpt-6-luna", "max", "luna_worker")
@@ -83,12 +83,12 @@ class RoleRecordingTests(unittest.TestCase):
             for color in (False, True):
                 with self.subTest(width=width, color=color):
                     text = ANSI.sub("", dashboard.render(settings(), data, "過去 7 天", width, color, today="2026-10-15"))
-                    for expected in ("Router skill 自己派工", "MRH 分級後出手", "子代理用了分級表的模型", "luna_worker 1"):
+                    for expected in ("有改派（MRH＋skill）", "skill 自選 1 次", "luna_worker 1", "由 Router skill 自己選模型派工"):
                         self.assertIn(expected, text)
                     card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
                     self.assertEqual({cell_width(l) for l in card}, {width})
         text = stats_view.render(data, "全部紀錄", 0.65, False, settings()["policy"])
-        for expected in ("■ 誰決定子代理的模型", "Router skill 自己派工", "skill 角色：luna_worker 1 次", "■ 子代理實際用的模型"):
+        for expected in ("Router skill 自己選模型派工", "■ 改派的效果", "skill 自選 1 次（luna_worker 1）", "■ 子代理實際用的模型"):
             self.assertIn(expected, text)
 
 

@@ -354,7 +354,7 @@ class AdviceStore:
         packet_releases = {p['release_request_id'] for p in packets if p['release_request_id']}
         packet_queries = {p['query_request_id'] for p in packets}
         counted = [r for r in recent if r["request_id"] not in links and r['request_id'] not in packet_releases]
-        by_action, per_platform, reasons, tiers, roles = {}, {}, {}, {}, {}
+        by_action, per_platform, reasons, tiers, roles, role_reasons = {}, {}, {}, {}, {}, {}
         role_recorded, explicit_without_role = 0, 0
         def inc(mapping, key):
             mapping[key] = mapping.get(key, 0) + 1
@@ -366,7 +366,7 @@ class AdviceStore:
             if "role" in meta:                      # older rows never recorded the role; they stay unknown
                 role_recorded += 1
                 if meta["role"]:
-                    inc(roles, meta["role"])
+                    inc(roles, meta["role"]); inc(role_reasons.setdefault(meta["role"], {}), row["reason"])
                 elif row["reason"] in ("explicit_model", "explicit_effort"):
                     explicit_without_role += 1
         usage, grouped = {}, {}
@@ -432,7 +432,7 @@ class AdviceStore:
                 "children_started": len(children), "children_following_advice": followed,
                 "followed_models": followed_models, "followed_requested_models": requested_models,
                 "observed_models": observed_models,
-                "roles": roles, "role_recorded": role_recorded, "explicit_without_role": explicit_without_role,
+                "roles": roles, "role_reasons": role_reasons, "role_recorded": role_recorded, "explicit_without_role": explicit_without_role,
                 "children_models": child_models, "children_inherited": inherited,
                 "packet_classifications": sum(r['request_id'] in packet_queries and r['tier'] is not None for r in recent),
                 "packet_releases": sum(r['request_id'] in packet_links for r in recent),
