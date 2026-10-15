@@ -72,6 +72,8 @@ mrh ctrl set enabled off          # 停用路由
 
 舊的 `app/` 目錄會保留作為既有 interpreter／Claude 命令的錨點，不會為更新 Codex 而替換共享 runtime。所選宿主的新 wiring 指向完整、獨立的代；未選宿主保持原樣。隔離驗證可明確指定 `--prefix`、`--config-root`、`--bin-dir`、`--cache-root`、`--settings`、`--codex-cli`、`--claude-cli` 或 `--claude-settings`，不必改 HOME/CODEX_HOME；CLI override 的來源會明列，並沿相同 metadata 檢查，不代表真正 vendor／帳號驗收。更多恢復細節見[安裝生命週期](docs/install-lifecycle.md)。舊 `install_local.py` 入口已停止危險的共享 app 替換，請用 `setup`。
 
+本機維護注意事項：目前 Claude hook 的 Python 是 `/Users/shawn/.local/share/model-routing-harness/app/runtime/bin/python3.11`，launcher 是 `/Users/shawn/Code/model-routing-harness/runtime/daily-cli/artifact/plugins/model-routing-harness/launcher.py claude`。這個舊 `app/` 不在 `setup-state/generations/` 管理範圍內。任何 setup 清理、rollback、Codex-only 更新或 runtime 清理，都不能刪除或移動上述 `app/` 與 `runtime/daily-cli/`；Python 不存在時 hook 根本無法啟動，MRH 的 fail-open 也無法處理。日後若要讓 Claude 改用 generation 管理，必須先提出遷移方案，包含 `~/.claude/settings.json` 的修改方式，經使用者同意後才執行。
+
 ## 支援與證據邊界
 
 | Surface | 此候選的安裝邊界 | 實際派工驗收 |
