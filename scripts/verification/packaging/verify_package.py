@@ -21,10 +21,11 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mrh-package-") as scratch:
         scratch = Path(scratch)
         venv = scratch / "venv"
-        subprocess.run([sys.executable, "-m", "venv", str(venv)], check=True, capture_output=True, timeout=30)
+        subprocess.run([sys.executable, "-B", "-m", "venv", str(venv)], check=True, capture_output=True, timeout=30)
         python, executable = venv / "bin/python", venv / "bin/mrh"
         env = {k: os.environ[k] for k in ("PATH", "HOME", "TMPDIR", "LANG") if k in os.environ}
-        install = subprocess.run([str(python), "-m", "pip", "--no-cache-dir", "install", "--no-index", "--no-deps",
+        env['PYTHONDONTWRITEBYTECODE'] = '1'
+        install = subprocess.run([str(python), "-B", "-m", "pip", "--no-cache-dir", "install", "--no-index", "--no-deps",
                                   "--no-build-isolation", str(root)], env=env, cwd=scratch,
                                  text=True, capture_output=True, timeout=30)
         if install.returncode:
@@ -32,7 +33,7 @@ def main():
             return install.returncode
         db = scratch / "facts.sqlite3"
         commands = [[str(executable), "demo", "--db", str(db), "--json"],
-                    [str(python), "-m", "mrh", "stats", "--db", str(db), "--synthetic", "--json"],
+                    [str(python), "-B", "-m", "mrh", "stats", "--db", str(db), "--synthetic", "--json"],
                     [str(executable), "stats", "--db", str(db), "--json"],
                     [str(executable), "stats", "--db", str(db), "--synthetic", "--plain", "--width", "80"],
                     [str(executable), "stats", "--db", str(db), "--synthetic", "--plain", "--width", "28"],
@@ -71,7 +72,7 @@ assert process(p,demo_policy(),demo_capabilities(),store,client).action == "retu
 assert store.stats()["jev_attempts"] == 0
 print(json.dumps(store.stats(True)))
 '''
-        provider = subprocess.run([str(python), "-c", provider_fixture, str(db)], text=True, capture_output=True,
+        provider = subprocess.run([str(python), "-B", "-c", provider_fixture, str(db)], text=True, capture_output=True,
                                   env=env, cwd=scratch, timeout=10, check=True)
         provider_stats = json.loads(provider.stdout)
         assert provider_stats["jev"]["source"] == "explicit_synthetic_offline_transport"

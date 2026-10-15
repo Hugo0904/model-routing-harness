@@ -17,7 +17,7 @@ def main():
         pid, fd = pty.fork()
         if pid == 0:
             os.environ.update({"TERM": "xterm-256color", "PYTHONPATH": str(ROOT / "src")})
-            os.execvp(sys.executable, [sys.executable, "-m", "mrh", "ctrl", "--settings", str(settings), "--width", "100"])
+            os.execvp(sys.executable, [sys.executable, "-B", "-m", "mrh", "ctrl", "--settings", str(settings), "--width", "100"])
         fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 60, 110, 0, 0))
         seen = []
 
@@ -60,7 +60,7 @@ def ctrl_c(keys_before):
         pid, fd = pty.fork()
         if pid == 0:
             os.environ.update({"TERM": "xterm-256color", "PYTHONPATH": str(ROOT / "src")})
-            os.execvp(sys.executable, [sys.executable, "-m", "mrh", "ctrl", "--settings", str(settings), "--width", "100"])
+            os.execvp(sys.executable, [sys.executable, "-B", "-m", "mrh", "ctrl", "--settings", str(settings), "--width", "100"])
         fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 60, 110, 0, 0))
         text = ""
 

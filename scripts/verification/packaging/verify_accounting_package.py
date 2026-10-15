@@ -74,30 +74,31 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mrh-"+prefix+"-package-") as alias:
         scratch=Path(alias).resolve();work=scratch/"work";work.mkdir();home=scratch/"home";home.mkdir()
         env={"PATH":"/usr/bin:/bin:/usr/sbin:/sbin","HOME":str(home),"LANG":"en_US.UTF-8"}
+        env['PYTHONDONTWRITEBYTECODE'] = '1'
         def run(args,input=None):
             began=time.monotonic();result=subprocess.run(args,input=input,env=env,cwd=work,text=True,capture_output=True,timeout=30)
             rows.append({"command":args,"exit_code":result.returncode,"wall_seconds":round(time.monotonic()-began,3)})
             if result.returncode:raise RuntimeError("accounting_package_smoke_failed:"+result.stderr[:200])
             return result.stdout
-        venv=scratch/"venv";run([sys.executable,"-m","venv",str(venv)])
+        venv=scratch/"venv";run([sys.executable, "-B","-m","venv",str(venv)])
         python=venv/"bin/python";executable=venv/"bin/mrh"
-        run([str(python),"-m","pip","--no-cache-dir","install","--no-index","--no-deps","--no-build-isolation",str(source)])
+        run([str(python), "-B","-m","pip","--no-cache-dir","install","--no-index","--no-deps","--no-build-isolation",str(source)])
         bundle=scratch/"bundle";state=scratch/"state/settings.json"
         prepared=json.loads(run([str(executable),"plugin","prepare","--root",str(bundle),"--settings",str(state)]))
         assert prepared["live_routing_ready"] is False and prepared["readiness_reason"]=="missing_role_protection"
         archive=bundle/"plugins/model-routing-harness/runtime.pyz"
         archive_hash=hashlib.sha256(archive.read_bytes()).hexdigest()
-        installed=json.loads(run([str(python),"-I","-c","import importlib.metadata,json,mrh;print(json.dumps({'version':importlib.metadata.version('model-routing-harness'),'module':mrh.__file__}))"]))
+        installed=json.loads(run([str(python), "-B","-I","-c","import importlib.metadata,json,mrh;print(json.dumps({'version':importlib.metadata.version('model-routing-harness'),'module':mrh.__file__}))"]))
         old=json.loads((source/"docs/evidence/e5-shell-plugin.json").read_text())
         events=[r["event"] for c in old["cases"] if c["scenario"]=="explicit" for r in c["injected_runtime_events"]]
         assert len(events)==2
         saved=scratch/"saved-events.json";saved.write_text(json.dumps(events))
-        neutral=json.loads(run([prepared["artifact"]["python"],"-I",str(archive.parent/"launcher.py")],json.dumps(events[0])))
+        neutral=json.loads(run([prepared["artifact"]["python"], "-B","-I",str(archive.parent/"launcher.py")],json.dumps(events[0])))
         assert neutral=={} and not (state.parent/"events.sqlite3").exists()
         run([str(executable),"settings","configure","--path",str(state),"--allow-workspace",events[0]["cwd"],"--permit-task-export"])
         run([str(executable),"settings","enable","--path",str(state)])
         bootstrap=scratch/"bootstrap.py";bootstrap.write_text(BOOTSTRAP)
-        accounting=json.loads(run([prepared["artifact"]["python"],"-I",str(bootstrap),str(archive),str(state),str(saved)]))
+        accounting=json.loads(run([prepared["artifact"]["python"], "-B","-I",str(bootstrap),str(archive),str(state),str(saved)]))
         result={"evidence_kind":"offline_installed_package_new_archive_saved_native_shape_replay","installed_package":installed,
           "archive_sha256":archive_hash,"artifact":prepared["artifact"],"accounting":accounting,"commands":rows,
           "raw_input_source":"docs/evidence/e5-shell-plugin.json explicit Pre/Post; same saved consumer shape, no new host execution",

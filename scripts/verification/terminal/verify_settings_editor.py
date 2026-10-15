@@ -36,14 +36,14 @@ def main():
         env={'PATH':os.defpath,'HOME':str(root/'home'),'TMPDIR':str(root/'tmp'),'PYTHONPATH':str(PROJECT/'src'),
              'PYTHONDONTWRITEBYTECODE':'1','TERM':'xterm-256color','LANG':'en_US.UTF-8'}
         def run(argv,text=''):
-            result=subprocess.run([sys.executable,'-m','mrh',*argv],input=text,text=True,capture_output=True,cwd=PROJECT,env=env,timeout=10)
+            result=subprocess.run([sys.executable, "-B",'-m','mrh',*argv],input=text,text=True,capture_output=True,cwd=PROJECT,env=env,timeout=10)
             assert result.returncode==0,(argv,result.returncode,result.stderr)
             return result.stdout
         def terminal(argv,answers=(),width=120,interrupt=False):
             pid,fd=pty.fork()
             if pid==0:
                 os.chdir(PROJECT)
-                os.execve(sys.executable,[sys.executable,'-m','mrh',*argv],env)
+                os.execve(sys.executable,[sys.executable, "-B",'-m','mrh',*argv],env)
             fcntl.ioctl(fd,termios.TIOCSWINSZ,struct.pack('HHHH',60,width,0,0))
             captured=bytearray();consumed=0;next_answer=0;deadline=time.monotonic()+10;waited=False
             try:

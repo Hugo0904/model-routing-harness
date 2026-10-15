@@ -438,7 +438,7 @@ safe={key:event.get(key) for key in ("hook_event_name","session_id","turn_id","t
 with Path(sys.argv[3]).open("a") as f:f.write(json.dumps({"event":safe,"output":output,"classifier_calls":classifier.calls})+"\\n")
 print(json.dumps(output))
 ''')
-            command = shlex.join([sys.executable, str(wrapper), str(Path(__file__).resolve().parents[3]/"src"), str(db_path), str(log), str(control)])
+            command = shlex.join([sys.executable, "-B", str(wrapper), str(Path(__file__).resolve().parents[3]/"src"), str(db_path), str(log), str(control)])
             (home/"hooks.json").write_text(json.dumps({"hooks": {kind: [
                 {"matcher": "^spawn_agent$", "hooks": [{"type": "command", "command": command, "timeout": 5}]}]
                 for kind in ("PreToolUse", "PostToolUse")}}))

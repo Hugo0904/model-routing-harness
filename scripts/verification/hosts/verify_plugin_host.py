@@ -73,6 +73,7 @@ def inspect(binary,catalog_path):
       with scope as alias:
         scratch=alias.resolve();home=scratch/"home";work=scratch/"workspace";home.mkdir();work.mkdir()
         env={"PATH":str(Path(binary).parent)+":/usr/bin:/bin:/usr/sbin:/sbin","HOME":str(scratch),"CODEX_HOME":str(home),"LANG":"en_US.UTF-8","TERM":"xterm-256color"}
+        env['PYTHONDONTWRITEBYTECODE'] = '1'
         def command(args,check=True):
             run=subprocess.run(args,cwd=work,env=env,capture_output=True,text=True,timeout=30)
             row={"command":args,"exit_code":run.returncode,"stdout":run.stdout,"stderr":run.stderr}
@@ -91,13 +92,13 @@ def inspect(binary,catalog_path):
         third=scratch/"third.py";third_log=scratch/"third.jsonl";third_mode=scratch/"third-mode";third_mode.write_text("benign")
         third.write_text('import json,os,sys\nfrom pathlib import Path\ne=json.load(sys.stdin);mode=Path(sys.argv[2]).read_text()\nwith Path(sys.argv[1]).open("a") as f:f.write(json.dumps({"tool_use_id":e.get("tool_use_id"),"mode":mode,"revision":os.environ.get("THIRD_PARTY_REV","1")})+"\\n")\nout={"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Independent fixture denial"}} if mode=="deny" else {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","updatedInput":{**e["tool_input"],"model":"mrh-synthetic-explicit","reasoning_effort":"high"}}} if mode=="rewrite" else {}\nprint(json.dumps(out))\n')
         import shlex
-        third_command=shlex.join([sys.executable,str(third),str(third_log),str(third_mode)])
+        third_command=shlex.join([sys.executable, "-B",str(third),str(third_log),str(third_mode)])
         shared=home/"hooks.json";shared.write_text(json.dumps({"hooks":{"PreToolUse":[{"matcher":"^spawn_agent$","hooks":[{"type":"command","command":third_command,"timeout":5}]}]}}))
         original_shared=shared.read_bytes();config_bytes=(home/"config.toml").read_bytes()
-        venv=scratch/"venv";command([sys.executable,"-m","venv",str(venv)])
+        venv=scratch/"venv";command([sys.executable, "-B","-m","venv",str(venv)])
         python=venv/"bin/python";mrh=venv/"bin/mrh"
         source=Path(__file__).resolve().parents[3]
-        command([str(python),"-m","pip","--no-cache-dir","install","--no-index","--no-deps","--no-build-isolation",str(source)])
+        command([str(python), "-B","-m","pip","--no-cache-dir","install","--no-index","--no-deps","--no-build-isolation",str(source)])
         bundle=scratch/"bundle";state=scratch/"state/settings.json"
         prepared=command([str(mrh),"plugin","prepare","--root",str(bundle),"--settings",str(state)])
         result["prepared_artifact"]=prepared["artifact"]
@@ -169,7 +170,7 @@ def inspect(binary,catalog_path):
         bootstrap=scratch/"bootstrap.py";bootstrap.write_text(BOOTSTRAP)
         hook_file=installed_path/"hooks/hooks.json"
         definition=json.loads(hook_file.read_text())
-        injected_command=shlex.join([prepared["artifact"]["python"],"-I",str(bootstrap),str(actual_runtime),str(state),str(control),str(log)])
+        injected_command=shlex.join([prepared["artifact"]["python"], "-B","-I",str(bootstrap),str(actual_runtime),str(state),str(control),str(log)])
         for rows in definition["hooks"].values():rows[0]["hooks"][0]["command"]=injected_command
         hook_file.write_text(json.dumps(definition))
         result["bootstrap_trust_review"]=trust_fixture(binary,env,work,scope)

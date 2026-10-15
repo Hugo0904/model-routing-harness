@@ -48,7 +48,7 @@ def inspect():
             pid, fd = pty.fork()
             if pid == 0:
                 fcntl.ioctl(0, termios.TIOCSWINSZ, struct.pack('HHHH', 24, width, 0, 0))
-                os.execve(str(SCREEN), [str(SCREEN), '-c', '/dev/null', '-S', session, '-T', 'xterm', '-U', sys.executable, '-c', CHILD], env)
+                os.execve(str(SCREEN), [str(SCREEN), '-c', '/dev/null', '-S', session, '-T', 'xterm', '-U', sys.executable, "-B", '-c', CHILD], env)
             fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack('HHHH', 24, width, 0, 0))
             output = bytearray()
             try:

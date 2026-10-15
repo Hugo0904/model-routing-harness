@@ -206,6 +206,67 @@ print(json.dumps(out))
         with self.assertRaisesRegex(setup.SetupError,'manifest_invalid'):self.run_setup()
         self.assertEqual(entry.read_text(),'local change')
 
+    def cached_build(self, *args, **kwargs):
+        self.fake_build(*args, **kwargs)
+        root = Path(args[1]); lib = root/'runtime/lib/python3.11'
+        (lib/'__pycache__').mkdir(parents=True)
+        (lib/'sample.py').write_text('value = 1\n')
+        (lib/'__pycache__/sample.cpython-311.pyc').write_bytes(b'original bytecode')
+        manifest = setup.document(root/'manifest.json')
+        manifest['files'] = bundle.file_manifest(root)
+        (root/'manifest.json').write_text(json.dumps(manifest))
+
+    def test_runtime_cache_drift_allows_check_repeat_update_and_rollback_without_repair(self):
+        self.run_setup(build=self.cached_build)
+        first = self.state()['current']; root = self.prefix/'setup-state/generations'/first
+        cache = root/'runtime/lib/python3.11/__pycache__'
+        manifest = (root/'manifest.json').read_bytes()
+        (cache/'sample.cpython-311.pyc').write_bytes(b'rewritten bytecode')
+        added = cache/'sample.cpython-311.opt-1.pyc'; added.write_bytes(b'new bytecode')
+        legacy = cache.parent/'sample.pyc'; legacy.write_bytes(b'legacy sibling cache')
+        self.assertNotEqual(setup.document(root/'manifest.json')['files'], bundle.file_manifest(root))
+        before = self.disk()
+        self.run_setup(self.args('--check'))
+        self.assertEqual(self.disk(), before)
+        self.assertEqual(self.run_setup()['operation'], 'unchanged')
+        self.assertEqual((root/'manifest.json').read_bytes(), manifest)
+        (cache/'sample.cpython-311.pyc').unlink()
+        self.revision = 'two'; self.run_setup(build=self.cached_build)
+        self.run_setup(self.args('--rollback'))
+        self.assertEqual(self.state()['current'], first)
+        self.assertEqual(added.read_bytes(), b'new bytecode')
+        self.assertFalse((cache/'sample.cpython-311.pyc').exists())
+        self.assertEqual((root/'manifest.json').read_bytes(), manifest)
+
+    def test_cache_exception_does_not_hide_source_or_noncache_changes(self):
+        self.run_setup(build=self.cached_build)
+        root = self.prefix/'setup-state/generations'/self.state()['current']
+        for relative in ('runtime/lib/python3.11/sample.py',
+                         'runtime/lib/python3.11/__pycache__/foreign.cpython-311.pyc',
+                         'runtime/lib/python3.11/__pycache__/payload.py',
+                         'app/foreign.pyc', 'runtime/bin/python3.11'):
+            with self.subTest(path=relative):
+                path = root/relative
+                original = path.read_bytes() if path.exists() else None
+                path.write_bytes(b'changed')
+                before = self.disk()
+                with self.assertRaisesRegex(setup.SetupError, 'manifest_invalid'):
+                    self.run_setup()
+                self.assertEqual(self.disk(), before)
+                if original is None: path.unlink()
+                else: path.write_bytes(original)
+        cache = root/'runtime/lib/python3.11/__pycache__/sample.cpython-311.pyc'
+        cache.unlink(); cache.symlink_to('../sample.py')
+        with self.assertRaisesRegex(setup.SetupError, 'manifest_invalid'):
+            setup.verify_bundle(root)
+
+    def test_cache_drift_does_not_bypass_manifest_digest(self):
+        self.run_setup(build=self.cached_build)
+        state = self.state(); root = self.prefix/'setup-state/generations'/state['current']
+        with (root/'manifest.json').open('a') as f: f.write(' ')
+        with self.assertRaisesRegex(setup.SetupError, 'manifest_changed'):
+            setup.verify_bundle(root, state['generations'][state['current']])
+
     def test_read_only_modes_create_nothing_and_do_not_download(self):
         before=self.disk()
         self.assertEqual(self.run_setup(self.args('--check'))['status'],'pending')

@@ -42,24 +42,24 @@ def main():
                              'seconds':round(time.monotonic()-before,4)})
             assert result.returncode==expected,(result.returncode,result.stderr[:500])
             return result.stdout
-        run([sys.executable,'-m','venv',root/'venv'])
+        run([sys.executable, "-B",'-m','venv',root/'venv'])
         python=root/'venv/bin/python';entry=root/'venv/bin/mrh'
         build="import sys;sys.path.insert(0,sys.argv[1]);import mrh_build;print(mrh_build.build_wheel(sys.argv[2]))"
-        wheel=root/'wheel'/run([sys.executable,'-c',build,PROJECT,root/'wheel']).strip()
+        wheel=root/'wheel'/run([sys.executable, "-B",'-c',build,PROJECT,root/'wheel']).strip()
         with zipfile.ZipFile(wheel) as archive:
             for name,digest in hashes.items():
                 assert hashlib.sha256(archive.read(name.removeprefix('src/'))).hexdigest()==digest
             metadata=archive.read('model_routing_harness-0.3.0.dist-info/METADATA').decode()
             assert 'Requires-Dist:' not in metadata
             assert not any(name.endswith(('.js','.mjs','.tgz')) for name in archive.namelist())
-        run([python,'-m','pip','--isolated','--no-cache-dir','install','--no-index','--no-deps','--no-build-isolation',wheel])
-        identity=json.loads(run([python,'-I','-c',
+        run([python, "-B",'-m','pip','--isolated','--no-cache-dir','install','--no-index','--no-deps','--no-build-isolation',wheel])
+        identity=json.loads(run([python, "-B",'-I','-c',
             "import json,mrh,mrh.adapters.catalogs.claude_catalog,os;print(json.dumps({'module':mrh.__file__,'claude':mrh.adapters.catalogs.claude_catalog.__file__,'cwd':os.getcwd()}))"]))
         assert Path(identity['claude']).is_relative_to(root/'venv') and identity['cwd']==str(work)
         for name,digest in hashes.items():
             installed=Path(identity['module']).parent/name.removeprefix('src/mrh/')
             assert hashlib.sha256(installed.read_bytes()).hexdigest()==digest
-        candidates=json.loads(run([python,'-I','-c',
+        candidates=json.loads(run([python, "-B",'-I','-c',
             "import json;from mrh.adapters.catalogs.catalog import discover;print(json.dumps(discover()))"]))
         claude_index=next(i for i,c in enumerate(candidates) if c['tool']=='claude' and c['supported'])
 
@@ -139,7 +139,7 @@ class Provider:
   return Catalog(**{**c.__dict__,'fetched_at':time.time(),'source':'synthetic:claude-save-refresh-failure','assurance':'synthetic'})
 raise SystemExit(cli.main(['model','small','--root',sys.argv[1],'--width','56','--plain'],model_dependencies={'provider':Provider()}))
 """
-        captures['save-failure-cancel']=terminal([python,'-I','-c',fixture,registry],[('Small MODEL','\n'),
+        captures['save-failure-cancel']=terminal([python, "-B",'-I','-c',fixture,registry],[('Small MODEL','\n'),
             ('REASONING EFFORT','\n'),('SAVE POLICY?','\n'),('LIST UNAVAILABLE',down*2+'\n')])
         assert path.read_bytes()==before
         assert 'display only' in captures['save-failure-cancel']

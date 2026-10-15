@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -97,7 +98,30 @@ def verify_bundle(root, digest=None):
     manifest = document(root / 'manifest.json')
     if digest and bundle.sha256(root / 'manifest.json') != digest:
         raise SetupError('manifest_changed')
-    if manifest.get('schema_version') != 1 or manifest.get('files') != bundle.file_manifest(root):
+    expected = manifest.get('files')
+    actual = bundle.file_manifest(root)
+    if manifest.get('schema_version') != 1 or not isinstance(expected, dict):
+        raise SetupError('manifest_invalid')
+    # Older manifests include bytecode. Keep their bytes/digest intact, but
+    # compare only immutable files on both sides. Never exempt symlinks or
+    # source-less bytecode: only runtime caches backed by a recorded .py file.
+    def immutable(files):
+        result = {}
+        for name, entry in files.items():
+            path = Path(name)
+            source = None
+            if path.parts[:1] == ('runtime',) and path.suffix == '.pyc' and isinstance(entry, dict) and 'symlink' not in entry:
+                try:
+                    source = (Path(importlib.util.source_from_cache(name)) if path.parent.name == '__pycache__'
+                              else path.with_suffix('.py'))
+                except ValueError:
+                    pass
+            source_entry = expected.get(source.as_posix()) if source else None
+            if isinstance(source_entry, dict) and 'sha256' in source_entry and 'symlink' not in source_entry:
+                continue
+            result[name] = entry
+        return result
+    if immutable(expected) != immutable(actual):
         raise SetupError('manifest_invalid')
     for p in root.rglob('*'):
         if p.is_symlink() and not p.resolve().is_relative_to(root):

@@ -166,7 +166,7 @@ def inspect(binary):
             definition = json.loads(original_hooks)
             bootstrap = root / 'fault_bootstrap.py'; log = root / 'faults.jsonl'; control = root / 'scenario'; control.write_text('failure')
             bootstrap.write_text(BOOTSTRAP.replace('synthetic failure', 'RAW_EXCEPTION_CANARY'))
-            definition['hooks']['PreToolUse'][0]['hooks'][0]['command'] = shlex.join([prepared['artifact']['python'], '-I', str(bootstrap), str(runtime), str(state), str(control), str(log)])
+            definition['hooks']['PreToolUse'][0]['hooks'][0]['command'] = shlex.join([prepared['artifact']['python'], "-B", '-I', str(bootstrap), str(runtime), str(state), str(control), str(log)])
             hook_file.write_text(json.dumps(definition))
             result['classifier_trust'] = trust_fixture(binary, env, work, scope)
             rpc = Rpc(binary, env, work, scope)

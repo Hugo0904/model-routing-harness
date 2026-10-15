@@ -144,7 +144,7 @@ def inspect(archive):
         event = {'hook_event_name': 'PreToolUse', 'tool_name': 'spawn_agent', 'session_id': 's', 'turn_id': 't',
                  'tool_use_id': 'c', 'cwd': str(root / 'work'), 'tool_input': {'message': 'isolated default-off fixture'}}
         def invoke():
-            p = subprocess.run([str(private_python), '-I', str(launcher)], input=json.dumps(event),
+            p = subprocess.run([str(private_python), "-B", '-I', str(launcher)], input=json.dumps(event),
                                env=env, cwd=root / 'work', capture_output=True, text=True, timeout=10)
             assert p.returncode == 0 and not p.stderr
             return json.loads(p.stdout)

@@ -80,7 +80,7 @@ def _spawn_cli(root: Path, width: int, mode: str):
     pid, fd = pty.fork()
     if pid == 0:
         fcntl.ioctl(0, termios.TIOCSWINSZ, struct.pack('HHHH', 24, width, 0, 0))
-        argv = [str(SCREEN), '-c', '/dev/null', '-S', session, '-T', 'xterm', '-U', sys.executable, '-c', _CHILD]
+        argv = [str(SCREEN), '-c', '/dev/null', '-S', session, '-T', 'xterm', '-U', sys.executable, "-B", '-c', _CHILD]
         try:
             os.execve(str(SCREEN), argv, env)
         except BaseException as exc:

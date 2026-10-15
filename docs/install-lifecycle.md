@@ -73,6 +73,35 @@ successful operation after lost acknowledgement. A different pending intent,
 foreign marketplace source, unexpected pointer, modified manifest or foreign bin
 entry is preserved as a conflict. Correct the actual cause before retrying.
 
+Runtime bytecode is a mutable cache. Verification excludes only regular `.pyc`
+files under `runtime/` whose corresponding `.py` source is recorded as a regular
+file in the manifest, including `__pycache__` names and legacy sibling `.pyc`
+names. Added, rewritten or removed caches do not block check, rerun, update or
+rollback. Source-less bytecode, symlinks, other files inside `__pycache__`, Python
+sources, binaries and application/host artifacts remain checked. Both old and
+new manifests use this comparison rule; their stored bytes and recorded digest
+are never rewritten. This is option (a): no permission changes, cache repair,
+deletion or downloads are needed. Bytecode contents are consequently outside
+this integrity comparison; `-B` prevents writes, not reads of existing caches.
+
+All Python verification commands must use `-B`; also set
+`PYTHONDONTWRITEBYTECODE=1` for children launched through Python console scripts.
+Pass `-B` explicitly to each Python subprocess, particularly with `-I` or `-E`,
+which ignore Python environment settings. Example:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest tests.infrastructure.test_setup
+```
+
+The 2026-10-15 19:33 (Asia/Taipei) incident came from the post-trust native-plugin
+readback: `current/runtime/bin/python3.11` ran
+`runtime/MRH-STABLE-HOOK-007/inspect-native-plugin.py` without `-B`. The retained
+execution record at 11:33 UTC shows this command and its successful readback of
+generation `1786afeee99b0fbd1f738f9b`; setup and its generated hooks already used
+`-B`. The retained diagnostic now disables bytecode writing before its stdlib
+imports. Invoke it with `-B` as well; do not repeat a live trust operation merely
+to test bytecode handling.
+
 Backups have unique names and retain exact prior Claude configuration bytes.
 They are evidence/recovery material, not instructions to overwrite later edits.
 The installer never writes Codex's private plugin database or trust records.
