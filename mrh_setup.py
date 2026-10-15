@@ -417,6 +417,20 @@ def finish_generation(stage, destination, settings, selected, fingerprint, prefi
         artifact = stage / 'hosts' / h
         artifact.parent.mkdir(parents=True, exist_ok=True)
         plugin.prepare(artifact, settings, stage / 'runtime/bin/python3.11', advisory=True, codex_packets=info['packets'])
+        meta = document(artifact/'artifact.json')
+        if h == 'codex':
+            # Codex 0.162.1 discovers skills from the portable manifest but silently
+            # omits its hooks. Use its supported compatibility manifest instead;
+            # keeping both would let the portable manifest shadow these hooks.
+            portable = Path('plugins') / plugin.NAME / 'plugin.json'
+            native = portable.parent / '.codex-plugin/plugin.json'
+            definition = document(artifact/portable)
+            compatibility = {k:definition[k] for k in ('name','version','description')}
+            compatibility['hooks'] = definition['extensions']['com.openai']['hooks']
+            write(artifact/native,encoded(compatibility))
+            (artifact/portable).unlink()
+            del meta['files'][portable.as_posix()]
+            meta['files'][native.as_posix()] = bundle.sha256(artifact/native)
         # prepare verifies a real staging interpreter. Only owned JSON wiring is
         # rebased to the final immutable generation before its atomic rename.
         for p in artifact.rglob('*.json'):
@@ -428,7 +442,6 @@ def finish_generation(stage, destination, settings, selected, fingerprint, prefi
                 # Do not resolve current: it may point to the previous generation.
                 data = data.replace(str(destination).encode(), str(prefix / 'current').encode())
             p.write_bytes(data); p.chmod(0o600)
-        meta = document(artifact/'artifact.json')
         meta['python'] = str(destination/'runtime/bin/python3.11')
         meta['files'] = {name:bundle.sha256(artifact/name) for name in meta['files']}
         write(artifact/'artifact.json',encoded(meta))

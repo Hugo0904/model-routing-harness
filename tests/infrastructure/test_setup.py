@@ -263,6 +263,17 @@ print(json.dumps(out))
         wheel=mrh_build.build_wheel(self.root/'wheels')
         with zipfile.ZipFile(self.root/'wheels'/wheel) as z:self.assertIn('mrh/resources/skills/mrh-codex-packet/SKILL.md',z.namelist())
 
+    def test_codex_setup_exposes_hooks_in_native_compatibility_manifest(self):
+        self.run_setup(self.args('--codex-packets'))
+        artifact=Path(self.state()['hosts']['codex']['artifact'])
+        root=artifact/'plugins/model-routing-harness'
+        manifest=setup.document(root/'.codex-plugin/plugin.json')
+        self.assertEqual(manifest['name'],'model-routing-harness')
+        self.assertEqual(manifest['hooks'],'./hooks/hooks.json')
+        self.assertFalse((root/'plugin.json').exists(),'standard manifest would shadow native compatibility hooks')
+        self.assertEqual(set(setup.document(root/manifest['hooks'])['hooks']),{'PreToolUse','PostToolUse'})
+        setup.plugin.show(artifact)  # the published manifest is part of owned integrity verification
+
     def test_unsupported_platform_and_unknown_host_do_not_write(self):
         with patch('mrh_setup.platform.system',return_value='Linux'):
             with self.assertRaisesRegex(setup.SetupError,'unsupported_platform'):self.run_setup()

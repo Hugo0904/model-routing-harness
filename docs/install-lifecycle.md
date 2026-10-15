@@ -55,6 +55,15 @@ the new launcher can start under the previous generation's compatible Python,
 then uses its immutable binding to run its own runtime. After completion, both
 the interpreter entry and registered launcher select the intended generation.
 
+The Codex-specific generation publishes `.codex-plugin/plugin.json` with a
+top-level `hooks` entry. Native Codex CLI 0.162.1 reads the portable root
+`plugin.json` for skills but returns no hooks for its OpenAI extension, including
+default-file discovery. The supported compatibility manifest exposes both hooks
+to `plugin/read` and `/hooks`. Do not publish both manifests in this artifact:
+the portable manifest takes precedence and hides the compatibility hook entry.
+This conversion belongs to setup's Codex adapter; portable plugin generation and
+unselected Claude artifacts are unchanged.
+
 ## Failure and recovery
 
 There is no atomic transaction across native hosts. Registration may complete
