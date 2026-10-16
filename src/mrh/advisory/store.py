@@ -12,6 +12,8 @@ import os
 import sqlite3
 import time
 
+from mrh.advisory import usage_report
+
 DEDUPE_SECONDS = 600
 FOLLOW_WINDOW_SECONDS = 600
 
@@ -409,6 +411,11 @@ class AdviceStore:
             attempts = db.execute("SELECT * FROM attempts WHERE ts>=?", (since,)).fetchall()
             every_child = db.execute("SELECT * FROM children").fetchall()
             packets = _packet_rows(db)
+            usage_rows = ([dict(r) for r in db.execute(
+                "SELECT u.*, c.requested_model, c.requested_effort, c.resolved_model, c.advice_request_id, c.followed, c.agent_id "
+                "FROM child_usage u JOIN children c ON c.platform=u.platform AND c.session_id=u.session_id AND c.call_id=u.call_id "
+                "WHERE u.ts>=? ORDER BY u.ts", (since,))]
+                          if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='child_usage'").fetchone() else [])
             answer_log = [(r[0], r[1]) for r in db.execute("SELECT ts, response_model FROM attempts WHERE response_model IS NOT NULL "
                                                          "AND outcome IN ('returned','late_returned') ORDER BY ts")]
         children = [c for c in every_child if c["ts"] >= since]
@@ -508,6 +515,8 @@ class AdviceStore:
                 "tiers": tiers, "classifier_usage": usage,
                 "classifier_latency": latency, "classifier_versions": versions, "manual_classifications": manual,
                 "classifier_change": version_change(answer_log),
+                "usage": usage_report.summarize(
+                    usage_rows, sum(1 for c in children if c["agent_id"]), {r["request_id"]: r for r in rows}),
                 "classifier_calls": sum(u["calls"] for u in usage.values()),
                 "classifier_requests": sum(u["requests"] for u in usage.values()),
                 "classifier_failed_requests": sum(u["failed"] for u in usage.values()),

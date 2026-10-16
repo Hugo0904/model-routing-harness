@@ -113,6 +113,58 @@ def latency_text(data):
     return f"平均 {latency['avg']:.1f} 秒、最慢 {latency['max']:.1f} 秒（{latency['n']} 次）"
 
 
+def _tokens(value):
+    if value is None:
+        return "未知"
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:.1f}M"
+    return f"{value / 1_000:.0f}K" if value >= 10_000 else f"{value:,}"
+
+
+def _usd2(amount):
+    return _usd(amount) if amount is not None else "未知"
+
+
+def usage_lines(data):
+    """The 'actual usage' section: measured tokens, price conversions and savings, each labelled for what it is."""
+    usage = data.get("usage") or {}
+    if not usage.get("recorded"):
+        return []
+    lines = [f"■ 子代理實際用量（已收集 {usage['collected']}／{usage['recorded']} 個" +
+             (f"；{usage['uncollected']} 個還沒收集，請執行 mrh usage collect）" if usage["uncollected"] else "）")]
+    if not usage["collected"]:
+        return lines + [""]
+    for label, slot in usage["by_model"].items():
+        platform, model = label.split("|", 1)
+        out = _tokens(slot["output"]) + (f"（含推理 {_tokens(slot['reasoning'])}）" if slot.get("reasoning") else "")
+        lines.append(f"    {PLATFORM.get(platform, platform)}　{model}　{slot['children']} 個　輸入 {_tokens(slot['input'])}　"
+                     f"快取寫入 {_tokens(slot['cache_write'])}　快取讀取 {_tokens(slot['cache_read'])}　輸出 {out}")
+    lines.append(f"    以下金額是依官方 API 定價換算，不是你的實際帳單（價格查於 {usage['pricing']['checked']}）：")
+    for platform, c in usage["cost"].items():
+        name = PLATFORM.get(platform, platform)
+        if c["output_usd"] is None:
+            text = f"輸入端 {_usd2(c['input_side_usd'])}（輸出量未知，不是總額）"
+        else:
+            text = f"{_usd2(c['input_side_usd'] + c['output_usd'])}"
+        text += f"，{c['input_side_unknown']} 個因缺價格無法換算" if c["input_side_unknown"] else ""
+        lines.append(f"      {name}：{text}")
+    if usage["saving"]:
+        lines.append("    節省（換算）：同樣的 token 若由主模型處理要多花多少；假設主模型處理同樣內容用的 token 數相同")
+        for platform, sv in usage["saving"].items():
+            if sv["children"]:
+                lines.append(f"      {PLATFORM.get(platform, platform)}：{sv['scope']}約省 {_usd(sv['usd'])}（{sv['children']} 個子代理）")
+        reasons = usage.get("saving_unknown_reasons") or {}
+        if reasons:
+            lines.append("      不能算：" + "；".join(f"{reason} {n} 個" for reason, n in sorted(reasons.items(), key=lambda x: -x[1])[:3]))
+    verified = usage["verified"]
+    if verified["checked"]:
+        lines.append(f"    照建議改派的子代理，實際執行的模型也符合建議：{verified['matching']}／{verified['checked']} 個")
+    for item in usage["mismatch"][:5]:
+        lines.append(f"      · {PLATFORM.get(item['platform'], item['platform'])} 建議 {'、'.join(item['advised'])}，"
+                     f"實際 {'、'.join(item['actual'])}（{'推理強度' if item['kind'] == 'effort' else '模型'}不同）")
+    return lines + [""]
+
+
 def skill_roles(data):
     """{role: count} of delegations the Router skill made with its own roles."""
     return {r: n for r, n in data.get("roles", {}).items() if r in ROUTER_SKILL_ROLES}
@@ -224,6 +276,7 @@ def render(data, period_label, threshold=None, color=False, policy=None):
         if data.get("children_inherited"):
             lines.append(f"    沿用主模型（沒指定模型）：{data['children_inherited']} 個")
         lines.append("")
+    lines += usage_lines(data)
     followed = data["children_following_advice"]
     moved, decided = rerouted(data)
     lines += ["■ 改派的效果",

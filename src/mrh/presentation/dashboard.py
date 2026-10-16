@@ -223,6 +223,12 @@ def _where(data, policy, inner, p, color):
     if data.get("children_started"):
         matched, started = stats_view.tier_model_children(data, policy)
         right += bar("子代理用了分級表的模型", matched, started, f"{matched} / {started} 個子代理，其餘沿用主模型或其他模型")
+    usage = data.get("usage") or {}
+    if usage.get("recorded"):                                      # one bar: how much real usage is collected, and the converted saving
+        saved = [sv for sv in (usage.get("saving") or {}).values() if sv["children"]]
+        right += bar("子代理用量已收集", usage["collected"], usage["recorded"],
+                     f"{usage['collected']} / {usage['recorded']} 個子代理" + ("（mrh usage collect）" if usage["uncollected"] else ""),
+                     f"節省（換算）{stats_view._usd(sum(sv['usd'] for sv in saved))}" if saved else "")
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}

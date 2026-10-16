@@ -64,6 +64,7 @@ mrh ctrl                          # 互動設定；取消不保存
 mrh ctrl show --json              # 公開設定
 mrh status --json                 # 唯讀狀態／Monitor 出口
 mrh stats                        # 分級、回退、派工與已觀測採用
+mrh usage collect                 # 收集子代理實際用了多少 token（只讀本機紀錄檔，不連網、不花錢）；之後 mrh stats 才有用量與換算
 mrh stats reset --hours 24        # 預覽，確認後才刪統計（另有 --today、--days N、--all）
 mrh classify "任務內容"           # 顧問分級：問分級器這件事算哪一級、各平台會建議什麼模型；不派工、不保存任務文字
 mrh ctrl set classifier.rich_input on   # 實驗：另外把子代理的標題與角色送給 Jev（預設 off，off 時請求與以前逐位元組相同）
@@ -88,6 +89,8 @@ Claude CLI 版本鎖：`setup --host claude` 只接受 `src/mrh/adapters/catalog
 檔位（進階，預設關閉）：`mrh ctrl` →「檔位（進階）」。Jev 仍然只回答四級，但它給的四個機率會換算成 0～3 的難度分數（Light 0、Small 1、Mid 2、Top 3 的加權平均），分數落在哪一檔就用哪一檔的模型。檔位數量與起點自訂（最多 8 檔，第 1 檔從 0 起），每檔可設各平台的候選模型，或「交回主模型自己做」，例如把最高兩檔設成 `opus:high`、`opus:xhigh`。信心門檻兩種模式都照常生效。最高檔就是上限：hook 拿不到主模型是哪個，請自己不要設得比主模型更強。指令版：`mrh ctrl set gears.default yes`（由目前難度表產生一組預設）、`gears.<編號>.claude 模型:強度`、`gears.<編號>.main on`、`gears.add 分數`、`gears.remove 編號`、`mode gears|tiers`。沒有開啟時不寫入任何設定，行為與以前完全相同。
 
 Jev 版本：`classifier.model` 可設 `jev-latest`（最新正式穩定版）、`jev-preview`（含非正式版）或指定版本（如 `jev-1.13.0`）。別名會在官方推出新版時自己換，答案可能跟著改變；指定版本才固定。新安裝預設 `jev-latest`，既有設定不會被改寫。`mrh ctrl` →「分級器」會列出官方版本清單（`GET /v1/models`，快取 24 小時，存在 `~/.local/state/model-routing-harness/jev-models.json`，不放進設定目錄；沒有網路或金鑰時只列內建項目並標明未更新）。實際回答的型號會逐次記錄；它改變後 7 天內，`mrh status`／`mrh stats` 頂部會提醒「分級器版本已變更，信心門檻建議重算」，門檻建議也只取變更之後的資料。
+
+子代理實際用量（`mrh usage collect` 之後，`mrh stats` 會多一段）：數字分三種，畫面都會標明。**實測**＝直接從 Claude／Codex 自己的紀錄檔讀到（token 數、實際跑的模型與推理強度）；**換算**＝實測 token × 官方公布的 API 定價，附價格網址與查價日期，**不是你的實際帳單**（訂閱方案的計費方式不同）；**未知**＝拿不到就寫「未知」，絕不填 0、也不估計。已知的限制：Claude 紀錄裡的輸出 token 只是串流開頭的數字，不是最終值，所以 Claude 的輸出量一律「未知」，金額只能算輸入端；Codex 的輸出量是準確的。節省（換算）＝同樣的 token 若由主模型處理要多花多少，假設主模型處理同樣內容用的 token 數相同；主模型不明、沒有官方價格、同一個子代理用了多個模型、Codex 單次請求超過 272K 輸入（長上下文價格未收錄）時，該筆不計並列出原因。實際執行的模型也會跟 MRH 的建議核對，不一致的會列出來。收集只讀本機檔案，只保存數字與識別碼，不保存任何任務文字；統計清除與保留期限會一併清掉這些用量。
 
 ## 支援與證據邊界
 
