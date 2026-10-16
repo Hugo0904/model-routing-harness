@@ -381,5 +381,87 @@ class SnapshotBoundaryTests(Env):
         self.assertEqual(json.loads(self.rows()[0]["usage"])["claude-haiku-5-5"]["small"]["input"], 9)
 
 
+class ParentReaderTests(Env):
+    def parent(self, records, parent="parent-cross-day"):
+        folder = self.codex / "2026/09/24"; folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"rollout-parent-{parent}.jsonl"
+        path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
+        return path
+
+    @staticmethod
+    def context(model="gpt-6.1-sol"):
+        return {"type": "turn_context", "payload": {"model": model}}
+
+    @staticmethod
+    def call(call_id, name="spawn_agent", **extra):
+        return {"type": "response_item", "payload": {"type": "function_call", "name": name, "call_id": call_id, **extra}}
+
+    def test_parent_exceeds_child_total_limit_but_streams_both_exact_calls_across_days(self):
+        path = self.parent([self.context(), self.call("call_a", "collaborationspawn_agent"), self.call("call_b", "another_native_alias")])
+        with patch.object(uc, "MAX_FILE_BYTES", 32):
+            self.assertGreater(path.stat().st_size, uc.MAX_FILE_BYTES)
+            self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["call_a", "call_b"]),
+                             {"call_a": "gpt-6.1-sol", "call_b": "gpt-6.1-sol"})
+            with self.assertRaisesRegex(ValueError, "too_large"):
+                uc.parse_codex(path)  # child usage retains the original whole-file gate
+
+    def test_only_real_events_and_exact_ids_count_not_quoted_arguments_or_outputs(self):
+        self.parent([self.context(),
+                     self.call("different", arguments=json.dumps({"call_id": "wanted"})),
+                     {"type": "event_msg", "payload": {"type": "function_call", "call_id": "wanted"}},
+                     {"type": "response_item", "payload": {"type": "function_call_output", "call_id": "wanted"}},
+                     self.call("wanted_suffix"),
+                     {"type": "response_item", "payload": {"type": "message", "text": json.dumps(self.call("wanted"))}}])
+        self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["wanted"]), {})
+
+    def test_missing_or_invalid_new_context_clears_model_and_quoted_context_does_not(self):
+        for payload in ({}, {"model": None}, {"model": False}, {"model": "invalid model"}, "not a payload"):
+            with self.subTest(payload=payload):
+                self.parent([self.context(), {"type": "turn_context", "payload": payload}, self.call("wanted")])
+                self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["wanted"]), {})
+        self.parent([self.context(), {"type": "response_item", "payload": {"type": "message", "text": json.dumps(self.context("gpt-6-astra"))}}, self.call("wanted")])
+        self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["wanted"]), {"wanted": "gpt-6.1-sol"})
+
+    def test_oversized_line_stops_parent_without_parsing_tail_or_losing_prior_evidence(self):
+        path = self.parent([self.context(), self.call("before")])
+        with path.open("ab") as f:
+            f.write(b' ' * 257 + b'\n')
+            f.write((json.dumps(self.call("after")) + "\n").encode())
+        with patch.object(uc, "MAX_PARENT_LINE_BYTES", 256):
+            self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["before", "after"]), {"before": "gpt-6.1-sol"})
+
+    def test_stops_reading_immediately_after_all_wanted_calls(self):
+        path = self.parent([])
+        def lines(p):
+            self.assertEqual(p, path)
+            yield json.dumps(self.context()).encode()
+            yield json.dumps(self.call("wanted")).encode()
+            raise AssertionError("read beyond complete mapping")
+        with patch.object(uc, "_parent_lines", side_effect=lines):
+            self.assertEqual(uc.codex_parent_models(self.codex, "parent-cross-day", ["wanted"]), {"wanted": "gpt-6.1-sol"})
+
+    def test_legacy_two_children_refresh_same_primary_keys_with_new_parent_mapping(self):
+        for call, agent in (("call_a", "/root/a"), ("call_b", "/root/b")):
+            self.child("codex", call, agent, session="parent-cross-day")
+            self.codex_agent("parent-cross-day", agent)
+        self.collect(); before = self.rows()
+        self.assertEqual(len(before), 2); self.assertTrue(all(row["parent_model"] is None for row in before))
+        with self.store.connect() as db:
+            for row in before:
+                legacy = json.loads(row["usage"])
+                for entry in legacy.values():
+                    entry.pop("observation")
+                db.execute("UPDATE child_usage SET usage=? WHERE platform=? AND session_id=? AND call_id=?",
+                           (json.dumps(legacy), row["platform"], row["session_id"], row["call_id"]))
+        self.parent([self.context(), self.call("call_a"), self.call("call_b")])
+        result = self.collect(); after = self.rows()
+        self.assertEqual((result["collected"], result["updated"]), (2, 2))
+        self.assertEqual([(r["platform"], r["session_id"], r["call_id"]) for r in after],
+                         [(r["platform"], r["session_id"], r["call_id"]) for r in before])
+        self.assertEqual([r["parent_model"] for r in after], ["gpt-6.1-sol"] * 2)
+        with patch.object(uc, "codex_parent_models", side_effect=AssertionError("unchanged parent reread")):
+            self.assertEqual(self.collect()["unchanged"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()

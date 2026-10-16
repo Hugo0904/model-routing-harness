@@ -25,6 +25,7 @@ CLAUDE_ENV = "MRH_CLAUDE_PROJECTS"
 CODEX_ENV = "MRH_CODEX_SESSIONS"
 SETTLE_SECONDS = 600            # a transcript changed more recently than this may still be running
 MAX_FILE_BYTES = 256 * 1024 * 1024
+MAX_PARENT_LINE_BYTES = 8 * 1024 * 1024
 LARGE_PROMPT = 100_000          # prompt tokens (input + cache writes + cache reads) above which Haiku uses its higher price tier
 MIXED = "(多個模型)"
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,128}")
@@ -303,25 +304,42 @@ def parse_codex(path):
     return models, {(distinct[0] if unambiguous else MIXED): entry}
 
 
+def _parent_lines(path):
+    """Stream parent metadata without a total-size gate; stop at an oversized line."""
+    with path.open("rb") as handle:
+        while line := handle.readline(MAX_PARENT_LINE_BYTES + 1):
+            if len(line) > MAX_PARENT_LINE_BYTES:
+                return
+            yield line
+
+
 def codex_parent_models(root, parent_id, call_ids):
     """{call_id: the model in effect when the parent made the call} from the parent rollout, scanned once."""
     wanted, found = set(call_ids), {}
-    if not _ID.fullmatch(parent_id or ""):
+    if not wanted or not _ID.fullmatch(parent_id or ""):
         return found
     for path in sorted(Path(root).glob(f"*/*/*/rollout-*-{parent_id}.jsonl")):
         current = None
         try:
-            for line in _lines(path):
-                if '"turn_context"' in line:
-                    try:
-                        model = (json.loads(line).get("payload") or {}).get("model")
-                    except ValueError:
-                        continue
-                    current = model if isinstance(model, str) and safe_id(model) else current
-                elif current and '"function_call"' in line:
-                    for call in wanted:
-                        if call in line and call not in found:
-                            found[call] = current
+            for line in _parent_lines(path):
+                try:
+                    record = json.loads(line)
+                except (ValueError, UnicodeError):
+                    current = None
+                    continue
+                if not isinstance(record, dict):
+                    continue
+                payload = record.get("payload")
+                if record.get("type") == "turn_context":
+                    model = payload.get("model") if isinstance(payload, dict) else None
+                    current = model if isinstance(model, str) and safe_id(model) else None
+                elif (current and record.get("type") == "response_item" and isinstance(payload, dict)
+                      and payload.get("type") == "function_call"):
+                    call = payload.get("call_id")
+                    if isinstance(call, str) and call in wanted:
+                        found.setdefault(call, current)
+                        if wanted <= found.keys():
+                            return found
         except (OSError, ValueError):
             continue
     return found
