@@ -143,7 +143,7 @@ class Collector:
         private(path, True)
         return path
 
-    def prompt_context(self, event, state):
+    def turn_context(self, event, state):
         turn = event.get('turn_id')
         if not isinstance(turn, str) or not turn:
             return None
@@ -160,12 +160,30 @@ class Collector:
                 del state['contexts'][old]
         if key not in state['contexts'] and len(list(root.iterdir())) >= MAX_CONTEXTS:
             return None
-        value = {'source': 'UserPromptSubmit', 'session': event['session_id'], 'turn': turn,
+        value = {'source': event['hook_event_name'], 'session': event['session_id'], 'turn': turn,
                  'cwd': str(Path(event['cwd']).resolve()), 'created_at': time.time()}
         path = root / (key + '.json')
         write(path, value)
         state['contexts'][key] = {**value, 'fingerprint': digest(json.dumps(value, sort_keys=True))}
         return path
+
+    def reminder(self, event, state):
+        # Native app_tool_send_message/continuation turns need not run
+        # UserPromptSubmit. Use the first ordinary tool as a non-blocking
+        # fallback, once per native turn, without retaining that tool's input.
+        turn = event.get('turn_id')
+        if not isinstance(turn, str) or not turn:
+            return {}
+        key = digest(event['session_id'] + '\0' + turn + '\0' + str(Path(event['cwd']).resolve()))
+        prior = state['contexts'].get(key)
+        if prior and time.time() - prior['created_at'] <= CONTEXT_TTL:
+            return {}
+        context = self.turn_context(event, state)
+        if context is None:
+            return {'systemMessage': 'MRH 未取得可用的本回合原生 context；本回合不收集，原工作照常。'}
+        self.save(state)
+        return {'hookSpecificOutput': {'hookEventName': event['hook_event_name'],
+                                       'additionalContext': self.instructions(context)}}
 
     def stage_context(self, path, state, session, cwd):
         path = Path(path)
@@ -174,7 +192,7 @@ class Collector:
             raise ValueError('invalid_prompt_context')
         value = read(path)
         recorded = state['contexts'].get(path.stem)
-        if (not recorded or value.get('source') != 'UserPromptSubmit'
+        if (not recorded or value.get('source') not in ('UserPromptSubmit', 'PreToolUse')
                 or digest(json.dumps(value, sort_keys=True)) != recorded['fingerprint']
                 or value['session'] != session or value['cwd'] != str(Path(cwd).resolve())
                 or time.time() - value['created_at'] > CONTEXT_TTL):
@@ -276,19 +294,20 @@ class Collector:
                     return {'systemMessage': 'MRH 樣本已收齊，收集已停止；請回原收集聊天檢視，尚未外送或呼叫比較服務。'}
                 return {}
             if phase == 'UserPromptSubmit':
-                context = self.prompt_context(event, state)
+                result = self.reminder(event, state)
                 state['last_prompt_hook_at'] = time.time()
                 self.save(state)
-                if context is None:
-                    return {'systemMessage': 'MRH 未取得可用的本回合原生 context；本回合不收集，原工作照常。'}
-                return {'hookSpecificOutput': {'hookEventName': phase, 'additionalContext': self.instructions(context)}}
-            if phase not in ('PreToolUse', 'PostToolUse') or event.get('tool_name') not in TOOLS:
+                return result
+            if phase not in ('PreToolUse', 'PostToolUse'):
                 return {}
             call = event.get('tool_use_id')
             req = event.get('tool_input')
             turn = event.get('turn_id')
             if not isinstance(call, str) or not call or not isinstance(turn, str) or not turn or not isinstance(req, dict):
                 return {}
+            result = self.reminder(event, state) if phase == 'PreToolUse' else {}
+            if event.get('tool_name') not in TOOLS:
+                return result
             key = digest(session + '\0' + call)
             if key in state['events'] and state['events'][key]['status'] == 'counted':
                 return {}
@@ -315,11 +334,15 @@ class Collector:
                     state['bindings'][key] = {'capture': capture, 'equality': equality,
                          'session': session, 'call': call, 'turn': event.get('turn_id'), 'bound_at': time.time()}
                 else:
-                    state['events'][key] = {'status': 'not_collected', 'reason': 'missing_or_ambiguous_pre_capture'}
+                    state['events'][key] = {'status': 'not_collected', 'reason': 'missing_or_ambiguous_pre_capture',
+                        'pre_capture_status': 'missing' if not state['stages'] else 'unmatched_or_ambiguous',
+                        'reminder_timing': 'at_dispatch' if 'hookSpecificOutput' in result else 'before_dispatch_or_unavailable'}
                 self.save(state)
                 # Never deny or modify a native dispatch.
-                return {} if len(choices) == 1 else {'systemMessage':
-                    'MRH 本次委派未收錄：沒有唯一的事前 stage。原工作照常；下次自然派工前先 stage，不重試已成功的委派。'}
+                if len(choices) != 1:
+                    result['systemMessage'] = ('MRH 本次委派未收錄：沒有唯一的事前 stage。'
+                        '原工作照常；下次自然派工前先 stage，不重試已成功的委派。')
+                return result
             binding = state['bindings'].get(key)
             if not binding:
                 self.save(state)

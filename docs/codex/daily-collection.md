@@ -14,7 +14,14 @@ subagent delegations are outside this installation's acceptance scope.
 ## Capture and evidence
 
 The prompt hook records the actual session, turn and cwd in a short-lived private
-context. Immediately before a genuine, independently needed root `spawn_agent`,
+context. Turns started by app-to-chat messages need not emit `UserPromptSubmit`.
+The `PreToolUse` handler therefore also matches ordinary tools: on the first
+tool of a turn without a recorded reminder, it creates the same private context
+from the native event and returns model-visible `additionalContext`. Subsequent
+tools in that turn return no repeated reminder and retain no tool input.
+`PostToolUse` still matches only delegation tools.
+
+Immediately before a genuine, independently needed root `spawn_agent`,
 the parent sends the complete **actual tool JSON** to the injected stage command.
 Stage verifies the recorded context and normal `CODEX_THREAD_ID` environment;
 PreToolUse must match that same session, turn, cwd and non-body fields. A stale
@@ -25,6 +32,20 @@ dataset. It therefore needs no cross-project write grant or recurring escalation
 The normal successful Post hook copies the exact request bytes to the persistent
 central capture directory, then commits its receipt and index under locks. The
 canonical JSON pointers always reference persistent requests, never tmp files.
+
+If the very first tool is a delegation with no prior stage, the collector does
+not deny it or reconstruct its original body later. It records the missing
+capture and whether the reminder was first prepared at that dispatch, and
+provides the context for a later, independently needed dispatch. A reminder
+being emitted is not proof that the parent followed it. Failed captures are not
+backfilled, and no extra dispatch is created just to test collection.
+
+The October 16 diagnosis matched three successful root delegations to collector
+misses in two native `app_tool_send_message` turns. Those turns had no user item,
+no collector reminder in their saved developer messages, and no stage call.
+This identified a missing turn-entry path, rather than a parent ignoring a
+delivered reminder. Isolated process tests exercise that absent-prompt path;
+future natural capture remains a separate observation.
 
 Native encrypted message equality is **unobservable**. Receipts label this
 `parent_pre_dispatch_attestation` and `unobservable_ciphertext`; plaintext alone
@@ -49,9 +70,12 @@ edits refuse publication rather than restoring an old whole-file backup.
 New or changed non-managed hooks require normal official `/hooks` review and trust
 of their exact definitions. Installation is not native activation; isolated event
 fixtures do not prove trust or a natural cross-chat dispatch. Do not use bypass
-flags, disguise a handler as managed, or edit trust storage. Existing chats need
-their next user turn to receive the reminder and may need hook configuration
-reload. Keep official activation and the next genuine dispatch as separate proof.
+flags, disguise a handler as managed, or edit trust storage. After the host loads
+the reviewed hook configuration, existing chats can receive the reminder on
+UserPromptSubmit or their first ordinary PreToolUse event. A turn whose first
+tool already dispatches a child can still miss pre-capture; the collector remains
+non-blocking. Keep official activation and the next genuine dispatch as separate
+proof.
 
 Use the fixed installed `install.py --root <owner-root> status`, `disable`, or
 `uninstall` with its recorded private interpreter. Disable/uninstall removes only

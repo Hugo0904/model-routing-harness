@@ -2,6 +2,8 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -225,6 +227,84 @@ class CollectionTests(unittest.TestCase):
         self.assertIn('--natural --safe-to-store', result['hookSpecificOutput']['additionalContext'])
         self.assertNotIn('permissionDecision', json.dumps(result))
         self.assertEqual(self.collector.index()['count'], 2)
+
+    def test_tool_started_turn_injects_once_then_captures_without_user_prompt(self):
+        # app_tool_send_message turns have no UserPromptSubmit. An ordinary
+        # tool before a real delegation must provide the same stage contract.
+        pre = self.event('PreToolUse'); pre['tool_name'] = 'exec'
+        pre['tool_input'] = {'code': 'read the existing source'}
+        result = self.collector.hook(pre)
+        self.assertEqual(result['hookSpecificOutput']['hookEventName'], 'PreToolUse')
+        self.assertIn('--natural --safe-to-store', result['hookSpecificOutput']['additionalContext'])
+        self.assertNotIn('permissionDecision', json.dumps(result))
+        self.assertNotIn('updatedInput', json.dumps(result))
+        self.assertEqual(self.collector.hook(pre), {})
+        key = daily.digest('chat-a\0native-turn\0' + str(self.root.resolve()))
+        context = self.spool / 'prompt-contexts' / (key + '.json')
+        self.assertEqual(daily.read(context)['source'], 'PreToolUse')
+        self.collector.stage(self.req, session='chat-a', cwd=str(self.root),
+                             natural=True, safe=True, context=context)
+        self.dispatch(); self.dispatch()
+        self.assertEqual(self.collector.index()['count'], 3)
+        sample = self.collector.index()['samples'][-1]
+        saved = self.root / sample['canonical_message_source'].split('#')[0]
+        self.assertEqual(daily.read(saved)['message'], self.req['message'])
+
+    def test_prompt_reminder_suppresses_tool_reminder_but_next_turn_gets_one(self):
+        self.collector.hook(self.event('UserPromptSubmit'))
+        pre = self.event('PreToolUse'); pre['tool_name'] = 'exec'
+        self.assertEqual(self.collector.hook(pre), {})
+        pre['turn_id'] = 'message-triggered-turn'
+        self.assertIn('additionalContext', self.collector.hook(pre)['hookSpecificOutput'])
+        self.assertEqual(self.collector.hook(pre), {})
+        self.assertEqual(self.collector.index()['count'], 2)
+
+    def test_spawn_first_never_backfills_or_blocks_and_records_missing_reminder(self):
+        result = self.collector.hook(self.event('PreToolUse'))
+        self.assertIn('additionalContext', result['hookSpecificOutput'])
+        self.assertNotIn('permissionDecision', json.dumps(result))
+        self.collector.hook(self.event('PostToolUse'))
+        self.assertEqual(self.collector.index()['count'], 2)
+        event = next(iter(self.collector.state()['events'].values()))
+        self.assertEqual(event['pre_capture_status'], 'missing')
+        self.assertEqual(event['reminder_timing'], 'at_dispatch')
+        self.assertFalse((self.root / 'captures').exists())
+
+    def test_tool_context_still_rejects_child_and_stale_turn(self):
+        pre = self.event('PreToolUse'); pre['tool_name'] = 'exec'
+        self.collector.hook(pre)
+        key = daily.digest('chat-a\0native-turn\0' + str(self.root.resolve()))
+        context = self.spool / 'prompt-contexts' / (key + '.json')
+        with self.assertRaises(ValueError):
+            self.collector.stage(self.req, session='child-id', cwd=str(self.root),
+                                 natural=True, safe=True, context=context)
+        self.collector.stage(self.req, session='chat-a', cwd=str(self.root),
+                             natural=True, safe=True, context=context)
+        for phase in ('PreToolUse', 'PostToolUse'):
+            event = self.event(phase); event['turn_id'] = 'different-turn'
+            self.collector.hook(event)
+        self.assertEqual(self.collector.index()['count'], 2)
+
+    def test_cli_message_turn_context_stage_and_post_across_processes(self):
+        script = Path(daily.__file__).resolve()
+        command = [sys.executable, '-I', '-B', str(script), '--config', str(self.config)]
+        def invoke(operation, value, *options):
+            result = subprocess.run([*command, operation, *options], input=json.dumps(value),
+                text=True, capture_output=True, cwd=self.root,
+                env={**os.environ, 'CODEX_THREAD_ID': 'chat-a'}, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+        pre = self.event('PreToolUse'); pre['tool_name'] = 'exec'
+        result = invoke('hook', pre)
+        self.assertIn('additionalContext', result['hookSpecificOutput'])
+        key = daily.digest('chat-a\0native-turn\0' + str(self.root.resolve()))
+        context = self.spool / 'prompt-contexts' / (key + '.json')
+        staged = invoke('stage', self.req, '--context', str(context), '--natural', '--safe-to-store')
+        self.assertEqual(staged['status'], 'prepared')
+        self.assertEqual(invoke('hook', self.event('PreToolUse')), {})
+        invoke('hook', self.event('PostToolUse'))
+        invoke('hook', self.event('PostToolUse'))
+        self.assertEqual(self.collector.index()['count'], 3)
 
 
 if __name__ == '__main__':

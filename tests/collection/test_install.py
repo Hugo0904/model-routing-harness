@@ -54,6 +54,16 @@ class InstallTests(unittest.TestCase):
             installer.hooks_commit(self.hooks, before, value, mode, self.root)
         self.assertTrue(json.loads(self.hooks.read_bytes())['new-owner'])
 
+    def test_pre_hook_covers_non_prompt_turn_tools_while_post_remains_spawn_only(self):
+        import re
+        groups = installer.hook_groups('collector-command')
+        pre = groups['PreToolUse'].get('matcher', '.*')
+        for name in ('exec', 'Bash', 'apply_patch', 'mcp__files__read', 'spawn_agent'):
+            self.assertIsNotNone(re.search(pre, name))
+        post = groups['PostToolUse']['matcher']
+        self.assertIsNone(re.search(post, 'exec'))
+        self.assertIsNotNone(re.search(post, 'collaboration.spawn_agent'))
+
     def test_symlink_hook_file_and_unowned_install_root_rejected(self):
         original = self.hooks.read_bytes(); self.hooks.rename(self.base / 'real-hooks')
         self.hooks.symlink_to(self.base / 'real-hooks')

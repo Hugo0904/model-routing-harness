@@ -86,7 +86,9 @@ def hook_groups(command):
     groups = {}
     for event in EVENTS:
         row = {'hooks': [{'type': 'command', 'command': command, 'timeout': 4}]}
-        if event != 'UserPromptSubmit':
+        # PreToolUse also seeds a once-per-turn reminder for native turns that
+        # bypass UserPromptSubmit. Post still observes only delegation receipts.
+        if event == 'PostToolUse':
             row['matcher'] = r'^(spawn_agent|collaborationspawn_agent|collaboration\.spawn_agent)$'
         groups[event] = row
     return groups
