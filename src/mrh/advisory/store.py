@@ -58,6 +58,32 @@ def candidates(row):
     return tuple(payload(row).get("candidates", ()))
 
 
+REDISPATCH_SECONDS = 1800
+
+
+def redispatch(rows, window=REDISPATCH_SECONDS):
+    """The same task text dispatched again in the same session within `window` of its previous dispatch: a count of facts.
+
+    Rows are delegations already stripped of MRH's own follow-the-advice re-issues and of packet queries/releases. Nothing here
+    says why the task was sent again. {"total", "tasks", "by_tier"}; a repeat is filed under the first dispatch's tier."""
+    groups = {}
+    for row in sorted(rows, key=lambda r: (r["ts"], r["request_id"])):
+        groups.setdefault((row["platform"], row["session_id"], row["task_hash"]), []).append(row)
+    total, tasks, by_tier = 0, 0, {}
+    for chain in groups.values():
+        first, previous, repeated = chain[0], chain[0], False
+        for row in chain[1:]:
+            if row["ts"] - previous["ts"] <= window:
+                total += 1; repeated = True
+                tier = first["tier"] or "未分級"
+                by_tier[tier] = by_tier.get(tier, 0) + 1
+            else:
+                first = row                                  # a new run: the gap was too long to call it the same attempt
+            previous = row
+        tasks += int(repeated)
+    return {"total": total, "tasks": tasks, "by_tier": by_tier, "window_minutes": window // 60}
+
+
 def version_change(answered):
     """The latest switch of the model that answered, from (ts, model) pairs in time order: {"from", "to", "at"} or None."""
     change, previous = None, None
@@ -515,6 +541,7 @@ class AdviceStore:
                 "tiers": tiers, "classifier_usage": usage,
                 "classifier_latency": latency, "classifier_versions": versions, "manual_classifications": manual,
                 "classifier_change": version_change(answer_log),
+                "redispatch": redispatch([r for r in counted if r["request_id"] not in packet_ids and r["reason"] != "advice_reissue"]),
                 "usage": usage_report.summarize(
                     usage_rows, sum(1 for c in children if c["agent_id"]), {r["request_id"]: r for r in rows}),
                 "classifier_calls": sum(u["calls"] for u in usage.values()),

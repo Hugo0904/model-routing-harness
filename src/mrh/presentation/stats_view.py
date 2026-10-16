@@ -277,6 +277,11 @@ def render(data, period_label, threshold=None, color=False, policy=None):
             lines.append(f"    沿用主模型（沒指定模型）：{data['children_inherited']} 個")
         lines.append("")
     lines += usage_lines(data)
+    again = data.get("redispatch") or {}
+    if again.get("total"):
+        tiers = "、".join(f"{t.lower()} {n}" for t, n in sorted(again["by_tier"].items(), key=lambda x: -x[1]))
+        lines += ["■ 同一任務重派", f"    文字相同的任務，在 {again['window_minutes']} 分鐘內又派了一次：{again['total']} 次（{again['tasks']} 個任務）；依第一次的級別：{tiers}",
+                  "    只計次數，不判斷原因。", ""]
     followed = data["children_following_advice"]
     moved, decided = rerouted(data)
     lines += ["■ 改派的效果",
