@@ -17,24 +17,29 @@ REASON = {
     "read_error": "紀錄檔讀取失敗",
     "too_large": "紀錄檔太大（上限 256 MB）",
     "platform_not_supported": "這個平台不支援收集",
+    "source_changed_during_read": "讀取期間來源有變動，保留原快照與時間",
 }
 
 
 def render(summary, days):
     lines = ["子代理用量收集（只讀本機紀錄檔，不連網、不花錢）", "",
-             f"範圍：最近 {days} 天、已記錄但還沒收集的子代理，共 {summary['candidates']} 個",
-             f"  這次新收集        {summary['collected']:>4} 個",
-             f"  仍在執行，下次再收  {summary['running']:>2} 個",
+             f"範圍：最近 {days} 天、已記錄的子代理，共 {summary['candidates']} 個",
+             f"  這次保存快照      {summary['collected']:>4} 個（含更新 {summary.get('updated', 0)} 個）",
+             f"  來源未變，不重讀  {summary.get('unchanged', 0):>4} 個",
+             f"  最近變動，下次再收  {summary['running']:>2} 個",
              f"  找不到紀錄檔      {summary['not_found']:>4} 個",
              f"  讀不懂            {summary['unreadable'] + summary['other']:>4} 個"]
     reasons = {}
     for item in summary["details"]:
         if item["reason"] != "transcript_changed_within_10_minutes":
-            key = (stats_view.PLATFORM.get(item["platform"], item["platform"]), REASON.get(item["reason"], item["reason"]))
+            reason = item["reason"]
+            label = ("用量缺失或格式不合法：" + reason.split(":", 1)[1] if reason.startswith("invalid_usage:") else
+                     "用量分量互相矛盾：" + reason.split(":", 1)[1] if reason.startswith("inconsistent_usage:") else REASON.get(reason, reason))
+            key = (stats_view.PLATFORM.get(item["platform"], item["platform"]), label)
             reasons[key] = reasons.get(key, 0) + 1
     if reasons:
         lines += ["", "沒收到的原因："] + [f"  {platform}：{reason}  {n} 個" for (platform, reason), n in sorted(reasons.items())]
-    lines += ["", "看結果：mrh stats（「子代理實際用量」段落）"]
+    lines += ["", "十分鐘未變只表示可讀快照，不代表已結束；讀取失敗會保留舊快照。", "看結果：mrh stats（「子代理實際用量」段落）"]
     return "\n".join(lines) + "\n"
 
 

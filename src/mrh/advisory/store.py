@@ -322,14 +322,15 @@ class AdviceStore:
             return [dict(r) for r in db.execute("SELECT * FROM advice")], [dict(r) for r in db.execute("SELECT * FROM children")]
 
     def usage_candidates(self, since):
-        """Recorded sub-agents (with an agent id) whose usage has not been collected yet."""
+        """Recorded children, including previous snapshots for explicit refresh checks."""
         with self.connect(readonly=True) as db:
             return [dict(r) for r in db.execute(
-                "SELECT c.* FROM children c WHERE c.agent_id IS NOT NULL AND c.ts>=? AND NOT EXISTS (SELECT 1 FROM child_usage u "
-                "WHERE u.platform=c.platform AND u.session_id=c.session_id AND u.call_id=c.call_id) ORDER BY c.ts", (since,))]
+                "SELECT c.*, u.usage AS previous_usage, u.source_file AS previous_source_file "
+                "FROM children c LEFT JOIN child_usage u ON u.platform=c.platform AND u.session_id=c.session_id AND u.call_id=c.call_id "
+                "WHERE c.agent_id IS NOT NULL AND c.ts>=? ORDER BY c.ts", (since,))]
 
     def save_usage(self, row):
-        """One finished sub-agent. Numbers and identifiers only; no task text ever reaches this table."""
+        """Replace one settled snapshot atomically. Numbers and identifiers only."""
         with self.connect() as db:
             db.execute("INSERT OR REPLACE INTO child_usage VALUES(?,?,?,?,?,?,?,?,?)",
                        (row["platform"], row["session_id"], row["call_id"], row["ts"], row["source_file"],

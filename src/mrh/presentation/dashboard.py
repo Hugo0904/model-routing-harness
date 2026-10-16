@@ -228,7 +228,9 @@ def _where(data, policy, inner, p, color):
         saved = [sv for sv in (usage.get("saving") or {}).values() if sv["children"]]
         right += bar("子代理用量已收集", usage["collected"], usage["recorded"],
                      f"{usage['collected']} / {usage['recorded']} 個子代理" + ("（mrh usage collect）" if usage["uncollected"] else ""),
-                     f"節省（換算）{stats_view._usd(sum(sv['usd'] for sv in saved))}" if saved else "")
+                     (f"節省（換算）{stats_view._usd(sum(sv.get('known_usd', sv['usd']) for sv in saved))}" +
+                      ("（已知部分）" if any(sv['unknown'] for sv in usage['saving'].values()) else "")) if saved else
+                     ("舊版未驗證" if usage.get("legacy") else "換算未知"))
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}

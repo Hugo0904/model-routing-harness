@@ -101,7 +101,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     usage = commands.add_parser("usage", help="what each recorded sub-agent actually used (read-only, local files)")
     usage_actions = usage.add_subparsers(dest="usage_action", required=True)
-    collect = usage_actions.add_parser("collect", help="read the finished sub-agents' own transcripts and store their token usage")
+    collect = usage_actions.add_parser("collect", help="refresh settled sub-agent token snapshots from local transcripts")
     collect.add_argument("--days", type=float, default=None, help="only sub-agents from the last N days (default 30)")
     collect.add_argument("--json", action="store_true", help="print the result as JSON")
     collect.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")

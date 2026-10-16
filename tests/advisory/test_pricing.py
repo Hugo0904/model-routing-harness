@@ -6,7 +6,7 @@ from mrh.advisory.usage_collect import MIXED
 M = 1_000_000
 
 
-def entry(inp=0, w5=0, w1=0, write=0, read=0, out=None, large=None, max_request=None):
+def entry(inp=0, w5=0, w1=0, write=0, read=0, out=None, large=None, max_request=1000):
     e = {"requests": 1, "output": out, "reasoning": None,
          "small": {"input": inp, "cache_write_5m": w5, "cache_write_1h": w1, "cache_write": write, "cache_read": read},
          "large": {"input": 0, "cache_write_5m": 0, "cache_write_1h": 0, "cache_write": 0, "cache_read": 0, **(large or {})}}
@@ -85,6 +85,22 @@ class SavingTests(unittest.TestCase):
             self.assertIsNone(result["usd"]); self.assertIn(fragment, result["reason"])
         self.assertIsNone(p.saving({"claude-opus-5-5": entry(inp=M, write=10)}, "claude-fable-5-1")["usd"])   # an unpriced write blocks it
         self.assertIsNone(p.saving({MIXED: entry(inp=M, out=5)}, "gpt-6.1-sol")["usd"])
+
+
+class UnknownValidityTests(unittest.TestCase):
+    def test_unknown_request_length_blocks_all_tier_dependent_money(self):
+        usage = {"gpt-6-luna": entry(inp=M, out=M, max_request=None)}
+        self.assertIsNone(p.price_child(usage)["total"])
+        self.assertIn("長度未知", p.price_child(usage)["unknown"][0])
+        self.assertIsNone(p.saving(usage, "gpt-6.1-sol")["usd"])
+
+    def test_missing_invalid_components_are_not_free_and_empty_is_unknown(self):
+        for invalid in (None, True, -1, "0"):
+            e = entry(inp=0); e["small"]["input"] = invalid
+            self.assertIsNone(p.price_entry("claude-haiku-5-5", e)["input_side"])
+        e = entry(inp=0); e["large"].pop("cache_read")
+        self.assertIsNone(p.price_entry("claude-haiku-5-5", e)["input_side"])
+        self.assertIsNone(p.price_child({})["total"])
 
 
 if __name__ == "__main__":

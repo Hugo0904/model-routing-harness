@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 
-from mrh.advisory.usage_collect import MIXED
+from mrh.advisory.usage_collect import MIXED, _n
 
 CHECKED = "2026-10-16"
 CLAUDE_URL = "https://platform.claude.com/docs/en/about-claude/pricing"
@@ -64,27 +64,36 @@ def price_entry(model, entry):
         return {"input_side": None, "output": None, "unknown": ["同一個子代理用了多個模型，無法分開計價"]}
     if not known(model):
         return {"input_side": None, "output": None, "unknown": [f"沒有官方價格：{model}"]}
-    if key(model).startswith("gpt-") and (entry.get("max_request_input") or 0) > CODEX_LONG_CONTEXT:
+    length = _n(entry.get("max_request_input"))
+    if key(model).startswith("gpt-") and length is None:
+        return {"input_side": None, "output": None, "unknown": ["單次請求輸入長度未知，無法確認價格分檔"]}
+    if key(model).startswith("gpt-") and length > CODEX_LONG_CONTEXT:
         return {"input_side": None, "output": None, "unknown": [f"單次請求超過 {CODEX_LONG_CONTEXT // 1000}K 輸入，長上下文價格未收錄"]}
     unknown, side = [], 0.0
     for bucket in ("small", "large"):
         for field in INPUT_SIDE:
-            tokens = (entry.get(bucket) or {}).get(field, 0)
-            if not tokens:
+            tokens = _n((entry.get(bucket) or {}).get(field))
+            if tokens is None:
+                unknown.append(f"用量未知：{bucket}.{field}")
+                continue
+            if tokens == 0:
                 continue
             rate = _rate(model, field, bucket)
             if rate is None:
                 unknown.append(f"沒有價格：{field}（{tokens:,} tokens）")
             else:
                 side += tokens * rate / 1_000_000
-    output = entry.get("output")
+    output = _n(entry.get("output"))
     out_usd = None if output is None else output * PRICES[key(model)]["small"]["output"] / 1_000_000
+    output_reason = "輸出 token 未知" + ("（Claude 紀錄不含最終輸出量）" if key(model).startswith("claude-") else "")
     return {"input_side": None if unknown else side, "output": out_usd,
-            "unknown": unknown + (["輸出 token 未知（Claude 紀錄不含最終輸出量）"] if output is None else [])}
+            "unknown": unknown + ([output_reason] if output is None else [])}
 
 
 def price_child(usage):
     """Sum over the models a sub-agent used. input_side is None if any part is unknown; output likewise; total needs both."""
+    if not usage:
+        return {"input_side": None, "output": None, "total": None, "unknown": ["沒有用量快照"]}
     side = out = 0.0
     side_ok = out_ok = True
     reasons = []
@@ -124,19 +133,13 @@ def saving(usage, parent_model):
 
 def _merge(usage):
     """All of a sub-agent's tokens as one entry, to price them at a single (parent) model's rates."""
-    merged = {"requests": 0, "output": 0, "reasoning": 0, "max_request_input": 0,
-              "small": {f: 0 for f in INPUT_SIDE}, "large": {f: 0 for f in INPUT_SIDE}}
-    unknown_output = False
-    for entry in usage.values():
-        merged["requests"] += entry.get("requests") or 0
-        merged["max_request_input"] = max(merged["max_request_input"], entry.get("max_request_input") or 0)
-        if entry.get("output") is None:
-            unknown_output = True
-        else:
-            merged["output"] += entry["output"]
-        for bucket in ("small", "large"):
-            for field in INPUT_SIDE:
-                merged[bucket][field] += (entry.get(bucket) or {}).get(field, 0)
-    if unknown_output:
-        merged["output"] = None
-    return merged
+    entries = list(usage.values())
+    def add(values):
+        return None if not values or any(_n(v) is None for v in values) else sum(values)
+    lengths = [e.get("max_request_input") for e in entries]
+    return {"requests": add([e.get("requests") for e in entries]),
+            "output": add([e.get("output") for e in entries]),
+            "reasoning": add([e.get("reasoning") for e in entries]),
+            "max_request_input": max(lengths) if lengths and all(_n(n) is not None for n in lengths) else None,
+            **{bucket: {f: add([(e.get(bucket) or {}).get(f) for e in entries]) for f in INPUT_SIDE}
+               for bucket in ("small", "large")}}

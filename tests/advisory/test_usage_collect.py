@@ -5,6 +5,7 @@ import sqlite3
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from argparse import Namespace
 from pathlib import Path
 
@@ -93,14 +94,19 @@ class ClaudeTests(Env):
         self.assertEqual(json.loads(row["models"]), [{"model": "claude-haiku-5-5", "effort": "high"}])
         self.assertEqual((row["parent_model"], row["source_file"], row["ts"]), ("claude-opus-5-5", "agent-a1.jsonl", NOW - 3600))
 
-    def test_large_prompts_are_kept_apart_for_the_higher_price_tier_and_cache_without_a_ttl_split_is_not_guessed(self):
+    def test_large_prompts_are_separate_and_missing_ttl_split_cannot_publish_partial_total(self):
         self.child("claude", "toolu_2", "a2")
-        self.claude_agent("a2", "toolu_2", [claude_line("big", "claude-haiku-5-5", inp=50, read=120_000),                    # 120,050 > 100K
-                                            claude_line("old", "claude-haiku-5-5", inp=5, total_cc=700, cc=False)])             # no TTL breakdown
+        path = self.claude_agent("a2", "toolu_2", [claude_line("big", "claude-haiku-5-5", inp=50, read=120_000)])
         self.collect()
-        usage = json.loads(self.rows()[0]["usage"])["claude-haiku-5-5"]
+        original = self.rows()
+        usage = json.loads(original[0]["usage"])["claude-haiku-5-5"]
         self.assertEqual(usage["large"]["cache_read"], 120_000); self.assertEqual(usage["small"]["cache_read"], 0)
-        self.assertEqual((usage["small"]["cache_write"], usage["small"]["cache_write_5m"]), (700, 0))
+        path.write_text(path.read_text() + claude_line("old", "claude-haiku-5-5", inp=5, total_cc=700, cc=False) + "\n")
+        os.utime(path, (NOW - 1800, NOW - 1800))
+        result = self.collect()
+        self.assertEqual(result["collected"], 0)
+        self.assertEqual(result["details"][0]["reason"], "invalid_usage:cache_creation_ttl_split")
+        self.assertEqual(self.rows(), original)
 
     def test_synthetic_malformed_and_other_roles_are_ignored(self):
         self.child("claude", "toolu_3", "a3")
@@ -124,13 +130,22 @@ class ClaudeTests(Env):
             os.utime(p, (NOW - 3600, NOW - 3600))
         self.assertEqual(self.collect()["collected"], 1)
 
-    def test_rerunning_never_duplicates_or_rereads(self):
+    def test_unchanged_sources_do_not_read_bodies_and_changed_sources_replace_same_child(self):
         self.child("claude", "toolu_6", "a6")
         path = self.claude_agent("a6", "toolu_6", [claude_line("m", "claude-haiku-5-5", inp=5)])
         self.assertEqual(self.collect()["collected"], 1)
-        path.write_text("")                                                                             # a re-read would now find nothing
+        original = self.rows()[0]
+        with patch.object(uc, "_lines", side_effect=AssertionError("body reread")), patch.object(uc, "find_claude_child", side_effect=AssertionError("meta reread")):
+            again = self.collect()
+        self.assertEqual((again["candidates"], again["unchanged"], again["collected"]), (1, 1, 0))
+        path.write_text(path.read_text() + claude_line("m2", "claude-haiku-5-5", inp=13) + "\n")
+        os.utime(path, (NOW - 1800, NOW - 1800))
         again = self.collect()
-        self.assertEqual((again["candidates"], again["collected"]), (0, 0)); self.assertEqual(len(self.rows()), 1)
+        self.assertEqual((again["collected"], again["updated"]), (1, 1))
+        (row,) = self.rows()
+        self.assertEqual(json.loads(row["usage"])["claude-haiku-5-5"]["small"]["input"], 18)
+        self.assertEqual((row["platform"], row["session_id"], row["call_id"]), (original["platform"], original["session_id"], original["call_id"]))
+        self.assertEqual(self.collect()["unchanged"], 1)
 
     def test_unknown_parent_model_stays_unknown(self):
         self.child("claude", "toolu_7", "a7")
@@ -139,7 +154,7 @@ class ClaudeTests(Env):
 
 
 class CodexTests(Env):
-    def test_the_child_is_found_by_parent_thread_and_agent_path_and_totals_are_taken_as_final(self):
+    def test_the_child_is_found_by_parent_thread_and_agent_path_and_totals_are_a_snapshot(self):
         self.child("codex", "call_1", "/root/map_ui", session="parent-1", model="gpt-6-luna")
         self.codex_agent("parent-1", "/root/map_ui", call_models=[("gpt-6-luna", "max")])
         self.codex_agent("parent-1", "/root/other_task")                                                  # a different child: ignored
@@ -148,15 +163,21 @@ class CodexTests(Env):
         (row,) = self.rows()
         usage = json.loads(row["usage"])["gpt-6-luna"]
         self.assertEqual(usage["small"], {"input": 400, "cache_write_5m": 0, "cache_write_1h": 0, "cache_write": 0, "cache_read": 600})  # input includes cached
-        self.assertEqual((usage["output"], usage["reasoning"], usage["requests"]), (50, 20, 0))
-        self.assertEqual(usage["max_request_input"], 0)                                                   # no per-request record in this fixture
+        self.assertEqual((usage["output"], usage["reasoning"], usage["requests"]), (50, 20, None))
+        self.assertIsNone(usage["max_request_input"])                                                   # no per-request record in this fixture
         self.assertEqual(json.loads(row["models"]), [{"model": "gpt-6-luna", "effort": "max"}])
 
     def test_the_largest_single_request_is_recorded_for_the_long_context_price_tier(self):
         self.child("codex", "call_7", "/root/big", session="parent-7")
         file = self.codex_agent("parent-7", "/root/big")
-        extra = [json.dumps({"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": n}}}}) for n in (1000, 310_000, 5000)]
-        file.write_text(file.read_text() + "\n".join(extra) + "\n"); os.utime(file, (NOW - 3600, NOW - 3600))
+        lines = file.read_text().splitlines()[:-1]
+        inp = out = 0
+        for n in (1000, 310_000, 5000):
+            inp += n; out += 10
+            lines.append(json.dumps({"type": "event_msg", "payload": {"type": "token_count", "info": {
+                "total_token_usage": {"input_tokens": inp, "cached_input_tokens": 0, "cache_write_input_tokens": 0, "output_tokens": out, "total_tokens": inp + out},
+                "last_token_usage": {"input_tokens": n, "output_tokens": 10}}}}))
+        file.write_text("\n".join(lines) + "\n"); os.utime(file, (NOW - 3600, NOW - 3600))
         self.collect()
         self.assertEqual(json.loads(self.rows()[0]["usage"])["gpt-6-luna"]["max_request_input"], 310_000)
 
@@ -231,6 +252,133 @@ class PrivacyAndCliTests(Env):
         self.assertEqual(uc.roots({uc.CLAUDE_ENV: "/x/claude", uc.CODEX_ENV: "/x/codex"}), (Path("/x/claude"), Path("/x/codex")))
         claude, codex = uc.roots({})
         self.assertTrue(str(claude).endswith(".claude/projects") and str(codex).endswith(".codex/sessions"))
+
+
+class SnapshotValidityTests(Env):
+    def test_required_values_are_not_zero_filled_and_real_zero_is_valid(self):
+        path = self.claude_agent("invalid", "c", [claude_line("m", "claude-haiku-5-5", inp=0)])
+        base = json.loads(path.read_text())
+        for field in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"):
+            for invalid in (None, True, -1, "0", 0.5):
+                with self.subTest(field=field, invalid=invalid):
+                    record = json.loads(json.dumps(base)); record["message"]["usage"][field] = invalid
+                    path.write_text(json.dumps(record) + "\n")
+                    with self.assertRaisesRegex(ValueError, "invalid_usage:"):
+                        uc.parse_claude(path)
+        path.write_text(json.dumps(base) + "\n")
+        self.assertEqual(uc.parse_claude(path)["claude-haiku-5-5"]["small"]["input"], 0)
+        base["message"]["usage"]["cache_creation"]["ephemeral_5m_input_tokens"] = 1
+        path.write_text(json.dumps(base) + "\n")
+        with self.assertRaisesRegex(ValueError, "inconsistent_usage:"):
+            uc.parse_claude(path)
+
+    def test_invalid_later_record_does_not_publish_partial_claude_total(self):
+        self.child("claude", "c", "invalid")
+        path = self.claude_agent("invalid", "c", [claude_line("m", "claude-haiku-5-5")])
+        self.collect(); original = self.rows()
+        invalid = json.loads(claude_line("m2", "claude-haiku-5-5")); invalid["message"]["usage"].pop("input_tokens")
+        path.write_text(path.read_text() + json.dumps(invalid) + "\n"); os.utime(path, (NOW - 1800, NOW - 1800))
+        result = uc.collect(self.store, NOW + 1, claude_root=self.claude, codex_root=self.codex)
+        self.assertEqual(result["collected"], 0); self.assertEqual(self.rows(), original)
+        self.assertEqual(result["details"][0]["reason"], "invalid_usage:input_tokens")
+
+    def test_codex_required_missing_invalid_and_inconsistent_counts(self):
+        base = {"input_tokens": 5, "cached_input_tokens": 1, "cache_write_input_tokens": 0, "output_tokens": 2, "total_tokens": 7}
+        for field in ("input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens"):
+            for invalid in (None, True, -1, "0"):
+                with self.subTest(field=field, invalid=invalid):
+                    counts = {**base, field: invalid}
+                    path = self.codex_agent("p", "/root/x", total=counts)
+                    with self.assertRaisesRegex(ValueError, "invalid_usage:"):
+                        uc.parse_codex(path)
+        for counts in ({**base, "cached_input_tokens": 6}, {**base, "total_tokens": 0}, {**base, "reasoning_output_tokens": 3}):
+            with self.assertRaisesRegex(ValueError, "inconsistent_usage:"):
+                uc.parse_codex(self.codex_agent("p", "/root/x", total=counts))
+        zero = {k: 0 for k in base}
+        _, entries = uc.parse_codex(self.codex_agent("p", "/root/x", total=zero))
+        e = entries["gpt-6-luna"]
+        self.assertEqual(e["output"], 0); self.assertIsNone(e["reasoning"]); self.assertIsNone(e["max_request_input"])
+
+    def test_codex_refresh_replaces_cumulative_total_and_unchanged_does_not_index_or_read(self):
+        self.child("codex", "c", "/root/x", session="p")
+        path = self.codex_agent("p", "/root/x")
+        self.collect()
+        with patch.object(uc, "index_codex", side_effect=AssertionError("indexed")), patch.object(uc, "_lines", side_effect=AssertionError("body reread")):
+            self.assertEqual(self.collect()["unchanged"], 1)
+        payload = {"type": "event_msg", "payload": {"type": "token_count", "info": {"total_token_usage": {
+            "input_tokens": 2000, "cached_input_tokens": 600, "cache_write_input_tokens": 0, "output_tokens": 70, "total_tokens": 2070}}}}
+        path.write_text(path.read_text() + json.dumps(payload) + "\n"); os.utime(path, (NOW - 1800, NOW - 1800))
+        self.assertEqual(self.collect()["updated"], 1)
+        (row,) = self.rows()
+        self.assertEqual(json.loads(row["usage"])["gpt-6-luna"]["small"]["input"], 1400)
+
+    def test_changes_during_read_preserve_snapshot_and_collected_at(self):
+        self.child("claude", "c", "race")
+        path = self.claude_agent("race", "c", [claude_line("m", "claude-haiku-5-5")])
+        self.collect(); old = self.rows()
+        path.write_text(path.read_text() + claude_line("m2", "claude-haiku-5-5") + "\n")
+        os.utime(path, (NOW - 1800, NOW - 1800))
+        parse = uc.parse_claude
+        def racing(p):
+            value = parse(p)
+            with p.open("a") as f:
+                f.write("\n")
+            return value
+        with patch.object(uc, "parse_claude", side_effect=racing):
+            result = uc.collect(self.store, NOW + 5, claude_root=self.claude, codex_root=self.codex)
+        self.assertEqual(self.rows(), old)
+        self.assertEqual(result["details"][0]["reason"], "source_changed_during_read")
+
+    def test_metadata_change_refreshes_and_legacy_revalidates_once(self):
+        self.child("claude", "c", "legacy")
+        path = self.claude_agent("legacy", "c", [claude_line("m", "claude-haiku-5-5")])
+        self.collect()
+        row = self.rows()[0]; legacy = json.loads(row["usage"])
+        for entry in legacy.values():
+            entry.pop("observation")
+        with self.store.connect() as db:
+            db.execute("UPDATE child_usage SET usage=?", (json.dumps(legacy),))
+        self.assertEqual(self.collect()["updated"], 1); self.assertEqual(self.collect()["unchanged"], 1)
+        meta = path.with_suffix(".meta.json"); data = json.loads(meta.read_text()); data["effort"] = "low"
+        meta.write_text(json.dumps(data)); os.utime(meta, (NOW - 1200, NOW - 1200))
+        self.assertEqual(self.collect()["updated"], 1)
+        self.assertEqual(json.loads(self.rows()[0]["models"])[0]["effort"], "low")
+
+
+class SnapshotBoundaryTests(Env):
+    def test_codex_unknown_profile_and_incomplete_request_lengths_are_not_verified(self):
+        path = self.codex_agent("p", "/root/x")
+        records = [json.loads(line) for line in path.read_text().splitlines()]
+        records.insert(2, {"type": "turn_context", "payload": {"effort": "high"}})
+        path.write_text("\n".join(map(json.dumps, records)) + "\n")
+        models, usage = uc.parse_codex(path)
+        self.assertIn({}, models); self.assertIn(uc.MIXED, usage)
+        self.assertIsNone(usage[uc.MIXED]["max_request_input"])
+        records[-1]["payload"]["info"]["last_token_usage"] = {"input_tokens": 1000, "output_tokens": 50}
+        records.pop(2)
+        path.write_text("\n".join(map(json.dumps, records + [records[-1]])) + "\n")
+        _, usage = uc.parse_codex(path)
+        self.assertEqual(usage["gpt-6-luna"]["requests"], 1)  # repeated cumulative report is not another request
+        self.assertEqual(usage["gpt-6-luna"]["max_request_input"], 1000)
+        records[-1]["payload"]["info"]["last_token_usage"]["input_tokens"] = 999
+        path.write_text("\n".join(map(json.dumps, records)) + "\n")
+        _, usage = uc.parse_codex(path)
+        self.assertIsNone(usage["gpt-6-luna"]["max_request_input"])
+        for record in (["token_count"], {"type": "event_msg", "payload": "token_count"},
+                       {"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": 1}}}}):
+            path.write_text(json.dumps(record) + "\n")
+            with self.assertRaisesRegex(ValueError, "invalid_usage:"):
+                uc.parse_codex(path)
+
+    def test_replaced_file_with_same_size_and_mtime_is_not_unchanged(self):
+        self.child("claude", "c", "identity")
+        path = self.claude_agent("identity", "c", [claude_line("m", "claude-haiku-5-5", inp=1)])
+        self.collect(); stat = path.stat()
+        replacement = path.with_suffix(".replacement")
+        replacement.write_text(path.read_text().replace('"input_tokens": 1', '"input_tokens": 9'))
+        os.utime(replacement, ns=(stat.st_atime_ns, stat.st_mtime_ns)); replacement.replace(path)
+        self.assertEqual(self.collect()["updated"], 1)
+        self.assertEqual(json.loads(self.rows()[0]["usage"])["claude-haiku-5-5"]["small"]["input"], 9)
 
 
 if __name__ == "__main__":
