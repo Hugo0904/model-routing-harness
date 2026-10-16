@@ -108,7 +108,7 @@ def statistics(path, days):
         "reissues": 0, "unverified_reissues": 0, "unverified_followed_children": 0, "classifier_calls": 0, "classifier_requests": 0,
         "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0,
         "packet_classifications": 0, "packet_releases": 0, "packet_children_started": 0, "packet_children_following_advice": 0,
-        "classifier_latency": {"avg": None, "max": None, "n": 0}, "classifier_versions": {}, "manual_classifications": 0,
+        "classifier_latency": {"avg": None, "max": None, "n": 0}, "classifier_versions": {}, "classifier_change": None, "manual_classifications": 0,
         "roles": {}, "role_recorded": 0, "explicit_without_role": 0, "children_models": {}, "children_inherited": 0}
     return data, label
 
@@ -159,6 +159,12 @@ class ModelChoices(list):
         stamp = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.fetched_at)) if self.fetched_at else "未取得更新時間"
         state = "CLI 宣告清單（不代表帳號實際可用）" if self.status == "advertised" else "清單未確認；離線或更新失敗不等於下架"
         return f"{state}；來源：{self.source}；{stamp}" + (f"；{self.reason}" if self.reason else "")
+
+
+def fetch_jev_models(secrets_module):
+    """The only place the control center talks to TypeSafe: GET /v1/models, when the Jev version menu is opened."""
+    from mrh.adapters.providers import typesafe_models
+    return typesafe_models.fetch(secrets_module.credential_resolver("jev"))
 
 
 def list_models(platform, cache={}):
@@ -271,6 +277,14 @@ class Session:
                     step = 1
                 elif step == 1:
                     if s["provider"] == "jev":
+                        from mrh.adapters.providers import typesafe_models as tm
+                        known, note = tm.known_models(tm.cache_path(), time.time(), fetcher=lambda: fetch_jev_models(self.secrets))
+                        self.menu.note(f"Jev 版本：{note}。別名（latest／preview）會在官方推出新版時自己換，答案可能改變；指定版本號才會固定。")
+                        entries = [(label, name) for name, label in tm.choices(known, s["model"])] + [("自己輸入版本號（jev-X.Y.Z）", None)]
+                        model = self.menu.pick("Jev 用哪個版本", entries, s["model"])
+                        model = model or self.menu.text("版本號，例如 jev-1.13.0")
+                        if model != s["model"]:
+                            self.set_key("classifier.model", model, f"Jev 版本 → {model}")
                         step = 2; continue
                     platform = "codex" if s["provider"] == "codex_subscription" else "claude"
                     source = self.model_choices(platform)
@@ -297,7 +311,7 @@ class Session:
             except Back:
                 if step == 0:
                     raise
-                step = 0 if step == 1 or (step == 2 and self.settings()["classifier"]["provider"] == "jev") else 1 if step == 2 else 2
+                step -= 1
             except logic.CtrlError as exc:
                 self.menu.note(str(exc)); step = 1
 
@@ -449,7 +463,9 @@ class Session:
             db = self.path.parent / "advice.sqlite3"
             if db.exists():
                 advice, children = AdviceStore.read_rows(db)
-                for line in calibration.describe(calibration.suggest_threshold(advice, children, self.settings()["policy"], time.time())):
+                change = AdviceStore.read_version_change(db)
+                result = calibration.suggest_threshold(advice, children, self.settings()["policy"], time.time(), since=change["at"] if change else None)
+                for line in calibration.describe(result, change):
                     self.menu.note(line)
         except Exception:
             pass                                          # a missing suggestion must never block setting the threshold

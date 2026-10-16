@@ -8,6 +8,7 @@ import ssl
 import time
 from mrh.routing.core import ClassifierFailure
 from mrh.adapters.providers.typesafe_protocol import PINNED_MODEL, parse_response, serialize_request
+from mrh.routing.classification_spec import is_jev_model
 
 MAX_RESPONSE_BYTES = 65536
 
@@ -69,7 +70,10 @@ def _no_duplicate_keys(pairs):
 
 
 class TypesafeClassifier:
-    def __init__(self, *, enabled=False, task_export_permitted=False, credential_resolver=None, transport=None):
+    def __init__(self, *, enabled=False, task_export_permitted=False, credential_resolver=None, transport=None, model=PINNED_MODEL):
+        if not is_jev_model(model):
+            raise ClassifierFailure("invalid_policy")
+        self.model = model
         self.enabled = enabled is True
         self.task_export_permitted = task_export_permitted is True
         self.credential_resolver = credential_resolver or environment_credential
@@ -87,7 +91,7 @@ class TypesafeClassifier:
         if not self.task_export_permitted:
             raise ClassifierFailure("typesafe_export_denied")
         recorder.check()
-        body = serialize_request(task, context, **{k: v for k, v in (extras or {}).items() if k in ("title", "role")})
+        body = serialize_request(task, context, model=self.model, **{k: v for k, v in (extras or {}).items() if k in ("title", "role")})
         if len(json.dumps(body, allow_nan=False).encode()) > 65536:
             raise ClassifierFailure("typesafe_invalid_task")
         try:
@@ -106,7 +110,7 @@ class TypesafeClassifier:
             return result
         try:
             response = recorder.invoke("0", lambda enter: self.transport.request(body, headers, recorder.deadline, enter),
-                                       kind=kind, requested_model=PINNED_MODEL)
+                                       kind=kind, requested_model=self.model)
             if not isinstance(response, HttpResponse) or type(response.status) is not int or not isinstance(response.body, bytes):
                 raise ClassifierFailure("typesafe_malformed_response")
             if 300 <= response.status < 400:
@@ -120,7 +124,7 @@ class TypesafeClassifier:
                 data = json.loads(response.body, object_pairs_hook=_no_duplicate_keys)
             except (ValueError, UnicodeError):
                 raise ClassifierFailure("typesafe_malformed_response") from None
-            parsed = parse_response(data)
+            parsed = parse_response(data, self.model)
             safe = safe_telemetry(parsed.telemetry)
             recorder.finish("0", "returned", **safe)
             return parsed.classification if safe.get("response_model") is not None else replace(parsed.classification, model=None)

@@ -52,6 +52,16 @@ def candidates(row):
     return tuple(payload(row).get("candidates", ()))
 
 
+def version_change(answered):
+    """The latest switch of the model that answered, from (ts, model) pairs in time order: {"from", "to", "at"} or None."""
+    change, previous = None, None
+    for ts, model in answered:
+        if previous is not None and model != previous:
+            change = {"from": previous, "to": model, "at": ts}
+        previous = model
+    return change
+
+
 def _average(rows, since):
     """{"avg": mean confidence or None, "n": classifications} for rows at or after `since`."""
     values = [r["confidence"] for r in rows if r["confidence"] is not None and r["ts"] >= since]
@@ -262,6 +272,14 @@ class AdviceStore:
         return reader.stats(since)
 
     @classmethod
+    def read_version_change(cls, path):
+        reader = cls.__new__(cls)
+        reader.path = str(path)
+        with reader.connect(readonly=True) as db:
+            return version_change([(r[0], r[1]) for r in db.execute(
+                "SELECT ts, response_model FROM attempts WHERE response_model IS NOT NULL AND outcome IN ('returned','late_returned') ORDER BY ts")])
+
+    @classmethod
     def read_rows(cls, path):
         """Every advice row and child row, read-only, as plain dicts (for the threshold suggestion)."""
         reader = cls.__new__(cls)
@@ -357,6 +375,8 @@ class AdviceStore:
             attempts = db.execute("SELECT * FROM attempts WHERE ts>=?", (since,)).fetchall()
             every_child = db.execute("SELECT * FROM children").fetchall()
             packets = _packet_rows(db)
+            answer_log = [(r[0], r[1]) for r in db.execute("SELECT ts, response_model FROM attempts WHERE response_model IS NOT NULL "
+                                                         "AND outcome IN ('returned','late_returned') ORDER BY ts")]
         children = [c for c in every_child if c["ts"] >= since]
         packet_ids = {rid for p in packets for rid in (p['query_request_id'], p['release_request_id']) if rid}
         ordinary = [r for r in rows if r['request_id'] not in packet_ids]
@@ -453,6 +473,7 @@ class AdviceStore:
                 "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
                 "tiers": tiers, "classifier_usage": usage,
                 "classifier_latency": latency, "classifier_versions": versions, "manual_classifications": manual,
+                "classifier_change": version_change(answer_log),
                 "classifier_calls": sum(u["calls"] for u in usage.values()),
                 "classifier_requests": sum(u["requests"] for u in usage.values()),
                 "classifier_failed_requests": sum(u["failed"] for u in usage.values()),

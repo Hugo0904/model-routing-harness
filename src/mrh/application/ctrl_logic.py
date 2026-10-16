@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from mrh.infrastructure import settings_v2 as v2
+from mrh.routing.classification_spec import is_jev_model
 from mrh.routing.types import safe_id, safe_model_id
 
 TRUE, FALSE = {"on", "true", "yes", "1", "enable", "enabled"}, {"off", "false", "no", "0", "disable", "disabled"}
@@ -151,7 +152,10 @@ def changes_for(settings, key, value):
         from mrh.adapters.providers.registry import DEFAULT_TIMEOUT
         return {"classifier": {"provider": provider, "model": v2.PROVIDERS[provider], "timeout_seconds": DEFAULT_TIMEOUT[provider]}}
     if key == "classifier.model":
-        return {"classifier": {**classifier, "model": str(value).strip()}}
+        model = str(value).strip()
+        if classifier["provider"] == "jev" and not is_jev_model(model):
+            raise CtrlError("Jev 型號只能是 jev-latest、jev-preview，或指定版本，例如 jev-1.13.0")
+        return {"classifier": {**classifier, "model": model}}
     if key == "classifier.rich_input":
         if parse_bool(value):
             return {"classifier": {**classifier, "rich_input": True}}

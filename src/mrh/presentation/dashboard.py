@@ -250,7 +250,10 @@ def render(settings, data, period_label, width=100, color=False, today=None):
             p("╰" + "─" * (cell_width(chip_text) + 4) + "╯", "border")]
     status = ("開啟" if settings["enabled"] and settings["task_export_permitted"] else "關閉")
     sub = f"派子代理時，hook 先請 {registry.LABELS[c['provider']]} 判斷這份任務需要哪一級，再從你設定的表格選模型。主模型保留最難的判斷。（路由：{status}）"
+    notice = stats_view.version_change_note(data)
     out = [*chip, "", p("Route the task, not the session.", "text", True), *[p(l, "dim") for l in wrap(sub, width - 2)], ""]
+    if notice:
+        out += [p("！" + clip(notice, width - 4), "lav", True), ""]
     policy = settings["policy"]
     bullets = ["只有主模型沒指定模型、推理強度或專門角色時，才給建議",
                f"分級信心低於 {policy['threshold']:.2f}，原樣放行，沿用主模型的選擇",

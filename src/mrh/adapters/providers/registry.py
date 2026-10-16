@@ -18,7 +18,7 @@ def build(settings, *, credential_resolver=None, transport=None):
                                                "task_export_permitted": settings["task_export_permitted"]}
     if provider == "jev":
         return TypesafeClassifier(**flags, credential_resolver=credential_resolver or secrets.credential_resolver("jev"),
-                                  transport=transport)
+                                  transport=transport, model=classifier["model"])
     if provider == "codex_subscription":
         return CodexSubscriptionClassifier(**flags, model=classifier["model"], standalone=True)
     if provider == "claude_subscription":

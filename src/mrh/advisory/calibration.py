@@ -83,12 +83,13 @@ def suggest_threshold(advice_rows, child_rows, policy, now, *, since=None, days=
             "pass_share": passing / n, "raised": bool(raised), "overrides": overrides, "followups": followups}
 
 
-def describe(result):
-    """The one or two lines shown above the threshold prompt."""
+def describe(result, change=None):
+    """The one or two lines shown above the threshold prompt. `change` is the latest classifier-version switch, if any."""
+    note = [f"　只計算分級器版本變更（{change['from']} → {change['to']}）之後的資料。"] if change else []
     if result["status"] == "insufficient":
         return [f"建議：樣本不足（最近 {result['days']} 天只有 {result['n']} 次分級，需要 {result['need']} 次），"
-                "之後可以請 Claude 依資料判斷。"]
+                "之後可以請 Claude 依資料判斷。", *note]
     lines = [f"建議：{result['suggested']:.2f}（依最近 {result['days']} 天 {result['n']} 次分級，約 {result['pass_share'] * 100:.0f}% 會通過）"]
     if result["raised"]:
         lines.append(f"　已 +{STEP:.2f}：主模型常改用更強的模型（{result['overrides']}／{result['followups']} 次）")
-    return lines
+    return lines + note

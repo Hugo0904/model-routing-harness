@@ -15,14 +15,14 @@ from mrh.infrastructure.settings_schema import (
     SettingsError, _is_finite_number, _reject_duplicate_keys, _reject_nonfinite_constant,
     _validate_rates, _validate_workspace_path, parse_settings as parse_v1,
 )
-from mrh.routing.classification_spec import TYPESAFE_MODEL
+from mrh.routing.classification_spec import DEFAULT_JEV_MODEL, TYPESAFE_MODEL, is_jev_model
 from mrh.routing.types import safe_id, safe_model_id
 
 SCHEMA_VERSION = 2
 OWNER = "org.model-routing-harness.settings.v1"
 PLATFORMS = ("codex", "claude", "gemini")
 TIERS = ("Light", "Small", "Mid")
-PROVIDERS = {"jev": TYPESAFE_MODEL, "codex_subscription": "gpt-6-luna", "claude_subscription": "haiku"}
+PROVIDERS = {"jev": DEFAULT_JEV_MODEL, "codex_subscription": "gpt-6-luna", "claude_subscription": "haiku"}
 MAX_CANDIDATES = 5
 DEFAULT_RETENTION_DAYS = 365          # statistics older than this are removed automatically; 0 keeps everything
 MAX_RETENTION_DAYS = 3650
@@ -68,7 +68,7 @@ def _classifier(value):
     provider, model, timeout = value["provider"], value["model"], value["timeout_seconds"]
     if type(provider) is not str or provider not in PROVIDERS or type(model) is not str:
         _invalid()
-    if provider == "jev" and model != TYPESAFE_MODEL or not safe_model_id(model):
+    if provider == "jev" and not is_jev_model(model) or not safe_model_id(model):
         _invalid()
     if not _is_finite_number(timeout) or not 0 < timeout <= 30:
         _invalid()
@@ -202,7 +202,7 @@ def validate(value):
 def default_settings():
     return validate({"schema_version": SCHEMA_VERSION, "owner": OWNER, "revision": 0, "enabled": False,
                      "task_export_permitted": False, "allowed_workspaces": [],
-                     "classifier": {"provider": "jev", "model": TYPESAFE_MODEL, "timeout_seconds": 10},
+                     "classifier": {"provider": "jev", "model": DEFAULT_JEV_MODEL, "timeout_seconds": 10},
                      "policy": {}})
 
 

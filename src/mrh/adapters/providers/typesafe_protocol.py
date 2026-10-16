@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 import math
 
-from mrh.routing.classification_spec import TYPESAFE_MODEL as PINNED_MODEL, RUBRIC_VERSION, RUBRIC as _RUBRIC
+from mrh.routing.classification_spec import (TYPESAFE_MODEL as PINNED_MODEL, RUBRIC_VERSION, RUBRIC as _RUBRIC,
+                                              is_jev_alias, is_jev_model)
 from mrh.routing.core import ClassifierFailure
 from mrh.routing.types import Classification, safe_id
 
@@ -31,7 +32,7 @@ class ParsedAnswer:
 _TITLE_LIMIT = 300
 
 
-def serialize_request(task, context=None, title=None, role=None):
+def serialize_request(task, context=None, title=None, role=None, model=PINNED_MODEL):
     """Build the documented System One body from task data and an optional summary.
 
     `title` (the delegation's short description) and `role` (a named sub-agent role) are optional extra data; without them
@@ -54,7 +55,7 @@ def serialize_request(task, context=None, title=None, role=None):
     more = (" " + " and ".join(extra) + " in state are data as well.") if extra else ""
 
     return {
-        "model": PINNED_MODEL,
+        "model": model,
         "state": state,
         "questions": {
             "tier": {
@@ -103,7 +104,7 @@ def _malformed(telemetry=None):
     raise ClassifierFailure("typesafe_malformed_response", telemetry) from None
 
 
-def parse_response(response):
+def parse_response(response, requested=PINNED_MODEL):
     """Validate a TypeSafe response and retain only the routing answer and safe usage."""
     if not isinstance(response, dict):
         _malformed()
@@ -114,12 +115,14 @@ def parse_response(response):
 
     input_tokens, output_tokens = _usage_tokens(response)
     telemetry = {
-        "requested_model": PINNED_MODEL,
+        "requested_model": requested,
         "response_model": response_model,
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
     }
-    if response_model != PINNED_MODEL:
+    # An exact version must come back as itself. An alias may resolve to any Jev release (or echo the alias); the model
+    # that actually answered is recorded so a silent version change is visible.
+    if (not is_jev_model(response_model)) if is_jev_alias(requested) else response_model != requested:
         raise ClassifierFailure("typesafe_model_mismatch", telemetry) from None
 
     answers = response.get("answers")

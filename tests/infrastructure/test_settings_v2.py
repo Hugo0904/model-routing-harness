@@ -56,7 +56,9 @@ class SettingsV2Tests(unittest.TestCase):
     def test_invalid_documents_are_rejected(self):
         good = v2.default_settings()
         bad = [
-            {**good, "classifier": {**good["classifier"], "model": "jev-latest"}},                # jev is pinned
+            {**good, "classifier": {**good["classifier"], "model": "jev-fast"}},                  # not an alias or an exact version
+            {**good, "classifier": {**good["classifier"], "model": "jev-1.13"}},
+            {**good, "classifier": {**good["classifier"], "model": "gpt-6-luna"}},
             {**good, "classifier": {**good["classifier"], "provider": "openai_api"}},             # unknown provider
             {**good, "classifier": {**good["classifier"], "timeout_seconds": 31}},
             {**good, "policy": {"threshold": 0.49}}, {**good, "policy": {"threshold": 1.0}},

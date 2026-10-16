@@ -80,6 +80,10 @@ Claude CLI 版本鎖：`setup --host claude` 只接受 `src/mrh/adapters/catalog
 
 信心門檻建議：打開 `mrh ctrl` →「信心門檻」時，會依最近 30 天的分級信心分布算出一個建議值（約 80% 的分級會通過，主模型常改用更強模型時再 +0.05，限制在 0.50～0.90）。少於 30 次分級不給數字。只在打開該畫面時計算一次，hook 與 `status` 都不會算；它只是建議，不會自動套用。
 
+檔位（進階，預設關閉）：`mrh ctrl` →「檔位（進階）」。Jev 仍然只回答四級，但它給的四個機率會換算成 0～3 的難度分數（Light 0、Small 1、Mid 2、Top 3 的加權平均），分數落在哪一檔就用哪一檔的模型。檔位數量與起點自訂（最多 8 檔，第 1 檔從 0 起），每檔可設各平台的候選模型，或「交回主模型自己做」，例如把最高兩檔設成 `opus:high`、`opus:xhigh`。信心門檻兩種模式都照常生效。最高檔就是上限：hook 拿不到主模型是哪個，請自己不要設得比主模型更強。指令版：`mrh ctrl set gears.default yes`（由目前難度表產生一組預設）、`gears.<編號>.claude 模型:強度`、`gears.<編號>.main on`、`gears.add 分數`、`gears.remove 編號`、`mode gears|tiers`。沒有開啟時不寫入任何設定，行為與以前完全相同。
+
+Jev 版本：`classifier.model` 可設 `jev-latest`（最新正式穩定版）、`jev-preview`（含非正式版）或指定版本（如 `jev-1.13.0`）。別名會在官方推出新版時自己換，答案可能跟著改變；指定版本才固定。新安裝預設 `jev-latest`，既有設定不會被改寫。`mrh ctrl` →「分級器」會列出官方版本清單（`GET /v1/models`，快取 24 小時，存在 `~/.local/state/model-routing-harness/jev-models.json`，不放進設定目錄；沒有網路或金鑰時只列內建項目並標明未更新）。實際回答的型號會逐次記錄；它改變後 7 天內，`mrh status`／`mrh stats` 頂部會提醒「分級器版本已變更，信心門檻建議重算」，門檻建議也只取變更之後的資料。
+
 ## 支援與證據邊界
 
 | Surface | 此候選的安裝邊界 | 實際派工驗收 |

@@ -60,7 +60,7 @@ class CtrlTests(unittest.TestCase):
         self.cli("set", "classifier.provider", "claude_subscription")
         self.assertEqual(v2.read(self.path)["classifier"], {"provider": "claude_subscription", "model": "haiku", "timeout_seconds": 25})
         self.cli("set", "classifier.provider", "jev")
-        self.assertEqual(v2.read(self.path)["classifier"]["model"], "jev-1.13.0")
+        self.assertEqual(v2.read(self.path)["classifier"]["model"], "jev-latest")           # new default; existing settings are not rewritten
 
     def test_show_json_has_state_but_no_secret_and_text_view_is_compact(self):
         self.cli("set", "tiers.Light.codex", "gpt-5.6-luna:low")

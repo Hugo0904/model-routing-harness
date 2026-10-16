@@ -1,6 +1,8 @@
 """Plain-language statistics for the control center. Product terms stay in English; explanations in Chinese."""
 from __future__ import annotations
 
+import time
+
 from mrh.presentation.terminal import cell_width
 
 PLATFORM = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
@@ -82,6 +84,19 @@ def _usd(amount):
 
 def _pct(part, whole):
     return f"{part * 100 // whole}%" if whole else "—"
+
+
+CHANGE_NOTICE_DAYS = 7
+
+
+def version_change_note(data, now=None):
+    """A reminder for a week after the answering model changed, or None."""
+    change = data.get("classifier_change")
+    now = time.time() if now is None else now
+    if not change or now - change["at"] > CHANGE_NOTICE_DAYS * 86400:
+        return None
+    return (f"分級器版本已從 {change['from']} 變為 {change['to']}（{time.strftime('%m/%d', time.localtime(change['at']))}），"
+            "信心門檻建議重算")
 
 
 def main_version(data):
@@ -177,7 +192,7 @@ def render(data, period_label, threshold=None, color=False, policy=None):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
     total = advised + main + kept
-    lines = [f"MRH 統計 ─ {period_label}", ""]
+    lines = [f"MRH 統計 ─ {period_label}", ""] + ([f"！{version_change_note(data)}", ""] if version_change_note(data) else [])
     if not total:
         return "\n".join(lines + ["  這段期間沒有任何子代理委派經過 MRH。",
                                   "  （路由關閉、不在生效範圍，或主模型沒有派子代理時都不會有紀錄。）", *accounting_notes(data), ""])
