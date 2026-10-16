@@ -47,8 +47,9 @@ class _Host:
     # -- shared output ---------------------------------------------------------------
     def output(self, advice: Advice):
         if advice.action in ("advise", "continue_main"):
-            reason = (advice_text.advise(self.platform, advice.tier, advice.confidence, advice.candidates)
-                      if advice.action == "advise" else advice_text.continue_main(advice.tier, advice.confidence))
+            gear = advice.extra.get("gear")
+            reason = (advice_text.advise(self.platform, advice.tier, advice.confidence, advice.candidates, gear)
+                      if advice.action == "advise" else advice_text.continue_main(advice.tier, advice.confidence, gear))
             return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                            "permissionDecisionReason": reason}}
         return {"systemMessage": advice.notice} if advice.notice else {}

@@ -83,8 +83,55 @@ def rich_input(settings):
     return settings["classifier"].get("rich_input", False) is True
 
 
+TIERS_ORDER = ("Light", "Small", "Mid", "Top")
+MAX_GEARS = 8
+SCORE_MAX = 3.0          # difficulty score: 0 (certainly Light) .. 3 (certainly Top)
+
+
+def _gears(value):
+    """Ordered gears from easiest to hardest. Each starts at a difficulty score (`from`); the first starts at 0, the rest
+    strictly increase. A gear either lists candidates per platform or hands the work back to the main model."""
+    if type(value) is not list or not 1 <= len(value) <= MAX_GEARS:
+        _invalid()
+    result, previous = [], None
+    for gear in value:
+        if type(gear) is not dict or "from" not in gear or set(gear) - {"from", "candidates", "main"} or (
+                ("candidates" in gear) == ("main" in gear)):
+            _invalid()
+        start = gear["from"]
+        if not _is_finite_number(start) or not 0 <= start <= SCORE_MAX or (previous is None and start != 0) or (
+                previous is not None and start <= previous):
+            _invalid()
+        previous = start
+        if "main" in gear:
+            if gear["main"] is not True:
+                _invalid()
+            result.append({"from": start, "main": True})
+        else:
+            result.append({"from": start, "candidates": _candidates(gear["candidates"])})
+    return result
+
+
+def difficulty_score(tier, probabilities=None):
+    """0..3. With the four per-tier probabilities it is their expectation; otherwise the chosen tier's own weight."""
+    weight = {name: i for i, name in enumerate(TIERS_ORDER)}
+    if isinstance(probabilities, dict) and set(probabilities) == set(TIERS_ORDER):
+        return sum(weight[name] * float(p) for name, p in probabilities.items())
+    return float(weight[tier])
+
+
+def gear_for(gears, score):
+    """(1-based number, gear) of the last gear whose `from` is at or below the score."""
+    number = max(i for i, gear in enumerate(gears, 1) if gear["from"] <= score + 1e-9)
+    return number, gears[number - 1]
+
+
+def mode(policy):
+    return policy.get("mode", "tiers")
+
+
 def _policy(value):
-    if type(value) is not dict or set(value) - {"threshold", "top_mode", "tiers", "fixed", "rates", "generic_roles"}:
+    if type(value) is not dict or set(value) - {"threshold", "top_mode", "tiers", "fixed", "rates", "generic_roles", "mode", "gears"}:
         _invalid()
     threshold = value.get("threshold", 0.5)
     if not _is_finite_number(threshold) or not THRESHOLD_RANGE[0] <= threshold <= THRESHOLD_RANGE[1]:
@@ -107,6 +154,14 @@ def _policy(value):
                 type(v) is not list or len(v) > 8 or not all(safe_id(r) for r in v) for v in roles.values()):
             _invalid()
         result["generic_roles"] = {p: list(v) for p, v in roles.items()}
+    chosen = value.get("mode", "tiers")
+    if chosen not in ("tiers", "gears") or type(chosen) is not str:
+        _invalid()
+    if chosen == "gears":                          # stored only when on, so existing settings are byte-for-byte unchanged
+        result["mode"] = "gears"
+        result["gears"] = _gears(value.get("gears"))
+    elif "gears" in value:
+        result["gears"] = _gears(value["gears"])    # a draft kept while the mode is tiers
     return result
 
 

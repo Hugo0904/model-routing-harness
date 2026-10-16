@@ -63,7 +63,7 @@ def _encode(req, data, extra=None):
     `extra` is the classifier's own record (probabilities, answering model); only those two keys are kept."""
     from mrh.routing.types import safe_id
     role = req.role if req.role is None or safe_id(req.role) else "other"
-    kept = {k: v for k, v in (extra or {}).items() if k in ("probabilities", "classifier_model")}
+    kept = {k: v for k, v in (extra or {}).items() if k in ("probabilities", "classifier_model", "gear", "score")}
     return json.dumps({**({"candidates": data} if isinstance(data, list) else data), "role": role, **kept})
 
 

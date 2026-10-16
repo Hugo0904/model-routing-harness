@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import math
 import time
+from typing import NamedTuple
 
 from mrh.advisory import advice_text
 from mrh.advisory.request import Advice, AdvisoryRequest
@@ -25,17 +26,35 @@ def _from_row(row):
                   candidates(row), row["request_id"], extra={"replayed": row.get("_replayed", True)})
 
 
-def route(policy, tier, confidence, platform):
-    """What the hook does with a classification: (action, reason, candidates). Shared with `mrh classify`."""
+class Route(NamedTuple):
+    """What the hook does with a classification. `gear`/`score` are set only in gears mode."""
+    action: str
+    reason: str
+    candidates: tuple = ()
+    gear: int | None = None
+    score: float | None = None
+
+
+def route(policy, tier, confidence, platform, probabilities=None):
+    """Shared by the hook and `mrh classify`. The confidence threshold is the same in both modes."""
     if confidence < policy["threshold"]:
-        return "preserve", "low_confidence", ()
+        return Route("preserve", "low_confidence")
+    if v2.mode(policy) == "gears":
+        score = v2.difficulty_score(tier, probabilities)
+        number, gear = v2.gear_for(policy["gears"], score)
+        if gear.get("main"):
+            return Route("continue_main", "gear_main", (), number, score)
+        chosen = tuple(gear["candidates"].get(platform, []))
+        if not chosen:
+            return Route("preserve", "no_candidates_for_platform", (), number, score)
+        return Route("advise", "advice_given", chosen, number, score)
     if tier == "Top" and policy["top_mode"] == "Main":
-        return "continue_main", "top_main_requested", ()
+        return Route("continue_main", "top_main_requested")
     pool = policy["fixed"] if tier == "Top" else policy["tiers"].get(tier, {})
     chosen = tuple(pool.get(platform, []))
     if not chosen:
-        return "preserve", "no_candidates_for_platform", ()
-    return "advise", "advice_given", chosen
+        return Route("preserve", "no_candidates_for_platform")
+    return Route("advise", "advice_given", chosen)
 
 
 def _meta(result):
@@ -114,5 +133,8 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
             or not 0 <= result.confidence <= 1):
         return finish(keep("malformed_classification"), notice_reason="malformed_classification")
     tier, confidence = result.tier, float(result.confidence)
-    action, reason, chosen = route(settings["policy"], tier, confidence, req.platform)
-    return finish(Advice(action, reason, tier, confidence, chosen, rid, extra=_meta(result)))
+    decision = route(settings["policy"], tier, confidence, req.platform, getattr(result, "probabilities", None))
+    meta = _meta(result)
+    if decision.gear is not None:
+        meta = {**meta, "gear": decision.gear, "score": round(decision.score, 2)}
+    return finish(Advice(decision.action, decision.reason, tier, confidence, decision.candidates, rid, extra=meta))

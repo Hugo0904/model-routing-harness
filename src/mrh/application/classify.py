@@ -26,12 +26,13 @@ class ClassifyError(Exception):
         self.reason = reason
 
 
-def recommend(policy, tier, confidence, platforms):
+def recommend(policy, tier, confidence, platforms, probabilities=None):
     """Per platform, what the hook would do with this classification right now."""
     result = {}
     for platform in platforms:
-        action, reason, chosen = route(policy, tier, confidence, platform)
-        result[platform] = {"action": action, "reason": reason, "candidates": [dict(c) for c in chosen]}
+        decision = route(policy, tier, confidence, platform, probabilities)
+        result[platform] = {"action": decision.action, "reason": decision.reason, "candidates": [dict(c) for c in decision.candidates],
+                            "gear": decision.gear, "score": None if decision.score is None else round(decision.score, 2)}
     return result
 
 
@@ -90,7 +91,7 @@ def run(settings, task, *, store, platforms=("claude", "codex"), extras=None, cl
         "tier": result.tier, "confidence": float(result.confidence),
         "probabilities": dict(result.probabilities) if result.probabilities else None,
         "threshold": settings["policy"]["threshold"],
-        "recommended": recommend(settings["policy"], result.tier, float(result.confidence), platforms),
+        "recommended": recommend(settings["policy"], result.tier, float(result.confidence), platforms, result.probabilities),
         "latency_seconds": seconds, "input_tokens": tokens, "output_tokens": answered[1].get("output_tokens"),
         "estimated_usd": tokens * JEV_USD_PER_INPUT_TOKEN if provider == "jev" and isinstance(tokens, int) else None,
     }

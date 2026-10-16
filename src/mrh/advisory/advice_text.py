@@ -10,8 +10,12 @@ def _entry(platform, number, candidate):
     return f"  {number}. " + " ".join(parts)
 
 
-def advise(platform, tier, confidence, candidates):
-    lines = [f"MRH routing advice (tier {tier}, confidence {confidence:.2f}): this delegation was not started.",
+def _level(tier, gear):
+    return f"tier {tier}" + (f", gear {gear}" if gear else "")
+
+
+def advise(platform, tier, confidence, candidates, gear=None):
+    lines = [f"MRH routing advice ({_level(tier, gear)}, confidence {confidence:.2f}): this delegation was not started.",
              "Re-issue the same delegation with one of these, in order of preference:"]
     lines += [_entry(platform, n, c) for n, c in enumerate(candidates, 1)]
     if platform == "codex":
@@ -25,8 +29,8 @@ def advise(platform, tier, confidence, candidates):
     return "\n".join(lines)
 
 
-def continue_main(tier, confidence):
-    return (f"MRH routing advice (tier {tier}, confidence {confidence:.2f}): this subtask needs the main model. "
+def continue_main(tier, confidence, gear=None):
+    return (f"MRH routing advice ({_level(tier, gear)}, confidence {confidence:.2f}): this subtask needs the main model. "
             "The delegation was not started; do the subtask yourself in this conversation. "
             "Do not create a replacement subagent and do not ask the user.")
 
