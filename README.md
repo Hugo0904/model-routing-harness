@@ -75,6 +75,8 @@ mrh ctrl set enabled off          # 停用路由
 
 本機維護注意事項：目前 Claude hook 的 Python 是 `/Users/shawn/.local/share/model-routing-harness/app/runtime/bin/python3.11`，launcher 是 `/Users/shawn/Code/model-routing-harness/runtime/daily-cli/artifact/plugins/model-routing-harness/launcher.py claude`。這個舊 `app/` 不在 `setup-state/generations/` 管理範圍內。任何 setup 清理、rollback、Codex-only 更新或 runtime 清理，都不能刪除或移動上述 `app/` 與 `runtime/daily-cli/`；Python 不存在時 hook 根本無法啟動，MRH 的 fail-open 也無法處理。日後若要讓 Claude 改用 generation 管理，必須先提出遷移方案，包含 `~/.claude/settings.json` 的修改方式，經使用者同意後才執行。
 
+Claude CLI 版本鎖：`setup --host claude` 只接受 `src/mrh/adapters/catalogs/claude_catalog.py` 的 `TESTED_VERSION`（目前 `2.1.296`，2026-10-16 以隔離的 `initialize` 驗證，沒有呼叫模型）。Claude Code 升級後 setup 會回報 `claude_catalog_version_unsupported`；處理方式是先用同一個隔離流程驗證新版的模型清單格式，通過後再更新該常數。這個限制只影響 setup 與模型選單，不影響已安裝的 hook。
+
 ## 支援與證據邊界
 
 | Surface | 此候選的安裝邊界 | 實際派工驗收 |

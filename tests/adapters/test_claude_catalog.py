@@ -12,6 +12,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from mrh.adapters.catalogs.claude_catalog import TESTED_VERSION
+
 from mrh.adapters.catalogs import catalog; from mrh.presentation import cli; from mrh.infrastructure import settings
 from mrh.adapters.catalogs.catalog import Catalog, CatalogError, CodexCatalog, Model, ToolCatalog, executable_hash
 import mrh.adapters.catalogs.claude_catalog as claude_catalog
@@ -122,7 +124,7 @@ class ToolCatalogDispatchTests(unittest.TestCase):
 
     def test_claude_description_uses_its_tool_specific_version_adapter(self):
         candidate = {"tool": "claude", "executable": "/synthetic/claude", "label": "Claude", "supported": True}
-        described = {**candidate, "version": "2.1.267 (Claude Code)", "executable_sha256": "a" * 64}
+        described = {**candidate, "version": TESTED_VERSION, "executable_sha256": "a" * 64}
         with patch.object(ClaudeCatalog, "describe", return_value=described) as describe:
             self.assertEqual(catalog.describe_tool(candidate), described)
         describe.assert_called_once_with(candidate)
@@ -153,11 +155,11 @@ class ToolCatalogDispatchTests(unittest.TestCase):
                           return_value=subprocess.CompletedProcess(["claude"], 0, output, "")):
                 return ClaudeCatalog().describe(candidate)
 
-        accepted = describe_output("2.1.267 (Claude Code)\n")
-        self.assertEqual(accepted["version"], "2.1.267 (Claude Code)")
+        accepted = describe_output(TESTED_VERSION + "\n")
+        self.assertEqual(accepted["version"], TESTED_VERSION)
         self.assertEqual(accepted["executable_sha256"], "a" * 64)
         with self.assertRaises(CatalogError) as raised:
-            describe_output("2.1.268 (Claude Code)\n")
+            describe_output("2.1.299 (Claude Code)\n")
         self.assertEqual(str(raised.exception), "claude_catalog_version_unsupported")
 
 

@@ -1,7 +1,8 @@
 """CLI-only, version-scoped advertised catalog; no SDK, account or task API.
 
 The initialize envelope was checked against official SDK 0.3.296's published
-types/implementation and native Claude Code 2.1.267. It is a compatibility
+types/implementation and native Claude Code 2.1.267, and re-run against 2.1.296 (isolated initialize, 5 models
+parsed, no model call). It is a compatibility
 contract over the public stream-json entry, not a stable model-list API.
 """
 from contextlib import contextmanager
@@ -21,7 +22,7 @@ from mrh.adapters.catalogs.catalog import Catalog, CatalogError, Model, executab
 from mrh.routing.types import safe_model_id
 from mrh.adapters.catalogs.isolation import isolation_profile
 
-TESTED_VERSION = '2.1.267 (Claude Code)'
+TESTED_VERSION = '2.1.296 (Claude Code)'
 EFFORTS = frozenset({'low','medium','high','xhigh','max'})
 MAX_RESPONSE = 262144
 
