@@ -149,7 +149,16 @@ class CodexTests(Env):
         usage = json.loads(row["usage"])["gpt-6-luna"]
         self.assertEqual(usage["small"], {"input": 400, "cache_write_5m": 0, "cache_write_1h": 0, "cache_write": 0, "cache_read": 600})  # input includes cached
         self.assertEqual((usage["output"], usage["reasoning"], usage["requests"]), (50, 20, 0))
+        self.assertEqual(usage["max_request_input"], 0)                                                   # no per-request record in this fixture
         self.assertEqual(json.loads(row["models"]), [{"model": "gpt-6-luna", "effort": "max"}])
+
+    def test_the_largest_single_request_is_recorded_for_the_long_context_price_tier(self):
+        self.child("codex", "call_7", "/root/big", session="parent-7")
+        file = self.codex_agent("parent-7", "/root/big")
+        extra = [json.dumps({"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": n}}}}) for n in (1000, 310_000, 5000)]
+        file.write_text(file.read_text() + "\n".join(extra) + "\n"); os.utime(file, (NOW - 3600, NOW - 3600))
+        self.collect()
+        self.assertEqual(json.loads(self.rows()[0]["usage"])["gpt-6-luna"]["max_request_input"], 310_000)
 
     def test_several_models_in_one_thread_are_kept_but_the_total_is_not_split_between_them(self):
         self.child("codex", "call_2", "/root/two", session="parent-2")

@@ -178,7 +178,7 @@ def _epoch(stamp, path):
 
 def parse_codex(path):
     """(models, entries): every (model, effort) the thread ran with, and its final cumulative token total."""
-    models, total = [], None
+    models, total, biggest = [], None, 0
     for line in _lines(path):
         if '"turn_context"' in line:
             try:
@@ -195,15 +195,19 @@ def parse_codex(path):
                 payload = (json.loads(line).get("payload") or {})
             except ValueError:
                 continue
-            usage = ((payload.get("info") or {}).get("total_token_usage")) if payload.get("type") == "token_count" else None
-            if isinstance(usage, dict):
-                total = usage
+            info = payload.get("info") or {} if payload.get("type") == "token_count" else {}
+            if isinstance(info.get("total_token_usage"), dict):
+                total = info["total_token_usage"]
+            last = info.get("last_token_usage")
+            if isinstance(last, dict):
+                biggest = max(biggest, _n(last.get("input_tokens")))      # the largest single request, for the long-context price tier
     if total is None:
         return models, {}
     cached, written = _n(total.get("cached_input_tokens")), _n(total.get("cache_write_input_tokens"))
     entry = _empty_entry()
     entry["small"].update(input=max(0, _n(total.get("input_tokens")) - cached - written), cache_read=cached, cache_write=written)
     entry["output"], entry["reasoning"] = _n(total.get("output_tokens")), _n(total.get("reasoning_output_tokens"))
+    entry["max_request_input"] = biggest
     distinct = sorted({m["model"] for m in models})
     return models, {(distinct[0] if len(distinct) == 1 else MIXED): entry}
 
