@@ -109,7 +109,7 @@ class MenuTests(unittest.TestCase):
             store.save(request_id("claude", f"s{n}", "t", f"c{n}"), req, task_hash("claude", f"s{n}", f"task {n}"),
                        Advice("advise", "advice_given", "Light", 0.6 + n * 0.005, ({"model": "haiku"},)), "jev", now - n)
         out = io.StringIO()
-        script = "\n".join(["5", "0.7", "13"]) + "\n"                               # threshold entry, a value, quit
+        script = "\n".join(["5", "0.7", "14"]) + "\n"                               # threshold entry, a value, quit
         class Tty(io.StringIO):
             def isatty(self): return True
             def fileno(self): raise OSError

@@ -89,7 +89,7 @@ class ResetTests(unittest.TestCase):
         before = self.path.read_bytes()
         total = sum(self.rows().values())
         out, err = io.StringIO(), io.StringIO()
-        script = "\n".join(["10", "6", f"刪除 {total}", "13"]) + "\n"                # menu: clear stats -> all -> confirm -> quit
+        script = "\n".join(["10", "6", f"刪除 {total}", "14"]) + "\n"                # menu: clear stats -> all -> confirm -> quit
         code = ctrl.main(Namespace(settings=self.path, width=100, json=False, ctrl_action=None), stdin=Tty(script), stdout=out, stderr=err)
         self.assertEqual(code, 0, err.getvalue())
         self.assertEqual(sum(self.rows().values()), 0)

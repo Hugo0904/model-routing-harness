@@ -74,14 +74,14 @@ def box(title, descs, width, p):
             p("╰" + "─" * (width - 2) + "╯", tone)]
 
 
-def _flow(settings, per_call, inner, p, actual=()):
+def _flow(settings, per_call, inner, p, actual=(), gears=False):
     bw = (inner - 3 * 3) // 4
     # `actual`: captions from most to least detailed; the first one that fits the box is shown.
     caption = next((c for c in actual if cell_width(c) <= bw - 4), None) or "一道選擇題"
     boxes = [("主模型", ["自己決定派工", "並寫下任務說明"]),
              (settings["classifier"]["model"], [caption, per_call]),
-             ("難度", ["light · small", "mid · top"]),
-             ("模型", ["依你設定的表格", "各工具各一份"])]
+             *([("難度分數", ["0～3，依四級機率", "加權算出"]), ("檔位", ["分數落在哪一檔", "就用哪一檔"])] if gears else
+               [("難度", ["light · small", "mid · top"]), ("模型", ["依你設定的表格", "各工具各一份"])])]
     arrow_w = 3
     bw = (inner - arrow_w * 3) // 4
     cols = [box(t, d, bw, p) for t, d in boxes]
@@ -129,6 +129,40 @@ def _table(settings, inner, p):
         row += p(clip(TIER_WHEN[tier], when_w), "dim")
         lines.append(row)
         lines.append(p("─" * inner, "border") if not top else "")
+    return lines[:-1]
+
+
+def _gear_table(settings, inner, p):
+    """Gears mode: one row per gear, easiest first, with the difficulty-score range it covers."""
+    from mrh.infrastructure import settings_v2 as v2
+    policy = settings["policy"]
+    gears = policy["gears"]
+    platforms = [x for x in ("claude", "codex", "gemini") if any(g.get("candidates", {}).get(x) for g in gears)] or ["claude"]
+
+    def cell(gear, plat):
+        if gear.get("main"):
+            return "主模型自己做"
+        return logic.format_candidates(gear["candidates"].get(plat, [])) if gear["candidates"].get(plat) else "—"
+
+    widths = [max(cell_width(PLATFORM_TITLE[x]), *(cell_width(cell(g, x)) for g in gears)) + 2 for x in platforms]
+    show_price = "claude" in platforms
+    lead, tier_w, price_w = 2, 7, 15
+    when_w = max(10, inner - (lead + tier_w + sum(widths) + (price_w if show_price else 0)))
+    head = pad("", lead) + pad(p("GEAR", "faint"), tier_w) + "".join(pad(p(PLATFORM_TITLE[x], "faint"), w) for x, w in zip(platforms, widths))
+    head += (pad(p("$/MTOK IN/OUT", "faint"), price_w) if show_price else "") + p("WHEN", "faint")
+    lines = [head, p("─" * inner, "border")]
+    for number, gear in enumerate(gears, 1):
+        end = gears[number]["from"] if number < len(gears) else v2.SCORE_MAX
+        main = bool(gear.get("main"))
+        row = (p("▌ ", "lav") if main else "  ") + pad(p(f"g{number}", "text", True), tier_w)
+        for x, w in zip(platforms, widths):
+            text = cell(gear, x)
+            row += pad(p(text, "lav" if main else "text" if text != "—" else "faint"), w)
+        if show_price:
+            first = gear.get("candidates", {}).get("claude", [])
+            row += pad(p(stats_view.claude_price(first[0]["model"]) if first else "—", "dim"), price_w)
+        row += p(clip(f"難度分數 {gear['from']:g}～{end:g}", when_w), "dim")
+        lines += [row, p("─" * inner, "border")]
     return lines[:-1]
 
 
@@ -228,7 +262,11 @@ def render(settings, data, period_label, width=100, color=False, today=None):
     actual = tuple(c for c in ((f"實際 {version} · {seconds}" if version and seconds else f"實際 {version}" if version else None),
                                (f"{short} · {seconds}" if short and seconds else short),
                                seconds) if c)
-    body = [*_flow(settings, per_call, inner, p, actual), "", *_table(settings, inner, p), "", *[p("• ", "lav") + clip(b, inner - 2) for b in bullets]]
+    gears_on = settings["policy"].get("mode") == "gears" and settings["policy"].get("gears")
+    if gears_on:
+        bullets[2] = f"檔位模式：Jev 的四級機率換算成 0～3 的難度分數，落在哪一檔就用哪一檔（共 {len(settings['policy']['gears'])} 檔）；最高檔是上限"
+    body = [*_flow(settings, per_call, inner, p, actual, bool(gears_on)), "", *(_gear_table(settings, inner, p) if gears_on else _table(settings, inner, p)),
+            "", *[p("• ", "lav") + clip(b, inner - 2) for b in bullets]]
     out += card("HOW A DELEGATION IS ROUTED", body, width, p) + [""]
     where, total = _where(data, policy, inner, p, color)
     out += card(f"WHERE {total} DELEGATIONS WENT · {period_label}", where, width, p) + [""]

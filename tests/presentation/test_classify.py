@@ -96,7 +96,7 @@ class ClassifyTests(unittest.TestCase):
         _, out, _, _ = self.ask(Transport({"light": 0.01, "small": 0.02, "mid": 0.07, "top": 0.9}), task="another task")
         self.assertIn("Top：交回主模型自己做", out)
         _, out, _, _ = self.ask(Transport({"light": 0.9, "small": 0.05, "mid": 0.03, "top": 0.02}), task="third task")
-        self.assertIn("Codex：這個等級在此平台沒有設定模型", out)
+        self.assertIn("Codex：這個等級（檔位）在此平台沒有設定模型", out)
         _, out, _, _ = self.ask(task="fourth task", platform="codex")
         self.assertNotIn("Claude Code：", out)
 

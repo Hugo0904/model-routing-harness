@@ -115,11 +115,11 @@ class SettingsTests(unittest.TestCase):
                       stdin=Tty("\n".join(lines) + "\n"), stdout=out, stderr=io.StringIO())
             return out.getvalue()
         # classifier screen -> keep Jev -> blank timeout -> choose "on" -> save -> quit
-        text = run("2", "1", "", "2", "1", "13")
+        text = run("2", "1", "", "2", "1", "14")
         self.assertIn("多送標題與角色給 Jev", text); self.assertIn("多送標題與角色 → 開啟", text)
         self.assertTrue(v2.rich_input(v2.read(self.path)))
         # the same screen again: "back" from the new step returns to the timeout question, then off
-        text = run("2", "1", "", "back", "", "1", "1", "13")
+        text = run("2", "1", "", "back", "", "1", "1", "14")
         self.assertEqual(text.count("逾時秒數 1–30"), 2); self.assertIn("多送標題與角色 → 關閉", text)
         self.assertFalse(v2.rich_input(v2.read(self.path)))
 

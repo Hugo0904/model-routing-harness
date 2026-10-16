@@ -52,6 +52,83 @@ def _number(value, low, high, label):
     return number
 
 
+DEFAULT_GEAR_STARTS = (0, 0.75, 1.5, 2.25, 2.75)
+
+
+def default_gears(policy):
+    """A five-gear starting ladder built from the current tier table: gears 1-3 copy Light/Small/Mid; the two hardest
+    go back to the main model (or to the Top list when Top is set to Fixed). The user then edits it."""
+    top = {p: list(c) for p, c in policy["fixed"].items() if c} if policy["top_mode"] == "Fixed" else {}
+    gears = []
+    for start, tier in zip(DEFAULT_GEAR_STARTS, ("Light", "Small", "Mid", "Top", "Top")):
+        if tier == "Top":
+            gears.append({"from": start, "candidates": top} if top else {"from": start, "main": True})
+        else:
+            gears.append({"from": start, "candidates": {p: list(c) for p, c in policy["tiers"].get(tier, {}).items() if c}})
+    return gears
+
+
+def _gear_number(policy, text, *, allow_new=False):
+    gears = policy.get("gears") or []
+    try:
+        number = int(str(text).strip())
+    except ValueError:
+        raise CtrlError("檔位編號必須是整數（第 1 檔最容易）") from None
+    if not 1 <= number <= len(gears) + (1 if allow_new else 0):
+        raise CtrlError(f"目前只有 {len(gears)} 檔")
+    return number
+
+
+def _checked(gears):
+    """User-facing reasons before the generic settings validation."""
+    if not 1 <= len(gears) <= v2.MAX_GEARS:
+        raise CtrlError(f"檔位最少 1 檔、最多 {v2.MAX_GEARS} 檔")
+    if gears[0]["from"] != 0:
+        raise CtrlError("第 1 檔的分數下限固定是 0")
+    for before, after in zip(gears, gears[1:]):
+        if after["from"] <= before["from"]:
+            raise CtrlError("每一檔的分數下限要比前一檔大（難度分數 0～3，越高越難）")
+    return gears
+
+
+def _gear_changes(policy, key, parts, value):
+    gears = [dict(g) for g in (policy.get("gears") or [])]
+    if key == "gears.default":
+        return {"policy": {**policy, "gears": default_gears(policy)}}
+    if key == "gears.add":
+        start = _number(value, 0, v2.SCORE_MAX, "分數下限")
+        if any(abs(g["from"] - start) < 1e-9 for g in gears):
+            raise CtrlError("已經有一檔從這個分數開始")
+        gears = sorted([*gears, {"from": start, "candidates": {}}], key=lambda g: g["from"])
+        return {"policy": {**policy, "gears": _checked(gears)}}
+    if key == "gears.remove":
+        number = _gear_number(policy, value)
+        if len(gears) == 1:
+            raise CtrlError("至少要保留 1 檔")
+        del gears[number - 1]
+        gears[0] = {**gears[0], "from": 0}                       # the first gear always starts at 0
+        return {"policy": {**policy, "gears": _checked(gears)}}
+    number = _gear_number(policy, parts[1])
+    gear = gears[number - 1]
+    field = parts[2]
+    if field == "from":
+        if number == 1:
+            raise CtrlError("第 1 檔的分數下限固定是 0")
+        gear["from"] = _number(value, 0, v2.SCORE_MAX, "分數下限")
+    elif field == "main":
+        gears[number - 1] = {"from": gear["from"], "main": True} if parse_bool(value) else {"from": gear["from"], "candidates": {}}
+        return {"policy": {**policy, "gears": _checked(gears)}}
+    elif field in v2.PLATFORMS:
+        candidates = dict(gear.get("candidates", {}))
+        candidates[field] = parse_candidates(value)
+        gears[number - 1] = {"from": gear["from"], "candidates": candidates}
+        return {"policy": {**policy, "gears": _checked(gears)}}
+    else:
+        raise CtrlError("檔位可以設：from（分數下限）、main（交回主模型）、" + "／".join(v2.PLATFORMS) + "（候選模型）")
+    gears[number - 1] = gear
+    return {"policy": {**policy, "gears": _checked(gears)}}
+
+
 def changes_for(settings, key, value):
     """Return kwargs for settings_v2.update. Raises CtrlError on unknown key or bad value."""
     policy, classifier = settings["policy"], settings["classifier"]
@@ -83,6 +160,18 @@ def changes_for(settings, key, value):
         return {"classifier": {**classifier, "timeout_seconds": _number(value, 1, 30, "逾時秒數")}}
     if key == "threshold":
         return {"policy": {**policy, "threshold": _number(value, *v2.THRESHOLD_RANGE, "信心門檻")}}
+    if key == "mode":
+        chosen = str(value).strip().lower()
+        if chosen not in ("tiers", "gears"):
+            raise CtrlError("模式只能是 tiers（難度表）或 gears（檔位）")
+        if chosen == "gears" and not policy.get("gears"):
+            raise CtrlError("還沒有檔位。請先建立：mrh ctrl set gears.default yes（再用 gears.<編號>.… 調整）")
+        return {"policy": {**{k: v for k, v in policy.items() if k != "mode"}, **({"mode": "gears"} if chosen == "gears" else {})}}
+    if key.startswith("gears."):
+        parts = key.split(".")
+        if key in ("gears.default", "gears.add", "gears.remove") or len(parts) == 3:
+            return _gear_changes(policy, key, parts, value)
+        raise CtrlError("檔位的設定項目：gears.default／gears.add／gears.remove／gears.<編號>.from／main／claude／codex")
     if key == "top_mode":
         mode = str(value).strip().title()
         if mode not in ("Main", "Fixed"):
@@ -112,6 +201,6 @@ def changes_for(settings, key, value):
 
 
 def key_names():
-    return ["enabled", "task_export", "stats.retention_days", "classifier.provider", "classifier.model", "classifier.timeout", "classifier.rich_input", "threshold",
+    return ["enabled", "task_export", "stats.retention_days", "classifier.provider", "classifier.model", "classifier.timeout", "classifier.rich_input", "threshold", "mode", "gears.default", "gears.add", "gears.remove",
             "top_mode", "allowed_workspaces", *[f"tiers.{t}.{p}" for t in v2.TIERS for p in v2.PLATFORMS],
             *[f"fixed.{p}" for p in v2.PLATFORMS], *[f"generic_roles.{p}" for p in v2.PLATFORMS]]

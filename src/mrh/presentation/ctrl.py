@@ -26,6 +26,7 @@ def snapshot(settings, path, secrets_module=secrets):
             "task_export_permitted": settings["task_export_permitted"], "classifier": settings["classifier"],
             "api_key": {"jev": key_state("jev", secrets_module)},
             "threshold": settings["policy"]["threshold"], "top_mode": settings["policy"]["top_mode"],
+            "mode": v2.mode(settings["policy"]), "gears": settings["policy"].get("gears", []),
             "applies_to": v2.effective_roots(settings)[0], "applies_to_source": v2.effective_roots(settings)[1],
             "tiers": settings["policy"]["tiers"],
             "fixed": settings["policy"]["fixed"],
@@ -49,6 +50,7 @@ def render(snap, width=100):
              _row("Jev 金鑰", key_text),
              _row("信心門檻", f"分級信心度達 {snap['threshold']:.2f} 以上才給建議"),
              _row("Top 難度", f"{snap['top_mode']}（{TOP_HELP[snap['top_mode']]}）"),
+             *([_row("檔位", f"已啟用，共 {len(snap['gears'])} 檔（依難度分數 0～3 選檔；mrh ctrl 的「檔位」畫面可調整）")] if snap.get("mode") == "gears" else []),
              _row("適用範圍", (", ".join(snap["applies_to"]) or "（無）") +
                   ("" if snap["applies_to_source"] == "settings" else f"   （清單存放於 {snap['applies_to_source']}）")),
              ""]
@@ -141,7 +143,8 @@ def status_data(path, days):
                       "enabled": settings["enabled"], "task_export_permitted": settings["task_export_permitted"],
                       "classifier": {k: settings["classifier"][k] for k in ("provider", "model", "timeout_seconds")}
                                             | {"rich_input": v2.rich_input(settings)},
-                      "policy": {k: settings["policy"][k] for k in ("threshold", "top_mode", "tiers", "fixed")}}
+                      "policy": {**{k: settings["policy"][k] for k in ("threshold", "top_mode", "tiers", "fixed")},
+                                 "mode": v2.mode(settings["policy"]), "gears": settings["policy"].get("gears", [])}}
     return data
 
 
@@ -300,12 +303,17 @@ class Session:
 
     def edit_list(self, scope, platform):
         s = self.settings()
-        items = list((s["policy"]["fixed"] if scope == "Top" else s["policy"]["tiers"].get(scope, {})).get(platform, []))
+        if isinstance(scope, tuple):                   # ("gear", n): one gear's candidates for this platform
+            number = scope[1]
+            items = list(s["policy"]["gears"][number - 1].get("candidates", {}).get(platform, []))
+            key, label = f"gears.{number}.{platform}", f"第 {number} 檔"
+        else:
+            items = list((s["policy"]["fixed"] if scope == "Top" else s["policy"]["tiers"].get(scope, {})).get(platform, []))
+            key, label = (f"fixed.{platform}" if scope == "Top" else f"tiers.{scope}.{platform}"), scope
         original = list(items)
-        key = f"fixed.{platform}" if scope == "Top" else f"tiers.{scope}.{platform}"
         while True:
-            self.out.write(f"\n  {scope} / {platform}: {logic.format_candidates(items)}\n")
-            trail = [platform, scope.lower()]
+            self.out.write(f"\n  {label} / {platform}: {logic.format_candidates(items)}\n")
+            trail = [platform, label.lower()]
             try:
                 action = self.menu.pick("編輯候選清單", [("從已安裝工具的模型清單加入", "add"), ("直接輸入模型（模型 或 模型:推理強度）", "type"),
                                         ("移除其中一個", "remove"), ("把其中一個移到最前面（最優先）", "top"), ("全部清空", "clear"), ("儲存並完成", "done")], trail=trail)
@@ -336,7 +344,7 @@ class Session:
                     items = []
                 elif action == "done":
                     if self.save(logic.changes_for(self.settings(), key, logic.format_candidates(items) if items else ""),
-                                 f"{scope}/{platform} -> {logic.format_candidates(items)}"):
+                                 f"{label}/{platform} -> {logic.format_candidates(items)}"):
                         return
                     continue
                 if len(items) > v2.MAX_CANDIDATES:
@@ -364,6 +372,70 @@ class Session:
                 if step == 0:
                     raise
                 step = 0 if step == 1 else 1
+
+    GEAR_NAMES = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
+
+    def gear_summary(self, policy):
+        lines = []
+        for number, gear in enumerate(policy.get("gears", []), 1):
+            what = "交回主模型自己做" if gear.get("main") else "；".join(
+                f"{self.GEAR_NAMES.get(p, p)} {logic.format_candidates(c)}" for p, c in gear["candidates"].items() if c) or "（還沒有設定模型）"
+            lines.append(f"    第 {number} 檔  難度分數 {gear['from']:g} 起   {what}")
+        return lines or ["    （還沒有檔位）"]
+
+    def gears(self):
+        """Jev still answers one of four tiers; its four probabilities become a 0-3 difficulty score, which picks a gear."""
+        while True:
+            policy = self.settings()["policy"]
+            on = v2.mode(policy) == "gears"
+            self.out.write("\n  檔位：難度分數＝Light 0、Small 1、Mid 2、Top 3 依機率加權（0～3，越高越難）。\n"
+                           "  最高檔就是上限，請不要設得比你的主模型更強。信心門檻在兩種模式下都照常生效。\n"
+                           f"  目前模式：{'檔位' if on else '難度表（原本的四級）'}\n" + "\n".join(self.gear_summary(policy)) + "\n")
+            try:
+                action = self.menu.pick("檔位（進階）", [
+                    (f"切換模式（目前：{'檔位' if on else '難度表'}）", "mode"), ("調整某一檔", "edit"), ("新增一檔", "add"),
+                    ("刪除一檔", "remove"), ("用目前的難度表產生一組預設檔位（會覆蓋現有檔位）", "default")], trail=["檔位"])
+                if action == "mode":
+                    self.set_key("mode", "tiers" if on else "gears", f"模式 → {'難度表' if on else '檔位'}")
+                elif action == "default":
+                    self.set_key("gears.default", "yes", "產生預設檔位（覆蓋現有檔位）")
+                elif action == "add":
+                    self.set_key("gears.add", self.menu.text("新的一檔從哪個難度分數開始？0～3（越高越難）", trail=["檔位", "新增"]), "新增一檔")
+                elif action in ("edit", "remove"):
+                    if not policy.get("gears"):
+                        self.menu.note("還沒有檔位，請先「用目前的難度表產生一組預設檔位」。"); continue
+                    number = self.menu.pick("要選哪一檔", [(f"第 {n} 檔　{gear['from']:g} 起", n) for n, gear in enumerate(policy["gears"], 1)],
+                                            trail=["檔位"])
+                    if action == "remove":
+                        self.set_key("gears.remove", str(number), f"刪除第 {number} 檔")
+                    else:
+                        self.edit_gear(number)
+            except Back:
+                return
+            except logic.CtrlError as exc:
+                self.menu.note(str(exc))
+
+    def edit_gear(self, number):
+        while True:
+            gear = self.settings()["policy"]["gears"][number - 1]
+            trail = ["檔位", f"第 {number} 檔"]
+            try:
+                action = self.menu.pick(f"第 {number} 檔（{gear['from']:g} 起）", [
+                    ("改難度分數下限", "from"), (("改成交給候選模型" if gear.get("main") else "改成交回主模型"), "main"),
+                    ("編輯 Claude Code 的候選模型", "claude"), ("編輯 Codex 的候選模型", "codex")], trail=trail)
+                if action == "from":
+                    self.set_key(f"gears.{number}.from", self.menu.text("分數下限 0～3", trail=trail), f"第 {number} 檔分數下限")
+                elif action == "main":
+                    self.set_key(f"gears.{number}.main", "off" if gear.get("main") else "on", f"第 {number} 檔 → {'候選模型' if gear.get('main') else '交回主模型'}")
+                else:
+                    try:
+                        self.edit_list(("gear", number), action)
+                    except Back:
+                        continue
+            except Back:
+                return
+            except logic.CtrlError as exc:
+                self.menu.note(str(exc))
 
     def top(self):
         mode = self.menu.pick("Top 難度怎麼處理", [(f"Main：{TOP_HELP['Main']}", "Main"), (f"Fixed：{TOP_HELP['Fixed']}", "Fixed")], self.settings()["policy"]["top_mode"])
@@ -434,7 +506,7 @@ class Session:
     def run(self):
         screens = [("路由開關", self.routing), ("分級器（Jev / Codex 訂閱 / Claude 訂閱）", self.classifier), ("各難度要用的模型", self.tiers),
                    ("Top 難度怎麼處理", self.top), ("信心門檻", self.threshold), ("適用範圍（哪些資料夾）", self.where),
-                   ("API 金鑰狀態", self.api_key), ("儀表板（圖表版面）", self.dashboard), ("統計（文字）", self.stats), ("清除統計", self.reset), ("統計保留天數", self.retention), ("網頁報表（選用）", self.report)]
+                   ("API 金鑰狀態", self.api_key), ("儀表板（圖表版面）", self.dashboard), ("統計（文字）", self.stats), ("清除統計", self.reset), ("統計保留天數", self.retention), ("網頁報表（選用）", self.report), ("檔位（進階）", self.gears)]
         while True:
             self.out.write("\n" + render(snapshot(self.settings(), self.path, self.secrets), self.menu.width))
             try:

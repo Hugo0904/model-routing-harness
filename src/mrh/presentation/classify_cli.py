@@ -22,11 +22,11 @@ HINT = {
 }
 ACTION = {
     "advise": lambda c: logic.format_candidates(c["candidates"]),
-    "continue_main": lambda c: "Top：交回主模型自己做",
+    "continue_main": lambda c: "交回主模型自己做" if c.get("gear") is not None else "Top：交回主模型自己做",
 }
 REASON_TEXT = {
     "low_confidence": "信心低於門檻，hook 不會給建議（沿用主模型的選擇）",
-    "no_candidates_for_platform": "這個等級在此平台沒有設定模型",
+    "no_candidates_for_platform": "這個等級（檔位）在此平台沒有設定模型",
 }
 
 
@@ -49,6 +49,9 @@ def render(result, task_chars):
         for tier in ("Light", "Small", "Mid", "Top"):
             p = result["probabilities"][tier]
             lines.append(f"  {tier.lower():<6}{_bar(p)} {p * 100:>3.0f}%")
+    first = next(iter(result["recommended"].values()), {})
+    if first.get("gear") is not None:
+        lines.append(f"難度分數 {first['score']:.2f} → 第 {first['gear']} 檔（檔位模式）")
     lines += ["", "各平台的建議（照目前設定）："]
     for platform, rec in result["recommended"].items():
         text = ACTION[rec["action"]](rec) if rec["action"] in ACTION else REASON_TEXT.get(rec["reason"], rec["reason"])
