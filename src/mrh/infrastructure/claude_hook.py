@@ -4,6 +4,7 @@ from __future__ import annotations
 import difflib
 import json
 import os
+import re
 import shlex
 import tempfile
 import time
@@ -18,13 +19,25 @@ class ClaudeHookError(ValueError):
     pass
 
 
+# A setup generation lives at <prefix>/setup-state/generations/<id>/...; <prefix>/current points at the active one.
+_GENERATION = re.compile(r"^(?P<prefix>.+)/setup-state/generations/[0-9a-f]+/(?P<rest>.+)$")
+
+
+def stable_path(path):
+    """Spell a path inside a setup generation through <prefix>/current, so the hook command (and settings.json) does not
+    change when a new generation is installed. Paths outside a generation are returned unchanged."""
+    found = _GENERATION.match(str(path))
+    return f"{found['prefix']}/current/{found['rest']}" if found else str(path)
+
+
 def command_for(artifact_root):
     root = Path(artifact_root)
     artifact = json.loads((root / "artifact.json").read_text())
     launcher = root / "plugins" / MARK / "launcher.py"
     if not launcher.is_file():
         raise ClaudeHookError("artifact has no launcher; run: mrh plugin prepare --advisory")
-    return f"{shlex.quote(artifact['python'])} -I -B {shlex.quote(str(launcher))} claude"
+    # The launcher resolves its own location, so it still runs the generation's own binding, runtime and interpreter.
+    return f"{shlex.quote(stable_path(artifact['python']))} -I -B {shlex.quote(stable_path(launcher))} claude"
 
 
 def _ours(entry):

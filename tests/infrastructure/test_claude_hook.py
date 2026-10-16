@@ -23,6 +23,15 @@ class ClaudeHookTests(unittest.TestCase):
         self.assertEqual(len(moved["hooks"]["PreToolUse"]), 2)                     # updated in place, never duplicated
         self.assertEqual(json.loads(ch.plan(installed, CMD, remove=True)), original)
 
+    def test_generation_paths_are_spelled_through_current_and_other_paths_are_left_alone(self):
+        generation = "/home/u/.local/share/model-routing-harness/setup-state/generations/0123abcd/"
+        self.assertEqual(ch.stable_path(generation + "runtime/bin/python3.11"),
+                         "/home/u/.local/share/model-routing-harness/current/runtime/bin/python3.11")
+        self.assertEqual(ch.stable_path(generation + "hosts/claude/plugins/model-routing-harness/launcher.py"),
+                         "/home/u/.local/share/model-routing-harness/current/hosts/claude/plugins/model-routing-harness/launcher.py")
+        legacy = "/work/runtime/daily-cli/artifact/plugins/model-routing-harness/launcher.py"
+        self.assertEqual(ch.stable_path(legacy), legacy)                           # the old, non-generation layout is unchanged
+
     def test_removal_from_a_file_that_only_had_our_hook_leaves_no_empty_hooks_key(self):
         self.assertEqual(json.loads(ch.plan(ch.plan("", CMD), CMD, remove=True)), {})
 

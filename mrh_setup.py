@@ -313,13 +313,17 @@ class ClaudeInstaller:
                     for hook in entry.get('hooks',[]):
                         args=shlex.split(hook.get('command',''))
                         if not args or args[-1]!='claude': continue
-                        try:
-                            launcher=Path(args[-2]);root=launcher.parents[2]
-                            info=plugin.show(root)['artifact']
-                            if info['settings_path']!=str(settings) or shlex.split(claude_hook.command_for(root))!=args:
-                                raise ValueError()
-                        except (ValueError,IndexError,OSError,KeyError):
-                            raise SetupError('claude_hook_unowned') from None
+                        # A hook written through <prefix>/current has a symlinked root, which plugin.show refuses; its
+                        # resolved generation path spells the same stable command.
+                        for resolve in (False,True):
+                            try:
+                                launcher=Path(args[-2]);root=(launcher.resolve() if resolve else launcher).parents[2]
+                                info=plugin.show(root)['artifact']
+                                if info['settings_path']!=str(settings) or shlex.split(claude_hook.command_for(root))!=args:
+                                    raise ValueError()
+                                break
+                            except Exception:
+                                if resolve:raise SetupError('claude_hook_unowned') from None
         return before
 
     def install(self, artifact, before, progress):

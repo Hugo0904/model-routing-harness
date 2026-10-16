@@ -309,6 +309,28 @@ print(json.dumps(out))
         exact=cp.read_bytes();self.run_setup(args);self.assertEqual(cp.read_bytes(),exact)
         self.assertEqual(len(list(cp.parent.glob('settings.json.mrh-bak-*'))),1)
 
+    def test_claude_hook_command_stays_stable_across_generations_updates_and_rollback(self):
+        cp=self.root/'claude/settings.json';cp.parent.mkdir()
+        args=self.args('--host','claude','--claude-settings',str(cp),'--claude-cli',str(self.claude))
+        def command():
+            hooks=json.loads(cp.read_text())['hooks']
+            found=[h['command'] for event in ('PreToolUse','PostToolUse') for e in hooks[event] for h in e['hooks']]
+            self.assertEqual(len(found),2);self.assertEqual(found[0],found[1]);return found[0]
+        self.run_setup(args);first=self.state()['current'];first_command=command();first_bytes=cp.read_bytes()
+        self.revision='two';self.run_setup(args);second=self.state()['current']
+        self.assertNotEqual(first,second)
+        self.assertEqual(command(),first_command);self.assertEqual(cp.read_bytes(),first_bytes)   # settings.json untouched by an update
+        parts=shlex.split(first_command)
+        self.assertEqual(parts[0],str(self.prefix/'current/runtime/bin/python3.11'))
+        self.assertEqual(parts[-2],str(self.prefix/'current/hosts/claude/plugins/model-routing-harness/launcher.py'))
+        self.assertEqual(parts[-1],'claude');self.assertNotIn('generations',first_command)
+        launcher=Path(parts[-2]).resolve()
+        self.assertIn(second,str(launcher))                                                         # `current` selects the active generation
+        self.run_setup(self.args('--host','claude','--rollback','--claude-settings',str(cp),'--claude-cli',str(self.claude)))
+        self.assertEqual(self.state()['current'],first);self.assertEqual(command(),first_command)
+        self.assertIn(first,str(Path(parts[-2]).resolve()))
+        self.assertEqual(len(list(cp.parent.glob('settings.json.mrh-bak-*'))),0)                    # nothing rewritten after the first install
+
     def test_unselected_claude_configuration_is_byte_exact(self):
         cp=self.root/'claude/settings.json';cp.parent.mkdir();cp.write_bytes(b'not even parsed by a codex-only installation')
         self.run_setup(self.args('--claude-settings',str(cp)))
