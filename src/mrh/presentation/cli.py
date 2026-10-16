@@ -50,6 +50,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh status             儀表板（流程、難度表、分段比例條）
   mrh stats              文字統計（可加 --days N；0 = 全部）
   mrh stats reset        清除統計（--hours 24／--today／--days N／--all；會先預覽並要你輸入確認）
+  mrh usage collect      收集子代理實際用了多少 token（只讀本機紀錄檔；之後 mrh stats 才有用量與換算）
   mrh classify "任務"    顧問分級：問分級器這件事算哪一級（不派工；--stdin／--json／--platform／--title／--role）
   mrh ctrl show          目前設定一覽
   mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
@@ -97,6 +98,13 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("--platform", choices=("claude", "codex"), help="show only this platform's suggestion")
     ask.add_argument("--json", action="store_true", help="print the result as JSON")
     ask.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
+
+    usage = commands.add_parser("usage", help="what each recorded sub-agent actually used (read-only, local files)")
+    usage_actions = usage.add_subparsers(dest="usage_action", required=True)
+    collect = usage_actions.add_parser("collect", help="read the finished sub-agents' own transcripts and store their token usage")
+    collect.add_argument("--days", type=float, default=None, help="only sub-agents from the last N days (default 30)")
+    collect.add_argument("--json", action="store_true", help="print the result as JSON")
+    collect.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
 
     ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
     ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
@@ -250,6 +258,9 @@ def main(
                 stdout.write("\nDry run. Add --apply to write this change.\n"); return 0
             backup = ch.apply(target, after)
             stdout.write(f"\nApplied. Backup: {backup}\n" if backup else "\nApplied (new file).\n"); return 0
+        if args.command == "usage":
+            from mrh.presentation import usage_cli
+            return usage_cli.main(args, stdin=stdin, stdout=stdout, stderr=stderr)
         if args.command == "classify":
             from mrh.presentation import classify_cli
             return classify_cli.main(args, stdin=stdin, stdout=stdout, stderr=stderr)

@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS packet_links(
   release_ts REAL, selected_model TEXT, selected_effort TEXT, origin TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS packet_imports(
   packet_id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, ts REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS child_usage(
+  platform TEXT NOT NULL, session_id TEXT NOT NULL, call_id TEXT NOT NULL,
+  ts REAL NOT NULL, source_file TEXT NOT NULL, models TEXT NOT NULL, usage TEXT NOT NULL,
+  parent_model TEXT, collected_at REAL NOT NULL, PRIMARY KEY(platform, session_id, call_id));
 """
 _META = {"requested_model", "response_model", "input_tokens", "output_tokens", "error_reason"}
 
@@ -186,7 +190,8 @@ class AdviceStore:
             db.execute("PRAGMA journal_mode=WAL")
         return db
 
-    TABLES = ("advice", "attempts", "children", "notices")
+    # `child_usage.ts` is the child's own timestamp, so reset and retention treat it like the other tables.
+    TABLES = ("advice", "attempts", "children", "notices", "child_usage")
 
     def _delete_plan(self, db, where, value):
         plan = {t:{r[0] for r in db.execute(f'SELECT rowid FROM {t} WHERE {where}',(value,))} for t in self.TABLES}
@@ -287,6 +292,35 @@ class AdviceStore:
         with reader.connect(readonly=True) as db:
             db.execute("BEGIN")
             return [dict(r) for r in db.execute("SELECT * FROM advice")], [dict(r) for r in db.execute("SELECT * FROM children")]
+
+    def usage_candidates(self, since):
+        """Recorded sub-agents (with an agent id) whose usage has not been collected yet."""
+        with self.connect(readonly=True) as db:
+            return [dict(r) for r in db.execute(
+                "SELECT c.* FROM children c WHERE c.agent_id IS NOT NULL AND c.ts>=? AND NOT EXISTS (SELECT 1 FROM child_usage u "
+                "WHERE u.platform=c.platform AND u.session_id=c.session_id AND u.call_id=c.call_id) ORDER BY c.ts", (since,))]
+
+    def save_usage(self, row):
+        """One finished sub-agent. Numbers and identifiers only; no task text ever reaches this table."""
+        with self.connect() as db:
+            db.execute("INSERT OR REPLACE INTO child_usage VALUES(?,?,?,?,?,?,?,?,?)",
+                       (row["platform"], row["session_id"], row["call_id"], row["ts"], row["source_file"],
+                        json.dumps(row["models"], sort_keys=True), json.dumps(row["usage"], sort_keys=True),
+                        row.get("parent_model"), row["collected_at"]))
+
+    @classmethod
+    def read_usage(cls, path, since):
+        """Collected usage rows joined with what MRH recorded about the same child, read-only."""
+        reader = cls.__new__(cls)
+        reader.path = str(path)
+        with reader.connect(readonly=True) as db:
+            db.execute("BEGIN")
+            if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='child_usage'").fetchone():
+                return []
+            return [dict(r) for r in db.execute(
+                "SELECT u.*, c.requested_model, c.requested_effort, c.resolved_model, c.advice_request_id, c.followed, c.agent_id "
+                "FROM child_usage u JOIN children c ON c.platform=u.platform AND c.session_id=u.session_id AND c.call_id=u.call_id "
+                "WHERE u.ts>=? ORDER BY u.ts", (since,))]
 
     def call(self, rid):
         with self.connect() as db:

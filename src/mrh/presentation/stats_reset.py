@@ -5,7 +5,8 @@ import time
 
 from mrh.presentation.terminal import cell_width
 
-LABEL = {"advice": "委派紀錄", "attempts": "分級器呼叫紀錄（除錯用）", "children": "子代理紀錄", "notices": "已提示過的通知"}
+LABEL = {"advice": "委派紀錄", "attempts": "分級器呼叫紀錄（除錯用）", "children": "子代理紀錄", "notices": "已提示過的通知",
+         "child_usage": "子代理用量紀錄"}
 
 
 def cutoff_for(scope, days, now):

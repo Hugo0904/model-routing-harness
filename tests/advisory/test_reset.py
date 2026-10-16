@@ -34,6 +34,8 @@ class ResetTests(unittest.TestCase):
             self.store.attempt(f"r{n}", "jev", "returned", ts, input_tokens=400, output_tokens=40)
             self.store.record_child(Child("claude", f"s{n}", f"c{n}", "haiku", None, "claude-haiku-5-5", f"a{n}"), ts)
             self.store.first_notice(f"s{n}", "typesafe_http_401", ts)
+            self.store.save_usage({"platform": "claude", "session_id": f"s{n}", "call_id": f"c{n}", "ts": ts, "source_file": f"agent-a{n}.jsonl",
+                                   "models": [{"model": "claude-haiku-5-5"}], "usage": {}, "parent_model": None, "collected_at": ts})
 
     def rows(self):
         with sqlite3.connect(self.store.path) as db:
@@ -45,7 +47,7 @@ class ResetTests(unittest.TestCase):
         self.assertEqual(preview["delete"], {t: 2 for t in AdviceStore.TABLES})       # 0.5 and 3 days ago
         self.assertEqual(preview["keep"], {t: 2 for t in AdviceStore.TABLES})
         self.assertEqual(self.rows(), {t: 4 for t in AdviceStore.TABLES})            # preview wrote nothing
-        self.assertEqual(sum(self.store.delete_since(cutoff).values()), 8)
+        self.assertEqual(sum(self.store.delete_since(cutoff).values()), 10)           # two delegations x five tables
         self.assertEqual(self.rows(), {t: 2 for t in AdviceStore.TABLES})
         self.store.save("again", AdvisoryRequest("claude", "s", "t", "x", "task"), "h", Advice("preserve", "named_role"), "jev", NOW)
         self.assertEqual(self.rows()["advice"], 3)
@@ -98,7 +100,7 @@ class ResetTests(unittest.TestCase):
     def test_retention_prunes_only_older_rows_and_only_once_a_day(self):
         self.assertEqual(self.store.maintain(0, NOW), 0)                              # 0 = keep forever
         self.assertEqual(self.rows()["advice"], 4)
-        self.assertEqual(self.store.maintain(30, NOW), 4)                             # the 40-day-old delegation, its call, child, notice
+        self.assertEqual(self.store.maintain(30, NOW), 5)                             # the 40-day-old delegation, its call, child, notice, usage
         self.assertEqual(self.rows(), {t: 3 for t in AdviceStore.TABLES})
         self.store.save("old", AdvisoryRequest("claude", "z", "t", "z", "task"), "h", Advice("preserve", "named_role"), "jev", NOW - 60 * DAY)
         self.assertEqual(self.store.maintain(30, NOW + 3600), 0)                      # same day: no second sweep
