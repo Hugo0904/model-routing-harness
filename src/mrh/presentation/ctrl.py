@@ -105,6 +105,7 @@ def statistics(path, days):
         "reissues": 0, "unverified_reissues": 0, "unverified_followed_children": 0, "classifier_calls": 0, "classifier_requests": 0,
         "classifier_failed_requests": 0, "classifier_input_tokens": 0, "classifier_output_tokens": 0, "children_started": 0,
         "packet_classifications": 0, "packet_releases": 0, "packet_children_started": 0, "packet_children_following_advice": 0,
+        "classifier_latency": {"avg": None, "max": None, "n": 0}, "classifier_versions": {},
         "roles": {}, "role_recorded": 0, "explicit_without_role": 0, "children_models": {}, "children_inherited": 0}
     return data, label
 

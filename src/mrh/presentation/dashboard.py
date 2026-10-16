@@ -74,9 +74,12 @@ def box(title, descs, width, p):
             p("╰" + "─" * (width - 2) + "╯", tone)]
 
 
-def _flow(settings, per_call, inner, p):
+def _flow(settings, per_call, inner, p, actual=()):
+    bw = (inner - 3 * 3) // 4
+    # `actual`: captions from most to least detailed; the first one that fits the box is shown.
+    caption = next((c for c in actual if cell_width(c) <= bw - 4), None) or "一道選擇題"
     boxes = [("主模型", ["自己決定派工", "並寫下任務說明"]),
-             (settings["classifier"]["model"], ["一道選擇題", per_call]),
+             (settings["classifier"]["model"], [caption, per_call]),
              ("難度", ["light · small", "mid · top"]),
              ("模型", ["依你設定的表格", "各工具各一份"])]
     arrow_w = 3
@@ -219,7 +222,13 @@ def render(settings, data, period_label, width=100, color=False, today=None):
                f"分級信心低於 {policy['threshold']:.2f}，原樣放行，沿用主模型的選擇",
                "Top 難度留給主模型，路由器只會降低成本，不會把成本墊高" if policy["top_mode"] == "Main" else "Top 難度建議改用你設定的 Top 清單",
                "失敗不擋工作：沒金鑰、沒網路、回答怪異，都照原樣放行"]
-    body = [*_flow(settings, per_call, inner, p), "", *_table(settings, inner, p), "", *[p("• ", "lav") + clip(b, inner - 2) for b in bullets]]
+    version, latency = stats_view.main_version(data), data.get("classifier_latency") or {}
+    seconds = f"{latency['avg']:.1f} 秒" if latency.get("n") else None
+    short = version[4:] if version and version.startswith("jev-") else version
+    actual = tuple(c for c in ((f"實際 {version} · {seconds}" if version and seconds else f"實際 {version}" if version else None),
+                               (f"{short} · {seconds}" if short and seconds else short),
+                               seconds) if c)
+    body = [*_flow(settings, per_call, inner, p, actual), "", *_table(settings, inner, p), "", *[p("• ", "lav") + clip(b, inner - 2) for b in bullets]]
     out += card("HOW A DELEGATION IS ROUTED", body, width, p) + [""]
     where, total = _where(data, policy, inner, p, color)
     out += card(f"WHERE {total} DELEGATIONS WENT · {period_label}", where, width, p) + [""]

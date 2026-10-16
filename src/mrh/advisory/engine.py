@@ -14,7 +14,7 @@ from mrh.advisory.store import AdviceStore, candidates, request_id, task_hash
 from mrh.infrastructure import settings_v2 as v2
 from mrh.routing.attempts import GuardedAttempts
 from mrh.routing.core import ClassifierFailure, bounded_call
-from mrh.routing.types import REASONS, TIERS, Classification
+from mrh.routing.types import REASONS, TIERS, Classification, safe_model_id
 
 QUIET = {"explicit_model", "explicit_effort", "named_role", "low_confidence",
          "no_candidates_for_platform", "advice_already_given"}
@@ -23,6 +23,19 @@ QUIET = {"explicit_model", "explicit_effort", "named_role", "low_confidence",
 def _from_row(row):
     return Advice(row["action"], row["reason"], row["tier"], row["confidence"],
                   candidates(row), row["request_id"], extra={"replayed": row.get("_replayed", True)})
+
+
+def _meta(result):
+    """Classifier facts worth keeping next to the decision: the four per-tier probabilities and the model that answered."""
+    meta = {}
+    probabilities = getattr(result, "probabilities", None)
+    if isinstance(probabilities, dict) and set(probabilities) == set(TIERS) and all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 <= v <= 1 for v in probabilities.values()):
+        meta["probabilities"] = {tier: round(float(probabilities[tier]), 4) for tier in TIERS}
+    model = getattr(result, "model", None)
+    if safe_model_id(model):
+        meta["classifier_model"] = model
+    return meta
 
 
 def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factory, clock=time.time) -> Advice:
@@ -85,12 +98,13 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
             or not 0 <= result.confidence <= 1):
         return finish(keep("malformed_classification"), notice_reason="malformed_classification")
     tier, confidence, policy = result.tier, float(result.confidence), settings["policy"]
+    meta = _meta(result)
     if confidence < policy["threshold"]:
-        return finish(keep("low_confidence", tier=tier, confidence=confidence))
+        return finish(keep("low_confidence", tier=tier, confidence=confidence, extra=meta))
     if tier == "Top" and policy["top_mode"] == "Main":
-        return finish(Advice("continue_main", "top_main_requested", tier, confidence, request_id=rid))
+        return finish(Advice("continue_main", "top_main_requested", tier, confidence, request_id=rid, extra=meta))
     pool = policy["fixed"] if tier == "Top" else policy["tiers"].get(tier, {})
     candidates = tuple(pool.get(req.platform, []))
     if not candidates:
         return finish(keep("no_candidates_for_platform", tier=tier, confidence=confidence))
-    return finish(Advice("advise", "advice_given", tier, confidence, candidates, rid))
+    return finish(Advice("advise", "advice_given", tier, confidence, candidates, rid, extra=meta))

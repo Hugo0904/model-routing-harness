@@ -49,6 +49,8 @@ class Classification:
     tier: str
     confidence: float
     reason_code: str = "classified"
+    probabilities: dict | None = None     # {"Light": p, "Small": p, "Mid": p, "Top": p}; only classifiers that report them
+    model: str | None = None              # the model identity that actually answered (an alias can move)
 
 @dataclass(frozen=True)
 class ContextSummary:

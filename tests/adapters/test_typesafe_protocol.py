@@ -58,8 +58,13 @@ class TypeSafeProtocolTests(unittest.TestCase):
         for choice, tier in cases:
             with self.subTest(choice=choice):
                 parsed = parse_response(self.response(choice, confidence=0.42))
-                self.assertEqual(parsed.classification, Classification(tier, 0.42))
+                self.assertEqual((parsed.classification.tier, parsed.classification.confidence), (tier, 0.42))
                 self.assertNotEqual(parsed.classification.confidence, 0.7)
+                self.assertEqual(parsed.classification.model, "jev-1.13.0")           # the model that actually answered
+                probabilities = parsed.classification.probabilities                    # all four tiers, keyed by display name
+                self.assertEqual(set(probabilities), {"Light", "Small", "Mid", "Top"})
+                self.assertAlmostEqual(sum(probabilities.values()), 1.0)
+                self.assertEqual(max(probabilities, key=probabilities.get), tier)
 
     def test_confidence_boundary_values_are_preserved(self):
         for confidence in (0.49, 0.5):

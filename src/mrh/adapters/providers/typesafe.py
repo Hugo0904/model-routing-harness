@@ -1,5 +1,5 @@
 """Default-off TypeSafe client. Construction does not resolve credentials."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import http.client
 import json
 import os
@@ -121,8 +121,9 @@ class TypesafeClassifier:
             except (ValueError, UnicodeError):
                 raise ClassifierFailure("typesafe_malformed_response") from None
             parsed = parse_response(data)
-            recorder.finish("0", "returned", **safe_telemetry(parsed.telemetry))
-            return parsed.classification
+            safe = safe_telemetry(parsed.telemetry)
+            recorder.finish("0", "returned", **safe)
+            return parsed.classification if safe.get("response_model") is not None else replace(parsed.classification, model=None)
         except ClassifierFailure as exc:
             # Parser telemetry is bounded and allowlisted. Store validates again.
             try:

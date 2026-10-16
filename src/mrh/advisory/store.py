@@ -58,11 +58,13 @@ def _average(rows, since):
     return {"avg": sum(values) / len(values) if values else None, "n": len(values)}
 
 
-def _encode(req, data):
-    """New rows always carry the spawn's role key (None when there was none): its presence marks rows that recorded it."""
+def _encode(req, data, extra=None):
+    """New rows always carry the spawn's role key (None when there was none): its presence marks rows that recorded it.
+    `extra` is the classifier's own record (probabilities, answering model); only those two keys are kept."""
     from mrh.routing.types import safe_id
     role = req.role if req.role is None or safe_id(req.role) else "other"
-    return json.dumps({**({"candidates": data} if isinstance(data, list) else data), "role": role})
+    kept = {k: v for k, v in (extra or {}).items() if k in ("probabilities", "classifier_model")}
+    return json.dumps({**({"candidates": data} if isinstance(data, list) else data), "role": role, **kept})
 
 
 def _matches(row, model, effort):
@@ -305,7 +307,7 @@ class AdviceStore:
         with self.connect() as db:
             db.execute("INSERT OR IGNORE INTO advice VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                        (rid, now, req.platform, req.session_id, req.turn_id, req.call_id, thash, advice.action,
-                        advice.reason, advice.tier, advice.confidence, provider, _encode(req, list(advice.candidates))))
+                        advice.reason, advice.tier, advice.confidence, provider, _encode(req, list(advice.candidates), advice.extra)))
 
     def attempt(self, rid, kind, outcome, now, **meta):
         values = {k: v for k, v in meta.items() if k in _META}
@@ -390,6 +392,16 @@ class AdviceStore:
             for field in ("input_tokens", "output_tokens"):
                 u[field] += max((e[field] for e in events if e[field] is not None), default=0)
             u["usage_unknown_calls"] += int(entered and not any(e["input_tokens"] is not None for e in events))
+        durations, versions = [], {}
+        for events in grouped.values():
+            started = [e["ts"] for e in events if e["outcome"] == "started"]
+            answered = sorted((e for e in events if e["outcome"] in ("returned", "late_returned")), key=lambda e: e["ts"])
+            if started and answered:
+                durations.append(max(0.0, answered[0]["ts"] - min(started)))
+            if answered and answered[0]["response_model"]:
+                versions[answered[0]["response_model"]] = versions.get(answered[0]["response_model"], 0) + 1
+        latency = {"avg": sum(durations) / len(durations) if durations else None, "max": max(durations) if durations else None,
+                   "n": len(durations)}
         followed_models, requested_models, observed_models, followed, unverified, prior = {}, {}, {}, 0, 0, 0
         packet_started, packet_followed, child_models, inherited = 0, 0, {}, 0
         for child in children:
@@ -430,6 +442,7 @@ class AdviceStore:
                 "children_following_prior_advice": prior,
                 "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
                 "tiers": tiers, "classifier_usage": usage,
+                "classifier_latency": latency, "classifier_versions": versions,
                 "classifier_calls": sum(u["calls"] for u in usage.values()),
                 "classifier_requests": sum(u["requests"] for u in usage.values()),
                 "classifier_failed_requests": sum(u["failed"] for u in usage.values()),
@@ -509,7 +522,7 @@ class PacketStore(AdviceStore):
             if self.phase != 'query' or rid != p['query_request_id'] or thash != p['task_hash']:
                 raise ValueError('packet_query_conflict')
             db.execute('INSERT OR IGNORE INTO advice VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                       (rid,now,req.platform,req.session_id,req.turn_id,req.call_id,thash,advice.action,advice.reason,advice.tier,advice.confidence,provider,json.dumps(list(advice.candidates))))
+                       (rid,now,req.platform,req.session_id,req.turn_id,req.call_id,thash,advice.action,advice.reason,advice.tier,advice.confidence,provider,_encode(req, list(advice.candidates), advice.extra)))
 
     def attempt(self, rid, kind, outcome, now, **meta):
         values = {k:v for k,v in meta.items() if k in _META}

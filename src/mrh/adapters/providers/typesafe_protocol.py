@@ -134,6 +134,8 @@ def parse_response(response):
         _malformed(telemetry)
 
     return ParsedAnswer(
-        classification=Classification(_TIERS[choice], confidence),
+        classification=Classification(_TIERS[choice], confidence,
+                                      probabilities={_TIERS[name]: float(value) for name, value in probabilities.items()},
+                                      model=response_model),
         telemetry=telemetry,
     )

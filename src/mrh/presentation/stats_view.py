@@ -84,6 +84,20 @@ def _pct(part, whole):
     return f"{part * 100 // whole}%" if whole else "—"
 
 
+def main_version(data):
+    """The classifier model that answered most often in the period, or None."""
+    versions = data.get("classifier_versions") or {}
+    return max(versions, key=versions.get) if versions else None
+
+
+def latency_text(data):
+    """'平均 0.8 秒、最慢 2.1 秒（12 次）' or None when no call returned."""
+    latency = data.get("classifier_latency") or {}
+    if not latency.get("n"):
+        return None
+    return f"平均 {latency['avg']:.1f} 秒、最慢 {latency['max']:.1f} 秒（{latency['n']} 次）"
+
+
 def skill_roles(data):
     """{role: count} of delegations the Router skill made with its own roles."""
     return {r: n for r, n in data.get("roles", {}).items() if r in ROUTER_SKILL_ROLES}
@@ -223,4 +237,8 @@ def render(data, period_label, threshold=None, color=False, policy=None):
         cost = (("用量未回報，成本未知" if not u["input_tokens"] and (u.get("usage_unknown_calls") or u.get("failed"))
                  else "估計 " + _usd(u["input_tokens"] * JEV_USD_PER_INPUT_TOKEN)) if kind == "jev" else "使用訂閱額度")
         lines.append(f"    {PROVIDER.get(kind, kind)}：呼叫 {u['calls']} 次，輸入 {u['input_tokens']:,} tokens，{cost}")
+    if latency_text(data):
+        lines.append("    耗時：" + latency_text(data))
+    if data.get("classifier_versions"):
+        lines.append("    實際版本：" + "、".join(f"{m} {n} 次" for m, n in sorted(data["classifier_versions"].items(), key=lambda x: -x[1])))
     return "\n".join(lines + accounting_notes(data) + [""])
