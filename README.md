@@ -65,6 +65,7 @@ mrh ctrl show --json              # 公開設定
 mrh status --json                 # 唯讀狀態／Monitor 出口
 mrh stats                        # 分級、回退、派工與已觀測採用
 mrh stats reset --hours 24        # 預覽，確認後才刪統計（另有 --today、--days N、--all）
+mrh classify "任務內容"           # 顧問分級：問分級器這件事算哪一級、各平台會建議什麼模型；不派工、不保存任務文字
 mrh ctrl set enabled off          # 停用路由
 ```
 

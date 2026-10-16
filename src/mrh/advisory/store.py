@@ -392,6 +392,7 @@ class AdviceStore:
             for field in ("input_tokens", "output_tokens"):
                 u[field] += max((e[field] for e in events if e[field] is not None), default=0)
             u["usage_unknown_calls"] += int(entered and not any(e["input_tokens"] is not None for e in events))
+        manual = len({rid for (rid, _) in grouped if str(rid).startswith("manual-")})   # `mrh classify`: costs, but no delegation
         durations, versions = [], {}
         for events in grouped.values():
             started = [e["ts"] for e in events if e["outcome"] == "started"]
@@ -442,7 +443,7 @@ class AdviceStore:
                 "children_following_prior_advice": prior,
                 "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
                 "tiers": tiers, "classifier_usage": usage,
-                "classifier_latency": latency, "classifier_versions": versions,
+                "classifier_latency": latency, "classifier_versions": versions, "manual_classifications": manual,
                 "classifier_calls": sum(u["calls"] for u in usage.values()),
                 "classifier_requests": sum(u["requests"] for u in usage.values()),
                 "classifier_failed_requests": sum(u["failed"] for u in usage.values()),

@@ -81,13 +81,13 @@ class TypesafeClassifier:
         else:
             raise ClassifierFailure("typesafe_unverified_transport")
 
-    def classify(self, task, context, recorder):
+    def classify(self, task, context, recorder, extras=None):
         if not self.enabled:
             raise ClassifierFailure("typesafe_disabled")
         if not self.task_export_permitted:
             raise ClassifierFailure("typesafe_export_denied")
         recorder.check()
-        body = serialize_request(task, context)
+        body = serialize_request(task, context, **{k: v for k, v in (extras or {}).items() if k in ("title", "role")})
         if len(json.dumps(body, allow_nan=False).encode()) > 65536:
             raise ClassifierFailure("typesafe_invalid_task")
         try:

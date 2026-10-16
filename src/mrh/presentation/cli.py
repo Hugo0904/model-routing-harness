@@ -50,6 +50,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh status             儀表板（流程、難度表、分段比例條）
   mrh stats              文字統計（可加 --days N；0 = 全部）
   mrh stats reset        清除統計（--hours 24／--today／--days N／--all；會先預覽並要你輸入確認）
+  mrh classify "任務"    顧問分級：問分級器這件事算哪一級（不派工；--stdin／--json／--platform／--title／--role）
   mrh ctrl show          目前設定一覽
   mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
   mrh key status jev     金鑰狀態（set 存入、delete 刪除）
@@ -87,6 +88,15 @@ def build_parser() -> argparse.ArgumentParser:
             scope.add_argument("--all", action="store_true", help="every record")
             reset.add_argument("--settings", type=Path, default=argparse.SUPPRESS, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
             reset.add_argument("--yes", action="store_true", help="really delete (without it: preview, or a typed confirmation when interactive)")
+
+    ask = commands.add_parser("classify", help="ask the classifier about one task (advisory; nothing is delegated or stored)")
+    ask.add_argument("task", nargs="?", help="the task text (or use --stdin)")
+    ask.add_argument("--stdin", action="store_true", help="read the task text from standard input")
+    ask.add_argument("--title", help="the delegation's short description (sent to Jev as extra data)")
+    ask.add_argument("--role", help="a named sub-agent role (sent to Jev as extra data)")
+    ask.add_argument("--platform", choices=("claude", "codex"), help="show only this platform's suggestion")
+    ask.add_argument("--json", action="store_true", help="print the result as JSON")
+    ask.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
 
     ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
     ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
@@ -240,6 +250,9 @@ def main(
                 stdout.write("\nDry run. Add --apply to write this change.\n"); return 0
             backup = ch.apply(target, after)
             stdout.write(f"\nApplied. Backup: {backup}\n" if backup else "\nApplied (new file).\n"); return 0
+        if args.command == "classify":
+            from mrh.presentation import classify_cli
+            return classify_cli.main(args, stdin=stdin, stdout=stdout, stderr=stderr)
         if args.command == "ctrl":
             from mrh.presentation import ctrl
             return ctrl.main(args, stdin=stdin, stdout=stdout, stderr=stderr, color=_wants_color(args))

@@ -237,6 +237,8 @@ def render(data, period_label, threshold=None, color=False, policy=None):
         cost = (("用量未回報，成本未知" if not u["input_tokens"] and (u.get("usage_unknown_calls") or u.get("failed"))
                  else "估計 " + _usd(u["input_tokens"] * JEV_USD_PER_INPUT_TOKEN)) if kind == "jev" else "使用訂閱額度")
         lines.append(f"    {PROVIDER.get(kind, kind)}：呼叫 {u['calls']} 次，輸入 {u['input_tokens']:,} tokens，{cost}")
+    if data.get("manual_classifications"):
+        lines.append(f"    其中手動查詢（mrh classify）{data['manual_classifications']} 次，不算委派")
     if latency_text(data):
         lines.append("    耗時：" + latency_text(data))
     if data.get("classifier_versions"):

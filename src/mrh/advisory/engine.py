@@ -25,6 +25,19 @@ def _from_row(row):
                   candidates(row), row["request_id"], extra={"replayed": row.get("_replayed", True)})
 
 
+def route(policy, tier, confidence, platform):
+    """What the hook does with a classification: (action, reason, candidates). Shared with `mrh classify`."""
+    if confidence < policy["threshold"]:
+        return "preserve", "low_confidence", ()
+    if tier == "Top" and policy["top_mode"] == "Main":
+        return "continue_main", "top_main_requested", ()
+    pool = policy["fixed"] if tier == "Top" else policy["tiers"].get(tier, {})
+    chosen = tuple(pool.get(platform, []))
+    if not chosen:
+        return "preserve", "no_candidates_for_platform", ()
+    return "advise", "advice_given", chosen
+
+
 def _meta(result):
     """Classifier facts worth keeping next to the decision: the four per-tier probabilities and the model that answered."""
     meta = {}
@@ -97,14 +110,6 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
             or not isinstance(result.confidence, (int, float)) or not math.isfinite(result.confidence)
             or not 0 <= result.confidence <= 1):
         return finish(keep("malformed_classification"), notice_reason="malformed_classification")
-    tier, confidence, policy = result.tier, float(result.confidence), settings["policy"]
-    meta = _meta(result)
-    if confidence < policy["threshold"]:
-        return finish(keep("low_confidence", tier=tier, confidence=confidence, extra=meta))
-    if tier == "Top" and policy["top_mode"] == "Main":
-        return finish(Advice("continue_main", "top_main_requested", tier, confidence, request_id=rid, extra=meta))
-    pool = policy["fixed"] if tier == "Top" else policy["tiers"].get(tier, {})
-    candidates = tuple(pool.get(req.platform, []))
-    if not candidates:
-        return finish(keep("no_candidates_for_platform", tier=tier, confidence=confidence))
-    return finish(Advice("advise", "advice_given", tier, confidence, candidates, rid, extra=meta))
+    tier, confidence = result.tier, float(result.confidence)
+    action, reason, chosen = route(settings["policy"], tier, confidence, req.platform)
+    return finish(Advice(action, reason, tier, confidence, chosen, rid, extra=_meta(result)))
