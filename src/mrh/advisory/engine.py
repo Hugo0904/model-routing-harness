@@ -93,7 +93,10 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
     try:
         emit(rid, provider, "classification_requested")
         classifier = classifier_factory()
-        result = bounded_call(lambda: classifier.classify(req.task, None, attempts), timeout)
+        # Only Jev takes the extra data, and only when the user turned `classifier.rich_input` on.
+        extra = ({"extras": {"title": req.title, "role": req.role}}
+                 if provider == "jev" and v2.rich_input(settings) else {})
+        result = bounded_call(lambda: classifier.classify(req.task, None, attempts, **extra), timeout)
         attempts.check()
     except ClassifierFailure as exc:
         fault = exc.reason if isinstance(exc.reason, str) and exc.reason in REASONS else "classifier_error"

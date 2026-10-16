@@ -61,7 +61,9 @@ def _candidates(value):
 
 
 def _classifier(value):
-    if type(value) is not dict or set(value) != {"provider", "model", "timeout_seconds"}:
+    if type(value) is not dict or set(value) - {"rich_input"} != {"provider", "model", "timeout_seconds"}:
+        _invalid()
+    if "rich_input" in value and type(value["rich_input"]) is not bool:
         _invalid()
     provider, model, timeout = value["provider"], value["model"], value["timeout_seconds"]
     if type(provider) is not str or provider not in PROVIDERS or type(model) is not str:
@@ -70,7 +72,15 @@ def _classifier(value):
         _invalid()
     if not _is_finite_number(timeout) or not 0 < timeout <= 30:
         _invalid()
-    return {"provider": provider, "model": model, "timeout_seconds": timeout}
+    result = {"provider": provider, "model": model, "timeout_seconds": timeout}
+    if value.get("rich_input") is True:       # off is the default and is simply not stored
+        result["rich_input"] = True
+    return result
+
+
+def rich_input(settings):
+    """Whether a Jev classification also receives the delegation's title and the sub-agent role."""
+    return settings["classifier"].get("rich_input", False) is True
 
 
 def _policy(value):

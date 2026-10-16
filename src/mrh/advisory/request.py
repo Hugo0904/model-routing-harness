@@ -17,6 +17,7 @@ class AdvisoryRequest:
     explicit_effort: str | None = None
     role: str | None = None  # a named, non-default role; always respected
     cwd: str | None = None
+    title: str | None = None  # the delegation's short description, when it differs from the task text
 
 
 @dataclass(frozen=True)

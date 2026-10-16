@@ -44,7 +44,8 @@ def render(snap, width=100):
     on = snap["enabled"] and snap["task_export_permitted"]
     lines = ["MRH  /  控制中心", "",
              _row("路由", "開啟   每次派子代理，任務內容會送給分級器判斷難度" if on else "關閉   完全不碰子代理委派"),
-             _row("分級器", f"{registry.LABELS[c['provider']]} · {c['model']} · 逾時 {c['timeout_seconds']:g} 秒"),
+             _row("分級器", f"{registry.LABELS[c['provider']]} · {c['model']} · 逾時 {c['timeout_seconds']:g} 秒"
+                  + (" · 多送標題與角色" if c.get("rich_input") else "")),
              _row("Jev 金鑰", key_text),
              _row("信心門檻", f"分級信心度達 {snap['threshold']:.2f} 以上才給建議"),
              _row("Top 難度", f"{snap['top_mode']}（{TOP_HELP[snap['top_mode']]}）"),
@@ -138,7 +139,8 @@ def status_data(path, days):
     data, label = statistics(path, days)
     data["status"] = {"format_version": 1, "generated_at": time.time(), "period_label": label,
                       "enabled": settings["enabled"], "task_export_permitted": settings["task_export_permitted"],
-                      "classifier": {k: settings["classifier"][k] for k in ("provider", "model", "timeout_seconds")},
+                      "classifier": {k: settings["classifier"][k] for k in ("provider", "model", "timeout_seconds")}
+                                            | {"rich_input": v2.rich_input(settings)},
                       "policy": {k: settings["policy"][k] for k in ("threshold", "top_mode", "tiers", "fixed")}}
     return data
 
@@ -276,15 +278,23 @@ class Session:
                     if model != s["model"]:
                         self.set_key("classifier.model", model, f"分級器模型 → {model}")
                     step = 2
-                else:
+                elif step == 2:
                     timeout = self.menu.text(f"逾時秒數 1–30（目前 {s['timeout_seconds']:g}，直接按 Enter 保持不變）")
                     if timeout:
                         self.set_key("classifier.timeout", timeout, f"逾時 → {timeout} 秒")
+                    if s["provider"] == "jev":
+                        step = 3; continue
+                    return
+                else:
+                    rich = self.menu.pick("多送標題與角色給 Jev（實驗：會讓分級依據變多，也可能讓信心值改變）",
+                                          [("關閉（預設）：只送任務內容", False), ("開啟：另外送子代理的標題和角色", True)], bool(s.get("rich_input")))
+                    if rich != bool(s.get("rich_input")):
+                        self.set_key("classifier.rich_input", "on" if rich else "off", f"多送標題與角色 → {'開啟' if rich else '關閉'}")
                     return
             except Back:
                 if step == 0:
                     raise
-                step = 0 if step == 1 or self.settings()["classifier"]["provider"] == "jev" else 1
+                step = 0 if step == 1 or (step == 2 and self.settings()["classifier"]["provider"] == "jev") else 1 if step == 2 else 2
             except logic.CtrlError as exc:
                 self.menu.note(str(exc)); step = 1
 
@@ -360,6 +370,17 @@ class Session:
         self.set_key("top_mode", mode, f"Top 難度 → {mode}")
 
     def threshold(self):
+        # Computed once, here, from the stored confidences; the hook and status never do this.
+        try:
+            from mrh.advisory import calibration
+            from mrh.advisory.store import AdviceStore
+            db = self.path.parent / "advice.sqlite3"
+            if db.exists():
+                advice, children = AdviceStore.read_rows(db)
+                for line in calibration.describe(calibration.suggest_threshold(advice, children, self.settings()["policy"], time.time())):
+                    self.menu.note(line)
+        except Exception:
+            pass                                          # a missing suggestion must never block setting the threshold
         value = self.menu.text("分級信心度要達到多少才給建議，0.50–0.99（越高越保守）")
         self.set_key("threshold", value, f"信心門檻 → {value}")
 

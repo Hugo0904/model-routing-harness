@@ -75,6 +75,10 @@ def changes_for(settings, key, value):
         return {"classifier": {"provider": provider, "model": v2.PROVIDERS[provider], "timeout_seconds": DEFAULT_TIMEOUT[provider]}}
     if key == "classifier.model":
         return {"classifier": {**classifier, "model": str(value).strip()}}
+    if key == "classifier.rich_input":
+        if parse_bool(value):
+            return {"classifier": {**classifier, "rich_input": True}}
+        return {"classifier": {k: v for k, v in classifier.items() if k != "rich_input"}}
     if key == "classifier.timeout":
         return {"classifier": {**classifier, "timeout_seconds": _number(value, 1, 30, "逾時秒數")}}
     if key == "threshold":
@@ -108,6 +112,6 @@ def changes_for(settings, key, value):
 
 
 def key_names():
-    return ["enabled", "task_export", "stats.retention_days", "classifier.provider", "classifier.model", "classifier.timeout", "threshold",
+    return ["enabled", "task_export", "stats.retention_days", "classifier.provider", "classifier.model", "classifier.timeout", "classifier.rich_input", "threshold",
             "top_mode", "allowed_workspaces", *[f"tiers.{t}.{p}" for t in v2.TIERS for p in v2.PLATFORMS],
             *[f"fixed.{p}" for p in v2.PLATFORMS], *[f"generic_roles.{p}" for p in v2.PLATFORMS]]

@@ -66,8 +66,10 @@ class CodexHost(_Host):
         if task is None or not all(safe_id(i) for i in ids):
             return None
         role = data.get("agent_type")
+        name = data.get("task_name")
+        title = re.sub(r"[_\-]+", " ", name).strip() if safe_id(name) else None
         return AdvisoryRequest("codex", *ids, task, data.get("model"), data.get("reasoning_effort"),
-                               None if role in (None, "default") else str(role), event.get("cwd"))
+                               None if role in (None, "default") else str(role), event.get("cwd"), title)
 
     def child(self, event):
         if not self.spawn_event(event, "PostToolUse"):
@@ -102,7 +104,7 @@ class ClaudeHost(_Host):
         role = data.get("subagent_type")
         effort = data.get("effort")
         return AdvisoryRequest("claude", session, turn, call, task, data.get("model"), effort if safe_id(effort) else None,
-                               None if role in (None, "general-purpose") else str(role), event.get("cwd"))
+                               None if role in (None, "general-purpose") else str(role), event.get("cwd"), _text(data.get("description")))
 
     def child(self, event):
         if not self.spawn_event(event, "PostToolUse"):

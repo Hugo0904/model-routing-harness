@@ -261,6 +261,15 @@ class AdviceStore:
         reader.path = str(path)
         return reader.stats(since)
 
+    @classmethod
+    def read_rows(cls, path):
+        """Every advice row and child row, read-only, as plain dicts (for the threshold suggestion)."""
+        reader = cls.__new__(cls)
+        reader.path = str(path)
+        with reader.connect(readonly=True) as db:
+            db.execute("BEGIN")
+            return [dict(r) for r in db.execute("SELECT * FROM advice")], [dict(r) for r in db.execute("SELECT * FROM children")]
+
     def call(self, rid):
         with self.connect() as db:
             row = db.execute("SELECT * FROM advice WHERE request_id=? AND NOT EXISTS "
