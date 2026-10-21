@@ -1,0 +1,90 @@
+"""Add or remove MRH's hook in a Claude Code settings.json. Dry-run unless asked; always backs up."""
+from __future__ import annotations
+
+import difflib
+import json
+import os
+import re
+import shlex
+import tempfile
+import time
+from pathlib import Path
+
+MATCHER = "Agent|Task"
+EVENTS = ("PreToolUse", "PostToolUse")
+MARK = "model-routing-harness"
+
+
+class ClaudeHookError(ValueError):
+    pass
+
+
+# A setup generation lives at <prefix>/setup-state/generations/<id>/...; <prefix>/current points at the active one.
+_GENERATION = re.compile(r"^(?P<prefix>.+)/setup-state/generations/[0-9a-f]+/(?P<rest>.+)$")
+
+
+def stable_path(path):
+    """Spell a path inside a setup generation through <prefix>/current, so the hook command (and settings.json) does not
+    change when a new generation is installed. Paths outside a generation are returned unchanged."""
+    found = _GENERATION.match(str(path))
+    return f"{found['prefix']}/current/{found['rest']}" if found else str(path)
+
+
+def command_for(artifact_root):
+    root = Path(artifact_root)
+    artifact = json.loads((root / "artifact.json").read_text())
+    launcher = root / "plugins" / MARK / "launcher.py"
+    if not launcher.is_file():
+        raise ClaudeHookError("artifact has no launcher; run: mrh plugin prepare --advisory")
+    # The launcher resolves its own location, so it still runs the generation's own binding, runtime and interpreter.
+    if os.name == 'nt':
+        from mrh.adapters.platforms.windows import quote_command
+        return quote_command([artifact['python'], '-I', '-B', str(launcher), 'claude'])
+    return f"{shlex.quote(stable_path(artifact['python']))} -I -B {shlex.quote(stable_path(launcher))} claude"
+
+
+def _ours(entry):
+    return isinstance(entry, dict) and any(MARK in h.get("command", "") and h.get("command", "").endswith(" claude")
+                                           for h in entry.get("hooks", []) if isinstance(h, dict))
+
+
+def plan(text, command, remove=False):
+    """Return the new file text. Everything that is not MRH's own entry is preserved verbatim."""
+    try:
+        document = json.loads(text) if text.strip() else {}
+    except ValueError:
+        raise ClaudeHookError("settings.json is not valid JSON; not touching it") from None
+    if not isinstance(document, dict) or not isinstance(document.get("hooks", {}), dict):
+        raise ClaudeHookError("unexpected settings.json shape; not touching it")
+    hooks = document.setdefault("hooks", {})
+    for event in EVENTS:
+        entries = [e for e in hooks.get(event, []) if not _ours(e)]
+        if not remove:
+            entries.append({"matcher": MATCHER, "hooks": [{"type": "command", "command": command, "timeout": 50 if event == "PreToolUse" else 2}]})
+        if entries:
+            hooks[event] = entries
+        else:
+            hooks.pop(event, None)
+    if not hooks:
+        document.pop("hooks")
+    return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+
+
+def diff(before, after, name):
+    return "".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True), name + " (current)", name + " (proposed)"))
+
+
+def apply(path, after):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".mrh-write-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as stream:
+            stream.write(after)
+        if path.exists():
+            os.chmod(tmp, path.stat().st_mode & 0o777)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+    return None

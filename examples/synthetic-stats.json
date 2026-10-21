@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-10-09T21:55:23.676251+00:00",
+  "partition": "synthetic",
+  "proposals": 5,
+  "jev_attempts": 0,
+  "synthetic_attempts": 5,
+  "classified_tasks": 5,
+  "low_confidence_tasks": 1,
+  "pending_proposals": 0,
+  "tiers": {
+    "Light": 1,
+    "Small": 1,
+    "Mid": 1,
+    "Top": 2
+  },
+  "outcomes": {
+    "cost_unknown": 2,
+    "low_confidence": 1,
+    "top_main_requested": 1,
+    "top_fixed_requested": 1
+  },
+  "requested_models": {
+    "gpt-6-astra": 1
+  },
+  "confirmed_children": 0,
+  "simulated_children": 0,
+  "reported_children": 0,
+  "actual_models": {},
+  "unknown_actual_model_children": 0,
+  "cost": null,
+  "tokens": null,
+  "quota": null,
+  "capabilities": {
+    "jev": "unavailable",
+    "codex": "candidate_unverified",
+    "claude": "unsupported",
+    "gemini": "unsupported"
+  },
+  "platforms": [
+    {
+      "platform": "codex",
+      "surface": "simulation",
+      "proposals": 5
+    }
+  ],
+  "event_ids": {
+    "proposals": [
+      "55b04009a8a224bcf586ea3e81f3ef76f0de893956a01e6060af18ecdcc65aad",
+      "8f4b574755718f93c6a8f24a31209a3bde14be5e4402b7a4720094fc15b404de",
+      "9d7545365752a154ec2acf280f5cd46cd3c5e3bca61740cb0b0166a22b4f1e85",
+      "bcee75dd4cab16992b7b427bdd516feb205c4819ce8e62221619489af4cb8700",
+      "f1dbf6c4088b2d9e4c18ad9f88769acaab993df32b43a35d67592fb29ff98aa9"
+    ],
+    "attempts": [
+      "55b04009a8a224bcf586ea3e81f3ef76f0de893956a01e6060af18ecdcc65aad:attempt:0",
+      "8f4b574755718f93c6a8f24a31209a3bde14be5e4402b7a4720094fc15b404de:attempt:0",
+      "9d7545365752a154ec2acf280f5cd46cd3c5e3bca61740cb0b0166a22b4f1e85:attempt:0",
+      "bcee75dd4cab16992b7b427bdd516feb205c4819ce8e62221619489af4cb8700:attempt:0",
+      "f1dbf6c4088b2d9e4c18ad9f88769acaab993df32b43a35d67592fb29ff98aa9:attempt:0"
+    ],
+    "receipts": []
+  },
+  "event_ids_truncated": false,
+  "jev": {
+    "source": "unavailable",
+    "attempt_states": {},
+    "requested_models": {},
+    "response_models": {},
+    "input_tokens": null,
+    "output_tokens": null,
+    "known_input_tokens": 0,
+    "known_output_tokens": 0,
+    "usage_unavailable_attempts": 0,
+    "estimated_cost": null
+  },
+  "handback_anomalies": 0,
+  "handback_anomaly_evidence": {
+    "confirmed": 0,
+    "reported": 0,
+    "synthetic": 0
+  }
+}

@@ -1,0 +1,72 @@
+#!/bin/sh
+# Pinned, verified bootstrap only. Never changes HOME, CODEX_HOME or global PATH.
+set -eu
+mrh_source=$(CDPATH= cd -P "$(/usr/bin/dirname "$0")" && pwd)
+mrh_prefix=${HOME}/.local/share/model-routing-harness
+mrh_cache=
+mrh_readonly=false
+mrh_help=false
+mrh_prev=
+for mrh_arg in "$@"; do
+    case "$mrh_prev" in
+        --prefix) mrh_prefix=$mrh_arg;;
+        --cache-root) mrh_cache=$mrh_arg;;
+    esac
+    case "$mrh_arg" in --check|--dry-run) mrh_readonly=true;; -h|--help) mrh_help=true;; esac
+    mrh_prev=$mrh_arg
+done
+mrh_python=
+for mrh_candidate in "$mrh_prefix/current/runtime/bin/python3.11" "$mrh_prefix/app/runtime/bin/python3.11" "$(command -v python3.11 || :)" "$(command -v python3 || :)"; do
+    if [ -n "$mrh_candidate" ] && [ -x "$mrh_candidate" ] && "$mrh_candidate" -I -B -c 'import sys;raise SystemExit(sys.version_info < (3,11))' >/dev/null 2>&1; then
+        mrh_python=$mrh_candidate
+        break
+    fi
+done
+if [ -n "$mrh_python" ]; then exec "$mrh_python" -I -B "$mrh_source/mrh_setup.py" "$@"; fi
+if [ "$mrh_help" = true ]; then
+    printf '%s\n' 'Usage: ./setup --host codex [--host claude] [--check|--dry-run|--rollback] [--json]' 'Optional: --codex-packets, --prefix, --config-root, --bin-dir, --cache-root, --settings, --codex-cli, --claude-cli, --claude-settings, --enable --workspace PATH'
+    exit 0
+fi
+if [ "$(/usr/bin/uname -s)" != Darwin ] || [ "$(/usr/bin/uname -m)" != arm64 ]; then
+    printf '%s\n' '{"status":"incomplete","reason":"unsupported_platform:macOS_arm64_only","writes":false}'
+    exit 2
+fi
+if [ "$mrh_readonly" = true ]; then
+    printf '%s\n' '{"status":"pending","reason":"python_3_11_or_pinned_bootstrap_required","writes":false,"downloads":false}'
+    exit 0
+fi
+mrh_lock=$mrh_source/packaging/macos-arm64/runtime-lock.json
+mrh_name=$(/usr/bin/plutil -extract runtime.name raw -o - "$mrh_lock")
+mrh_url=$(/usr/bin/plutil -extract runtime.url raw -o - "$mrh_lock")
+mrh_sha=$(/usr/bin/plutil -extract runtime.sha256 raw -o - "$mrh_lock")
+mrh_size=$(/usr/bin/plutil -extract runtime.size raw -o - "$mrh_lock")
+mrh_release=$(/usr/bin/plutil -extract release raw -o - "$mrh_lock")
+case "$mrh_url" in "https://github.com/astral-sh/python-build-standalone/releases/download/$mrh_release/"*) ;; *) echo 'MRH: invalid pinned runtime origin' >&2;exit 2;; esac
+case "$mrh_name" in *'/'*|*'..'*) echo 'MRH: invalid runtime name' >&2;exit 2;; esac
+umask 077
+mrh_scratch=$mrh_source/runtime/tmp/mrh
+for mrh_part in "$mrh_source/runtime" "$mrh_source/runtime/tmp" "$mrh_scratch"; do
+    if [ -L "$mrh_part" ]; then echo 'MRH: project scratch must not follow links.' >&2; exit 2; fi
+done
+/bin/mkdir -p "$mrh_scratch"
+if [ -L "$mrh_scratch/.mrh-owner.json" ]; then echo 'MRH: unsafe scratch marker.' >&2; exit 2; fi
+if [ ! -f "$mrh_scratch/.mrh-owner.json" ]; then
+    if [ -n "$(/bin/ls -A "$mrh_scratch")" ]; then echo 'MRH: unowned project scratch; no fallback.' >&2; exit 2; fi
+    printf '%s\n' '{"schema_version":1,"owner":"org.model-routing-harness","kind":"disposable_tmp"}' > "$mrh_scratch/.mrh-owner.json"
+fi
+if [ "$(/usr/bin/plutil -extract owner raw -o - "$mrh_scratch/.mrh-owner.json")" != org.model-routing-harness ] || [ "$(/usr/bin/plutil -extract kind raw -o - "$mrh_scratch/.mrh-owner.json")" != disposable_tmp ]; then
+    echo 'MRH: unowned project scratch; no fallback.' >&2; exit 2
+fi
+mrh_tmp=$(/usr/bin/mktemp -d "$mrh_scratch/mrh-bootstrap.XXXXXXXX")
+trap 'rm -rf "$mrh_tmp"' EXIT HUP INT TERM
+mrh_asset=$mrh_tmp/$mrh_name
+if [ -n "$mrh_cache" ] && [ -f "$mrh_cache/$mrh_name" ] && [ ! -L "$mrh_cache/$mrh_name" ]; then
+    /bin/cp "$mrh_cache/$mrh_name" "$mrh_asset"
+else
+    /usr/bin/curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 "$mrh_url" -o "$mrh_asset"
+fi
+if [ "$(/usr/bin/stat -f %z "$mrh_asset")" != "$mrh_size" ] || [ "$(/usr/bin/shasum -a 256 "$mrh_asset" | /usr/bin/awk '{print $1}')" != "$mrh_sha" ]; then
+    echo 'MRH: pinned runtime hash/size mismatch; nothing executed' >&2;exit 2
+fi
+/usr/bin/tar -xzf "$mrh_asset" -C "$mrh_tmp"
+MRH_SETUP_BOOTSTRAP_ASSET=$mrh_asset "$mrh_tmp/python/bin/python3.11" -I -B "$mrh_source/mrh_setup.py" "$@"

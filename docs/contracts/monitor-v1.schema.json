@@ -1,0 +1,350 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:mrh:monitor-events:v1",
+  "title": "MRH opt-in metadata snapshot v1",
+  "type": "object",
+  "required": [
+    "status",
+    "events"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "status": {
+      "type": "object",
+      "required": [
+        "format_version",
+        "generated_at"
+      ],
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "generated_at": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format_version",
+        "since",
+        "items"
+      ],
+      "properties": {
+        "format_version": {
+          "const": 1
+        },
+        "since": {
+          "type": "number"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/decision"
+              },
+              {
+                "$ref": "#/definitions/classification"
+              },
+              {
+                "$ref": "#/definitions/child"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "codeOrNull": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "maxLength": 128
+    },
+    "requestIdOrNull": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "maxLength": 256
+    },
+    "modelOrNull": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128,
+      "pattern": "^(?![./~])(?![A-Za-z]:/)(?!.*://)[A-Za-z0-9_.:/-]+(?:\\[[A-Za-z0-9_.:-]+\\])?$"
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "kind",
+        "timestamp",
+        "platform",
+        "request_id",
+        "action",
+        "reason",
+        "tier",
+        "confidence",
+        "provider",
+        "candidates",
+        "origin",
+        "counted_in_decisions",
+        "recorded_links"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^decision:[A-Za-z0-9_.:-]{1,256}$"
+        },
+        "kind": {
+          "const": "decision"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "platform": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "maxLength": 256
+        },
+        "action": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "reason": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "tier": {
+          "enum": [
+            "Light",
+            "Small",
+            "Mid",
+            "Top",
+            null
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provider": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "candidates": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "model",
+              "effort"
+            ],
+            "properties": {
+              "model": {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^(?![./~])(?![A-Za-z]:/)(?!.*://)[A-Za-z0-9_.:/-]+(?:\\[[A-Za-z0-9_.:-]+\\])?$"
+              },
+              "effort": {
+                "$ref": "#/definitions/codeOrNull"
+              }
+            }
+          }
+        },
+        "origin": {
+          "enum": [
+            "ordinary",
+            "packet_query",
+            "packet_release",
+            null
+          ]
+        },
+        "counted_in_decisions": {
+          "type": "boolean"
+        },
+        "recorded_links": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "advice_request_id",
+            "packet_query_request_id",
+            "packet_release_request_id"
+          ],
+          "properties": {
+            "advice_request_id": {
+              "$ref": "#/definitions/requestIdOrNull"
+            },
+            "packet_query_request_id": {
+              "$ref": "#/definitions/requestIdOrNull"
+            },
+            "packet_release_request_id": {
+              "$ref": "#/definitions/requestIdOrNull"
+            }
+          }
+        }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "kind",
+        "timestamp",
+        "request_id",
+        "provider",
+        "platform",
+        "first_phase_at",
+        "last_phase_at",
+        "phases",
+        "requested_model",
+        "response_model",
+        "entered",
+        "returned",
+        "failed",
+        "unknown",
+        "input_tokens",
+        "output_tokens"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^classification:[0-9a-f]{64}$"
+        },
+        "kind": {
+          "const": "classification_request"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]+$",
+          "maxLength": 256
+        },
+        "provider": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "platform": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "first_phase_at": {
+          "type": "number"
+        },
+        "last_phase_at": {
+          "type": "number"
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "maxLength": 128
+          },
+          "uniqueItems": true
+        },
+        "requested_model": {
+          "$ref": "#/definitions/modelOrNull"
+        },
+        "response_model": {
+          "$ref": "#/definitions/modelOrNull"
+        },
+        "entered": {
+          "type": "boolean"
+        },
+        "returned": {
+          "type": "boolean"
+        },
+        "failed": {
+          "type": "boolean"
+        },
+        "unknown": {
+          "type": "boolean"
+        },
+        "input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "child": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "kind",
+        "timestamp",
+        "platform",
+        "requested_model",
+        "requested_effort",
+        "resolved_model",
+        "recorded_advice_request_id",
+        "recorded_followed"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^child:[0-9a-f]{64}$"
+        },
+        "kind": {
+          "const": "child"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "platform": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "requested_model": {
+          "$ref": "#/definitions/modelOrNull"
+        },
+        "requested_effort": {
+          "$ref": "#/definitions/codeOrNull"
+        },
+        "resolved_model": {
+          "$ref": "#/definitions/modelOrNull"
+        },
+        "recorded_advice_request_id": {
+          "$ref": "#/definitions/requestIdOrNull"
+        },
+        "recorded_followed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

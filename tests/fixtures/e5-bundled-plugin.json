@@ -1,0 +1,4012 @@
+{
+  "status": "passed",
+  "native_commands": [
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "codex-cli 0.162.0-alpha.17.2\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "-m",
+        "venv",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/python",
+        "-m",
+        "pip",
+        "--no-cache-dir",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-build-isolation",
+        "/Users/example/Code/model-routing-harness"
+      ],
+      "exit_code": 0,
+      "stdout": "Processing /Users/example/Code/model-routing-harness\n  Preparing metadata (pyproject.toml): started\n  Preparing metadata (pyproject.toml): finished with status 'done'\nBuilding wheels for collected packages: model-routing-harness\n  Building wheel for model-routing-harness (pyproject.toml): started\n  Building wheel for model-routing-harness (pyproject.toml): finished with status 'done'\n  Created wheel for model-routing-harness: filename=model_routing_harness-0.2.0-py3-none-any.whl size=41268 sha256=2a6cc3444e87042e8674fcc8b6e9ede1fe38f76e34b9bd760d420df6484e2c63\n  Stored in directory: /private/tmp/pip-ephem-wheel-cache-53mcqy_g/wheels/c3/d7/cd/31b3905468ba27ecbf8c08296fddea822f414220a40de57bdf\nSuccessfully built model-routing-harness\nInstalling collected packages: model-routing-harness\nSuccessfully installed model-routing-harness-0.2.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "plugin",
+        "prepare",
+        "--root",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle",
+        "--settings",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"prepared\",\n  \"native_registration\": \"unverified\",\n  \"hook_trust\": \"unverified\",\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"artifact\": {\n    \"files\": {\n      \".agents/plugins/marketplace.json\": \"c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6\",\n      \"plugins/model-routing-harness/binding.json\": \"b75ee2e927378a4aafd497a9ddc060e43b145f4a5a9b14779d4f097b67e78707\",\n      \"plugins/model-routing-harness/hooks/hooks.json\": \"395e57fd86c21b5823d9030f0f0399d634f4167dee537bca5e5968cd198c0409\",\n      \"plugins/model-routing-harness/launcher.py\": \"93479ca1f1e8003fca75582238e53d16d6a7e60455ca583b279c8ac352afe000\",\n      \"plugins/model-routing-harness/plugin.json\": \"b586dfe34e7eaae2d416c1b0fbc597e213f4bcc59155091a656396cd08396144\",\n      \"plugins/model-routing-harness/runtime.pyz\": \"ee7917718ba4a547aaebf62b5635487d1b4690cca00800373d0684041df6913d\"\n    },\n    \"owner\": \"org.model-routing-harness\",\n    \"plugin_id\": \"model-routing-harness@model-routing-harness-local\",\n    \"python\": \"/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11\",\n    \"python_version\": \"3.11\",\n    \"schema_version\": 1,\n    \"settings_path\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json\",\n    \"version\": \"0.2.0\"\n  },\n  \"native_commands\": [\n    [\n      \"codex\",\n      \"plugin\",\n      \"marketplace\",\n      \"add\",\n      \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"add\",\n      \"model-routing-harness@model-routing-harness-local\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"list\",\n      \"--json\"\n    ],\n    [\n      \"codex\",\n      \"plugin\",\n      \"remove\",\n      \"model-routing-harness@model-routing-harness-local\",\n      \"--json\"\n    ]\n  ],\n  \"next_trust_step\": \"Review the current definitions in the native /hooks UI\",\n  \"removal_state_policy\": \"Native uninstall preserves separate MRH settings and telemetry; no automatic deletion\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "marketplace",
+        "add",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"installedRoot\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle\",\n  \"alreadyAdded\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "add",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\",\n  \"version\": \"local\",\n  \"installedPath\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local\",\n  \"authPolicy\": \"ON_USE\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"installed\": [\n    {\n      \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n      \"name\": \"model-routing-harness\",\n      \"marketplaceName\": \"model-routing-harness-local\",\n      \"version\": \"local\",\n      \"installed\": true,\n      \"enabled\": true,\n      \"source\": {\n        \"source\": \"local\",\n        \"path\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle/plugins/model-routing-harness\"\n      },\n      \"marketplaceSource\": {\n        \"sourceType\": \"local\",\n        \"source\": \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle\"\n      },\n      \"installPolicy\": \"AVAILABLE\",\n      \"authPolicy\": \"ON_USE\"\n    }\n  ],\n  \"available\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "settings",
+        "configure",
+        "--path",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json",
+        "--provider",
+        "typesafe",
+        "--policy",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/policy.json",
+        "--allow-workspace",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+        "--permit-task-export"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"settings\": {\n    \"schema_version\": 1,\n    \"owner\": \"org.model-routing-harness.settings.v1\",\n    \"revision\": 1,\n    \"enabled\": false,\n    \"task_export_permitted\": true,\n    \"allowed_workspaces\": [\n      \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace\"\n    ],\n    \"provider\": \"typesafe\",\n    \"classifier_model\": \"jev-1.13.0\",\n    \"policy\": {\n      \"top_mode\": \"Main\",\n      \"timeout_seconds\": 1,\n      \"tiers\": {},\n      \"fixed\": {\n        \"effort\": \"high\",\n        \"model\": \"mrh-synthetic-fixed\"\n      },\n      \"rates\": {}\n    }\n  },\n  \"routing_enabled\": false,\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"installation_status\": \"not_inferred_from_settings\",\n  \"credentials_probed\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "settings",
+        "enable",
+        "--path",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"settings\": {\n    \"schema_version\": 1,\n    \"owner\": \"org.model-routing-harness.settings.v1\",\n    \"revision\": 2,\n    \"enabled\": true,\n    \"task_export_permitted\": true,\n    \"allowed_workspaces\": [\n      \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace\"\n    ],\n    \"provider\": \"typesafe\",\n    \"classifier_model\": \"jev-1.13.0\",\n    \"policy\": {\n      \"top_mode\": \"Main\",\n      \"timeout_seconds\": 1,\n      \"tiers\": {},\n      \"fixed\": {\n        \"effort\": \"high\",\n        \"model\": \"mrh-synthetic-fixed\"\n      },\n      \"rates\": {}\n    }\n  },\n  \"routing_enabled\": true,\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"installation_status\": \"not_inferred_from_settings\",\n  \"credentials_probed\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "settings",
+        "configure",
+        "--path",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json",
+        "--provider",
+        "typesafe",
+        "--policy",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/policy.json",
+        "--allow-workspace",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+        "--permit-task-export"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"settings\": {\n    \"schema_version\": 1,\n    \"owner\": \"org.model-routing-harness.settings.v1\",\n    \"revision\": 3,\n    \"enabled\": true,\n    \"task_export_permitted\": true,\n    \"allowed_workspaces\": [\n      \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace\"\n    ],\n    \"provider\": \"typesafe\",\n    \"classifier_model\": \"jev-1.13.0\",\n    \"policy\": {\n      \"top_mode\": \"Fixed\",\n      \"timeout_seconds\": 1,\n      \"tiers\": {},\n      \"fixed\": {\n        \"effort\": \"high\",\n        \"model\": \"mrh-synthetic-fixed\"\n      },\n      \"rates\": {}\n    }\n  },\n  \"routing_enabled\": true,\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"installation_status\": \"not_inferred_from_settings\",\n  \"credentials_probed\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "settings",
+        "disable",
+        "--path",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"settings\": {\n    \"schema_version\": 1,\n    \"owner\": \"org.model-routing-harness.settings.v1\",\n    \"revision\": 4,\n    \"enabled\": false,\n    \"task_export_permitted\": true,\n    \"allowed_workspaces\": [\n      \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace\"\n    ],\n    \"provider\": \"typesafe\",\n    \"classifier_model\": \"jev-1.13.0\",\n    \"policy\": {\n      \"top_mode\": \"Fixed\",\n      \"timeout_seconds\": 1,\n      \"tiers\": {},\n      \"fixed\": {\n        \"effort\": \"high\",\n        \"model\": \"mrh-synthetic-fixed\"\n      },\n      \"rates\": {}\n    }\n  },\n  \"routing_enabled\": false,\n  \"live_routing_ready\": false,\n  \"readiness_reason\": \"unresolved_host_configuration\",\n  \"installation_status\": \"not_inferred_from_settings\",\n  \"credentials_probed\": false\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "remove",
+        "model-routing-harness@model-routing-harness-local",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"pluginId\": \"model-routing-harness@model-routing-harness-local\",\n  \"name\": \"model-routing-harness\",\n  \"marketplaceName\": \"model-routing-harness-local\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+        "--no-daemon",
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"installed\": [],\n  \"available\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "stats",
+        "--db",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/events.sqlite3",
+        "--synthetic",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"schema_version\": 2,\n  \"updated_at\": \"2026-10-10T06:49:49.648413+00:00\",\n  \"partition\": \"synthetic\",\n  \"proposals\": 5,\n  \"jev_attempts\": 0,\n  \"synthetic_attempts\": 5,\n  \"classified_tasks\": 4,\n  \"low_confidence_tasks\": 0,\n  \"pending_proposals\": 0,\n  \"tiers\": {\n    \"Light\": 0,\n    \"Small\": 0,\n    \"Mid\": 0,\n    \"Top\": 4\n  },\n  \"outcomes\": {\n    \"top_main_requested\": 1,\n    \"top_fixed_requested\": 3,\n    \"typesafe_network_error\": 1\n  },\n  \"requested_models\": {\n    \"mrh-synthetic-fixed\": 3\n  },\n  \"confirmed_children\": 0,\n  \"simulated_children\": 3,\n  \"reported_children\": 0,\n  \"actual_models\": {},\n  \"unknown_actual_model_children\": 0,\n  \"cost\": null,\n  \"tokens\": null,\n  \"quota\": null,\n  \"capabilities\": {\n    \"jev\": \"unavailable\",\n    \"codex\": \"candidate_unverified\",\n    \"claude\": \"unsupported\",\n    \"gemini\": \"unsupported\"\n  },\n  \"platforms\": [\n    {\n      \"platform\": \"codex\",\n      \"surface\": \"simulation\",\n      \"proposals\": 5\n    }\n  ],\n  \"event_ids\": {\n    \"proposals\": [\n      \"25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991\",\n      \"4e377fa0a97434b9356602c57a2f22b8fab8b6e22eeaacdc81e589bea2557482\",\n      \"6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b\",\n      \"7e1ee07f1959fff64747ac38c35b89f1ffcdf87fbcdad3a69528757d5687cfc4\",\n      \"b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e\"\n    ],\n    \"attempts\": [\n      \"25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991:attempt:0\",\n      \"4e377fa0a97434b9356602c57a2f22b8fab8b6e22eeaacdc81e589bea2557482:attempt:0\",\n      \"6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b:attempt:0\",\n      \"7e1ee07f1959fff64747ac38c35b89f1ffcdf87fbcdad3a69528757d5687cfc4:attempt:0\",\n      \"b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e:attempt:0\"\n    ],\n    \"receipts\": [\n      \"25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991:child:c21916f0-8d05-5973-a2a6-21b590bbfeac\",\n      \"6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b:child:0c16f514-5a61-52c7-8456-93551251568d\",\n      \"b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e:child:00bbaa14-8705-5cde-915a-28a7b2fbd9ba\"\n    ]\n  },\n  \"event_ids_truncated\": false,\n  \"jev\": {\n    \"source\": \"explicit_synthetic_offline_transport\",\n    \"attempt_states\": {\n      \"returned\": 4,\n      \"error\": 1\n    },\n    \"requested_models\": {\n      \"jev-1.13.0\": 5\n    },\n    \"response_models\": {\n      \"jev-1.13.0\": 4\n    },\n    \"input_tokens\": null,\n    \"output_tokens\": null,\n    \"known_input_tokens\": 4,\n    \"known_output_tokens\": 4,\n    \"usage_unavailable_attempts\": 1,\n    \"estimated_cost\": null\n  },\n  \"handback_anomalies\": 0,\n  \"handback_anomaly_evidence\": {\n    \"confirmed\": 0,\n    \"reported\": 0,\n    \"synthetic\": 0\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/venv/bin/mrh",
+        "stats",
+        "--db",
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/events.sqlite3",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"schema_version\": 2,\n  \"updated_at\": null,\n  \"partition\": \"live\",\n  \"proposals\": 0,\n  \"jev_attempts\": 0,\n  \"synthetic_attempts\": 0,\n  \"classified_tasks\": 0,\n  \"low_confidence_tasks\": 0,\n  \"pending_proposals\": 0,\n  \"tiers\": {\n    \"Light\": 0,\n    \"Small\": 0,\n    \"Mid\": 0,\n    \"Top\": 0\n  },\n  \"outcomes\": {},\n  \"requested_models\": {},\n  \"confirmed_children\": 0,\n  \"simulated_children\": 0,\n  \"reported_children\": 0,\n  \"actual_models\": {},\n  \"unknown_actual_model_children\": 0,\n  \"cost\": null,\n  \"tokens\": null,\n  \"quota\": null,\n  \"capabilities\": {\n    \"jev\": \"unavailable\",\n    \"codex\": \"candidate_unverified\",\n    \"claude\": \"unsupported\",\n    \"gemini\": \"unsupported\"\n  },\n  \"platforms\": [],\n  \"event_ids\": {\n    \"proposals\": [],\n    \"attempts\": [],\n    \"receipts\": []\n  },\n  \"event_ids_truncated\": false,\n  \"jev\": {\n    \"source\": \"unavailable\",\n    \"attempt_states\": {},\n    \"requested_models\": {},\n    \"response_models\": {},\n    \"input_tokens\": null,\n    \"output_tokens\": null,\n    \"known_input_tokens\": 0,\n    \"known_output_tokens\": 0,\n    \"usage_unavailable_attempts\": 0,\n    \"estimated_cost\": null\n  },\n  \"handback_anomalies\": 0,\n  \"handback_anomaly_evidence\": {\n    \"confirmed\": 0,\n    \"reported\": 0,\n    \"synthetic\": 0\n  }\n}\n",
+      "stderr": ""
+    }
+  ],
+  "cases": [
+    {
+      "scenario": "before-trust",
+      "parent_id": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+          "turn": {
+            "id": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "rootTurnId": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614985,
+            "completedAt": 1791614985,
+            "durationMs": 66
+          }
+        },
+        "emittedAtMs": 1791614985608
+      },
+      "native_events": [
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-1",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+            "turnId": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "startedAtMs": 1791614985550
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-1",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+              "receiverThreadIds": [
+                "dd5aaa72-4415-543a-9d09-9ef60cb4c32e"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "dd5aaa72-4415-543a-9d09-9ef60cb4c32e": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+            "turnId": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "completedAtMs": 1791614985588
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "030d768d-815e-5f9c-aca5-6153cfaafd30",
+          "turn": {
+            "id": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "rootTurnId": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614985,
+            "completedAt": 1791614985,
+            "durationMs": 66
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "dd5aaa72-4415-543a-9d09-9ef60cb4c32e",
+          "turn": {
+            "id": "dbc8b943-b51d-517c-af2f-b934e33ea3b3",
+            "rootTurnId": "00a5eccb-69e8-5599-a16d-14180f76d288",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614985,
+            "completedAt": 1791614985,
+            "durationMs": 21
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_d1714b62-5d66-5c4b-8dcf-b75fc42e774c",
+              "call_id": "call-fixture-1",
+              "output": "{\"agent_id\":\"dd5aaa72-4415-543a-9d09-9ef60cb4c32e\",\"nickname\":\"Cicero\"}"
+            }
+          ]
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        }
+      ],
+      "child_ids": [
+        "dd5aaa72-4415-543a-9d09-9ef60cb4c32e"
+      ],
+      "injected_runtime_events": [],
+      "third_party_events": [],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "disabled-original",
+      "parent_id": "8443a609-6af6-57d4-95d0-270e480bc646",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turn": {
+            "id": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "rootTurnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614986,
+            "completedAt": 1791614986,
+            "durationMs": 257
+          }
+        },
+        "emittedAtMs": 1791614986964
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-4",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-4",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 32,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 100,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-4",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+            "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "startedAtMs": 1791614986820
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-4",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+              "receiverThreadIds": [
+                "0199aac5-5894-5856-8849-de348ee80ecd"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "0199aac5-5894-5856-8849-de348ee80ecd": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+            "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "completedAtMs": 1791614986853
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "0199aac5-5894-5856-8849-de348ee80ecd",
+          "turn": {
+            "id": "8a98c8ff-4b72-57c3-952b-aa33fd13ce9b",
+            "rootTurnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614986,
+            "completedAt": 1791614986,
+            "durationMs": 15
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 99,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+          "turn": {
+            "id": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "rootTurnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614986,
+            "completedAt": 1791614986,
+            "durationMs": 257
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_d8522e58-2abe-5eb2-a209-36c575feb49d",
+              "call_id": "call-fixture-4",
+              "output": "{\"agent_id\":\"0199aac5-5894-5856-8849-de348ee80ecd\",\"nickname\":\"Tesla\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "0199aac5-5894-5856-8849-de348ee80ecd"
+      ],
+      "injected_runtime_events": [],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-4",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "configured-disabled",
+      "parent_id": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turn": {
+            "id": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "rootTurnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 204
+          }
+        },
+        "emittedAtMs": 1791614988264
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-7",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-7",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-7",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 25,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-7",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 74,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-7",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+            "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "startedAtMs": 1791614988147
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-7",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+              "receiverThreadIds": [
+                "af492013-68b6-572c-a043-ea046b806ed2"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "af492013-68b6-572c-a043-ea046b806ed2": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+            "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "completedAtMs": 1791614988181
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-7",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "af492013-68b6-572c-a043-ea046b806ed2",
+          "turn": {
+            "id": "fe53ca77-e839-5bbc-b63d-f76ffcdab18c",
+            "rootTurnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 14
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-7",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 74,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+          "turn": {
+            "id": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "rootTurnId": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 204
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_e2c1c0dc-af60-5456-9b66-018b12b3af24",
+              "call_id": "call-fixture-7",
+              "output": "{\"agent_id\":\"af492013-68b6-572c-a043-ea046b806ed2\",\"nickname\":\"Banach\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "af492013-68b6-572c-a043-ea046b806ed2"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+            "turn_id": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "tool_use_id": "call-fixture-7",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "d04c7a33-639d-5311-ba6b-b45ab4bcc23b",
+            "turn_id": "fc9c8cad-c8a8-51d8-ac75-77858dc1d24e",
+            "tool_use_id": "call-fixture-7",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": "{\"agent_id\":\"af492013-68b6-572c-a043-ea046b806ed2\",\"nickname\":\"Banach\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-7",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "main",
+      "parent_id": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turn": {
+            "id": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+            "rootTurnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 105
+          }
+        },
+        "emittedAtMs": 1791614988452
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-10",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-10",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-10",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 24,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-10",
+            "eventName": "preToolUse",
+            "status": "blocked",
+            "durationMs": 86,
+            "entries": [
+              {
+                "kind": "feedback",
+                "text": "MRH Top Main requested for existing subtask call-fixture-10; main continuation remains unverified."
+              }
+            ]
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+          "turn": {
+            "id": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+            "rootTurnId": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 105
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_e789a110-2c16-5c23-ba89-4bc0e49112de",
+              "call_id": "call-fixture-10",
+              "output": "Tool call blocked by PreToolUse hook: MRH Top Main requested for existing subtask call-fixture-10; main continuation remains unverified.. Tool: spawn_agent"
+            }
+          ]
+        }
+      ],
+      "child_ids": [],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "c0ec0a6b-513c-509a-8577-9fe2da33a7a6",
+            "turn_id": "d1f875d8-b5d1-580c-b33f-4396871faa3d",
+            "tool_use_id": "call-fixture-10",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "deny",
+              "permissionDecisionReason": "MRH Top Main requested for existing subtask call-fixture-10; main continuation remains unverified."
+            }
+          },
+          "http_calls": 1,
+          "key_resolutions": 1,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-10",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "fixed",
+      "parent_id": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turn": {
+            "id": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "rootTurnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 224
+          }
+        },
+        "emittedAtMs": 1791614988771
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-12",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-12",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-12",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 24,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-12",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 84,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-12",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-fixed",
+              "reasoningEffort": "high",
+              "agentsStates": {}
+            },
+            "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+            "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "startedAtMs": 1791614988643
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-12",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+              "receiverThreadIds": [
+                "c21916f0-8d05-5973-a2a6-21b590bbfeac"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-fixed",
+              "reasoningEffort": "high",
+              "agentsStates": {
+                "c21916f0-8d05-5973-a2a6-21b590bbfeac": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+            "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "completedAtMs": 1791614988676
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-12",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "c21916f0-8d05-5973-a2a6-21b590bbfeac",
+          "turn": {
+            "id": "0e2eaf20-60d8-5039-a9ce-5b04c3e3a44a",
+            "rootTurnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-12",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 85,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+          "turn": {
+            "id": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "rootTurnId": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 224
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-fixed",
+          "reasoning": {
+            "effort": "high"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_a2da3985-106a-5858-b807-024685b5e340",
+              "call_id": "call-fixture-12",
+              "output": "{\"agent_id\":\"c21916f0-8d05-5973-a2a6-21b590bbfeac\",\"nickname\":\"Archimedes\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "c21916f0-8d05-5973-a2a6-21b590bbfeac"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+            "turn_id": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "tool_use_id": "call-fixture-12",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "allow",
+              "updatedInput": {
+                "message": "MRH_CHILD_failure",
+                "fork_context": false,
+                "model": "mrh-synthetic-fixed",
+                "reasoning_effort": "high"
+              }
+            }
+          },
+          "http_calls": 1,
+          "key_resolutions": 1,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "0cf30ec5-9cd5-5483-b7a7-a9fd48b8c4f7",
+            "turn_id": "5a7a8092-ad7a-5713-a1c3-c011e4f6829b",
+            "tool_use_id": "call-fixture-12",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false,
+              "model": "mrh-synthetic-fixed",
+              "reasoning_effort": "high"
+            },
+            "tool_response": "{\"agent_id\":\"c21916f0-8d05-5973-a2a6-21b590bbfeac\",\"nickname\":\"Archimedes\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-12",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "explicit",
+      "parent_id": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turn": {
+            "id": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "rootTurnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614989,
+            "durationMs": 209
+          }
+        },
+        "emittedAtMs": 1791614989010
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-15",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-15",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-15",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 25,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-15",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 73,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-15",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_explicit",
+              "model": "mrh-synthetic-explicit",
+              "reasoningEffort": "high",
+              "agentsStates": {}
+            },
+            "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+            "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "startedAtMs": 1791614988884
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-15",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+              "receiverThreadIds": [
+                "8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97"
+              ],
+              "prompt": "MRH_CHILD_explicit",
+              "model": "mrh-synthetic-explicit",
+              "reasoningEffort": "high",
+              "agentsStates": {
+                "8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+            "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "completedAtMs": 1791614988917
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-15",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97",
+          "turn": {
+            "id": "0becdd7a-39d8-5145-9b6d-a78fdda40a69",
+            "rootTurnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614988,
+            "durationMs": 11
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-15",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 81,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+          "turn": {
+            "id": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "rootTurnId": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614988,
+            "completedAt": 1791614989,
+            "durationMs": 209
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-explicit",
+          "reasoning": {
+            "effort": "high"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_58b2cdd5-7047-524d-8aff-d31280a5dc6a",
+              "call_id": "call-fixture-15",
+              "output": "{\"agent_id\":\"8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97\",\"nickname\":\"Maxwell\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+            "turn_id": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "tool_use_id": "call-fixture-15",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit",
+              "fork_context": false,
+              "model": "mrh-synthetic-explicit",
+              "reasoning_effort": "high"
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "c0149db4-9300-5ce6-9f12-ddc6744fce1f",
+            "turn_id": "1601fb89-921e-5fd4-9db6-cdff737d3188",
+            "tool_use_id": "call-fixture-15",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_explicit",
+              "fork_context": false,
+              "model": "mrh-synthetic-explicit",
+              "reasoning_effort": "high"
+            },
+            "tool_response": "{\"agent_id\":\"8bf3e417-7f7c-51c5-97fc-bfefc4f8ed97\",\"nickname\":\"Maxwell\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-15",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "failure",
+      "parent_id": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turn": {
+            "id": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "rootTurnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 222
+          }
+        },
+        "emittedAtMs": 1791614989268
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-18",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-18",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-18",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 25,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-18",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 87,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-18",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+            "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "startedAtMs": 1791614989145
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-18",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+              "receiverThreadIds": [
+                "0c16f514-5a61-52c7-8456-93551251568d"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "0c16f514-5a61-52c7-8456-93551251568d": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+            "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "completedAtMs": 1791614989178
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-18",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "0c16f514-5a61-52c7-8456-93551251568d",
+          "turn": {
+            "id": "8ee71104-d291-5e31-9d2e-503570bdc317",
+            "rootTurnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-18",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 81,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+          "turn": {
+            "id": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "rootTurnId": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 222
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_ebcca288-6069-50b0-90ae-0100b1ebcb12",
+              "call_id": "call-fixture-18",
+              "output": "{\"agent_id\":\"0c16f514-5a61-52c7-8456-93551251568d\",\"nickname\":\"Bacon\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "0c16f514-5a61-52c7-8456-93551251568d"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+            "turn_id": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "tool_use_id": "call-fixture-18",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 1,
+          "key_resolutions": 1,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "137c74d6-09d8-56b6-b446-c602cd04eb83",
+            "turn_id": "47ce62ed-f675-578f-9439-e004e08efa3d",
+            "tool_use_id": "call-fixture-18",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": "{\"agent_id\":\"0c16f514-5a61-52c7-8456-93551251568d\",\"nickname\":\"Bacon\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-18",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "co-deny",
+      "parent_id": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turn": {
+            "id": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+            "rootTurnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 102
+          }
+        },
+        "emittedAtMs": 1791614989407
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-21",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-21",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-21",
+            "eventName": "preToolUse",
+            "status": "blocked",
+            "durationMs": 25,
+            "entries": [
+              {
+                "kind": "feedback",
+                "text": "Independent fixture denial"
+              }
+            ]
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-21",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 85,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+          "turn": {
+            "id": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+            "rootTurnId": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 102
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_f2fe1b54-bc16-573b-873e-809465ab10a5",
+              "call_id": "call-fixture-21",
+              "output": "Tool call blocked by PreToolUse hook: Independent fixture denial. Tool: spawn_agent"
+            }
+          ]
+        }
+      ],
+      "child_ids": [],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "c64f9c85-258a-5bf8-b84e-a9e9de82bc79",
+            "turn_id": "b55c8470-0cb0-506f-aca7-42c76ee8e479",
+            "tool_use_id": "call-fixture-21",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "allow",
+              "updatedInput": {
+                "message": "MRH_CHILD_failure",
+                "fork_context": false,
+                "model": "mrh-synthetic-fixed",
+                "reasoning_effort": "high"
+              }
+            }
+          },
+          "http_calls": 1,
+          "key_resolutions": 1,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-21",
+          "mode": "deny",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "competing-rewrite",
+      "parent_id": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turn": {
+            "id": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "rootTurnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 221
+          }
+        },
+        "emittedAtMs": 1791614989662
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-23",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-23",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-23",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 25,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-23",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 85,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-23",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-fixed",
+              "reasoningEffort": "high",
+              "agentsStates": {}
+            },
+            "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+            "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "startedAtMs": 1791614989536
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-23",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+              "receiverThreadIds": [
+                "00bbaa14-8705-5cde-915a-28a7b2fbd9ba"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-fixed",
+              "reasoningEffort": "high",
+              "agentsStates": {
+                "00bbaa14-8705-5cde-915a-28a7b2fbd9ba": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+            "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "completedAtMs": 1791614989569
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-23",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "00bbaa14-8705-5cde-915a-28a7b2fbd9ba",
+          "turn": {
+            "id": "a212cedb-5102-5f1a-b905-7072beb0fa5f",
+            "rootTurnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 13
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-23",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 84,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+          "turn": {
+            "id": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "rootTurnId": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 221
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-fixed",
+          "reasoning": {
+            "effort": "high"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_286f998a-4ee1-5823-864f-529bd3b470cd",
+              "call_id": "call-fixture-23",
+              "output": "{\"agent_id\":\"00bbaa14-8705-5cde-915a-28a7b2fbd9ba\",\"nickname\":\"Heisenberg\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "00bbaa14-8705-5cde-915a-28a7b2fbd9ba"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+            "turn_id": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "tool_use_id": "call-fixture-23",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {
+            "hookSpecificOutput": {
+              "hookEventName": "PreToolUse",
+              "permissionDecision": "allow",
+              "updatedInput": {
+                "message": "MRH_CHILD_failure",
+                "fork_context": false,
+                "model": "mrh-synthetic-fixed",
+                "reasoning_effort": "high"
+              }
+            }
+          },
+          "http_calls": 1,
+          "key_resolutions": 1,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "9f9dbcd3-3871-5aa5-9864-91e9a15d8084",
+            "turn_id": "936179ba-84a0-5bdd-90f2-1240a4baa33e",
+            "tool_use_id": "call-fixture-23",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false,
+              "model": "mrh-synthetic-fixed",
+              "reasoning_effort": "high"
+            },
+            "tool_response": "{\"agent_id\":\"00bbaa14-8705-5cde-915a-28a7b2fbd9ba\",\"nickname\":\"Heisenberg\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-23",
+          "mode": "rewrite",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "disabled-again",
+      "parent_id": "e9b11df2-c517-5692-84a0-7f870629ef92",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turn": {
+            "id": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "rootTurnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 205
+          }
+        },
+        "emittedAtMs": 1791614989947
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-26",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-26",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-26",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 25,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-26",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 74,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-26",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+            "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "startedAtMs": 1791614989828
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-26",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+              "receiverThreadIds": [
+                "b2f4bb80-633f-5c96-934d-c11d1ff23cb8"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "b2f4bb80-633f-5c96-934d-c11d1ff23cb8": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+            "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "completedAtMs": 1791614989861
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-26",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "b2f4bb80-633f-5c96-934d-c11d1ff23cb8",
+          "turn": {
+            "id": "a11df5e0-b9a0-55a9-949a-541c56463a72",
+            "rootTurnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 12
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-26",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 77,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "e9b11df2-c517-5692-84a0-7f870629ef92",
+          "turn": {
+            "id": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "rootTurnId": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614989,
+            "completedAt": 1791614989,
+            "durationMs": 205
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_b02a6e0b-e451-5865-b2b5-5e37f6687756",
+              "call_id": "call-fixture-26",
+              "output": "{\"agent_id\":\"b2f4bb80-633f-5c96-934d-c11d1ff23cb8\",\"nickname\":\"Pascal\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "b2f4bb80-633f-5c96-934d-c11d1ff23cb8"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "e9b11df2-c517-5692-84a0-7f870629ef92",
+            "turn_id": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "tool_use_id": "call-fixture-26",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "e9b11df2-c517-5692-84a0-7f870629ef92",
+            "turn_id": "d2969ba5-e63b-5d8c-889b-c549cd6ab718",
+            "tool_use_id": "call-fixture-26",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": "{\"agent_id\":\"b2f4bb80-633f-5c96-934d-c11d1ff23cb8\",\"nickname\":\"Pascal\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-26",
+          "mode": "benign",
+          "revision": "1"
+        }
+      ],
+      "parent_unchanged": true
+    },
+    {
+      "scenario": "third-party-update",
+      "parent_id": "ae1db447-a956-57d9-840b-2a94699984f3",
+      "completed_turn": {
+        "method": "turn/completed",
+        "params": {
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turn": {
+            "id": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "rootTurnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614990,
+            "completedAt": 1791614991,
+            "durationMs": 213
+          }
+        },
+        "emittedAtMs": 1791614991178
+      },
+      "native_events": [
+        {
+          "method": "hook/started",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-29",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-29",
+            "eventName": "preToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "pre-tool-use:0:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:call-fixture-29",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 26,
+            "entries": []
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-29",
+            "eventName": "preToolUse",
+            "status": "completed",
+            "durationMs": 76,
+            "entries": []
+          }
+        },
+        {
+          "method": "item/started",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-29",
+              "tool": "spawnAgent",
+              "status": "inProgress",
+              "senderThreadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+              "receiverThreadIds": [],
+              "prompt": "MRH_CHILD_failure",
+              "model": "",
+              "reasoningEffort": "medium",
+              "agentsStates": {}
+            },
+            "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+            "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "startedAtMs": 1791614991055
+          }
+        },
+        {
+          "method": "item/completed",
+          "params": {
+            "item": {
+              "type": "collabAgentToolCall",
+              "id": "call-fixture-29",
+              "tool": "spawnAgent",
+              "status": "completed",
+              "senderThreadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+              "receiverThreadIds": [
+                "cc93ff6c-98bc-5830-9296-cad9c84aba9d"
+              ],
+              "prompt": "MRH_CHILD_failure",
+              "model": "mrh-synthetic-parent",
+              "reasoningEffort": "low",
+              "agentsStates": {
+                "cc93ff6c-98bc-5830-9296-cad9c84aba9d": {
+                  "status": "pendingInit",
+                  "message": null
+                }
+              }
+            },
+            "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+            "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "completedAtMs": 1791614991087
+          }
+        },
+        {
+          "method": "hook/started",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-29",
+            "eventName": "postToolUse",
+            "status": "running",
+            "durationMs": null,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "cc93ff6c-98bc-5830-9296-cad9c84aba9d",
+          "turn": {
+            "id": "aedcbea8-9b97-588b-b085-e68b750e209f",
+            "rootTurnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614991,
+            "completedAt": 1791614991,
+            "durationMs": 14
+          }
+        },
+        {
+          "method": "hook/completed",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+          "run": {
+            "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-29",
+            "eventName": "postToolUse",
+            "status": "completed",
+            "durationMs": 80,
+            "entries": []
+          }
+        },
+        {
+          "method": "turn/completed",
+          "threadId": "ae1db447-a956-57d9-840b-2a94699984f3",
+          "turn": {
+            "id": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "rootTurnId": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "items": [
+              {
+                "type": "agentMessage",
+                "id": "message-fixture",
+                "text": "MRH scripted fixture complete.",
+                "phase": null,
+                "memoryCitation": null,
+                "delivery": null,
+                "questions": null
+              }
+            ],
+            "itemsView": "summary",
+            "status": "completed",
+            "error": null,
+            "startedAt": 1791614990,
+            "completedAt": 1791614991,
+            "durationMs": 213
+          }
+        }
+      ],
+      "requests": [
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ]
+          },
+          "is_parent": false,
+          "function_outputs": []
+        },
+        {
+          "model": "mrh-synthetic-parent",
+          "reasoning": {
+            "effort": "low"
+          },
+          "native_namespace_tools": {
+            "clock": [
+              "curr_time",
+              "sleep"
+            ],
+            "multi_agent_v1": [
+              "close_agent",
+              "resume_agent",
+              "send_input",
+              "spawn_agent",
+              "wait_agent"
+            ]
+          },
+          "is_parent": true,
+          "function_outputs": [
+            {
+              "type": "function_call_output",
+              "id": "fco_104b0a80-13fb-58d9-8469-4712e48176c8",
+              "call_id": "call-fixture-29",
+              "output": "{\"agent_id\":\"cc93ff6c-98bc-5830-9296-cad9c84aba9d\",\"nickname\":\"Boole\"}"
+            }
+          ]
+        }
+      ],
+      "child_ids": [
+        "cc93ff6c-98bc-5830-9296-cad9c84aba9d"
+      ],
+      "injected_runtime_events": [
+        {
+          "event": {
+            "hook_event_name": "PreToolUse",
+            "session_id": "ae1db447-a956-57d9-840b-2a94699984f3",
+            "turn_id": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "tool_use_id": "call-fixture-29",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": null,
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        },
+        {
+          "event": {
+            "hook_event_name": "PostToolUse",
+            "session_id": "ae1db447-a956-57d9-840b-2a94699984f3",
+            "turn_id": "b17479fc-6ce7-553a-bdcd-9d8fdfc0a3fe",
+            "tool_use_id": "call-fixture-29",
+            "tool_name": "spawn_agent",
+            "tool_input": {
+              "message": "MRH_CHILD_failure",
+              "fork_context": false
+            },
+            "tool_response": "{\"agent_id\":\"cc93ff6c-98bc-5830-9296-cad9c84aba9d\",\"nickname\":\"Boole\"}",
+            "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+            "model": "mrh-synthetic-parent"
+          },
+          "output": {},
+          "http_calls": 0,
+          "key_resolutions": 0,
+          "classifier_factory": "TypesafeClassifier; installed runtime",
+          "diagnostic": ""
+        }
+      ],
+      "third_party_events": [
+        {
+          "tool_use_id": "call-fixture-29",
+          "mode": "benign",
+          "revision": "2"
+        }
+      ],
+      "parent_unchanged": true
+    }
+  ],
+  "evidence_kind": "deidentified_recorded_shape_fixture_not_live_evidence",
+  "real_provider_requests": 0,
+  "formal_global_changes": false,
+  "desktop_ui_validation": false,
+  "synthetic_dependencies": "process bootstrap into installed runtime archive; production host resolver remains unknown",
+  "version": "0.162.0-alpha.17.2",
+  "binary": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+  "catalog": {
+    "source_tag": "rust-v0.162.0-alpha.17.2",
+    "sha256": "943ca7fe1d19ed019054158303f0dbbd80b3bef43b3aa425a71aa7cb3fb52c2b",
+    "overrides": {
+      "tool_mode": null,
+      "multi_agent_version": "v1",
+      "use_responses_lite": false,
+      "supports_search_tool": false
+    },
+    "actual_model_execution": false
+  },
+  "prepared_artifact": {
+    "files": {
+      ".agents/plugins/marketplace.json": "c31ede761c87a0ca574d95f779d80004a0514a8a8b20913e338cad374f1e4ab6",
+      "plugins/model-routing-harness/binding.json": "b75ee2e927378a4aafd497a9ddc060e43b145f4a5a9b14779d4f097b67e78707",
+      "plugins/model-routing-harness/hooks/hooks.json": "395e57fd86c21b5823d9030f0f0399d634f4167dee537bca5e5968cd198c0409",
+      "plugins/model-routing-harness/launcher.py": "93479ca1f1e8003fca75582238e53d16d6a7e60455ca583b279c8ac352afe000",
+      "plugins/model-routing-harness/plugin.json": "b586dfe34e7eaae2d416c1b0fbc597e213f4bcc59155091a656396cd08396144",
+      "plugins/model-routing-harness/runtime.pyz": "ee7917718ba4a547aaebf62b5635487d1b4690cca00800373d0684041df6913d"
+    },
+    "owner": "org.model-routing-harness",
+    "plugin_id": "model-routing-harness@model-routing-harness-local",
+    "python": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11",
+    "python_version": "3.11",
+    "schema_version": 1,
+    "settings_path": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json",
+    "version": "0.2.0"
+  },
+  "marketplace_add": {
+    "marketplaceName": "model-routing-harness-local",
+    "installedRoot": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle",
+    "alreadyAdded": false
+  },
+  "plugin_add": {
+    "pluginId": "model-routing-harness@model-routing-harness-local",
+    "name": "model-routing-harness",
+    "marketplaceName": "model-routing-harness-local",
+    "version": "local",
+    "installedPath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+    "authPolicy": "ON_USE"
+  },
+  "plugin_repeat_add": {
+    "pluginId": "model-routing-harness@model-routing-harness-local",
+    "name": "model-routing-harness",
+    "marketplaceName": "model-routing-harness-local",
+    "version": "local",
+    "installedPath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+    "authPolicy": "ON_USE"
+  },
+  "plugin_list": {
+    "installed": [
+      {
+        "pluginId": "model-routing-harness@model-routing-harness-local",
+        "name": "model-routing-harness",
+        "marketplaceName": "model-routing-harness-local",
+        "version": "local",
+        "installed": true,
+        "enabled": true,
+        "source": {
+          "source": "local",
+          "path": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle/plugins/model-routing-harness"
+        },
+        "marketplaceSource": {
+          "sourceType": "local",
+          "source": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/bundle"
+        },
+        "installPolicy": "AVAILABLE",
+        "authPolicy": "ON_USE"
+      }
+    ],
+    "available": []
+  },
+  "installed_path": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local",
+  "installed_manifest": {
+    "description": "Default-off model routing with explicit workspace export permission",
+    "extensions": {
+      "com.openai": {
+        "hooks": "./hooks/hooks.json"
+      }
+    },
+    "name": "model-routing-harness",
+    "version": "0.2.0"
+  },
+  "installed_runtime_sha256": "ee7917718ba4a547aaebf62b5635487d1b4690cca00800373d0684041df6913d",
+  "before_trust_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+          "hooks": [
+            {
+              "key": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.py /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.jsonl /private/tmp/mrh-fixture/mrh-e4-cakr4187/third-mode",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 5,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json",
+              "source": "user",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9144af81fefb24cca944cbf653417d44d6e893997cb9c2c5a6ac733c7f51359f",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:08cb8a62671759ca8ee86395a2a00e809953f42637b035f568a98f46d8c85027",
+              "trustStatus": "untrusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:718414196de109f610a1fd0e3807cc7bc9ff80779773c0f9237686751c7ad093",
+              "trustStatus": "untrusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "original_trust_review": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": false
+  },
+  "trusted_original_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+          "hooks": [
+            {
+              "key": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.py /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.jsonl /private/tmp/mrh-fixture/mrh-e4-cakr4187/third-mode",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 5,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json",
+              "source": "user",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9144af81fefb24cca944cbf653417d44d6e893997cb9c2c5a6ac733c7f51359f",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:08cb8a62671759ca8ee86395a2a00e809953f42637b035f568a98f46d8c85027",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I \"/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/launcher.py\"",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:718414196de109f610a1fd0e3807cc7bc9ff80779773c0f9237686751c7ad093",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "unmodified_installed_launcher": {
+    "native_hook_runs": [
+      {
+        "method": "hook/completed",
+        "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+        "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+        "run": {
+          "id": "pre-tool-use:1:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+          "eventName": "preToolUse",
+          "status": "completed",
+          "durationMs": 100,
+          "entries": []
+        }
+      },
+      {
+        "method": "hook/completed",
+        "threadId": "8443a609-6af6-57d4-95d0-270e480bc646",
+        "turnId": "b6302197-29c5-5461-b7b0-c8cecc41bf51",
+        "run": {
+          "id": "post-tool-use:2:/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json:call-fixture-4",
+          "eventName": "postToolUse",
+          "status": "completed",
+          "durationMs": 99,
+          "entries": []
+        }
+      }
+    ],
+    "runtime_hash_matches_artifact": true,
+    "disabled_output_neutral": true
+  },
+  "bootstrap_trust_review": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": false
+  },
+  "configured_disabled": {
+    "settings": {
+      "schema_version": 1,
+      "owner": "org.model-routing-harness.settings.v1",
+      "revision": 1,
+      "enabled": false,
+      "task_export_permitted": true,
+      "allowed_workspaces": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace"
+      ],
+      "provider": "typesafe",
+      "classifier_model": "jev-1.13.0",
+      "policy": {
+        "top_mode": "Main",
+        "timeout_seconds": 1,
+        "tiers": {},
+        "fixed": {
+          "effort": "high",
+          "model": "mrh-synthetic-fixed"
+        },
+        "rates": {}
+      }
+    },
+    "routing_enabled": false,
+    "live_routing_ready": false,
+    "readiness_reason": "unresolved_host_configuration",
+    "installation_status": "not_inferred_from_settings",
+    "credentials_probed": false
+  },
+  "trusted_injected_hooks": {
+    "id": 2,
+    "result": {
+      "data": [
+        {
+          "cwd": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace",
+          "hooks": [
+            {
+              "key": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.py /private/tmp/mrh-fixture/mrh-e4-cakr4187/third.jsonl /private/tmp/mrh-fixture/mrh-e4-cakr4187/third-mode",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 5,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/hooks.json",
+              "source": "user",
+              "pluginId": null,
+              "displayOrder": 0,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9144af81fefb24cca944cbf653417d44d6e893997cb9c2c5a6ac733c7f51359f",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:pre_tool_use:0:0",
+              "eventName": "preToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/tmp/mrh-fixture/mrh-e4-cakr4187/bootstrap.py /private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json /private/tmp/mrh-fixture/mrh-e4-cakr4187/scenario /private/tmp/mrh-fixture/mrh-e4-cakr4187/mrh.jsonl",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 1,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:dad1c310d9b8939104bba0a4612d094dbc8abbdd0f0e6933bfbfd8f2aeb3af29",
+              "trustStatus": "trusted"
+            },
+            {
+              "key": "model-routing-harness@model-routing-harness-local:hooks/hooks.json:post_tool_use:0:0",
+              "eventName": "postToolUse",
+              "handlerType": "command",
+              "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -I /private/tmp/mrh-fixture/mrh-e4-cakr4187/bootstrap.py /private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/runtime.pyz /private/tmp/mrh-fixture/mrh-e4-cakr4187/state/settings.json /private/tmp/mrh-fixture/mrh-e4-cakr4187/scenario /private/tmp/mrh-fixture/mrh-e4-cakr4187/mrh.jsonl",
+              "async": false,
+              "matcher": "^spawn_agent$",
+              "timeoutSec": 35,
+              "statusMessage": null,
+              "additionalContextLimit": null,
+              "sourcePath": "/private/tmp/mrh-fixture/mrh-e4-cakr4187/home/plugins/cache/model-routing-harness-local/model-routing-harness/local/hooks/hooks.json",
+              "source": "plugin",
+              "pluginId": "model-routing-harness@model-routing-harness-local",
+              "displayOrder": 2,
+              "enabled": true,
+              "isManaged": false,
+              "currentHash": "sha256:9922808da8b3897867fabffdc30c48fe7508ae6baf72c066afe66055bdbe3fa8",
+              "trustStatus": "trusted"
+            }
+          ],
+          "warnings": [],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "enable": {
+    "settings": {
+      "schema_version": 1,
+      "owner": "org.model-routing-harness.settings.v1",
+      "revision": 2,
+      "enabled": true,
+      "task_export_permitted": true,
+      "allowed_workspaces": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace"
+      ],
+      "provider": "typesafe",
+      "classifier_model": "jev-1.13.0",
+      "policy": {
+        "top_mode": "Main",
+        "timeout_seconds": 1,
+        "tiers": {},
+        "fixed": {
+          "effort": "high",
+          "model": "mrh-synthetic-fixed"
+        },
+        "rates": {}
+      }
+    },
+    "routing_enabled": true,
+    "live_routing_ready": false,
+    "readiness_reason": "unresolved_host_configuration",
+    "installation_status": "not_inferred_from_settings",
+    "credentials_probed": false
+  },
+  "co_denial_rewrite_observed": true,
+  "disable": {
+    "settings": {
+      "schema_version": 1,
+      "owner": "org.model-routing-harness.settings.v1",
+      "revision": 4,
+      "enabled": false,
+      "task_export_permitted": true,
+      "allowed_workspaces": [
+        "/private/tmp/mrh-fixture/mrh-e4-cakr4187/workspace"
+      ],
+      "provider": "typesafe",
+      "classifier_model": "jev-1.13.0",
+      "policy": {
+        "top_mode": "Fixed",
+        "timeout_seconds": 1,
+        "tiers": {},
+        "fixed": {
+          "effort": "high",
+          "model": "mrh-synthetic-fixed"
+        },
+        "rates": {}
+      }
+    },
+    "routing_enabled": false,
+    "live_routing_ready": false,
+    "readiness_reason": "unresolved_host_configuration",
+    "installation_status": "not_inferred_from_settings",
+    "credentials_probed": false
+  },
+  "third_update_trust_review": {
+    "method": "official CLI startup review Trust all and continue",
+    "bypass_flag": false,
+    "temporary_home_only": true,
+    "official_temporary_folder_trust": false
+  },
+  "native_remove": {
+    "pluginId": "model-routing-harness@model-routing-harness-local",
+    "name": "model-routing-harness",
+    "marketplaceName": "model-routing-harness-local"
+  },
+  "after_remove_list": {
+    "installed": [],
+    "available": []
+  },
+  "shared_hook_preservation": {
+    "unchanged_through_install_and_disable": true,
+    "independent_later_update_preserved": true,
+    "original_sha256": "f37076e7eaac63120cb302afbefa5a2d93e38e88739c53dd346ade39817adc6e",
+    "final_sha256": "83e633c377420ac7f2cb55f58133919278d12f79748b047ac326c6ddeb2d6392"
+  },
+  "separate_state_preserved_after_native_remove": true,
+  "synthetic_stats": {
+    "schema_version": 2,
+    "updated_at": "2026-10-10T06:49:49.648413+00:00",
+    "partition": "synthetic",
+    "proposals": 5,
+    "jev_attempts": 0,
+    "synthetic_attempts": 5,
+    "classified_tasks": 4,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 4
+    },
+    "outcomes": {
+      "top_main_requested": 1,
+      "top_fixed_requested": 3,
+      "typesafe_network_error": 1
+    },
+    "requested_models": {
+      "mrh-synthetic-fixed": 3
+    },
+    "confirmed_children": 0,
+    "simulated_children": 3,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [
+      {
+        "platform": "codex",
+        "surface": "simulation",
+        "proposals": 5
+      }
+    ],
+    "event_ids": {
+      "proposals": [
+        "25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991",
+        "4e377fa0a97434b9356602c57a2f22b8fab8b6e22eeaacdc81e589bea2557482",
+        "6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b",
+        "7e1ee07f1959fff64747ac38c35b89f1ffcdf87fbcdad3a69528757d5687cfc4",
+        "b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e"
+      ],
+      "attempts": [
+        "25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991:attempt:0",
+        "4e377fa0a97434b9356602c57a2f22b8fab8b6e22eeaacdc81e589bea2557482:attempt:0",
+        "6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b:attempt:0",
+        "7e1ee07f1959fff64747ac38c35b89f1ffcdf87fbcdad3a69528757d5687cfc4:attempt:0",
+        "b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e:attempt:0"
+      ],
+      "receipts": [
+        "25a5c7fc690abb31cdc8266f980be9859cb632b1ee8c6715ddbc1595f6364991:child:c21916f0-8d05-5973-a2a6-21b590bbfeac",
+        "6fd5384710998b6ded345a0193892301092ea832d470a40663be7b8a4c16e02b:child:0c16f514-5a61-52c7-8456-93551251568d",
+        "b389c3e8ea10bdd88d9a65185f327347681a4557c408c9f54ed74b2df73ec21e:child:00bbaa14-8705-5cde-915a-28a7b2fbd9ba"
+      ]
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "explicit_synthetic_offline_transport",
+      "attempt_states": {
+        "returned": 4,
+        "error": 1
+      },
+      "requested_models": {
+        "jev-1.13.0": 5
+      },
+      "response_models": {
+        "jev-1.13.0": 4
+      },
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 4,
+      "known_output_tokens": 4,
+      "usage_unavailable_attempts": 1,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "live_stats": {
+    "schema_version": 2,
+    "updated_at": null,
+    "partition": "live",
+    "proposals": 0,
+    "jev_attempts": 0,
+    "synthetic_attempts": 0,
+    "classified_tasks": 0,
+    "low_confidence_tasks": 0,
+    "pending_proposals": 0,
+    "tiers": {
+      "Light": 0,
+      "Small": 0,
+      "Mid": 0,
+      "Top": 0
+    },
+    "outcomes": {},
+    "requested_models": {},
+    "confirmed_children": 0,
+    "simulated_children": 0,
+    "reported_children": 0,
+    "actual_models": {},
+    "unknown_actual_model_children": 0,
+    "cost": null,
+    "tokens": null,
+    "quota": null,
+    "capabilities": {
+      "jev": "unavailable",
+      "codex": "candidate_unverified",
+      "claude": "unsupported",
+      "gemini": "unsupported"
+    },
+    "platforms": [],
+    "event_ids": {
+      "proposals": [],
+      "attempts": [],
+      "receipts": []
+    },
+    "event_ids_truncated": false,
+    "jev": {
+      "source": "unavailable",
+      "attempt_states": {},
+      "requested_models": {},
+      "response_models": {},
+      "input_tokens": null,
+      "output_tokens": null,
+      "known_input_tokens": 0,
+      "known_output_tokens": 0,
+      "usage_unavailable_attempts": 0,
+      "estimated_cost": null
+    },
+    "handback_anomalies": 0,
+    "handback_anomaly_evidence": {
+      "confirmed": 0,
+      "reported": 0,
+      "synthetic": 0
+    }
+  },
+  "temporary_files_removed": true,
+  "server_stopped": true,
+  "elapsed_seconds": 8.981,
+  "elapsed_scope": "package preparation, native CLI lifecycle, fixture operation and final cleanup"
+}

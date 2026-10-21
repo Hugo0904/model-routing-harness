@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "skills": {
+    "codex": {
+      "name": "mrh-delegation-codex",
+      "resource": "mrh-delegation-codex/SKILL.md",
+      "source": {
+        "kind": "custom",
+        "project": "adaptive-agent-workbench",
+        "revision": "bb535f2fa42a42162d0f5ebac1a49fb013f47886",
+        "files": {
+          "skills/engineering-workflow-router/SKILL.md": "e1e5cf3d70e2ddb4f1babc034814b102cf752916b1ba76c6a1b87766e97e2af0",
+          "skills/engineering-workflow-router/references/effective-delegation.md": "374c5cbb78ca1aae9e28498b8632ba15be443f8321cfc1b9ea6f67acaaf3495e"
+        },
+        "adaptation": "Bounded allocation, handoff and parent acceptance only; excludes named execution roles, fixed model families or effort, analysis upgrades and governance dependencies."
+      },
+      "released_sha256": [
+        "90ce731cb5dbb2cdb8d08604288296ee152b220ce6dad12cdcd7127c144e8eb1"
+      ]
+    },
+    "claude": {
+      "name": "mrh-delegation-claude",
+      "resource": "mrh-delegation-claude/SKILL.md",
+      "source": {
+        "kind": "custom",
+        "document": "Operator-provided MRH Claude delegation draft",
+        "sha256": "fbb91fc9f62c4aa86123f88a341963fc0f3cc7b52e5519c72e572a462b82626b",
+        "adaptation": "Retains the native Agent flow; adds mandatory useful dispatch, whole-task quality and cost, parent acceptance and one clear unstarted-advice replacement only."
+      },
+      "released_sha256": [
+        "81ddb5e3dd2dd17c8b6f8a4093d70a6f65c3c9e298493cfe48a1f54b09a49359"
+      ]
+    }
+  }
+}

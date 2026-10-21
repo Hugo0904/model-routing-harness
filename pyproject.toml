@@ -1,0 +1,18 @@
+[build-system]
+requires = []
+build-backend = "mrh_build"
+backend-path = ["."]
+
+[project]
+name = "model-routing-harness"
+version = "0.4.0"
+description = "Independent task routing candidate with explicit evidence boundaries"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+mrh = "mrh.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

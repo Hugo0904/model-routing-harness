@@ -1,0 +1,124 @@
+{
+  "example_only": true,
+  "status": {
+    "format_version": 1,
+    "generated_at": 20,
+    "period_label": "SYNTHETIC EXAMPLE"
+  },
+  "since": 0,
+  "decisions": {
+    "preserve": 1,
+    "advise": 1
+  },
+  "classifier_calls": 1,
+  "classifier_requests": 1,
+  "manual_classifications": 1,
+  "children_started": 1,
+  "packet_classifications": 1,
+  "packet_releases": 1,
+  "packet_children_started": 0,
+  "events": {
+    "format_version": 1,
+    "since": 0,
+    "items": [
+      {
+        "event_id": "decision:ordinary-1",
+        "kind": "decision",
+        "timestamp": 1,
+        "platform": "codex",
+        "request_id": "ordinary-1",
+        "action": "preserve",
+        "reason": "explicit_model",
+        "tier": null,
+        "confidence": null,
+        "provider": "jev",
+        "candidates": [],
+        "origin": "ordinary",
+        "counted_in_decisions": true,
+        "recorded_links": {
+          "advice_request_id": null,
+          "packet_query_request_id": null,
+          "packet_release_request_id": null
+        }
+      },
+      {
+        "event_id": "decision:packet-q",
+        "kind": "decision",
+        "timestamp": 2,
+        "platform": "codex",
+        "request_id": "packet-q",
+        "action": "advise",
+        "reason": "advice_given",
+        "tier": "Light",
+        "confidence": 0.9,
+        "provider": "jev",
+        "candidates": [
+          {
+            "model": "luna",
+            "effort": "low"
+          }
+        ],
+        "origin": "packet_query",
+        "counted_in_decisions": true,
+        "recorded_links": {
+          "advice_request_id": null,
+          "packet_query_request_id": "packet-q",
+          "packet_release_request_id": "packet-r"
+        }
+      },
+      {
+        "event_id": "decision:packet-r",
+        "kind": "decision",
+        "timestamp": 3,
+        "platform": "codex",
+        "request_id": "packet-r",
+        "action": "preserve",
+        "reason": "explicit_model",
+        "tier": null,
+        "confidence": null,
+        "provider": "jev",
+        "candidates": [],
+        "origin": "packet_release",
+        "counted_in_decisions": false,
+        "recorded_links": {
+          "advice_request_id": null,
+          "packet_query_request_id": "packet-q",
+          "packet_release_request_id": "packet-r"
+        }
+      },
+      {
+        "event_id": "classification:b0f93d5fe4df8393efc65f36b3717e865ab6778c752053bfe4d50b7249fe8d28",
+        "kind": "classification_request",
+        "timestamp": 4,
+        "request_id": "manual-example",
+        "provider": "jev",
+        "platform": null,
+        "first_phase_at": 4,
+        "last_phase_at": 5,
+        "phases": [
+          "started",
+          "returned"
+        ],
+        "requested_model": "jev-latest",
+        "response_model": "jev-v1",
+        "entered": true,
+        "returned": true,
+        "failed": false,
+        "unknown": false,
+        "input_tokens": 10,
+        "output_tokens": null
+      },
+      {
+        "event_id": "child:be088471a9cda899609f5243fa767c8f10e36a1bbe94350fc0fe9d8f0e5bb51b",
+        "kind": "child",
+        "timestamp": 6,
+        "platform": "codex",
+        "requested_model": "luna",
+        "requested_effort": "high",
+        "resolved_model": null,
+        "recorded_advice_request_id": null,
+        "recorded_followed": false
+      }
+    ]
+  }
+}
