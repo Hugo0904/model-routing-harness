@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import patch
 
 import mrh_windows_setup as setup
+from mrh.adapters.catalogs.catalog import CatalogError
 from mrh.infrastructure import owned, settings_v2, claude_hook, plugin
 if os.name == 'nt':
     from mrh.adapters.platforms.windows_path import UserPath, PathValue
@@ -72,6 +73,10 @@ class FakeCodex:
 @unittest.skipUnless(os.name == "nt", "requires native Windows filesystem/ACLs")
 class WindowsSetupTests(unittest.TestCase):
     def setUp(self):
+        # Lifecycle fixtures must not discover or launch the machine's real CLI.
+        self.catalog = self.enterContext(patch(
+            "mrh.adapters.catalogs.catalog.public_models",
+            side_effect=CatalogError("host_unavailable")))
         evidence_root = Path(__file__).resolve().parents[2]/'runtime'
         evidence_root.mkdir(exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(prefix="s ", dir=evidence_root)
@@ -165,13 +170,19 @@ class WindowsSetupTests(unittest.TestCase):
         for root in (self.source,other):
             for name in ('mrh_windows_setup.py','mrh_setup.py','setup.ps1','mrh_build.py','mrh_bundle.py','pyproject.toml','LICENSE'):
                 (root/name).write_bytes(b'identical fixture content')
-        def identity(root):
-            with patch.object(setup,'ROOT',root), patch.object(setup.subprocess,'run',return_value=SimpleNamespace(stdout='a'*40)):
+        def identity(root, head='a'*40):
+            with patch.object(setup,'ROOT',root), patch.object(setup.subprocess,'run',return_value=SimpleNamespace(stdout=head)):
                 return setup.source_identity(['codex'],False,self.profile(),self.python)
         first,second=identity(self.source),identity(other)
         self.assertEqual(first['project_root'],str(self.source))
         self.assertEqual(second['project_root'],str(other))
         self.assertNotEqual(first['fingerprint'],second['fingerprint'])
+        (self.source/'README.md').write_text('Documentation-only change',encoding='utf-8')
+        docs_only=identity(self.source,'b'*40)
+        self.assertEqual(docs_only['head'],'b'*40)
+        self.assertEqual(first['fingerprint'],docs_only['fingerprint'])
+        (self.source/'mrh_windows_setup.py').write_bytes(b'changed program content')
+        self.assertNotEqual(docs_only['fingerprint'],identity(self.source,'b'*40)['fingerprint'])
 
     def test_native_hook_uses_selected_host_generation_and_verifies_its_metadata(self):
         self.run_setup();first=self.state()

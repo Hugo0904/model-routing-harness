@@ -267,11 +267,11 @@ Claude 的 settings.json 若原本不是 2 空白縮排的格式，移除時會�
 Windows 安裝器目前沒有 `--uninstall`。以下是依安裝內容整理的步驟，**未在 Windows 實機驗證過**，執行時請對照 `--check --json` 顯示的實際路徑；發現與實際不符請先停下。
 
 1. 先停用路由：`mrh ctrl set enabled off`。
-2. 需要 `mrh` 才能做的先做：`mrh skill remove --host codex`／`--host claude`（有安裝才需要）、`mrh key delete jev`（刪除 Credential Manager 裡的金鑰）。
+2. 有安裝選配派工 skill 時，先執行 `mrh skill remove --host codex`／`--host claude`。只有確定不再保留 Jev 金鑰時，才另外執行 `mrh key delete jev`；要保留設定與金鑰供日後重裝使用，就略過刪除金鑰。
 3. Codex：`codex plugin remove model-routing-harness@model-routing-harness-local`，再 `codex plugin marketplace remove model-routing-harness-local`。
 4. Claude Code：`claude plugin uninstall model-routing-harness@model-routing-harness-local --scope user --keep-data`，再 `claude plugin marketplace remove model-routing-harness-local --scope user`。
 5. 從使用者環境變數的 `Path` 拿掉 `...\install\bin`（安裝器加到使用者 PATH 的項目），關掉並重開終端與編輯器。
-6. 確認 Hook 都已移除後，才刪除 `$env:ProgramData\ModelRoutingHarness-<SID>`。`install` 是程式，`config` 內有設定與統計；要保留資料就只刪 `install`。
+6. 確認已安裝宿主的 MRH 插件、marketplace 與 Hook 都已移除後，才刪除 `install`。預設保留旁邊的 `config`，其中有設定與統計；確定不再需要這些資料時，才刪除整個 `$env:ProgramData\ModelRoutingHarness-<SID>`。資料夾刪除不會代替步驟 2 的 Credential Manager 金鑰刪除。
 
 ## AI 代辦的安裝與更新完工條件
 
