@@ -186,7 +186,7 @@ class OverheadTests(unittest.TestCase):
         self.child_usage("claude", "redo", "claude-haiku-5-5", "haiku", usage, "claude-opus-5-5")
         with patch.dict(os.environ, {"MRH_CLAUDE_PROJECTS": str(self.claude)}):
             card = ctrl.dashboard_text(self.path, None, 100, False)
-        self.assertIn("攔截回本率", card); self.assertIn("耗 $", card); self.assertIn("（1 次重派）", card)
+        self.assertIn("攔截回本率", card); self.assertIn("改用便宜模型省 $", card); self.assertIn("重派多花 $", card); self.assertIn("（1 次重派）", card)
 
     def test_status_card_omits_the_block_without_data(self):
         from mrh.presentation import ctrl

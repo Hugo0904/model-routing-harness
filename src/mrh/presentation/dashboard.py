@@ -231,7 +231,8 @@ def _where(data, policy, inner, p, color):
         if ov["compared"]:
             saving, cost = ov["compared_saving_usd"], ov["compared_overhead_usd"]
             right += bar("攔截回本率", round(min(saving, cost) * 1_000_000) or 1, round(cost * 1_000_000) or 1,
-                         f"省 {stats_view._usd(saving)} · 耗 {stats_view._usd(cost)}（{ov['compared']} 次重派）")
+                         f"改用便宜模型省 {stats_view._usd(saving)}",
+                         f"重派多花 {stats_view._usd(cost)}（{ov['compared']} 次重派）")
         else:
             right += [p("攔截回本率：還沒有可比樣本（先 mrh usage collect）", "faint"), ""]
     conf = data.get("confidence") or {}
