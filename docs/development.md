@@ -58,6 +58,18 @@ python -B -m unittest tests.windows.test_setup
 
 `-I` 會忽略 `PYTHONPATH`，因此上述原始碼測試不使用 `-I`；已安裝入口與安裝器依自己的隔離契約使用 `-I -B`。驗證命令與各 Python 子程序都需帶 `-B`，不要把 bytecode 寫入受完整性檢查的產物。
 
+Claude Windows catalog 的直接測試是 `tests.windows.test_claude_catalog`、`tests.windows.test_claude_routing` 及 `tests.adapters.test_claude_catalog.ClaudeInitializeParserTests`。原生隔離案例另用 `tests.windows.test_lpac`，需要先把 `lpac_payload.c` 編成私有的 x64 測試 exe；未提供 payload 的案例會明確略過，不能算原生隔離通過。
+
+可使用已核對來源及雜湊的 TinyCC 0.9.27 x64；不安裝到系統或加入 PATH，保留工具原有授權。`$scratch` 請指向私有、可刪除的測試目錄：
+
+```powershell
+python -B tests/windows/build_lpac_payload.py --cc 'C:\Tools\tcc\tcc.exe' --output "$scratch\lpac_payload.exe"
+$env:MRH_LPAC_TEST_HELPER_EXE = "$scratch\lpac_payload.exe"
+python -B -m unittest tests.windows.test_lpac
+```
+
+payload 不連結 CRT，只匯入 kernel32，按測試模式觀察合成檔案、程序及無資料的 TCP 連線；不含任務、登入或憑證。builder 保留 relocation、啟用 ASLR／NX，避免舊式 PE 被 LPAC 拒絕。正式接頭每次建立新 profile、只繼承指定管線，先核對 AppContainer、零 capabilities、低完整性、package SID、ALL APPLICATION PACKAGES 拒絕、映像及 Job，才解除懸停。未知或清理失敗均拒絕清單，不增加 capability。設計依據為 [Microsoft LPAC 啟動流程](https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer)。
+
 需要整體離線回歸時：
 
 ```sh

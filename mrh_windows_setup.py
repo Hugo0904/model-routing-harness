@@ -387,7 +387,7 @@ class ClaudeInstaller:
         if version not in CLAUDE_VERSIONS:
             raise SetupError("claude_cli_unsupported_version")
         self.cli = {"executable": str(executable), "version": version, "source": "native_version_metadata",
-                    "catalog": "unavailable_on_windows", "account_availability": "not_probed"}
+                    "catalog": "isolated_initialize", "account_availability": "not_probed"}
 
     def _validate_hooks(self, settings):
         text = regular(self.path).decode("utf-8") if self.path.exists() else ""
@@ -477,7 +477,7 @@ def configured(host, adapter, artifact):
 def host_settings(host, adapter, main_settings, state=None):
     previous = (state or {}).get('hosts', {}).get(host, {})
     if previous.get('settings'): return Path(previous['settings'])
-    if host == 'claude' and getattr(adapter, 'cli', {}).get('registration') == 'native_plugin':
+    if host == 'claude' and (adapter is None or getattr(adapter, 'cli', {}).get('registration') == 'native_plugin'):
         return main_settings.parent.with_name('claude-profile')/'settings.json'
     return main_settings
 
@@ -544,34 +544,46 @@ def key_status(value):
     if not value or value["classifier"]["provider"] != "jev":
         return None
     # Status APIs only; no credential value is retrieved.
-    return bool("TYPESAFE_API_KEY" in os.environ) or secrets.is_set("jev")
+    return bool(os.environ.get("TYPESAFE_API_KEY")) or secrets.is_set("jev")
 
 
-def policy_ready(value, hosts):
-    if not value or not hosts or "claude" in hosts:
-        return False
+def catalog_validation(host, catalogs):
+    """One public query per host for this readiness/enable operation."""
+    if host in catalogs:
+        return catalogs[host]
     from mrh.adapters.catalogs.catalog import public_models
-    policy = value["policy"]
     try:
-        for host in hosts:
-            catalog = public_models(host)
-            tiers = [policy.get("tiers", {}).get(tier, {}).get(host, []) for tier in ("Light", "Small", "Mid")]
-            if not all(tiers):
-                return False
-            candidates = [candidate for tier in tiers for candidate in tier]
-            if policy.get("top_mode", "Main") == "Fixed":
-                fixed = policy.get("fixed", {}).get(host, [])
-                if not fixed:
-                    return False
-                candidates += fixed
-            if not all(catalog.option(c["model"], c.get("effort")) for c in candidates):
-                return False
-        return True
+        catalog = public_models(host)
+        result = (catalog, {"status": "verified", "verified": True, "source": catalog.source,
+                            "assurance": catalog.assurance, "fetched_at": catalog.fetched_at,
+                            "account_availability": "not_probed"})
     except (ValueError, OSError, subprocess.SubprocessError):
+        result = (None, {"status": "unavailable", "verified": False,
+                         "reason": "catalog_unavailable", "account_availability": "not_probed"})
+    catalogs[host] = result
+    return result
+
+
+def policy_ready(value, hosts, *, catalogs=None):
+    if not value or not hosts:
         return False
+    catalogs = {} if catalogs is None else catalogs
+    policy = value["policy"]
+    valid = True
+    for host in hosts:
+        catalog, _ = catalog_validation(host, catalogs)
+        tiers = [policy.get("tiers", {}).get(tier, {}).get(host, []) for tier in ("Light", "Small", "Mid")]
+        candidates = [candidate for tier in tiers for candidate in tier]
+        complete = all(tiers)
+        if policy.get("top_mode", "Main") == "Fixed":
+            fixed = policy.get("fixed", {}).get(host, [])
+            complete = complete and bool(fixed)
+            candidates += fixed
+        valid = bool(catalog and complete and all(catalog.option(c["model"], c.get("effort")) for c in candidates)) and valid
+    return valid
 
 
-def readiness(args, state, paths, adapters=None, operation=None, path_manager=None, path_change=None):
+def readiness(args, state, paths, adapters=None, operation=None, path_manager=None, path_change=None, *, catalogs=None):
     prefix, config, bin_dir, pointer, settings = paths
     result = {"status": "pending", "installed": False, "generation_integrity": "not_installed",
               "settings": str(settings), "hosts": {}, "key_present": None, "routing": "disabled",
@@ -580,13 +592,20 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
     result['project_root'] = {'status':'not_installed', 'ready':False}
     if operation:
         result["operation"] = operation
-    value = settings_v2.read(settings) if settings.exists() else None
-    result["key_present"] = key_status(value)
-    result["enabled"] = bool(value and value["enabled"])
-    result["export_permitted"] = bool(value and value["task_export_permitted"])
-    result["workspace_ready"] = bool(value and settings_v2.effective_roots(value)[0])
-    selected = args.host or list((state or {}).get("hosts", {}))
-    result["policy_ready"] = policy_ready(value, [h for h in selected if h != 'claude'])
+    selected = list(dict.fromkeys(args.host or list((state or {}).get("hosts", {}))))
+    adapters = {} if adapters is None else adapters
+    catalogs = {} if catalogs is None else catalogs
+    for host in selected:
+        profile = host_settings(host, adapters.get(host), settings, state)
+        value = settings_v2.read(profile) if profile.exists() else None
+        _, catalog = catalog_validation(host, catalogs)
+        result["hosts"][host] = {"registration": "missing", "trust": "unknown", "settings": str(profile),
+            "project_root": {"status": "not_installed", "ready": False}, "catalog": catalog,
+            "classifier": value["classifier"] if value else None, "key_present": key_status(value),
+            "policy_ready": policy_ready(value, [host], catalogs=catalogs),
+            "enabled": bool(value and value["enabled"]),
+            "export_permitted": bool(value and value["task_export_permitted"]),
+            "workspace_ready": bool(value and settings_v2.effective_roots(value)[0])}
     if state:
         generation = prefix / "setup-state/generations" / state["current"]
         meta = verify_generation(generation, state["generations"][state["current"]])
@@ -595,12 +614,9 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
         result["installed"] = (snapshot(bin_dir / "mrh.cmd") == {"sha256": digest(launcher_bytes(prefix, meta["python"]))}
                                and snapshot(prefix / "bootstrap.py") == {"sha256": digest(BOOTSTRAP)}
                                and pointer.exists() and regular(pointer) == (str(settings) + "\n").encode())
-        selected = args.host or list(state["hosts"])
-        adapters = adapters if adapters is not None else {}
         for host in selected:
             info = state["hosts"].get(host)
             if not info:
-                result["hosts"][host] = {"registration": "missing", "trust": "unknown"}
                 continue
             host_meta = meta if info['generation'] == state['current'] else verify_generation(
                 prefix/'setup-state/generations'/info['generation'], state['generations'][info['generation']])
@@ -608,27 +624,31 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
                 adapter = adapters.get(host) or adapters_for(args, [host], state)[host]
                 observed = configured(host, adapter, Path(info["artifact"]))
                 trust = adapter.trust(Path.cwd()) if host == "codex" else "not_applicable_native_settings"
-                result["hosts"][host] = {"registration": "observed" if observed else "missing", "trust": trust,
+                result["hosts"][host].update({"registration": "observed" if observed else "missing", "trust": trust,
                     'project_root': project_root_readiness(host_meta),
-                    **({"cli": adapter.cli, "catalog": "unavailable_on_windows", 'settings':info.get('settings',str(settings)),
-                        'routing':'disabled_pending_windows_catalog'} if host == "claude" else {})}
+                    **({"cli": adapter.cli} if host == "claude" else {})})
             except (ValueError, OSError, subprocess.SubprocessError):
-                result["hosts"][host] = {"registration": "unknown", "trust": "unknown"}
+                result["hosts"][host].update(registration="unknown", trust="unknown")
         journal = prefix / "setup-state/pending.json"
         result["transaction_pending"] = journal.exists() and document(journal).get("phase") != "complete"
         result["idempotent"] = bool(result["installed"] and not result["transaction_pending"]
             and all(info["registration"] == "observed" for info in result["hosts"].values()))
         result["status"] = "installed" if result["installed"] else "pending"
-    if result["enabled"]:
-        result["routing"] = "ready" if (result["installed"] and result["idempotent"] and result["export_permitted"]
-            and result["workspace_ready"] and result["policy_ready"] and result["key_present"]
-            and result['project_root']['ready'] and all(h.get('project_root',{}).get('ready') for h in result['hosts'].values())
-            and all(h["trust"] in ("trusted", "not_applicable_native_settings") for h in result["hosts"].values())) else "not_ready"
-        # Native Claude catalog isolation is deliberately unavailable. Its
-        # metadata version check must never be mistaken for model readiness.
-        if not result["policy_ready"]:
+    host_results = list(result["hosts"].values())
+    for key in ("enabled", "export_permitted", "workspace_ready", "policy_ready", "key_present"):
+        result[key] = bool(host_results) and all(info[key] for info in host_results)
+    for info in host_results:
+        info["routing"] = "disabled"
+        if info["enabled"]:
+            info["routing"] = "ready" if (result["installed"] and not result.get("transaction_pending", False)
+                and info["registration"] == "observed" and info["export_permitted"] and info["workspace_ready"]
+                and info["policy_ready"] and info["key_present"] and info["project_root"]["ready"]
+                and info["trust"] in ("trusted", "not_applicable_native_settings")) else "not_ready"
+    if any(info["enabled"] for info in host_results):
+        result["routing"] = "ready" if all(info["routing"] == "ready" for info in host_results) else "not_ready"
+        if any(info["enabled"] and not info["policy_ready"] for info in host_results):
             result["pending"].append("policy_catalog_validation")
-        if any(h['trust'] not in ('trusted','not_applicable_native_settings') for h in result['hosts'].values()):
+        if any(info["enabled"] and info["trust"] not in ('trusted','not_applicable_native_settings') for info in host_results):
             result['pending'].append('native_hook_trust')
     for key in ("installed", "workspace_ready", "policy_ready"):
         if not result[key]:
@@ -677,16 +697,20 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
     path_manager.validate(path_plan)
     for path in args.workspace:
         canonical(path)  # explicit operator opt-in; no embedded project name
-    value = profile_preflight(settings)
+    profiles = {host: host_settings(host, (adapters or {}).get(host), settings, state) for host in hosts}
+    profile_paths = list(dict.fromkeys([settings, *profiles.values()]))
+    profile_snapshots = {str(path): snapshot(path) for path in profile_paths}
+    profile_values = {path: profile_preflight(path) for path in profile_paths}
+    if any(snapshot(path) != profile_snapshots[str(path)] for path in profile_paths):
+        raise SetupError("profile_concurrent_change")
+    catalogs = {}
     if args.enable:
-        if not value or value["classifier"]["provider"] != "jev" or not secrets.is_set("jev"):
-            raise SetupError("enable_requires_configured_classifier_key")
-        # Windows catalog validation is not implemented for Claude. Enabling
-        # routing without a validated model contract would change policy.
-        if "codex" not in hosts:
-            raise SetupError("enable_requires_available_native_catalog")
-        if not policy_ready(value, [h for h in hosts if h != 'claude']):
-            raise SetupError("enable_requires_validated_model_policy")
+        for host, profile in profiles.items():
+            value = profile_values[profile]
+            if not value or value["classifier"]["provider"] != "jev" or not key_status(value):
+                raise SetupError("enable_requires_configured_classifier_key:" + host)
+            if not policy_ready(value, [host], catalogs=catalogs):
+                raise SetupError("enable_requires_validated_model_policy:" + host)
     if adapters is None and not args.dry_run:
         initialize(prefix, 'windows-install')
         if not args.python and not installed_python:
@@ -729,6 +753,7 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
     if before_bootstrap is not None and before_bootstrap not in valid_bootstraps:
         raise SetupError("bootstrap_conflict")
     adapters = adapters if adapters is not None else adapters_for(args, hosts, state)
+    adapters = {host: adapters[host] for host in hosts}
     source = source_identity(hosts, args.codex_packets, settings, python)
     intent = {"hosts": hosts, "rollback": args.rollback, "source": source, "enable": args.enable,
               "workspaces": ['*'] if args.all_workspaces else [str(canonical(path)) for path in args.workspace], "settings": str(settings),
@@ -755,14 +780,18 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
                 path_change = path_manager.apply(path_plan)
                 pending["phase"] = "complete"
                 write(pending_path, encoded(pending))
-                return readiness(args, state, paths, adapters, "recovered", path_manager, path_change)
+                return readiness(args, state, paths, adapters, "recovered", path_manager, path_change, catalogs=catalogs)
         else:
             native_before = {host: adapter.preflight(host_settings(host,adapter,settings,state), (state or {}).get("hosts", {}).get(host, {}).get("packets", False)
                 if args.rollback else args.codex_packets if host == "codex" else False) for host, adapter in adapters.items()}
             pending = {"owner": OWNER, "operation": uuid.uuid4().hex, "phase": "preflight", "intent": intent,
                        "before_hosts": native_before, "completed_hosts": [], "before_bin": before_bin,
                        "before_bootstrap": before_bootstrap, "before_pointer": snapshot(pointer),
-                       "before_profile": snapshot(settings), "before_state": snapshot(control / "state.json")}
+                       "before_profile": profile_snapshots[str(settings)], "before_profiles": profile_snapshots,
+                       "before_state": snapshot(control / "state.json")}
+        # Older journals recorded only the main profile. Keep that comparison
+        # while tracking independent host profiles for new transactions.
+        pending.setdefault("before_profiles", {**profile_snapshots, str(settings): pending["before_profile"]})
         if state:
             verify_generation(control / "generations" / state["current"], state["generations"][state["current"]])
         if args.rollback:
@@ -791,15 +820,18 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
                 if not all(configured(h, adapters[h], Path(selected[h]["artifact"])) for h in hosts):
                     raise SetupError("native_registration_changed")
                 path_change = path_manager.apply(path_plan)
-                return readiness(args, state, paths, adapters, "unchanged", path_manager, path_change)
+                return readiness(args, state, paths, adapters, "unchanged", path_manager, path_change, catalogs=catalogs)
             pending.update(target=identifier, phase="building")
             write(pending_path, encoded(pending))
-            if snapshot(settings) != pending["before_profile"]:
-                if pending["before_profile"] is not None or settings_v2.read(settings) != settings_v2.default_settings():
-                    raise SetupError("profile_concurrent_change")
             initialize(config, "windows-config")
-            mkdir(settings.parent.parent)
-            settings_v2.init(settings)
+            for profile_name, before in pending["before_profiles"].items():
+                profile = Path(profile_name)
+                if snapshot(profile) != before:
+                    if before is not None or settings_v2.read(profile) != settings_v2.default_settings():
+                        raise SetupError("profile_concurrent_change")
+                mkdir(profile.parent.parent)
+                settings_v2.init(profile)
+                pending["before_profiles"][profile_name] = snapshot(profile)
             pending["before_profile"] = snapshot(settings)
             write(pending_path, encoded(pending))
             if not generation.exists():
@@ -836,17 +868,20 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
         if snapshot(pointer) != pending["before_pointer"] and not (pointer.exists() and regular(pointer) == expected_pointer):
             raise SetupError("active_pointer_concurrent_change")
         if args.enable or args.workspace or args.all_workspaces:
-            if snapshot(settings) != pending["before_profile"]:
-                raise SetupError("profile_concurrent_change")
-            current_profile = settings_v2.read(settings)
+            for profile in dict.fromkeys(profiles.values()):
+                if snapshot(profile) != pending["before_profiles"][str(profile)]:
+                    raise SetupError("profile_concurrent_change")
             changes = {"allowed_workspaces": intent["workspaces"], "workspace_allowlist_file": None} if args.workspace or args.all_workspaces else {}
             if args.enable:
                 changes.update(enabled=True, task_export_permitted=True)
-            settings_v2.update(settings, expected_revision=current_profile["revision"], **changes)
-            for host, info in selected.items():
-                other = Path(info.get('settings',settings))
-                if other != settings and (args.workspace or args.all_workspaces):
-                    settings_v2.update(other, allowed_workspaces=intent['workspaces'], workspace_allowlist_file=None)
+            for profile in dict.fromkeys(profiles.values()):
+                current_profile = settings_v2.read(profile)
+                if args.enable and current_profile != profile_values[profile]:
+                    raise SetupError("profile_concurrent_change")
+                settings_v2.update(profile, expected_revision=current_profile["revision"], **changes)
+                pending["before_profiles"][str(profile)] = snapshot(profile)
+                pending["before_profile"] = pending["before_profiles"][str(settings)]
+                write(pending_path, encoded(pending))
             pending["before_profile"] = snapshot(settings)
             write(pending_path, encoded(pending))
         initialize(config, "windows-config")
@@ -868,7 +903,7 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
         path_change = path_manager.apply(path_plan)
         pending["phase"] = "complete"
         write(pending_path, encoded(pending))
-        return readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change)
+        return readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change, catalogs=catalogs)
 
 
 def parser():

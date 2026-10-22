@@ -94,7 +94,9 @@ class NativeFixture:
 @unittest.skipUnless(os.name == "nt", "requires native Windows owned paths")
 class ClaudeNativeInstallTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="mrh Claude native contract ")
+        evidence_root = Path(__file__).resolve().parents[2] / 'runtime'
+        evidence_root.mkdir(exist_ok=True)
+        self.temporary = tempfile.TemporaryDirectory(prefix="mrh Claude native contract ", dir=evidence_root)
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
         from mrh.adapters.platforms.windows import protect
@@ -131,7 +133,7 @@ class ClaudeNativeInstallTests(unittest.TestCase):
 
     def test_pinned_version_metadata_and_empty_observation(self):
         self.assertEqual(self.adapter.cli["version"], TESTED_VERSION)
-        self.assertEqual(self.adapter.cli["catalog"], "unavailable_on_windows")
+        self.assertEqual(self.adapter.cli["catalog"], "isolated_initialize")
         self.assertEqual(self.adapter.observe()["root"], None)
         self.native.version = "2.1.304 (Claude Code)"
         with self.assertRaisesRegex(ClaudeInstallError, "unsupported_version"):

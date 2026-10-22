@@ -62,7 +62,7 @@ mrh ctrl                     # 設定每個難度要用的模型
 ./setup --check --json                           # pending 是空的就完成了
 ```
 
-**Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
+**Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。Codex 已有實機路由證據；Claude 的原生插件可安裝，但零權限 LPAC 模型清單尚未通過，仍保持停用。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
 
 ## 費用與資料外送
 
@@ -132,7 +132,7 @@ mrh skill install --host claude   # Codex 用 --host codex
 | macOS（Apple Silicon） | 支援。安裝器自備 Python 3.11。 |
 | Windows（x64） | 支援。需自備 Python 3.11 以上。 |
 | Linux、WSL、Intel Mac | 不支援。 |
-| Codex、Claude Code | 支援。Mac 上的 Claude Code 需 2.1.296 以上。 |
+| Codex、Claude Code | Mac Claude Code 需 2.1.296 以上；Windows Claude 路由仍待隔離清單驗證，不能視為已可用。 |
 | Gemini | 尚未支援。 |
 
 已驗證的版本與已知限制見[平台與相容性](docs/compatibility.md)。

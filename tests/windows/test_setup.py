@@ -12,8 +12,10 @@ import unittest
 from unittest.mock import patch
 
 import mrh_windows_setup as setup
-from mrh.adapters.catalogs.catalog import CatalogError
+from mrh.adapters.catalogs.catalog import Catalog, CatalogError, Model
+from mrh.adapters.hosts.claude_windows_install import ClaudeWindowsInstaller
 from mrh.infrastructure import owned, settings_v2, claude_hook, plugin
+from tests.windows.test_claude_native import NativeFixture
 if os.name == 'nt':
     from mrh.adapters.platforms.windows_path import UserPath, PathValue
 
@@ -131,8 +133,28 @@ class WindowsSetupTests(unittest.TestCase):
         adapter = setup.ClaudeInstaller.__new__(setup.ClaudeInstaller)
         adapter.path = self.root / "Claude settings with spaces/settings.json"
         adapter.cli = {"executable": "fixture", "version": setup.CLAUDE_VERSIONS[0],
-                       "catalog": "unavailable_on_windows", "account_availability": "not_probed"}
+                       "catalog": "isolated_initialize", "account_availability": "not_probed"}
         return adapter
+
+    def native_claude(self):
+        executable = self.root / 'protected Claude fixture.exe'
+        executable.write_bytes(b'isolated fixture, never launched')
+        native = NativeFixture(self.root)
+        return ClaudeWindowsInstaller(executable, run=native.run), native
+
+    def claude_profile(self):
+        return self.config / 'claude-profile/settings.json'
+
+    def configure_policy(self, path, host, **changes):
+        setup.initialize(self.config, 'windows-config')
+        setup.mkdir(path.parent.parent)
+        settings_v2.init(path)
+        settings_v2.update(path, policy={'tiers': {tier: {host: [{'model': host + '-model', 'effort': 'high'}]}
+                                                  for tier in ('Light', 'Small', 'Mid')}}, **changes)
+
+    def available_catalogs(self):
+        self.catalog.side_effect = lambda host: Catalog('fixture-' + host, host, 'public', 'fixture',
+            'isolated_initialize', 1.0, (Model(host + '-model', host, ('high',)),))
 
     def bootstrap_environment(self, native=False):
         code = ("import json,os,runpy,sys;from pathlib import Path;target=sys.argv[1];"
@@ -461,7 +483,8 @@ class WindowsSetupTests(unittest.TestCase):
         adapters = {"codex": self.codex, "claude": claude}
         args = self.args("--host", "claude", "--claude-settings", str(claude.path))
         result = self.run_setup(args, adapters)
-        self.assertEqual(result["hosts"]["claude"]["catalog"], "unavailable_on_windows")
+        self.assertFalse(result["hosts"]["claude"]["catalog"]["verified"])
+        self.assertEqual(result["hosts"]["claude"]["catalog"]["reason"], "catalog_unavailable")
         after = json.loads(claude.path.read_text())
         self.assertEqual(after["theme"], "dark")
         self.assertEqual(after["hooks"]["PreToolUse"][0]["hooks"][0]["command"], "other-hook")
@@ -495,6 +518,190 @@ class WindowsSetupTests(unittest.TestCase):
                     self.run_setup(args)
         self.assertFalse(self.profile().exists())
         self.assertEqual(self.codex.mutations, 0)
+
+    def test_native_claude_readiness_uses_its_independent_profile_and_one_query_per_host(self):
+        claude, _ = self.native_claude()
+        adapters = {'codex': self.codex, 'claude': claude}
+        self.configure_policy(self.profile(), 'codex', enabled=True, task_export_permitted=True,
+                              allowed_workspaces=[str(self.root)], retention_days=42)
+        self.available_catalogs()
+        self.codex.trust = lambda workspace: 'trusted'
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            result = self.run_setup(self.args('--host', 'claude'), adapters)
+        codex, native = result['hosts']['codex'], result['hosts']['claude']
+        self.assertEqual(codex['routing'], 'ready')
+        self.assertEqual(native['settings'], str(self.claude_profile()))
+        self.assertFalse(native['enabled'])
+        self.assertFalse(native['export_permitted'])
+        self.assertFalse(native['workspace_ready'])
+        self.assertFalse(native['policy_ready'])
+        self.assertEqual(native['routing'], 'disabled')
+        self.assertTrue(native['catalog']['verified'])
+        self.assertFalse(result['policy_ready'])
+        self.assertEqual(result['routing'], 'not_ready')
+        self.assertCountEqual([call.args[0] for call in self.catalog.call_args_list], ['codex', 'claude'])
+        self.assertEqual(settings_v2.read(self.profile())['retention_days'], 42)
+        state = self.state()
+        binding = setup.document(Path(state['hosts']['claude']['artifact']) / 'plugins/model-routing-harness/binding.json')
+        self.assertEqual(binding['settings_path'], str(self.claude_profile()))
+
+    def test_claude_only_enable_validates_and_updates_only_its_selected_profile(self):
+        claude, native = self.native_claude()
+        self.configure_policy(self.claude_profile(), 'claude', retention_days=99)
+        setup.mkdir(self.profile().parent.parent)
+        settings_v2.init(self.profile())
+        settings_v2.update(self.profile(), classifier={'provider': 'codex_subscription', 'model': 'codex-model', 'timeout_seconds': 10})
+        main_before = self.profile().read_bytes()
+        database = self.claude_profile().parent / 'advice.sqlite3'
+        database.write_bytes(b'existing Claude statistics')
+        self.available_catalogs()
+        args = self.args('--enable', '--workspace', str(self.root))
+        args.host = ['claude']
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            result = self.run_setup(args, {'claude': claude})
+        value = settings_v2.read(self.claude_profile())
+        self.assertTrue(value['enabled'])
+        self.assertTrue(value['task_export_permitted'])
+        self.assertEqual(value['allowed_workspaces'], [str(self.root)])
+        self.assertEqual(value['retention_days'], 99)
+        self.assertEqual(self.profile().read_bytes(), main_before)
+        self.assertEqual(database.read_bytes(), b'existing Claude statistics')
+        self.assertEqual(result['routing'], 'ready')
+        self.assertEqual(result['hosts']['claude']['routing'], 'ready')
+        self.assertEqual(self.catalog.call_count, 1)
+        self.catalog.assert_called_with('claude')
+        self.assertEqual(native.mutations, ['marketplace-add', 'install'])
+        self.assertEqual(self.codex.mutations, 0)
+
+    def test_enable_refuses_claude_profile_even_when_main_codex_profile_is_ready(self):
+        claude, native = self.native_claude()
+        self.configure_policy(self.profile(), 'codex', enabled=True, task_export_permitted=True,
+                              allowed_workspaces=[str(self.root)])
+        self.available_catalogs()
+        before = self.disk()
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            with self.assertRaisesRegex(setup.SetupError, 'configured_classifier_key:claude'):
+                self.run_setup(self.args('--host', 'claude', '--enable', '--workspace', str(self.root)),
+                               {'codex': self.codex, 'claude': claude})
+        self.assertEqual(self.disk(), before)
+        self.assertEqual((self.codex.mutations, native.mutations), (0, []))
+
+    def test_claude_enable_refuses_missing_key_unavailable_catalog_and_invalid_options(self):
+        claude, native = self.native_claude()
+        self.configure_policy(self.claude_profile(), 'claude')
+        args = self.args('--enable', '--workspace', str(self.root))
+        args.host = ['claude']
+        for failure in ('key', 'catalog', 'model', 'effort', 'fixed', 'tier', 'classifier'):
+            with self.subTest(failure=failure):
+                self.configure_policy(self.claude_profile(), 'claude')
+                if failure in ('model', 'effort', 'fixed', 'tier'):
+                    policy = settings_v2.read(self.claude_profile())['policy']
+                    if failure == 'fixed':
+                        policy.update(top_mode='Fixed', fixed={'claude': [{'model': 'unknown-model'}]})
+                    elif failure == 'tier':
+                        policy['tiers'].pop('Mid')
+                    else:
+                        policy['tiers']['Mid']['claude'][0][failure] = 'unsupported'
+                    settings_v2.update(self.claude_profile(), policy=policy)
+                if failure == 'classifier':
+                    settings_v2.update(self.claude_profile(), classifier={'provider': 'claude_subscription', 'model': 'haiku', 'timeout_seconds': 10})
+                self.available_catalogs()
+                if failure == 'catalog':
+                    self.catalog.side_effect = CatalogError('isolated_query_failed')
+                before = self.disk()
+                with patch.dict(os.environ, {'TYPESAFE_API_KEY': ''}), patch.object(setup.secrets, 'is_set', return_value=failure != 'key'):
+                    reason = 'configured_classifier_key' if failure in ('key', 'classifier') else 'validated_model_policy'
+                    with self.assertRaisesRegex(setup.SetupError, reason + ':claude'):
+                        self.run_setup(args, {'claude': claude})
+                self.assertEqual(self.disk(), before)
+                self.assertEqual(native.mutations, [])
+
+    def test_enable_both_native_hosts_updates_their_separate_profiles(self):
+        claude, _ = self.native_claude()
+        self.configure_policy(self.profile(), 'codex', retention_days=42)
+        self.configure_policy(self.claude_profile(), 'claude', retention_days=99)
+        self.available_catalogs()
+        self.codex.trust = lambda workspace: 'trusted'
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            result = self.run_setup(self.args('--host', 'claude', '--enable', '--all-workspaces'),
+                                    {'codex': self.codex, 'claude': claude})
+        for path, host, retention in ((self.profile(), 'codex', 42), (self.claude_profile(), 'claude', 99)):
+            value = settings_v2.read(path)
+            self.assertTrue(value['enabled'])
+            self.assertTrue(value['task_export_permitted'])
+            self.assertEqual(value['allowed_workspaces'], ['*'])
+            self.assertEqual(value['retention_days'], retention)
+            self.assertEqual(result['hosts'][host]['routing'], 'ready')
+        self.assertEqual(result['routing'], 'ready')
+        self.assertCountEqual([call.args[0] for call in self.catalog.call_args_list], ['codex', 'claude'])
+
+    def test_claude_catalog_metadata_does_not_establish_readiness(self):
+        claude, _ = self.native_claude()
+        self.configure_policy(self.claude_profile(), 'claude', enabled=True, task_export_permitted=True,
+                              allowed_workspaces=[str(self.root)])
+        args = self.args()
+        args.host = ['claude']
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            result = self.run_setup(args, {'claude': claude})
+        info = result['hosts']['claude']
+        self.assertEqual(info['cli']['catalog'], 'isolated_initialize')
+        self.assertFalse(info['catalog']['verified'])
+        self.assertFalse(info['policy_ready'])
+        self.assertEqual(info['routing'], 'not_ready')
+        self.assertEqual(result['routing'], 'not_ready')
+        self.assertEqual(self.catalog.call_count, 1)
+
+    def test_claude_profile_update_and_rollback_preserve_settings_and_statistics(self):
+        claude, _ = self.native_claude()
+        adapters = {'codex': self.codex, 'claude': claude}
+        args = self.args('--host', 'claude')
+        self.run_setup(args, adapters)
+        first = self.state()['current']
+        self.configure_policy(self.claude_profile(), 'claude', retention_days=66)
+        profile = self.claude_profile().read_bytes()
+        database = self.claude_profile().parent / 'advice.sqlite3'
+        database.write_bytes(b'Claude persistent history')
+        self.revision = 'two'
+        self.run_setup(args, adapters)
+        self.run_setup(self.args('--host', 'claude', '--rollback'), adapters)
+        self.assertEqual(self.state()['current'], first)
+        self.assertEqual(self.claude_profile().read_bytes(), profile)
+        self.assertEqual(database.read_bytes(), b'Claude persistent history')
+
+    def test_claude_profile_changed_during_registration_is_not_enabled_or_overwritten(self):
+        claude, _ = self.native_claude()
+        self.configure_policy(self.profile(), 'codex')
+        self.configure_policy(self.claude_profile(), 'claude')
+        self.available_catalogs()
+        self.codex.race = lambda: settings_v2.update(self.claude_profile(), retention_days=77)
+        with patch.object(setup.secrets, 'is_set', return_value=True):
+            with self.assertRaisesRegex(setup.SetupError, 'profile_concurrent_change'):
+                self.run_setup(self.args('--host', 'claude', '--enable', '--workspace', str(self.root)),
+                               {'codex': self.codex, 'claude': claude})
+        value = settings_v2.read(self.claude_profile())
+        self.assertEqual(value['retention_days'], 77)
+        self.assertFalse(value['enabled'])
+        self.assertFalse(settings_v2.read(self.profile())['enabled'])
+
+    def test_profile_changed_during_preflight_is_refused_before_install(self):
+        claude, native = self.native_claude()
+        self.configure_policy(self.claude_profile(), 'claude')
+        original = setup.profile_preflight
+        def concurrent_preflight(path):
+            value = original(path)
+            if path == self.claude_profile():
+                settings_v2.update(path, retention_days=77)
+            return value
+        args = self.args('--enable', '--workspace', str(self.root))
+        args.host = ['claude']
+        with patch.object(setup, 'profile_preflight', side_effect=concurrent_preflight):
+            with self.assertRaisesRegex(setup.SetupError, 'profile_concurrent_change'):
+                self.run_setup(args, {'claude': claude})
+        self.assertFalse(self.prefix.exists())
+        self.assertFalse(settings_v2.read(self.claude_profile())['enabled'])
+        self.assertEqual(settings_v2.read(self.claude_profile())['retention_days'], 77)
+        self.assertEqual(native.mutations, [])
+        self.catalog.assert_not_called()
 
     def test_operator_can_persist_global_scope_without_enabling(self):
         self.run_setup(self.args('--all-workspaces'))

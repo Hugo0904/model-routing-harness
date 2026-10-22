@@ -34,8 +34,8 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | 安裝、更新、退版 | 原生 x64 入口、私有 runtime、世代完整性檢查與持久設定保留；以 `--check --json` 回報本機結果。 |
 | 全部專案範圍 | 明確選用 `--all-workspaces` 後，以持久設定涵蓋所有本機磁碟及支援的 UNC 專案路徑；可改用有限的 `--workspace`，兩者互斥。這不增加宿主檔案系統權限。 |
 | Codex 插件與 Hook | 透過原生介面註冊並讀回；信任仍需使用者在 `/hooks` 確認。模型政策需通過公開 catalog 驗證才可啟用。 |
-| Claude 插件與 Hook | 使用 Windows 原生註冊接頭，保留其他插件與 Hook；使用獨立的 `config\claude-profile\settings.json`，保持停用及禁止外送。 |
-| Claude 模型清單 | 不可用；不得把 CLI 版本或手動模型輸入當作已驗證清單，保持路由停用。 |
+| Claude 插件與 Hook | 使用 Windows 原生註冊接頭及獨立的 `config\claude-profile\settings.json`，保留其他插件與 Hook。每個宿主分開驗證模型政策、金鑰、範圍與開關。 |
+| Claude 模型清單 | 已加入零 capabilities LPAC 接頭，先在懸停狀態核對 token、映像與 Job，再只送 initialize。Windows 10 LTSC 19044／Claude 2.1.303 可讀版本，但 initialize 在 Winsock 啟動失敗，清單尚未通過，路由保持停用。 |
 | Jev 金鑰 | 目前使用者的 Windows Credential Manager，本機持久保存；原生視窗密碼欄輸入 Jev 金鑰。 |
 | Jev 實際分類 | Windows 驗證時已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
 | 真宿主子代理採用 | 原生 Codex 合成任務已驗證：Jev 分為 Small，MRH 建議 `gpt-6.1-sol / high`，重新委派後子代理 session 記錄相同模型與強度，並完成任務。 |
@@ -47,7 +47,7 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 
 新安裝預設停用、禁止外送任務。全部專案的外送同意與設定持續有效時，不因切換專案重新要求個別授權。Windows 內部以 `allowed_workspaces: ["*"]` 表示全部；Mac 仍用 `/`，Windows 不把 `/` 視為全機範圍。
 
-`enabled` 是每份 profile 的開關。Windows 將 Codex 主 profile 與 Claude profile 分開：兩者可保存相同的全部專案範圍，但 Codex 通過條件後才啟用，Claude 仍保持 `disabled_pending_windows_catalog`。`--check` 需同時查看主 profile 與各宿主結果，不能把主 profile 的 `routing: ready` 當成 Claude 路由就緒。安裝、原生信任、模型政策、provider 回應與實際子代理採用仍是不同證據。
+`enabled` 是每份 profile 的開關。Windows 將 Codex 主 profile 與 Claude profile 分開。`--enable` 只驗證及更新選定宿主的 profile；任一清單或政策未通過就拒絕啟用，不借用另一個宿主的結果。`--check --json` 的 `hosts.<宿主>` 分別回報 `catalog.verified`、`policy_ready`、`enabled` 與 `routing`，頂層彙整這次選定的宿主。CLI metadata 的 `isolated_initialize` 只代表有接頭，不能代替 `catalog.verified: true`。安裝、信任、清單、provider 回應與實際子代理採用仍是不同證據。
 
 ## Mac 既有宿主範圍
 

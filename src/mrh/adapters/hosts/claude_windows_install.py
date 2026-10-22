@@ -58,7 +58,7 @@ class ClaudeWindowsInstaller:
             raise ClaudeInstallError("claude_cli_unsupported_version")
         self.cli = {"executable": str(self.executable), "version": TESTED_VERSION,
                     "sha256": hashlib.sha256(owned.read_regular(self.executable, 600_000_000)).hexdigest(),
-                    "source": "protected_native_cli", "catalog": "unavailable_on_windows",
+                    "source": "protected_native_cli", "catalog": "isolated_initialize",
                     "registration": "native_plugin", "account_availability": "not_probed"}
 
     def _run(self, args):

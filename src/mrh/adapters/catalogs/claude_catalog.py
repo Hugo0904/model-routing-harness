@@ -125,11 +125,45 @@ def _stop(proc):
     except PermissionError:raise CatalogError('claude_catalog_cleanup_failed') from None
 
 
-def _models(command,root,env,settings,mcp):
-    args=['-p','--bare','--verbose','--output-format','stream-json','--input-format','stream-json',
+def _arguments(settings, mcp):
+    return ['-p','--bare','--verbose','--output-format','stream-json','--input-format','stream-json',
           '--setting-sources','','--settings',str(settings),'--tools','','--strict-mcp-config',
           '--mcp-config',str(mcp),'--permission-mode','dontAsk','--disable-slash-commands',
           '--no-session-persistence']
+
+
+def _windows_models(sandbox):
+    request_id = 'mrh_' + uuid.uuid4().hex
+    request = {'type':'control_request','request_id':request_id,
+               'request':{'subtype':'initialize','hooks':{},'sdkMcpServers':[],'agents':{},'plugins':[]}}
+    found = []
+    def matching(data):
+        for line in data.split(b'\n')[:-1]:
+            frame = json.loads(line, object_pairs_hook=_unique)
+            if type(frame) is not dict: raise CatalogError('claude_catalog_protocol_incompatible')
+            if frame.get('type') == 'control_response':
+                if type(frame.get('response')) is not dict:
+                    raise CatalogError('claude_catalog_protocol_incompatible')
+                if frame['response'].get('request_id') == request_id:
+                    found.append(parse_initialize(frame, request_id))
+                    return True
+            elif frame.get('type') not in ('system', 'keep_alive'):
+                raise CatalogError('claude_catalog_protocol_incompatible')
+        return False
+    try:
+        sandbox.capture(_arguments(sandbox.work/'config/settings.json', sandbox.work/'config/mcp.json'),
+                        input=(json.dumps(request)+'\n').encode(), until=matching, timeout=15, limit=MAX_RESPONSE)
+        if not found: raise CatalogError('claude_catalog_initialize_failed')
+        return found[0]
+    except subprocess.TimeoutExpired:
+        raise CatalogError('claude_catalog_timeout') from None
+    except (ValueError, UnicodeError) as exc:
+        if isinstance(exc, CatalogError): raise
+        raise CatalogError('claude_catalog_protocol_incompatible') from None
+
+
+def _models(command,root,env,settings,mcp):
+    args = _arguments(settings, mcp)
     proc=subprocess.Popen([*command,*args],cwd=root,env=env,stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True)
     selector=selectors.DefaultSelector();selector.register(proc.stdout,selectors.EVENT_READ)
@@ -169,10 +203,18 @@ class ClaudeCatalog:
     def describe(self,candidate):
         digest=executable_hash(candidate['executable'])
         try:
-            with isolated_cli(candidate['executable']) as (root,env,command,_,_):
-                result=subprocess.run([*command,'--version'],cwd=root,env=env,capture_output=True,
-                                      text=True,timeout=5,start_new_session=True)
+            if sys.platform == 'win32':
+                from mrh.adapters.platforms.windows_lpac import isolated
+                with isolated(candidate['executable']) as sandbox:
+                    output = sandbox.capture(['--version'], timeout=5).decode('utf-8', errors='strict')
+                result = subprocess.CompletedProcess([], 0, output, '')
+            else:
+                with isolated_cli(candidate['executable']) as (root,env,command,_,_):
+                    result=subprocess.run([*command,'--version'],cwd=root,env=env,capture_output=True,
+                                          text=True,timeout=5,start_new_session=True)
             if result.returncode:raise CatalogError('tool_unavailable')
+            if executable_hash(candidate['executable']) != digest:
+                raise CatalogError('tool_changed_rebind_required')
             try:require_version(result.stdout.strip())
             except ValueError as exc:raise CatalogError(str(exc)) from None
             return {**candidate,'version':result.stdout.strip(),'executable_sha256':digest}
@@ -189,8 +231,13 @@ class ClaudeCatalog:
             current=self.describe(binding)
             if current['version']!=binding['version']:
                 raise CatalogError('tool_changed_rebind_required')
-            with isolated_cli(binding['executable']) as (root,env,command,settings,mcp):
-                models=_models(command,root,env,settings,mcp)
+            if sys.platform == 'win32':
+                from mrh.adapters.platforms.windows_lpac import isolated
+                with isolated(binding['executable']) as sandbox:
+                    models = _windows_models(sandbox)
+            else:
+                with isolated_cli(binding['executable']) as (root,env,command,settings,mcp):
+                    models=_models(command,root,env,settings,mcp)
             if executable_hash(binding['executable'])!=binding['executable_sha256']:
                 raise CatalogError('tool_changed_rebind_required')
             return Catalog(binding['id'],'claude',binding['executable_sha256'],binding['version'],

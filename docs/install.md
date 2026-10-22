@@ -23,7 +23,7 @@ cd model-routing-harness
 .\setup.ps1 --host codex --host claude
 ~~~
 
-Windows Claude 目前提供原生插件／Hook 註冊，但沒有可驗證的原生模型清單，使用獨立 profile 保持路由停用；Codex 主 profile 可在後續條件完成後啟用。若 PowerShell 執行原則擋住 `.ps1`，直接使用同一個 Python 安裝器，不必修改執行原則：
+Windows Claude 目前提供原生插件／Hook 註冊及 LPAC 清單接頭，但實測 initialize 尚未通過，使用獨立 profile 保持路由停用。Codex 可在後續條件完成後啟用。若 PowerShell 執行原則擋住 `.ps1`，直接使用同一個 Python 安裝器，不必修改執行原則：
 
 ~~~powershell
 python -I -B .\mrh_windows_setup.py --host codex --host claude
@@ -95,6 +95,16 @@ mrh ctrl
 
 也可用 `mrh ctrl set tiers.Light.codex '模型ID:推理強度'` 直接設定，將模型 ID 與強度換成清單中的值；Small、Mid 的寫法相同。`mrh ctrl set top_mode Main` 可指定 Top 交回主 AI。手動輸入成功只代表設定已保存，不能替代模型清單驗證或帳號實際使用權。其他共用設定見 [日常操作](usage.md)，Windows 資料位置以本頁為準。
 
+Claude 使用另一份 MRH 設定，不能在 Codex 的設定頁代填：
+
+~~~powershell
+$claudeProfile = Join-Path $mrhBase 'config\claude-profile\settings.json'
+mrh models --host claude --json
+mrh ctrl --settings $claudeProfile
+~~~
+
+只有第一條清單查詢成功後，才從回傳清單設定 Claude 的 Light、Small、Mid；不要硬填清單或刪除版本／隔離檢查。目前 Windows 10 LTSC 19044 的零 capabilities LPAC 在 Winsock 初始化失敗，應停在這一步，保留 profile 停用。增加 capability 會改變權限範圍，不能作為自動修復。
+
 ### 4. 明確啟用全部專案
 
 **啟用全部專案，代表同意所有本機磁碟及支援的 UNC 路徑下，專案任務內容都可送往 Jev 分類。** 這是持久的全域範圍設定，不限於 MRH 原始碼資料夾；同意與設定未變時，切換專案不需逐一重新授權。
@@ -103,7 +113,6 @@ mrh ctrl
 
 ~~~powershell
 .\setup.ps1 --host codex --all-workspaces --enable
-.\setup.ps1 --host codex --host claude --all-workspaces --enable
 ~~~
 
 若只允許指定專案，改用完整路徑；可重複 `--workspace`，但不能與 `--all-workspaces` 同時使用：
@@ -112,7 +121,7 @@ mrh ctrl
 .\setup.ps1 --host codex --workspace 'C:\Projects\Example' --enable
 ~~~
 
-Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。兩者都註冊時，上述指令只啟用已驗證的 Codex 主 profile（`config\profile\settings.json`）；Claude 使用獨立的 `config\claude-profile\settings.json`，保存相同範圍但保持停用及禁止外送，待原生模型清單可驗證後再啟用。只安裝 Claude 時，目前不能完成路由啟用。
+Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 清單、政策與金鑰日後都通過時，才可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。目前這台 LTSC 的 Claude 仍不能完成啟用。
 
 更新指定專案的範圍時，需列出所有要保留的專案。Windows 目前不提供訂閱分級器、Codex 完整任務封包（`--codex-packets`）或 Gemini 整合。
 

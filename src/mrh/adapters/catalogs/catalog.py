@@ -119,8 +119,10 @@ def discover():
             state = json.loads(owned.read_regular(root/'install/setup-state/state.json'))
             for tool, info in state.get('hosts', {}).items():
                 executable = info.get('cli', {}).get('executable')
-                if executable and tool == 'codex':
-                    executable_hash(executable)
+                if executable and tool in ('codex', 'claude'):
+                    actual = executable_hash(executable)
+                    if tool == 'claude' and info.get('cli', {}).get('sha256') != actual:
+                        continue
                     candidates.append({'tool':tool,'executable':executable,'label':'MRH pinned '+tool,'supported':True})
         except (OSError, ValueError): pass
     trusted = [Path('/usr'), Path('/opt/homebrew'), Path('/Applications'),
