@@ -92,7 +92,7 @@ Status and removal: [delegation skills](docs/delegation-skills.md).
 
 ## Update
 
-From the repo folder run `git pull --ff-only`, then rerun `./setup` with the same options as before (for example `./setup --host claude`). `./setup --rollback` returns to the previous version if something goes wrong.
+From the repo folder run `git pull --ff-only`, then rerun `./setup` with the same options as before (for example `./setup --host claude`). `./setup --rollback` returns to the previous version if something goes wrong. A new version exists only when program content changed; after a docs-only update, rerunning `./setup` reports no change.
 
 ## Uninstall
 

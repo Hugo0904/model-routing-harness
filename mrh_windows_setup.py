@@ -144,7 +144,8 @@ def source_identity(hosts, packets, settings, python):
         # The checkout is a user-editable input, not an installed artifact.
         # The second source identity check before publication catches changes.
         h.update(path.relative_to(ROOT).as_posix().encode() + b"\0" + path.read_bytes())
-    h.update(encoded({"head": head, "hosts": hosts, "packets": packets, "settings": str(settings), "python": python,
+    # The commit id is recorded for display only: a docs-only commit must not make a new version.
+    h.update(encoded({"hosts": hosts, "packets": packets, "settings": str(settings), "python": python,
                       "project_root": project_root}))
     return {"head": head, "fingerprint": h.hexdigest(), "project_root": project_root}
 

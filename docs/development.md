@@ -19,6 +19,25 @@
 
 Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式庫、DLL 與授權，排除 `site-packages`；不加入 Python 下載或 pip 安裝。Mac 的 3.11.17 runtime lock、第三方聲明與 Claude catalog metadata 驗證保留；Claude CLI 最低版本與 catalog 清單是否已確認分開處理，各平台接頭不能互相代替驗證。
 
+## 本機開發安裝（`--dev`）
+
+只改文件不會產生新版本：安裝版本只由會裝進去的程式內容決定，與 git commit 無關，重跑 `./setup` 會回報沒有變更。程式有改時，一般安裝仍要重跑 `./setup` 才會生效。
+
+自己開發時不想每次改程式都重裝，用開發安裝（只支援 Mac）：
+
+~~~sh
+./setup --host claude --dev        # 依需要加 --host codex
+~~~
+
+- Hook 與 `mrh` 指令直接執行這份 checkout 的 `src/`，改完存檔就生效，不用重跑 `./setup`。
+- 這個模式不驗證打包 runtime 的雜湊，所以只用在你自己的 checkout；`src/` 必須是你自己的、群組與其他人不可寫的目錄，否則 Hook 會退回安全通知並照原樣放行。
+- Hook 指令與 `hooks.json` 位元組和一般安裝相同，Codex 的信任不會因切換而失效。
+- 改到 `setup`、`mrh_setup.py`、`mrh_bundle.py` 等安裝程式本身，或要換成別的 checkout 時，才需要重跑 `./setup --dev`。
+- `./setup --check --json` 的 `dev_source` 會顯示目前綁定的 checkout。
+- 要回到一般安裝：不帶 `--dev` 重跑 `./setup`（會建立新的安裝代，之後程式有改才需更新）。
+- 不能與 `--rollback`、`--codex-packets`、`--uninstall` 併用。
+- 開發中的程式出錯，Hook 的錯誤會影響你正在用的派工；改到一半先確認測試能跑。
+
 ## 測試
 
 在 repository 根目錄執行。測試 guard 使用假 HOME 並阻擋 TypeSafe 網路，也會為整次測試自建一個私有、解析過符號連結的暫存目錄（`tests/__init__.py`），不論 `TMPDIR` 設成什麼都能跑；macOS 預設的 `/var/folders/...` 經過符號連結，MRH 的所有權檢查會拒絕，所以測試不直接使用它。執行直接受影響的測試，例如：

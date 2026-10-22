@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -80,3 +82,53 @@ class AdvisoryPluginTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DevSourceTests(unittest.TestCase):
+    """`setup --dev`: the launcher runs a checkout's src as is, so edits apply without reinstalling."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(); self.addCleanup(tmp.cleanup)
+        base = Path(tmp.name).resolve()
+        self.checkout = base / "checkout"
+        shutil.copytree(Path(__file__).resolve().parents[2] / "src", self.checkout / "src",
+                        ignore=shutil.ignore_patterns("__pycache__"))
+        self.root, self.settings = base / "artifact", base / "profile" / "settings.json"
+        plugin.prepare(self.root, self.settings, sys.executable, advisory=True, dev_source=self.checkout)
+        self.launcher = self.root / "plugins/model-routing-harness/launcher.py"
+        v2.update(self.settings, enabled=True, task_export_permitted=True, allowed_workspaces=["/"])
+        self.event = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": "s", "turn_id": "t",
+                      "tool_use_id": "c1", "cwd": "/", "tool_input": {"message": "do x", "model": "gpt-5.6-luna"}}
+
+    def launch(self):
+        run = subprocess.run([sys.executable, "-I", "-B", str(self.launcher)], input=json.dumps(self.event),
+                             capture_output=True, text=True, timeout=30)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        return json.loads(run.stdout)
+
+    def test_binding_records_the_checkout_and_the_launcher_uses_its_source_not_the_packaged_runtime(self):
+        binding = json.loads((self.launcher.parent / "binding.json").read_text())
+        self.assertEqual(binding["dev_source"], str(self.checkout))
+        (self.launcher.parent / "runtime.pyz").write_bytes(b"corrupted: would fail the integrity hash")
+        self.assertEqual(self.launch(), {})
+        with sqlite3.connect(self.settings.parent / "advice.sqlite3") as db:
+            self.assertEqual(db.execute("SELECT reason FROM advice").fetchall(), [("explicit_model",)])
+
+    def test_edits_to_the_checkout_take_effect_without_reinstalling(self):
+        module = self.checkout / "src/mrh/application/advisory_runtime.py"
+        module.write_text(module.read_text() + "\n"
+                          "def run(platform, settings, stdin, stdout, stderr, **kwargs):\n"
+                          "    stdout.write('{\"systemMessage\":\"DEV-EDIT-APPLIED\"}\\n')\n"
+                          "    return 0\n")
+        self.assertEqual(self.launch(), {"systemMessage": "DEV-EDIT-APPLIED"})
+
+    def test_unsafe_or_missing_checkout_falls_back_to_the_safe_notice(self):
+        os.chmod(self.checkout / "src", 0o777)
+        self.assertIn("original tool call preserved", self.launch()["systemMessage"])
+        os.chmod(self.checkout / "src", 0o755)
+        shutil.rmtree(self.checkout / "src/mrh")
+        self.assertIn("original tool call preserved", self.launch()["systemMessage"])
+
+    def test_prepare_refuses_a_directory_that_is_not_a_checkout(self):
+        with self.assertRaises(plugin.owned.OwnedError):
+            plugin.prepare(self.root.parent / "other", self.settings, sys.executable, advisory=True, dev_source=self.root.parent)

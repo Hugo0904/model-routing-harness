@@ -39,6 +39,37 @@ class SetupTests(unittest.TestCase):
                     fingerprints.append(setup.source_fingerprint(['codex'], False, settings))
             self.assertNotEqual(*fingerprints)
 
+    def test_only_program_changes_make_a_new_version(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / 'src/mrh').mkdir(parents=True); (root / 'docs').mkdir()
+            (root / 'src/mrh/example.py').write_text('program\n'); (root / 'docs/README.md').write_text('text\n')
+            lock = root / 'runtime-lock.json'; lock.write_text('{}')
+            settings = root / 'profile/settings.json'
+            def fingerprint():
+                with patch.object(setup, 'ROOT', root), patch.object(bundle, 'LOCK', lock), \
+                        patch.object(setup.subprocess, 'run', side_effect=AssertionError('the commit id must not matter')):
+                    return setup.source_fingerprint(['codex'], False, settings)
+            first = fingerprint()
+            (root / 'docs/README.md').write_text('only words changed\n'); (root / 'README.md').write_text('new\n')
+            self.assertEqual(fingerprint(), first)
+            (root / 'src/mrh/example.py').write_text('program changed\n')
+            self.assertNotEqual(fingerprint(), first)
+
+    def test_dev_fingerprint_ignores_source_edits_but_differs_from_a_normal_install(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / 'src/mrh').mkdir(parents=True)
+            (root / 'src/mrh/example.py').write_text('one\n')
+            lock = root / 'runtime-lock.json'; lock.write_text('{}')
+            settings = root / 'profile/settings.json'
+            def fingerprint(dev):
+                with patch.object(setup, 'ROOT', root), patch.object(bundle, 'LOCK', lock):
+                    return setup.source_fingerprint(['codex'], False, settings, dev)
+            normal, dev = fingerprint(False), fingerprint(True)
+            (root / 'src/mrh/example.py').write_text('two\n')
+            self.assertEqual(fingerprint(True), dev)
+            self.assertNotEqual(fingerprint(False), normal)
+            self.assertNotEqual(dev, normal)
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='mrh-setup-test-')
         self.addCleanup(self.tmp.cleanup)
@@ -414,6 +445,30 @@ print(json.dumps(out))
         self.assertFalse((root/'plugin.json').exists(),'standard manifest would shadow native compatibility hooks')
         self.assertEqual(set(setup.document(root/manifest['hooks'])['hooks']),{'PreToolUse','PostToolUse'})
         setup.plugin.show(artifact)  # the published manifest is part of owned integrity verification
+
+    def test_dev_install_binds_the_hook_and_mrh_to_the_checkout_and_normal_install_goes_back(self):
+        out = self.run_setup(self.args('--dev'))
+        generation = self.prefix / 'setup-state/generations' / self.state()['current']
+        binding = json.loads((generation / 'hosts/codex/plugins/model-routing-harness/binding.json').read_text())
+        self.assertEqual(binding['dev_source'], str(setup.ROOT))
+        self.assertEqual(out['dev_source'], str(setup.ROOT))
+        self.assertIn(str(setup.ROOT / 'src'), (generation / 'app/dev_main.py').read_text())
+        self.assertTrue((generation / 'app/dev_main.py').exists())
+        self.revision = 'normal'
+        again = self.run_setup()
+        self.assertNotIn('dev_source', again)
+        normal = self.prefix / 'setup-state/generations' / self.state()['current']
+        hooks = 'hosts/codex/plugins/model-routing-harness/hooks/hooks.json'
+        self.assertEqual((generation / hooks).read_bytes().replace(str(generation).encode(), b''), (normal / hooks).read_bytes().replace(str(normal).encode(), b''))
+        self.assertEqual((generation / hooks).read_bytes(), (normal / hooks).read_bytes())    # Codex trust covers this file
+        self.assertNotIn('dev_source', json.loads((normal / 'hosts/codex/plugins/model-routing-harness/binding.json').read_text()))
+
+    def test_dev_cannot_be_combined_with_rollback_packets_or_uninstall(self):
+        for extra in (['--rollback'], ['--codex-packets']):
+            with self.assertRaises(setup.SetupError):
+                self.run_setup(self.args('--dev', *extra))
+        with self.assertRaises(setup.SetupError):
+            setup.uninstall(setup.parser().parse_args(['--uninstall', '--dev', '--prefix', str(self.prefix), '--config-root', str(self.config), '--bin-dir', str(self.bin)]))
 
     def test_unsupported_platform_and_unknown_host_do_not_write(self):
         with patch('mrh_setup.platform.system',return_value='Linux'):

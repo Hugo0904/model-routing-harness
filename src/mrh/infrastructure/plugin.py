@@ -71,14 +71,20 @@ try:
     root=Path(__file__).resolve().parent
     binding=json.loads((root/"binding.json").read_bytes())
     base={"schema_version","python","settings_path","runtime_sha256"}
-    if set(binding)-{"project_root"} not in (base,base|{"platform"},base|{"platform","codex_packets"}) or binding["schema_version"]!=1:raise ValueError()
+    if set(binding)-{"project_root","dev_source"} not in (base,base|{"platform"},base|{"platform","codex_packets"}) or binding["schema_version"]!=1:raise ValueError()
     platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform","codex")
     if platform not in (None,"codex","claude"):raise ValueError()
     packets=binding.get("codex_packets",False)
     if "codex_packets" in binding and (packets is not True or platform!="codex" or binding.get("platform")!="codex"):raise ValueError()
     runtime=root/"runtime.pyz"
     reason="runtime_integrity"
-    if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
+    dev=binding.get("dev_source")
+    if dev is None:
+        if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
+    else:
+        # Developer checkout (setup --dev): run the source tree as is, without the packaged-runtime hash.
+        runtime=Path(dev)/"src";info=runtime.stat()
+        if not isinstance(dev,str) or not Path(dev).is_absolute() or runtime.resolve()!=runtime or not (runtime/"mrh").is_dir() or info.st_uid!=os.getuid() or info.st_mode&0o022:raise ValueError()
     python=binding["python"];settings=binding["settings_path"]
     project=Path(binding.get("project_root") or os.environ["MRH_PROJECT_ROOT"])
     if not project.is_absolute() or project.resolve()!=project or not project.is_dir():raise ValueError()
@@ -222,9 +228,15 @@ def _old_artifact(root):
         raise owned.OwnedError("owned_source_changed") from None
 
 
-def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=False, project_root=None):
+def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=False, project_root=None, dev_source=None):
     if not advisory:
         raise owned.OwnedError("advisory_required")
+    if dev_source is not None:
+        if os.name == 'nt':
+            raise owned.OwnedError("dev_source_unsupported_platform")
+        dev_source = owned.canonical_path(dev_source)
+        if not (dev_source / "src/mrh").is_dir():
+            raise owned.OwnedError("dev_source_invalid")
     root = owned.canonical_path(root)
     settings_path = owned.canonical_path(settings_path)
     if root == settings_path.parent or root in settings_path.parents or settings_path.parent in root.parents:
@@ -266,6 +278,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
                                          "runtime_sha256": _hash(runtime), "platform": "codex",
                                          "project_root": str(bound_project),
+                                         **({"dev_source": str(dev_source)} if dev_source is not None else {}),
                                          **({"codex_packets": True} if codex_packets else {})}),
     }
     if codex_packets:

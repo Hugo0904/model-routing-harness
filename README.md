@@ -108,7 +108,7 @@ mrh skill install --host claude   # Codex 用 --host codex
 5. 回報結果與還沒驗證的項目；不要為了測試呼叫 Jev 或派子代理。
 ```
 
-自己更新：在 repo 資料夾執行 `git pull --ff-only`，再用原本的指令重跑一次 `./setup`（例如 `./setup --host claude`）。出問題可以用 `./setup --rollback` 退回上一版。
+自己更新：在 repo 資料夾執行 `git pull --ff-only`，再用原本的指令重跑一次 `./setup`（例如 `./setup --host claude`）。出問題可以用 `./setup --rollback` 退回上一版。新版本只在程式內容有變時才會產生；只改了文件的更新，重跑 `./setup` 會回報沒有變更。
 
 ## 移除
 

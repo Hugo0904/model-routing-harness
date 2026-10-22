@@ -140,16 +140,17 @@ def verify_bundle(root, digest=None):
     return manifest
 
 
-def source_fingerprint(hosts, packets, settings):
-    files = list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*'))
+def source_fingerprint(hosts, packets, settings, dev=False):
+    # A developer install runs the checkout's src directly, so editing it must not make a new version.
+    files = [] if dev else list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*'))
     files += [ROOT / n for n in ('setup', 'mrh_setup.py', 'mrh_bundle.py', 'mrh_build.py', 'pyproject.toml', 'LICENSE')]
     files += [bundle.LOCK]
     files += [p for p in (ROOT/'packaging/macos-arm64/license-snapshot').rglob('*') if p.is_file()]
     h = hashlib.sha256()
     for p in sorted(set(p for p in files if p.is_file())):
         h.update(p.relative_to(ROOT).as_posix().encode() + b'\0' + p.read_bytes())
-    head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
-    h.update(encoded({'head': head, 'hosts': hosts, 'packets': packets, 'settings': str(settings), 'project_root': str(ROOT)}))
+    # Only what goes into the installation counts: a commit that changes docs or tests must not make a new version.
+    h.update(encoded({'hosts': hosts, 'packets': packets, 'settings': str(settings), 'project_root': str(ROOT), **({'dev': True} if dev else {})}))
     return h.hexdigest()
 
 
@@ -465,12 +466,20 @@ def compatible(generation, settings):
     return metadata
 
 
-def finish_generation(stage, destination, settings, selected, fingerprint, prefix):
+DEV_MAIN = '''import sys
+sys.path.insert(0, {src!r})
+sys.argv[0] = 'mrh'
+from mrh.cli import main
+raise SystemExit(main())
+'''
+
+
+def finish_generation(stage, destination, settings, selected, fingerprint, prefix, dev=False):
     """Prepare inside private staging; publish only the complete final-path artifact."""
     for h, info in selected.items():
         artifact = stage / 'hosts' / h
         artifact.parent.mkdir(parents=True, exist_ok=True)
-        plugin.prepare(artifact, settings, stage / 'runtime/bin/python3.11', advisory=True, codex_packets=info['packets'], project_root=ROOT)
+        plugin.prepare(artifact, settings, stage / 'runtime/bin/python3.11', advisory=True, codex_packets=info['packets'], project_root=ROOT, dev_source=ROOT if dev else None)
         meta = document(artifact/'artifact.json')
         if h == 'codex':
             # Codex 0.162.1 discovers skills from the portable manifest but silently
@@ -500,7 +509,12 @@ def finish_generation(stage, destination, settings, selected, fingerprint, prefi
         meta['files'] = {name:bundle.sha256(artifact/name) for name in meta['files']}
         write(artifact/'artifact.json',encoded(meta))
         plugin.show(artifact)
-    write(stage/'generation.json',encoded({'owner':OWNER,'fingerprint':fingerprint,'reader':READER,'hosts':selected,'project_root':str(ROOT)}))
+    if dev:
+        # The mrh command follows the checkout too; the packaged archive stays in the generation but is not used.
+        write(stage/'app/dev_main.py', DEV_MAIN.format(src=str(ROOT/'src')).encode())
+        entry = (stage/'mrh').read_bytes().replace(b'"$mrh_dir/app/mrh.pyz"', b'"$mrh_dir/app/dev_main.py"')
+        write(stage/'mrh', entry); (stage/'mrh').chmod(0o755)
+    write(stage/'generation.json',encoded({'owner':OWNER,'fingerprint':fingerprint,'reader':READER,'hosts':selected,'project_root':str(ROOT),**({'dev_source':str(ROOT)} if dev else {})}))
     manifest=document(stage/'manifest.json');manifest['files']=bundle.file_manifest(stage)
     write(stage/'manifest.json',encoded(manifest));verify_bundle(stage)
 
@@ -526,6 +540,9 @@ def readiness(args, state, paths, hosts=None):
         verify_bundle(root, state['generations'][state['current']])
         result['installed'] = snapshot(prefix / 'current') == {'symlink': str(root)} and snapshot(bin_dir / 'mrh') == {'symlink': str(prefix / 'current/mrh')}
         result['generation'] = state['current']
+        dev_source = document(root / 'generation.json').get('dev_source')
+        if dev_source:
+            result['dev_source'] = dev_source    # hook and mrh run this checkout directly
     if settings.exists():
         value = settings_v2.read(settings)
         result.update(configured=True, enabled=value['enabled'], export_permitted=value['task_export_permitted'])
@@ -597,6 +614,8 @@ def _install(args, *, build=bundle.build):
         raise SetupError('codex_packets_requires_codex')
     if args.enable and not args.workspace:
         raise SetupError('enable_requires_explicit_workspace')
+    if args.dev and (args.rollback or args.codex_packets):
+        raise SetupError('dev_cannot_combine_with_rollback_or_packets')
     if args.rollback and (args.enable or args.workspace or args.codex_packets):
         raise SetupError('rollback_does_not_change_policy_or_packet_mode')
     value = profile_preflight(settings)
@@ -623,7 +642,7 @@ def _install(args, *, build=bundle.build):
         before_profile = snapshot(settings)
         journal_path = control / 'journal.json'
         journal = document(journal_path) if journal_path.exists() else None
-        fingerprint = source_fingerprint(hosts, args.codex_packets, settings)
+        fingerprint = source_fingerprint(hosts, args.codex_packets, settings, args.dev)
         intent={'enable':args.enable,'workspaces':[str(canonical(p)) for p in args.workspace]}
         if journal and journal.get('phase') != 'complete':
             if journal['fingerprint'] != fingerprint or journal['hosts'] != hosts or journal['rollback'] != args.rollback or journal.get('intent') != intent:
@@ -682,7 +701,7 @@ def _install(args, *, build=bundle.build):
                     build(cache, stage, temporary / 'bundle.tar.gz', download=True)
                     verify_bundle(stage)
                     prepare_profile()
-                    finish_generation(stage,generation,settings,selected,fingerprint,prefix)
+                    finish_generation(stage,generation,settings,selected,fingerprint,prefix,args.dev)
                     stage.rename(generation)
             else:
                 verify_bundle(generation)
@@ -994,7 +1013,7 @@ def _plan_data(paths, plan, purge):
 def uninstall(args):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SetupError('unsupported_platform:macOS_arm64_only')
-    if args.enable or args.workspace or args.codex_packets:
+    if args.enable or args.workspace or args.codex_packets or args.dev:
         raise SetupError('uninstall_does_not_change_policy_or_packet_mode')
     paths = resolve_paths(args)
     prefix, config, bin_dir, pointer, settings = paths
@@ -1064,6 +1083,7 @@ def parser():
     for name in ('prefix','config-root','bin-dir','cache-root','settings','codex-cli','claude-cli','claude-settings'):
         p.add_argument('--'+name,type=Path)
     p.add_argument('--workspace',action='append',type=Path,default=[]);p.add_argument('--enable',action='store_true')
+    p.add_argument('--dev',action='store_true',help='developer install: the hook and mrh run this checkout\'s src directly (no reinstall after edits; skips the runtime integrity hash). Rerun without --dev to go back')
     p.add_argument('--yes',action='store_true',help='with --uninstall: actually remove (otherwise preview only)')
     p.add_argument('--purge-data',action='store_true',help='with --uninstall --yes: also delete settings, statistics and the Jev key')
     return p
