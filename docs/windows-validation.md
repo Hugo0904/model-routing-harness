@@ -135,3 +135,22 @@ Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
 - 無 Hook 逾時，無 `cli.exe`／host-tools 孤兒程序。
 
 證據分開：子代理本身由宿主以既有權限執行；catalog 探測程序才是 LPAC＋`registryRead`，兩者不互相證明。這只是一次 Light 層級的最小驗證，未涵蓋 Small／Mid／Top、使用者明示指定模型、Post 失敗或 Mac。
+### 其餘情境的真實驗證與觀察到的 Hook 逾時（2026-10-23）
+
+同一個工作階段、同一份已啟用的 Claude profile（門檻 0.5，下限由設計限定為 0.5），共 13 個不同任務的原生 Agent 委派，任務內容皆為無敏感資料的合成任務：
+
+| 情境 | 結果 |
+| --- | --- |
+| Light | `advise`（0.87）→ 依 `haiku`／`max` 重發 → 子代理 followed=1，resolved `claude-haiku-5-5`。 |
+| Small | 先有 2 次 `preserve`／`low_confidence`（Small 0.47、0.45，低於門檻，原委派照常執行）；第 4 次任務更明確，`advise`（Small 0.68）→ `sonnet`／`high` 重發 → followed=1，resolved `claude-sonnet-5-5`。 |
+| Mid | 先有 2 次 `preserve`／`low_confidence`（Mid 0.50 對 Small 0.38～0.47，信心 0.33）；第 3 次 `advise`（Mid 0.87）→ `opus`／`xhigh` 重發 → followed=1，resolved `claude-opus-5-5`。 |
+| Top | 判為 Top（1.00），`continue_main`／`top_main_requested`，委派被攔下並指示主模型自己做，沒有建立替代子代理。 |
+| 明示模型 | `model=sonnet`、`effort=high`：`preserve`／`explicit_model`，不呼叫 Jev，原呼叫保留。 |
+| 具名角色 | `Explore`：`preserve`／`named_role`，原呼叫保留，子代理記錄 followed=0。 |
+| Post 失敗（受控注入） | 背景程序在 Pre 寫入後 30 毫秒對 MRH 自己的 Claude `advice.sqlite3` 取得 `BEGIN EXCLUSIVE` 並持有 12 秒後 `ROLLBACK`。原子代理照常完成、沒有重複委派；該次 `children` 沒有新增列；`PRAGMA integrity_check` 為 ok，advice 9、children 5 與預期一致。 |
+
+**Hook 逾時（未解決）**：兩次 Pre 回報 `hook time budget exhausted`（原呼叫保留，依提示未重試），這兩次沒有任何 `advice`／`attempts` 記錄，也沒有 Post 子代理記錄。另有一次明示模型委派的 Pre 正常但 Post 沒有子代理記錄（單次，原因未能分辨是逾時還是其他）。Post 在非同步 Agent 流程下沒有出現使用者可見的訊息，所以這類遺失不易察覺。
+
+原因觀測：launcher 的第一階段期限是 1.0 秒（自 supervisor 啟動起算），要等 runtime 匯入與兩次設定驗證後回報政策，才延長到 Jev 路徑的 2.5 秒；`launch_seconds` 的 1.0 秒也是 Post 的上限。以無副作用的方式量測 Hook 子程序到回報政策為止的啟動時間（受保護 Python、已安裝 runtime 與設定，不處理事件）：第一批 25 次中位數 0.56 秒、p90 1.09 秒、最大 2.02 秒、4 次超過 1.0 秒；其後兩批各 25 次中位數 0.34～0.36 秒，超過 1.0 秒為 0 與 3 次。匯入約佔 0.22～0.40 秒，其餘是行程啟動，離群值來自行程啟動的環境波動。把預編譯 `.pyc` 放進 pyz 只讓中位數快約 30 毫秒，不能消除離群，已還原，未留在程式中。
+
+沒有提高任何時限。要降低發生率只能放寬第一階段期限或再減少行程數，兩者都會改變既有 Hook 契約，須使用者決定；在那之前，失敗的行為是設計的「保留原呼叫並提示」，且在本次觀察中從未造成重複委派。
