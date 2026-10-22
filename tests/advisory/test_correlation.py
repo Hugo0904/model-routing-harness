@@ -53,8 +53,10 @@ class CorrelationTests(unittest.TestCase):
         self.assertEqual((data["children_started"], data["children_following_advice"]), (2, 1))
         self.assertEqual(data["followed_models"], {})
         self.assertEqual(data["followed_requested_models"], {"luna": 1})
-        for text in (stats_view.render(data, "全部"), dashboard.render(v2.read(self.path), data, "全部"), report_html.render(v2.read(self.path), data, "全部")):
+        for text in (stats_view.render(data, "全部"), report_html.render(v2.read(self.path), data, "全部")):
             self.assertIn("實際模型未回報", text)
+        # The status card stays short: it points at `mrh stats` for the evidence caveats instead of listing them.
+        self.assertIn("資料說明，見 mrh stats", dashboard.render(v2.read(self.path), data, "全部"))
         before = self.path.parent.joinpath('advice.sqlite3').read_bytes()
         out = io.StringIO()
         self.assertEqual(cli.main(["status", "--settings", str(self.path), "--days", "0", "--json"], stdout=out, stderr=io.StringIO()), 0)

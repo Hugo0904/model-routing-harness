@@ -171,7 +171,7 @@ class OverheadTests(unittest.TestCase):
         with patch.dict(os.environ, {"MRH_CLAUDE_PROJECTS": str(self.claude)}):
             card = ctrl.dashboard_text(self.path, None, 100, False)
             exported = ctrl.status_data(self.path, None)
-        for text in ("攔下重派的開銷", "給建議 1 / 1 次", "重派 1 次", "多跑一輪", "mrh usage overhead"):
+        for text in ("MRH 攔截的淨收益", "1 次重派，還算不出淨值"):
             self.assertIn(text, card)
         self.assertNotIn("overhead", exported)
 
@@ -186,11 +186,11 @@ class OverheadTests(unittest.TestCase):
         self.child_usage("claude", "redo", "claude-haiku-5-5", "haiku", usage, "claude-opus-5-5")
         with patch.dict(os.environ, {"MRH_CLAUDE_PROJECTS": str(self.claude)}):
             card = ctrl.dashboard_text(self.path, None, 100, False)
-        self.assertIn("淨 －$", card); self.assertIn("1 次可比", card)
+        self.assertIn("淨 －$", card); self.assertIn("（1 次重派）", card)
 
     def test_status_card_omits_the_block_without_data(self):
         from mrh.presentation import ctrl
-        self.assertNotIn("攔下重派的開銷", ctrl.dashboard_text(self.path, None, 100, False))
+        self.assertNotIn("MRH 攔截的淨收益", ctrl.dashboard_text(self.path, None, 100, False))
 
     def test_empty_database_and_bad_days(self):
         args = type("A", (), {"settings": self.path, "days": 0, "json": False, "usage_action": "overhead"})()

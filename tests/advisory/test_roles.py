@@ -86,7 +86,7 @@ class RoleRecordingTests(unittest.TestCase):
             for color in (False, True):
                 with self.subTest(width=width, color=color):
                     text = ANSI.sub("", dashboard.render(settings(), data, "過去 7 天", width, color, today="2026-10-15"))
-                    for expected in ("有改派（MRH＋skill）", "skill 自選 1 次", "luna_worker 1", "由 Router skill 自己選模型派工", "子代理用了分級表的模型", "平均信心度 · 24 小時內", "平均信心度 · 總平均", "0.90"):
+                    for expected in ("有改派（MRH＋skill）", "skill 自選 1 次", "路由器處理", "原樣放行", "子代理用了分級表的模型", "平均信心度 · 24 小時內", "平均信心度 · 總平均", "0.90"):
                         self.assertIn(expected, text)
                     card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
                     self.assertEqual({cell_width(l) for l in card}, {width})

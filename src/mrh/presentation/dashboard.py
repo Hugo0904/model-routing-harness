@@ -184,25 +184,15 @@ def _pct_row(parts, width):
 
 
 def _overhead_lines(report, width, p):
-    """A compact view of `mrh usage overhead`; absent when it could not be computed or nothing was delegated."""
-    if not report or not report.get("delegations"):
+    """One number from `mrh usage overhead`: did stopping and re-issuing pay off? The breakdown stays in that command."""
+    if not report or not report.get("reissues"):
         return []
-    usd = stats_view._usd
-    lines = [p("攔下重派的開銷", "text")]
-    notes = [f"給建議 {report['advised']} / {report['delegations']} 次 · 重派 {report['reissues']} 次"]
-    if report["reissues"]:
-        wait = report["classifier_seconds_median"]
-        extra = report["main_extra_input_usd_total"]
-        notes.append(f"等待 {'未知' if wait is None else format(wait, '.1f') + ' 秒'} · 多跑一輪 {'未知' if extra is None else usd(extra)}")
-        if report["compared"]:
-            net = report["compared_saving_usd"] - report["compared_overhead_usd"]
-            sign = "＋" if net >= 0 else "－"     # stats_view._usd has no negative form
-            notes += [f"省 {usd(report['compared_saving_usd'])} · 耗 {usd(report['compared_overhead_usd'])}",
-                      f"淨 {sign}${abs(net):.4f}（{report['compared']} 次可比）"]
-        else:
-            notes.append("尚無可比樣本（先 mrh usage collect）")
-    notes.append("詳細：mrh usage overhead")
-    return lines + [p(clip(n, width), "faint") for n in notes] + [""]
+    if report["compared"]:
+        net = report["compared_saving_usd"] - report["compared_overhead_usd"]
+        value = f"淨 {'＋' if net >= 0 else '－'}${abs(net):.4f}（{report['compared']} 次重派）"   # stats_view._usd has no sign
+    else:
+        value = f"{report['reissues']} 次重派，還算不出淨值"
+    return [p("MRH 攔截的淨收益", "text"), p(clip(value, width), "faint"), ""]
 
 
 def _where(data, policy, inner, p, color):
@@ -221,30 +211,25 @@ def _where(data, policy, inner, p, color):
     bw = left_w
     left = [p(_pct_row(parts, bw), "text"), stats_view.stacked_bar(parts, bw, color)]
     legend = "  ".join(f"{stats_view._swatch(t, color)} {t.lower()} {n}" for t, n in parts)
-    left += ["", legend, "", p(f"{advised + main} 次由路由器處理（{advised} 次給建議、{main} 次留給主模型）", "text"),
-             *([p(f"{skill_total} 次由 Router skill 自己選模型派工", "text")] if skill_total else []),
-             p(f"{kept - skill_total} 次原樣放行", "dim")]
-    if data.get("reissues"):
-        left += ["", p(f"另有 {data['reissues']} 次是主模型照建議重派的後續呼叫（不重複計算）", "faint")]
-    kept_reasons = stats_view.kept_without_skill(data)
-    if kept_reasons:
-        left.append("")
-        for reason, n in sorted(kept_reasons.items(), key=lambda x: -x[1])[:4]:
-            left.append(p("· " + clip(stats_view.REASON.get(reason, reason), left_w - 8) + f"  {n}", "dim"))
+    left += ["", legend, "", p(f"路由器處理  {advised + main} 次", "text"),
+             *([p(f"skill 自選  {skill_total} 次", "text")] if skill_total else []),
+             p(f"原樣放行    {kept - skill_total} 次", "dim")]
+    # The breakdowns and evidence caveats live in `mrh stats`; the card only says that there are some.
+    notes = stats_view.accounting_notes(data)
+    if notes:
+        left += ["", p(f"另有 {len(notes)} 項資料說明，見 mrh stats", "faint")]
     followed = data["children_following_advice"]
-    left += [p(clip(note, left_w), "faint") for note in stats_view.accounting_notes(data)]
 
     def bar(title, part, whole, *notes):
         pct = part * 100 // whole if whole else 0
         pb = stats_view.progress_bar(pct, right_w, color)
         return [pad(p(title, "text"), right_w - len(f"{pct}%")) + p(f"{pct}%", "text"), pb,
                 *[p(clip(n, right_w), "faint") for n in notes if n], ""]
-    role_list = "、".join(f"{r} {n}" for r, n in sorted(skill.items(), key=lambda x: -x[1]))
     right = bar("有改派（MRH＋skill）", *stats_view.rerouted(data),
-                f"照 MRH 建議 {followed} / {advised} 次 · skill 自選 {skill_total} 次", role_list)
+                f"照 MRH 建議 {followed} / {advised} 次 · skill 自選 {skill_total} 次")
     if data.get("children_started"):
         matched, started = stats_view.tier_model_children(data, policy)
-        right += bar("子代理用了分級表的模型", matched, started, f"{matched} / {started} 個子代理，其餘沿用主模型或其他模型")
+        right += bar("子代理用了分級表的模型", matched, started, f"{matched} / {started} 個子代理")
     usage = data.get("usage") or {}
     if usage.get("recorded"):                                      # one bar: how much real usage is collected, and the converted saving
         saved = [sv for sv in (usage.get("saving") or {}).values() if sv["children"]]
@@ -258,7 +243,8 @@ def _where(data, policy, inner, p, color):
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}
         if c.get("avg") is None:
-            right += [p(f"平均信心度 · {label}：沒有分級紀錄", "faint"), ""]
+            if key == "total":
+                right += [p("平均信心度：還沒有分級紀錄", "faint"), ""]
         else:
             right += bar(f"平均信心度 · {label}", round(c["avg"] * 100), 100,
                          f"{c['avg']:.2f}（{c['n']} 次分級）" + (f" · 門檻 {policy['threshold']:.2f}" if key == "total" else ""))
