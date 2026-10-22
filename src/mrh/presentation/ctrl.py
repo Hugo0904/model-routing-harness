@@ -155,7 +155,20 @@ def dashboard_text(path, days, width, color):
     """The card layout: routing flow + tier table + proportion bars."""
     from mrh.presentation import dashboard
     data = status_data(path, days)
+    data["overhead"] = _overhead(path, days)      # card only: the JSON export keeps its published shape
     return dashboard.render(data["status"], data, data["status"]["period_label"], width, color)
+
+
+def _overhead(path, days):
+    """The re-issue cost report for the status card, or None when it cannot be read (the card then simply omits it)."""
+    db = path.parent / "advice.sqlite3"
+    if not db.exists():
+        return None
+    try:
+        from mrh.advisory import overhead
+        return overhead.build(db, 0 if days is None else time.time() - days * 86400)
+    except Exception:
+        return None
 
 
 def status_data(path, days, *, include_events=False):

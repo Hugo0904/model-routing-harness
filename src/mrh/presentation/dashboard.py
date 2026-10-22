@@ -183,6 +183,28 @@ def _pct_row(parts, width):
     return "".join(row)
 
 
+def _overhead_lines(report, width, p):
+    """A compact view of `mrh usage overhead`; absent when it could not be computed or nothing was delegated."""
+    if not report or not report.get("delegations"):
+        return []
+    usd = stats_view._usd
+    lines = [p("攔下重派的開銷", "text")]
+    notes = [f"給建議 {report['advised']} / {report['delegations']} 次 · 重派 {report['reissues']} 次"]
+    if report["reissues"]:
+        wait = report["classifier_seconds_median"]
+        extra = report["main_extra_input_usd_total"]
+        notes.append(f"等待 {'未知' if wait is None else format(wait, '.1f') + ' 秒'} · 多跑一輪 {'未知' if extra is None else usd(extra)}")
+        if report["compared"]:
+            net = report["compared_saving_usd"] - report["compared_overhead_usd"]
+            sign = "＋" if net >= 0 else "－"     # stats_view._usd has no negative form
+            notes += [f"省 {usd(report['compared_saving_usd'])} · 耗 {usd(report['compared_overhead_usd'])}",
+                      f"淨 {sign}${abs(net):.4f}（{report['compared']} 次可比）"]
+        else:
+            notes.append("尚無可比樣本（先 mrh usage collect）")
+    notes.append("詳細：mrh usage overhead")
+    return lines + [p(clip(n, width), "faint") for n in notes] + [""]
+
+
 def _where(data, policy, inner, p, color):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
@@ -231,6 +253,7 @@ def _where(data, policy, inner, p, color):
                      (f"節省（換算）{stats_view._usd(sum(sv.get('known_usd', sv['usd']) for sv in saved))}" +
                       ("（已知部分）" if any(sv['unknown'] for sv in usage['saving'].values()) else "")) if saved else
                      ("舊版未驗證" if usage.get("legacy") else "換算未知"))
+    right += _overhead_lines(data.get("overhead"), right_w, p)
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}

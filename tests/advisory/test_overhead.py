@@ -161,6 +161,37 @@ class OverheadTests(unittest.TestCase):
                                   stdout=out, stderr=io.StringIO()), 0)
         self.assertEqual(json.loads(out.getvalue())["advised"], 1)
 
+    def test_status_card_shows_a_summary_and_the_json_export_is_unchanged(self):
+        from mrh.presentation import ctrl
+        self.advise("claude", "orig")
+        self.transcript("redo", {"input_tokens": 10, "cache_read_input_tokens": 50_000, "cache_creation_input_tokens": 0})
+        self.reissue("claude", "redo", "haiku")
+        import os
+        from unittest.mock import patch
+        with patch.dict(os.environ, {"MRH_CLAUDE_PROJECTS": str(self.claude)}):
+            card = ctrl.dashboard_text(self.path, None, 100, False)
+            exported = ctrl.status_data(self.path, None)
+        for text in ("攔下重派的開銷", "給建議 1 / 1 次", "重派 1 次", "多跑一輪", "mrh usage overhead"):
+            self.assertIn(text, card)
+        self.assertNotIn("overhead", exported)
+
+    def test_status_card_shows_a_negative_net_with_its_sign(self):
+        from mrh.presentation import ctrl
+        import os
+        from unittest.mock import patch
+        self.advise("claude", "orig")
+        self.transcript("redo", {"input_tokens": 10, "cache_read_input_tokens": 420_000, "cache_creation_input_tokens": 0})
+        self.reissue("claude", "redo", "haiku")
+        usage = {"small": {**BLANK, "input": 100, "cache_read": 1000}, "large": dict(BLANK), "requests": 1, "output": None, "reasoning": None}
+        self.child_usage("claude", "redo", "claude-haiku-5-5", "haiku", usage, "claude-opus-5-5")
+        with patch.dict(os.environ, {"MRH_CLAUDE_PROJECTS": str(self.claude)}):
+            card = ctrl.dashboard_text(self.path, None, 100, False)
+        self.assertIn("淨 －$", card); self.assertIn("1 次可比", card)
+
+    def test_status_card_omits_the_block_without_data(self):
+        from mrh.presentation import ctrl
+        self.assertNotIn("攔下重派的開銷", ctrl.dashboard_text(self.path, None, 100, False))
+
     def test_empty_database_and_bad_days(self):
         args = type("A", (), {"settings": self.path, "days": 0, "json": False, "usage_action": "overhead"})()
         err = io.StringIO()
