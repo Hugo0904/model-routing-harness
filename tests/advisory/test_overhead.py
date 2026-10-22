@@ -52,7 +52,13 @@ class OverheadTests(unittest.TestCase):
         with open(self.claude / "proj" / f"{session}.jsonl", "a") as handle:
             handle.write(json.dumps(line) + "\n")
 
+    def observed(self, entry):
+        """What the collector adds to every entry of a settled snapshot; without it `mrh stats` treats the row as legacy."""
+        return {**entry, "observation": {"version": 1, "semantics": "settled_snapshot", "collected_at": self.now, "sources": [
+            {"name": "x.jsonl", "device": 1, "inode": 2, "size": 3, "mtime_ns": 4}]}}
+
     def child_usage(self, platform, call, model, requested, usage_entry, parent):
+        usage_entry = self.observed(usage_entry)
         self.assertTrue(self.store.record_child(Child(platform, "s", call, requested, None, model, "agent-" + call), self.now))
         self.store.save_usage({"platform": platform, "session_id": "s", "call_id": call, "ts": self.now, "source_file": "x",
                                "models": [model], "usage": {model: usage_entry}, "parent_model": parent, "collected_at": self.now})
@@ -80,9 +86,26 @@ class OverheadTests(unittest.TestCase):
         # same tokens on opus minus on haiku (input side)
         self.assertAlmostEqual(pair["saving_usd"], (100 * 4 + 1000 * 0.20) / 1e6 - (100 * 0.10 + 1000 * 0.01) / 1e6)
         self.assertEqual(pair["saving_scope"], "輸入端")
+        self.assertEqual(pair["main_context_tokens"], 50_010)
+        self.assertEqual(report["main_context_tokens_median"], 50_010)
+        # the figure `mrh stats` shows counts every collected child, here the one that followed the advice
+        self.assertAlmostEqual(report["all_children_saving_usd"], pair["saving_usd"])
+        self.assertEqual(report["all_children_saving_children"], 1)
         self.assertEqual(report["compared"], 1)
         self.assertEqual(report["compared_net_positive"], 0)          # one small child cannot pay for a 50K-token extra turn
         self.assertAlmostEqual(report["compared_saving_usd"], pair["saving_usd"])
+
+    def test_a_legacy_snapshot_without_observation_is_not_priced(self):
+        self.advise("claude", "orig")
+        self.reissue("claude", "redo", "haiku")
+        usage = {"small": {**BLANK, "input": 100}, "large": dict(BLANK), "requests": 1, "output": None, "reasoning": None}
+        self.assertTrue(self.store.record_child(Child("claude", "s", "redo", "haiku", None, "claude-haiku-5-5", "agent"), self.now))
+        self.store.save_usage({"platform": "claude", "session_id": "s", "call_id": "redo", "ts": self.now, "source_file": "x",
+                               "models": ["claude-haiku-5-5"], "usage": {"claude-haiku-5-5": usage}, "parent_model": "claude-opus-5-5",
+                               "collected_at": self.now})
+        report = self.build()
+        self.assertIsNone(report["pairs"][0]["saving_usd"]); self.assertIn("舊格式", report["pairs"][0]["saving_unknown"])
+        self.assertEqual(report["all_children_saving_children"], 0)
 
     def test_codex_pair_reports_the_parent_request_as_unknown_not_zero(self):
         self.advise("codex", "orig")
@@ -122,7 +145,7 @@ class OverheadTests(unittest.TestCase):
         args = type("A", (), {"settings": self.path, "days": 30, "json": False, "usage_action": "overhead"})()
         out = io.StringIO()
         self.assertEqual(usage_cli.main(args, stdin=None, stdout=out, stderr=io.StringIO(), now=self.now + 60, claude_root=self.claude), 0)
-        for text in ("攔下重派的開銷", "MRH 給了建議", "主模型多跑的那一輪", "不量品質", "不能判斷划不划算"):
+        for text in ("攔下重派的開銷", "MRH 給了建議", "主模型多跑的那一輪", "上下文大小", "和 mrh stats 的差別", "不量品質", "不能判斷划不划算"):
             self.assertIn(text, out.getvalue())
         args.json = True
         out = io.StringIO()

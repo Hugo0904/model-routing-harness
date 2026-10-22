@@ -66,11 +66,17 @@ def render_overhead(report, days):
              f"  主模型多跑的那一輪（輸入端）  合計 {_usd(r['main_extra_input_usd_total'])}（可算 {r['main_extra_known']} / {r['reissues']} 次）", "",
              "和省下的錢相比：",
              f"  子代理省下（換算，輸入端）    合計 {_usd(r['saving_usd_total'])}（可算 {r['saving_known']} / {r['reissues']} 次）"]
+    lines += [f"  主模型那一輪的上下文大小      中位數 {'未知' if r['main_context_tokens_median'] is None else format(int(r['main_context_tokens_median']), ',') + ' tokens'}（越大，每次重派越貴）"]
     if r["compared"]:
         lines += [f"  兩邊都算得出的 {r['compared']} 次：省 {_usd(r['compared_saving_usd'])}，開銷 {_usd(r['compared_overhead_usd'])}，"
                   f"淨賺 {_usd(r['compared_saving_usd'] - r['compared_overhead_usd'])}；省得比開銷多的有 {r['compared_net_positive']} 次"]
     else:
         lines += ["  還沒有任何一次兩邊都算得出來，不能判斷划不划算。"]
+    lines += ["", "和 mrh stats 的差別：",
+              f"  mrh stats 的「節省」是所有已收集子代理（{r['all_children_saving_children']} 個可算"
+              + (f"、{r['all_children_saving_unknown']} 個算不出" if r["all_children_saving_unknown"] else "")
+              + f"）的合計 {_usd(r['all_children_saving_usd'])}，不論是誰決定用哪個模型。",
+              f"  這份報告只看「照 MRH 建議重派」的子代理：{_usd(r['saving_usd_total'])}。差額是主模型或 skill 自己選便宜模型的結果，不是 MRH 的功勞。"]
     lines += ["", "注意：", "  ‧ 主模型多跑的那一輪只含輸入端（Claude 的紀錄沒有最終輸出量），所以是下限；Codex 沒有逐請求的父層用量，不計入（顯示未知，不當 0）。",
               "  ‧ 金額是依官方價格表換算，不是帳單；沒收集用量的子代理請先執行 mrh usage collect。",
               "  ‧ 這只量成本，不量品質。"]

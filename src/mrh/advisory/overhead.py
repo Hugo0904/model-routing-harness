@@ -14,7 +14,7 @@ import json
 import statistics
 from pathlib import Path
 
-from mrh.advisory import pricing, usage_collect
+from mrh.advisory import pricing, usage_collect, usage_report
 from mrh.advisory.store import AdviceStore, _links
 from mrh.application.classify import JEV_USD_PER_INPUT_TOKEN
 
@@ -110,7 +110,9 @@ def build(path, since, *, claude_root=None, now=None):
                 usage = json.loads(row["usage"])
             except ValueError:
                 continue
-            saved[row["advice_request_id"]] = pricing.saving(usage, row.get("parent_model"))
+            # Same trust rule as `mrh stats`: a snapshot without observation metadata is legacy and prices nothing.
+            saved[row["advice_request_id"]] = (pricing.saving(usage, row.get("parent_model")) if usage_collect.observation(usage) is not None
+                                               else {"usd": None, "scope": None, "reason": "舊格式的用量快照，不計價"})
     claude_calls = {}
     for replacement_id, (original, _) in links.items():
         reissue = by_id[replacement_id]
@@ -129,7 +131,7 @@ def build(path, since, *, claude_root=None, now=None):
                 "classifier_seconds": wait.get("seconds"),
                 "classifier_usd": tokens * JEV_USD_PER_INPUT_TOKEN if isinstance(tokens, int) else None,
                 "deny_to_reissue_seconds": reissue["ts"] - original["ts"],
-                "main_model": None, "main_extra_input_usd": None, "main_extra_unknown": None,
+                "main_model": None, "main_extra_input_usd": None, "main_extra_unknown": None, "main_context_tokens": None,
                 "saving_usd": None, "saving_scope": None, "saving_unknown": None}
         if original["platform"] == "claude":
             found = requests.get((reissue["session_id"], reissue["call_id"]))
@@ -137,6 +139,7 @@ def build(path, since, *, claude_root=None, now=None):
                 model, entry = found
                 priced = pricing.price_entry(model, entry)
                 item["main_model"] = model
+                item["main_context_tokens"] = entry["max_request_input"]
                 item["main_extra_input_usd"] = priced["input_side"]
                 if priced["input_side"] is None:
                     item["main_extra_unknown"] = (priced["unknown"] or ["價格不完整"])[0]
@@ -155,6 +158,10 @@ def build(path, since, *, claude_root=None, now=None):
         return [p[key] for p in pairs if p[key] is not None]
 
     both = [p for p in pairs if p["main_extra_input_usd"] is not None and p["saving_usd"] is not None and p["saving_scope"] == "輸入端"]
+    # The same figure `mrh stats` shows covers every collected sub-agent, however it was started.
+    everything = usage_report.summarize(usage_rows, sum(1 for c in children if c["agent_id"]), {r["request_id"]: r for r in advice})
+    all_known = sum(v["known_usd"] for v in everything["saving"].values())
+    all_children = sum(v["children"] for v in everything["saving"].values())
     reasons = {}
     for row in advice:
         reasons[row["reason"]] = reasons.get(row["reason"], 0) + 1
@@ -175,6 +182,9 @@ def build(path, since, *, claude_root=None, now=None):
         "compared": len(both),
         "compared_saving_usd": sum(p["saving_usd"] for p in both),
         "compared_overhead_usd": sum(p["main_extra_input_usd"] + (p["classifier_usd"] or 0.0) for p in both),
+        "main_context_tokens_median": _median(known("main_context_tokens")),
+        "all_children_saving_usd": all_known, "all_children_saving_children": all_children,
+        "all_children_saving_unknown": sum(v["unknown"] for v in everything["saving"].values()),
         "compared_net_positive": sum(p["saving_usd"] > p["main_extra_input_usd"] + (p["classifier_usd"] or 0.0) for p in both),
         "reasons": reasons, "pairs": pairs,
     }
