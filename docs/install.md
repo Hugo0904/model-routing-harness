@@ -121,7 +121,7 @@ mrh ctrl --settings $claudeProfile
 .\setup.ps1 --host codex --workspace 'C:\Projects\Example' --enable
 ~~~
 
-Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 清單、政策與金鑰日後都通過時，才可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。目前這台 LTSC 的 Claude 仍不能完成啟用。
+Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 清單、政策與金鑰日後都通過時，才可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。Windows 10 LTSC 19044／Claude 2.1.303 已用上述方式取得清單並完成啟用與真實子代理驗證（見 [Windows 驗證紀錄](windows-validation.md)）；啟用 Claude 同樣需要你明確同意任務內容送往 Jev。
 
 更新指定專案的範圍時，需列出所有要保留的專案。Windows 目前不提供訂閱分級器、Codex 完整任務封包（`--codex-packets`）或 Gemini 整合。
 

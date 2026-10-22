@@ -121,3 +121,17 @@ Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時
 - 其他 Windows 測試：`test_claude_native`、`test_claude_routing`、`test_platform` 共 29 項中 28 PASS；`test_platform` 的跨程序鎖測試在 `-I` 受保護 Python 下子程序找不到 `mrh`，屬測試啟動方式，與本改動無關。
 
 Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
+### 啟用與真實子代理驗證（2026-10-23）
+
+使用者明確同意所有本機磁碟及 UNC 路徑下的 Claude 專案任務內容可送往 Jev 分類後，執行 `--host claude --all-workspaces --enable`；安裝器回報 Claude routing ready、enabled、export 已允許，Codex profile（revision 6）未被更動。Claude 政策取自驗證清單：Light `haiku:max`、Small `sonnet:high`、Mid `opus:xhigh`、Top 交回主 AI。
+
+在已載入該外掛的 Claude Code 工作階段，用原生 Agent 工具派一個最小、無敏感資料的任務（只回覆 OK）：
+
+- Pre Hook 攔截原委派，Jev 分級為 Light、信心 0.87，建議 `haiku` / `max`，原委派未啟動。
+- 依建議重發同一委派後，子代理完成並回報 OK。
+- `advice`：一筆 `advise`／`advice_given`，一筆 `preserve`／`advice_reissue`，後者關聯到前者並記錄 haiku／max。
+- `children`：一筆，requested `haiku`／`max`，resolved `claude-haiku-5-5`，followed=1。
+- `attempts`：Jev 僅一次 `classification_requested`→`requested`→`started`→`returned`；重發沒有再次呼叫分級器，也沒有重複委派。
+- 無 Hook 逾時，無 `cli.exe`／host-tools 孤兒程序。
+
+證據分開：子代理本身由宿主以既有權限執行；catalog 探測程序才是 LPAC＋`registryRead`，兩者不互相證明。這只是一次 Light 層級的最小驗證，未涵蓋 Small／Mid／Top、使用者明示指定模型、Post 失敗或 Mac。
