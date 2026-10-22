@@ -186,7 +186,7 @@ def _windows_launcher():
     source = source.replace('str(writer),"1"', 'str(control_handle),"1"')
     source = source.replace('args=[python,"-I","-B",', 'args=[python,"-I","-B","-X","utf8",')
     source = source.replace('process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,pass_fds=(writer,))',
-                            'process=popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,startupinfo=startup,close_fds=True)')
+                            'process=popen_python(python,code,args[7:],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,startupinfo=startup,close_fds=True)')
     control_read = 'try:chunk=os.read(reader,1025)\n                except BlockingIOError:chunk=b""'
     if source.count(control_read) != 1:
         raise owned.OwnedError('windows_launcher_control_read_template_mismatch')

@@ -69,6 +69,49 @@ class PlatformTests(unittest.TestCase):
                 try: self.assertEqual(wait(handle, 1000), 0, 'owned descendant survived')
                 finally: win.close(handle)
 
+    def test_python_gate_executes_in_assigned_process_and_preserves_stdin(self):
+        assigned = []
+        original = proc.Job.assign
+        def assign(job, process):
+            original(job, process)
+            assigned.append(process.pid)
+        code = "import json,os,sys;print(json.dumps({'pid':os.getpid(),'input':sys.stdin.read(),'arg':sys.argv[1]}))"
+        with patch.object(proc.Job, 'assign', assign):
+            process = proc.popen_python(sys.executable, code, ['中文 argument'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            out, err = process.communicate('原始 stdin'.encode('utf-8'), timeout=3)
+            self.assertEqual(process.returncode, 0, err)
+            self.assertEqual(json.loads(out), {'pid':assigned[0], 'input':'原始 stdin', 'arg':'中文 argument'})
+        finally: proc.finish(process)
+
+    def test_python_gate_assignment_failure_never_executes_target(self):
+        marker = self.root/'must-not-exist'
+        processes = []
+        def refuse(job, process):
+            processes.append(process)
+            raise OSError('synthetic_assignment_refused')
+        code = 'from pathlib import Path;Path('+repr(str(marker))+').write_text("unsafe")'
+        with patch.object(proc.Job, 'assign', refuse):
+            with self.assertRaisesRegex(OSError, 'synthetic_assignment_refused'):
+                proc.popen_python(sys.executable, code, [], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertFalse(marker.exists())
+        self.assertIsNotNone(processes[0].poll())
+
+    def test_python_gate_timeout_reaps_descendants(self):
+        marker = self.root/'python-child-pid'
+        code = ("import subprocess,sys,time;from pathlib import Path;"
+                "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);"
+                "Path(sys.argv[1]).write_text(str(p.pid));time.sleep(30)")
+        process = proc.popen_python(sys.executable, code, [marker], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            with self.assertRaises(subprocess.TimeoutExpired):process.communicate(timeout=1)
+        finally:proc.finish(process)
+        self.assertTrue(marker.exists())
+        handle = win.api(win.k, 'OpenProcess', [win.w.DWORD, win.w.BOOL, win.w.DWORD], win.w.HANDLE)(0x100000, False, int(marker.read_text()))
+        if handle:
+            try:self.assertEqual(win.api(win.k, 'WaitForSingleObject', [win.w.HANDLE, win.w.DWORD], win.w.DWORD)(handle,1000),0)
+            finally:win.close(handle)
+
     def test_shell_quotes_spaces_and_refuses_expansion_metacharacters(self):
         self.assertIn('"C:\\Program Files\\Python\\python.exe"', win.quote_command(['C:\\Program Files\\Python\\python.exe', '-B']))
         for unsafe in ('%TEMP%', 'a&b', 'a!b', 'a\nb'):

@@ -81,3 +81,15 @@ SKIP 對應 `SkillCompletionTests.test_force_never_accepts_foreign_extra_or_link
 零 capabilities 下的 Winsock 失敗仍未解決。增加 `registryRead` 會改變權限範圍，沒有在本批自行加入；Claude profile 保持停用。這是未完成的路由功能，不是完整 Windows Claude 支援。
 
 Mac 的 sandbox-exec 分支保留，共用 initialize 參數與解析的相關檢查在 Windows 執行。Mac 仍需實機驗證版本探測、隔離 initialize、逾時／後代清理及實際 Hook 採用；本批不宣稱 Mac 已重驗。
+
+## 2026-10-23 Hook 啟動預算修正
+
+完整階段觀測確認，PowerShell 與 bootstrap 驗證在 supervisor 的 1 秒起點之前；原 Windows 接頭在起點後先啟動 Python gate，再啟動第二個 Python。一次觀測中 gate 到約 0.63 秒才準備好，第二個 Python 尚未進入 runtime，supervisor 就已逾時。移除第二次啟動後，另一次觀測顯示 runtime 匯入約 0.67 秒、兩次設定驗證約 0.13 秒，仍略超過原預算。
+
+Windows Hook 現在於同一個 Python gate 執行 runtime：先加入 kill-on-close Job，才透過原本的私有管線放行。普通外部 CLI 仍沿用既有 gate；LPAC 不變。runtime 僅在需要分級時載入 engine，只有保留的 Codex 封包事件才載入 packet 處理器；辨識條件與公開 `marked`／`PREFIXES` 契約保留。兩次設定驗證、範圍、明示選型、DB 記錄、故障告警及原有 1／2.5／48 秒期限均未移除或延長。
+
+- 新 gate 與既有程序樹清理共 **4 PASS**，包含 Job 綁定拒絕時不執行目標、同程序執行、UTF-8 stdin 及逾時清除後代。
+- 受影響的 supervisor 與路由檢查 **7 PASS、0 FAIL／ERROR／SKIP**：完整性拒絕、PowerShell 含空白路徑、UTF-8 控制管線與期限、Claude 停用／建議／明示選型、DB 故障、設定競態及保留封包拒絕。均使用本機合成事件／分類替身，不代表實際 Jev 或 Claude 子代理採用。
+- 正式安裝與原生宿主讀回另行驗收，不以候選測試代替。Claude 模型清單的 Winsock 問題不因 Hook 修正而視為解決；路由仍保持停用。
+
+Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時機及 Codex 封包辨識已改；若要宣稱 Mac 實機相容，最小追加驗證是停用 profile 的 Pre／Post、啟用後一般建議與明示選型／Post 記錄，以及保留封包的拒絕或原有處理。Windows 的上述結果不能代替這些 Mac 宿主觀測。

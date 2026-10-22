@@ -84,17 +84,37 @@ p=subprocess.Popen(json.loads(sys.argv[1]),stdin=sys.stdin,stdout=sys.stdout,std
 raise SystemExit(p.wait())
 '''
 
+_PYTHON_GATE = '''import os
+if os.read(0,1)!=b"G":raise SystemExit(125)
+'''
+
 def popen(argv, **kwargs):
     """Caller must call finish even after normal exit, to reap descendants.
 
     Child startup is gated until Job assignment succeeds; an assignment failure
     aborts before the target CLI can run. No global process inventory or kill.
     """
+    return _popen_gate([sys.executable, '-I', '-B', '-c', _GATE, json.dumps([str(x) for x in argv])], kwargs)
+
+
+def popen_python(python, code, args, **kwargs):
+    """Run bound Hook Python code in the gate itself, after Job assignment.
+
+    The caller already verifies the bound interpreter/runtime. A second Python
+    process spends most of the local Hook deadline merely starting on Windows.
+    Only the stdlib gate runs before assignment; application code follows the
+    same private one-byte release protocol as the generic process gate.
+    """
+    return _popen_gate([str(python), '-I', '-B', '-X', 'utf8', '-c', _PYTHON_GATE + code,
+                        *[str(value) for value in args]], kwargs)
+
+
+def _popen_gate(command, kwargs):
     job = Job(); process = None
     try:
         kwargs.pop('start_new_session', None)
         kwargs.setdefault('stdin', subprocess.PIPE)
-        process = subprocess.Popen([sys.executable, '-I', '-B', '-c', _GATE, json.dumps([str(x) for x in argv])], **kwargs)
+        process = subprocess.Popen(command, **kwargs)
         job.assign(process)
         process._mrh_job = job
         process.stdin.write('G' if kwargs.get('text') or kwargs.get('encoding') else b'G')

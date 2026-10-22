@@ -14,6 +14,15 @@ from mrh.routing.types import safe_id, safe_model_id
 
 CODEX_TOOLS = ("spawn_agent", "collaborationspawn_agent")
 CLAUDE_TOOLS = ("Agent", "Task")
+CODEX_PACKET_PREFIXES = {"query": "mrh_packet_", "release": "mrh_release_"}
+
+
+def codex_packet_marked(event):
+    """Recognize the native envelope without loading packet storage/engine."""
+    data = event.get("tool_input") if isinstance(event, dict) else None
+    return (event.get("tool_name") in CODEX_TOOLS
+            and isinstance(data, dict) and isinstance(data.get("task_name"), str)
+            and any(data["task_name"].startswith(p) for p in CODEX_PACKET_PREFIXES.values())) if isinstance(event, dict) else False
 
 
 # Codex 0.159.3 hands hooks the delegation `message` as an opaque Fernet token; only `task_name` is readable.

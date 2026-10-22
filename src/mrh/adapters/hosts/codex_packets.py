@@ -23,10 +23,10 @@ import uuid
 from mrh.advisory import engine
 from mrh.advisory.request import AdvisoryRequest
 from mrh.advisory.store import PacketStore, candidates
+from mrh.adapters.hosts.advisory_hosts import CODEX_PACKET_PREFIXES as PREFIXES, codex_packet_marked as marked
 from mrh.infrastructure import owned, settings_v2 as v2
 from mrh.routing.types import safe_id, safe_model_id
 
-PREFIXES = {"query": "mrh_packet_", "release": "mrh_release_"}
 IDENTIFIER = re.compile(r"[0-9a-f]{32}")
 MAX_TASK_BYTES = 16_384
 TTL_SECONDS = 600
@@ -41,13 +41,6 @@ class PacketError(ValueError):
 
 def _hash(value):
     return hashlib.sha256(value).hexdigest()
-
-
-def marked(event):
-    data = event.get("tool_input") if isinstance(event, dict) else None
-    return (event.get("tool_name") in ("spawn_agent", "collaborationspawn_agent")
-            and isinstance(data, dict) and isinstance(data.get("task_name"), str)
-            and any(data["task_name"].startswith(p) for p in PREFIXES.values())) if isinstance(event, dict) else False
 
 
 def _marker(event):

@@ -8,7 +8,8 @@ import os
 from pathlib import Path
 
 from mrh.adapters.hosts.registry import HOSTS
-from mrh.advisory import engine, advice_text
+from mrh.adapters.hosts.advisory_hosts import codex_packet_marked
+from mrh.advisory import advice_text
 from mrh.advisory.hook_budget import CURRENT, HookBudget, HookExpired, HookStoreBusy, settings_digest, launch_seconds
 from mrh.advisory.store import AdviceStore
 from mrh.infrastructure import settings_v2 as v2
@@ -38,8 +39,9 @@ def _handle(event, platform, settings_path, *, classifier_factory=None, clock=No
     """Return the hook JSON object for one event. Never raises."""
     stderr = stderr or sys.stderr
     host = HOSTS.get(platform)
-    from mrh.adapters.hosts import codex_packets as packets
-    opt_in = platform == "codex" and packets.marked(event)
+    opt_in = platform == "codex" and codex_packet_marked(event)
+    if opt_in:
+        from mrh.adapters.hosts import codex_packets as packets
     try:
         if host is None or not isinstance(event, dict):
             return {}
@@ -77,6 +79,7 @@ def _handle(event, platform, settings_path, *, classifier_factory=None, clock=No
             store.maintain(v2.retention_days(settings), now())      # at most once a day
             return {}
         factory = classifier_factory or (lambda: build(settings))
+        from mrh.advisory import engine
         advice = engine.decide(pre, settings, store, factory, now)
         return host.output(advice)
     except SettingsError:
