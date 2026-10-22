@@ -109,3 +109,15 @@ Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時
 - 正式入口 `mrh models --host claude` 本日重跑仍為 `claude_catalog_initialize_failed`、exit 2。
 
 結論：在零 capabilities LPAC 契約下，原 initialize 無法成功，除非放寬隔離（`registryRead`、一般 AppContainer 或系統 ACL）或改用另一個清單來源（隔離外 broker、其他 sandbox、版本鎖定的離線快照）。這些都會改變安全邊界或資料語意，須由使用者決定；未做任何一項，Claude profile 維持停用。
+
+## 2026-10-23 registryRead：Claude 清單通過
+
+使用者決定（2026-10-23）以 LPAC 加單一 `registryRead` 取得 Claude 清單，取代先前「零 capabilities」限制。依據：`WinSock2\Parameters` 的 ACL 只對 BU、ALL APPLICATION PACKAGES 與 `registryRead` SID 授讀；Chromium 的 LPAC 沙箱也一律附 `registryRead`。
+
+- 實作：`windows_lpac.isolated(..., capabilities=)` 名稱白名單（僅 `registryRead`），SID 由 `DeriveCapabilitySidsFromName` 推導；懸停 token 必須恰好列出要求的 SID，多、少或不同均不解除懸停。只有 initialize 帶 `registryRead`，`--version` 維持零。
+- 讀回：推導的 SID 等於 Winsock 鍵 ACL 的授權 SID；真實 token 零要求時為空清單，要求時恰好該 SID。
+- 邊界（原生 payload，`tests.windows.test_lpac` 加 catalog **19 PASS、0 FAIL**）：Winsock 鍵可讀、寫入回 5；`HKLM\SECURITY` 與使用者自建 canary 鍵回 5；Winsock 啟動為 0，但第一個 socket 回 10013（WFP 拒絕）；隔離外檔案讀寫與映像寫入仍 5；環境不繼承。注意 Windows 自己在部分系統／使用者鍵（例如 `HKCU\Software`、`HKLM\SAM` 容器本身）的 ACL 已列 `registryRead`，這些鍵可被開啟，所以 canary 用全新的預設 ACL 子鍵。
+- 真實 initialize（鎖定雜湊的 Claude 2.1.303，約 22 秒）取得 default、opus、fable、sonnet、haiku 共 5 個模型，每個支援 low 至 max 五級 effort，無模型請求。
+- 其他 Windows 測試：`test_claude_native`、`test_claude_routing`、`test_platform` 共 29 項中 28 PASS；`test_platform` 的跨程序鎖測試在 `-I` 受保護 Python 下子程序找不到 `mrh`，屬測試啟動方式，與本改動無關。
+
+Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。

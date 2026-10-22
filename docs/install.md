@@ -103,7 +103,7 @@ mrh models --host claude --json
 mrh ctrl --settings $claudeProfile
 ~~~
 
-只有第一條清單查詢成功後，才從回傳清單設定 Claude 的 Light、Small、Mid；不要硬填清單或刪除版本／隔離檢查。目前 Windows 10 LTSC 19044 的零 capabilities LPAC 在 Winsock 初始化失敗；原生觀測已確認讀取系統 WinSock2 登錄檔被拒，這不是 Jev 金鑰檢查失敗。應停在這一步，保留 profile 停用，不增加 capability、修改系統 ACL 或強制打開開關。
+只有第一條清單查詢成功後，才從回傳清單設定 Claude 的 Light、Small、Mid；不要硬填清單或刪除版本／隔離檢查。Windows 上 Claude 的 initialize 在 LPAC 內只附 `registryRead` 一個 capability（libuv 初始化 Winsock 所需，網路仍被拒）；版本探測仍是零 capabilities。若清單失敗，應停在這一步，保留 profile 停用，不增加其他 capability、修改系統 ACL 或強制打開開關。
 
 ### 4. 明確啟用全部專案
 

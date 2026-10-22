@@ -1,4 +1,5 @@
-/* Win32-only test payload. No CRT, credentials, provider calls, or capabilities.
+/* Win32-only test payload. No CRT, credentials, provider calls, or capabilities
+ * of its own; the sandbox decides which (none, or registryRead) it runs with.
  * Build with a native Windows C compiler; only kernel32 is statically imported.
  * Network mode sends no application data. All canaries are test-owned.
  */
@@ -74,6 +75,25 @@ static void network(void) {
     code=connect_(socket,&address,sizeof(address));number("connect=",code==-1?error_():0);close_(socket);
 }
 
+/* Registry probes. Predefined handles are spelled out so only kernel32 and a
+ * run-time advapi32 lookup are needed. The private key path is test-supplied. */
+static void registry(void) {
+    HMODULE module=LoadLibraryW(L"advapi32.dll"); static WCHAR path[1024]; HKEY key; LONG code;
+    LONG (WINAPI *open_)(HKEY,LPCWSTR,DWORD,DWORD,HKEY*); LONG (WINAPI *close_)(HKEY);
+    HKEY machine=(HKEY)(ULONG_PTR)0x80000002, users=(HKEY)(ULONG_PTR)0x80000003;
+    if(!module){number("load_error=",GetLastError());return;}
+    open_=(void*)GetProcAddress(module,"RegOpenKeyExW");close_=(void*)GetProcAddress(module,"RegCloseKey");
+    code=open_(machine,L"System\\CurrentControlSet\\Services\\WinSock2\\Parameters",0,0x20019,&key);
+    number("winsock_read=",code); if(!code)close_(key);
+    code=open_(machine,L"System\\CurrentControlSet\\Services\\WinSock2\\Parameters",0,0x2,&key);
+    number("winsock_write=",code); if(!code)close_(key);
+    code=open_(machine,L"SECURITY",0,0x20019,&key);
+    number("machine_private=",code); if(!code)close_(key);
+    GetEnvironmentVariableW(L"MRH_LPAC_USER_KEY",path,1024);
+    code=open_(users,path,0,0x20019,&key);
+    number("user_private=",code); if(!code)close_(key);
+}
+
 static void hold(void) {
     char digits[16];int n=0,i;DWORD value=GetCurrentProcessId(),written;HANDLE file;
     do{digits[n++]=(char)('0'+value%10);value/=10;}while(value);
@@ -92,6 +112,7 @@ void _start(void) {
     else if(lstrcmpW(mode,L"sleep")==0)Sleep(30000);
     else if(lstrcmpW(mode,L"hold")==0)hold();
     else if(lstrcmpW(mode,L"network")==0)network();
+    else if(lstrcmpW(mode,L"registry")==0)registry();
     else if(lstrcmpW(mode,L"output")==0)for(i=0;i<10000;i++)WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),"xxxxxxxxxx\n",11,&written,NULL);
     ExitProcess(0);
 }

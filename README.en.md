@@ -57,7 +57,7 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 ./setup --check --json                           # done when "pending" is empty
 ```
 
-**Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Codex routing has native evidence. Claude plugin registration works, but routing stays disabled because its zero-capability LPAC catalog initialization has not passed. See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
+**Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Codex routing has native evidence. Claude plugin registration works, and its model catalog is read through an LPAC process holding only the `registryRead` capability (needed for Winsock initialization; network stays denied). See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
 
 ## Cost and data export
 

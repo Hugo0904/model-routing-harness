@@ -63,6 +63,28 @@ class ClaudeWindowsCatalogTests(unittest.TestCase):
              patch.object(catalog,'executable_hash',return_value='a'*64),patch.object(catalog.shutil,'which',return_value=None):
             self.assertEqual([x['tool'] for x in catalog.discover()],['codex'])
 
+    def test_initialize_alone_gets_registry_read_and_version_probe_stays_zero(self):
+        from mrh.adapters.platforms import windows_lpac
+        binding = {'tool':'claude','id':'claude-test','executable':'C:/private/claude.exe',
+                   'executable_sha256':'a'*64,'version':'2.1.303 (Claude Code)'}
+        requested = []
+        class Sandbox:
+            work = Path('C:/private space/runtime')
+            def capture(self, args, **kwargs):
+                if args == ['--version']: return b'2.1.303 (Claude Code)\n'
+                request = json.loads(kwargs['input'])
+                frame = {'type':'control_response','response':{'request_id':request['request_id'],
+                    'subtype':'success','response':{'models':[{'value':'opus','displayName':'Opus'}]}}}
+                kwargs['until']((json.dumps(frame)+'\n').encode())
+        @contextmanager
+        def isolated(_, **kwargs):
+            requested.append(kwargs.get('capabilities', ())); yield Sandbox()
+        with patch.object(windows_lpac,'isolated',side_effect=isolated), \
+             patch.object(claude,'executable_hash',return_value='a'*64):
+            result = claude.ClaudeCatalog().refresh(binding)
+        self.assertEqual([m.id for m in result.models],['opus'])
+        self.assertEqual(requested,[(),('registryRead',)])
+
     def test_describe_uses_lpac_and_detects_image_change(self):
         from mrh.adapters.platforms import windows_lpac
         candidate = {'tool':'claude','executable':'C:/private/claude.exe'}

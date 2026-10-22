@@ -233,7 +233,10 @@ class ClaudeCatalog:
                 raise CatalogError('tool_changed_rebind_required')
             if sys.platform == 'win32':
                 from mrh.adapters.platforms.windows_lpac import isolated
-                with isolated(binding['executable']) as sandbox:
+                # Claude's libuv loop initializes Winsock, which reads a system
+                # registry key that LPAC only allows through registryRead. The
+                # version probe in describe() stays at zero capabilities.
+                with isolated(binding['executable'], capabilities=('registryRead',)) as sandbox:
                     models = _windows_models(sandbox)
             else:
                 with isolated_cli(binding['executable']) as (root,env,command,settings,mcp):

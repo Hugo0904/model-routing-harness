@@ -1,9 +1,15 @@
-"""Credential-free metadata processes in a fresh, zero-capability Windows LPAC.
+"""Credential-free metadata processes in a fresh Windows LPAC.
 
 No shell or parent environment is inherited. The copied image is read-only and
 locked against replacement, and the token and Job are checked while suspended.
 An anonymous pipe and detached process avoid console initialization in LPAC.
 This is for public CLI metadata, never authenticated tasks.
+
+Capabilities are an explicit, closed set: none by default, or exactly the named
+system capabilities the caller passes (only `registryRead`). A runtime that
+starts a libuv loop needs `registryRead` for Winsock initialization; it grants
+no network, file or credential access. The suspended token must list exactly
+the derived capability SIDs and no others before the process is resumed.
 """
 from contextlib import contextmanager
 import ctypes as c
@@ -27,6 +33,7 @@ api, check = win.api, win.checked
 create_profile = api(u, 'CreateAppContainerProfile', [w.LPCWSTR, w.LPCWSTR, w.LPCWSTR, P, w.DWORD, c.POINTER(P)], c.c_long)
 delete_profile = api(u, 'DeleteAppContainerProfile', [w.LPCWSTR], c.c_long)
 free_sid = api(a, 'FreeSid', [P], P)
+convert_string_sid = api(a, 'ConvertStringSidToSidW', [w.LPCWSTR, c.POINTER(P)])
 init_attrs = api(k, 'InitializeProcThreadAttributeList', [P, w.DWORD, w.DWORD, c.POINTER(c.c_size_t)])
 update_attr = api(k, 'UpdateProcThreadAttribute', [P, w.DWORD, c.c_size_t, P, c.c_size_t, P, P])
 delete_attrs = api(k, 'DeleteProcThreadAttributeList', [P], None)
@@ -67,6 +74,34 @@ class PI(c.Structure):
 
 class CAPS(c.Structure):
     _fields_ = [('sid', P), ('capabilities', P), ('count', w.DWORD), ('reserved', w.DWORD)]
+
+
+class SIDATTR(c.Structure):
+    _fields_ = [('sid', P), ('attributes', w.DWORD)]
+
+
+# The only capability this module may grant. Names are closed on purpose: an
+# unknown name is refused rather than derived into a new SID.
+ALLOWED_CAPABILITIES = frozenset({'registryRead'})
+SE_GROUP_ENABLED = 4
+derive_capability = api(c.WinDLL('kernelbase', use_last_error=True), 'DeriveCapabilitySidsFromName',
+                        [w.LPCWSTR, c.POINTER(P), c.POINTER(w.DWORD), c.POINTER(P), c.POINTER(w.DWORD)])
+
+
+def capability_sid(name):
+    """Derive the capability SID text for a system capability name."""
+    if name not in ALLOWED_CAPABILITIES: raise ValueError('windows_lpac_capability_not_allowed')
+    groups, capabilities = P(), P()
+    group_count, capability_count = w.DWORD(), w.DWORD()
+    check(derive_capability(name, c.byref(groups), c.byref(group_count), c.byref(capabilities), c.byref(capability_count)))
+    try:
+        if capability_count.value != 1: raise OSError('windows_lpac_capability_derivation_invalid')
+        return win.sid_text(c.cast(capabilities, c.POINTER(P))[0])
+    finally:
+        for array, count in ((groups, group_count), (capabilities, capability_count)):
+            if array:
+                for index in range(count.value): win.local_free(c.cast(array, c.POINTER(P))[index])
+                win.local_free(array)
 
 
 create = api(k, 'CreateProcessW', [w.LPCWSTR, w.LPWSTR, P, P, w.BOOL, w.DWORD, P, w.LPCWSTR, P, c.POINTER(PI)])
@@ -117,7 +152,15 @@ def _package_access(token, sid):
         win.close(impersonation)
 
 
-def _verify(process, sid, job, executable):
+def _token_capabilities(token):
+    """Capability SID texts from TOKEN_GROUPS (class 30): count, then SID_AND_ATTRIBUTES[]."""
+    data = _token_value(token, 30)
+    count = c.cast(data, c.POINTER(w.DWORD))[0]
+    entries = c.cast(c.addressof(data) + c.sizeof(P), c.POINTER(SIDATTR))
+    return sorted(win.sid_text(entries[index].sid) for index in range(count))
+
+
+def _verify(process, sid, job, executable, capabilities=()):
     token = w.HANDLE()
     check(win.open_token(process, 8|2, c.byref(token)))
     try:
@@ -127,8 +170,7 @@ def _verify(process, sid, job, executable):
             return value.value
         package = _token_value(token, 31)  # TOKEN_APPCONTAINER_INFORMATION
         integrity = _token_value(token, 25)  # TOKEN_MANDATORY_LABEL
-        capabilities = _token_value(token, 30)
-        if (scalar(29) != 1 or c.cast(capabilities, c.POINTER(w.DWORD))[0] != 0
+        if (scalar(29) != 1 or _token_capabilities(token) != sorted(capabilities)
                 or win.sid_text(c.cast(package, c.POINTER(P))[0]) != sid
                 or win.sid_text(c.cast(integrity, c.POINTER(P))[0]) != 'S-1-16-4096'
                 or not _package_access(token, sid) or _package_access(token, 'S-1-15-2-1')):
@@ -144,8 +186,9 @@ def _verify(process, sid, job, executable):
 
 
 class Sandbox:
-    def __init__(self, root, sid):
+    def __init__(self, root, sid, capabilities=()):
         self.root, self.sid = root, sid
+        self.capabilities = tuple(capabilities)  # SID texts; empty means zero capabilities
         self.executable = root/'cli.exe'
         self.work = root/'runtime'
         self.env = {'SystemRoot': os.environ['SystemRoot'], 'WINDIR': os.environ['SystemRoot'],
@@ -167,7 +210,7 @@ class Sandbox:
         if not isinstance(input, bytes) or len(input) > 4096:
             raise ValueError('windows_lpac_input_limit')
         handles = []; attrs = None; pi = PI(); job = None
-        image_lock = None
+        image_lock = None; capability_sids = []
         try:
             # Deny write/delete sharing throughout CreateProcess and execution.
             image_lock = win.create_file(str(self.executable), 0x80000000, 1, None, 3, 0x00200000, None)
@@ -187,7 +230,11 @@ class Sandbox:
             size = c.c_size_t(); init_attrs(None, 3, 0, c.byref(size))
             buffer = c.create_string_buffer(size.value)
             check(init_attrs(buffer, 3, 0, c.byref(size))); attrs = buffer
-            caps = CAPS(self._sid, None, 0, 0); opt = w.DWORD(1)
+            for text in self.capabilities:
+                sid = P(); check(convert_string_sid(text, c.byref(sid))); capability_sids.append(sid)
+            entries = (SIDATTR*len(capability_sids))(*[(item, SE_GROUP_ENABLED) for item in capability_sids])
+            caps = CAPS(self._sid, c.cast(entries, P) if capability_sids else None, len(capability_sids), 0)
+            opt = w.DWORD(1)
             inherited = (w.HANDLE*3)(rin.value, wout.value, null)
             for key, value in ((SECURITY_CAPABILITIES, caps), (ALL_APPLICATION_PACKAGES_POLICY, opt), (HANDLE_LIST, inherited)):
                 check(update_attr(attrs, 0, key, c.byref(value), c.sizeof(value), None, None))
@@ -202,7 +249,7 @@ class Sandbox:
             job = Job()
             child = type('Child', (), {'_handle': pi.process})()
             job.assign(child)
-            _verify(pi.process, self.sid, job, self.executable)
+            _verify(pi.process, self.sid, job, self.executable, self.capabilities)
             if resume(pi.thread) == 0xffffffff: raise c.WinError(c.get_last_error())
             for handle in (rin, wout, null):
                 win.close(handle); handles.remove(handle)
@@ -247,12 +294,18 @@ class Sandbox:
                     for handle in (pi.thread, pi.process, *handles, image_lock):
                         if handle: win.close(handle)
                     if attrs is not None: delete_attrs(attrs)
+                    for item in capability_sids: win.local_free(item)
 
 
 @contextmanager
-def isolated(executable):
-    """Fresh profile/SID and private files; no persistent package or credentials."""
+def isolated(executable, *, capabilities=()):
+    """Fresh profile/SID and private files; no persistent package or credentials.
+
+    `capabilities` names system capabilities (see ALLOWED_CAPABILITIES); the
+    default grants none. Unknown names are refused before any profile exists.
+    """
     from mrh.adapters.catalogs.catalog import executable_hash
+    capability_texts = tuple(capability_sid(name) for name in dict.fromkeys(capabilities))
     digest = executable_hash(executable)
     name = 'mrh.catalog.'+uuid.uuid4().hex
     sid = P()
@@ -264,7 +317,7 @@ def isolated(executable):
             root = Path(directory)
             win.protect(root)
             sid_text = win.sid_text(sid); owner = win.current_sid()
-            sandbox = Sandbox(root, sid_text); sandbox._sid = sid; sandbox.digest = digest
+            sandbox = Sandbox(root, sid_text, capability_texts); sandbox._sid = sid; sandbox.digest = digest
             sandbox.profile_name = name
             shutil.copyfile(executable, sandbox.executable)
             if hashlib.sha256(sandbox.executable.read_bytes()).hexdigest() != digest or executable_hash(executable) != digest:

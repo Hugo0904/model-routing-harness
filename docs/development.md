@@ -68,7 +68,7 @@ $env:MRH_LPAC_TEST_HELPER_EXE = "$scratch\lpac_payload.exe"
 python -B -m unittest tests.windows.test_lpac
 ```
 
-payload 不連結 CRT，只匯入 kernel32，按測試模式觀察合成檔案、程序及無資料的 TCP 連線；不含任務、登入或憑證。builder 保留 relocation、啟用 ASLR／NX，避免舊式 PE 被 LPAC 拒絕。正式接頭每次建立新 profile、只繼承指定管線，先核對 AppContainer、零 capabilities、低完整性、package SID、ALL APPLICATION PACKAGES 拒絕、映像及 Job，才解除懸停。未知或清理失敗均拒絕清單，不增加 capability。設計依據為 [Microsoft LPAC 啟動流程](https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer)。
+payload 不連結 CRT，只匯入 kernel32，按測試模式觀察合成檔案、程序及無資料的 TCP 連線；不含任務、登入或憑證。builder 保留 relocation、啟用 ASLR／NX，避免舊式 PE 被 LPAC 拒絕。正式接頭每次建立新 profile、只繼承指定管線，先核對 AppContainer、capabilities 與要求完全一致（預設零；唯一白名單項目為 `registryRead`）、低完整性、package SID、ALL APPLICATION PACKAGES 拒絕、映像及 Job，才解除懸停。未知或清理失敗均拒絕清單；capability 名稱為封閉白名單，未列名稱在建立 profile 前即拒絕。設計依據為 [Microsoft LPAC 啟動流程](https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer)。
 
 需要整體離線回歸時：
 

@@ -23,14 +23,14 @@ if os.name == 'nt':
 @unittest.skipUnless(os.name == 'nt', 'native Windows LPAC only')
 class LpacTests(unittest.TestCase):
     @contextmanager
-    def payload(self, mode):
+    def payload(self, mode, capabilities=()):
         source = os.environ.get('MRH_LPAC_TEST_HELPER_EXE')
         if not source: self.skipTest('compile lpac_payload.c and set MRH_LPAC_TEST_HELPER_EXE')
         with tempfile.TemporaryDirectory(prefix='MRH native helper space ') as directory:
             target = Path(directory)/'helper.exe'
             shutil.copyfile(source,target)
             win.protect(target)
-            with lpac.isolated(target) as sandbox:
+            with lpac.isolated(target, capabilities=capabilities) as sandbox:
                 sandbox.env['MRH_LPAC_TEST_CASE'] = mode
                 yield sandbox
 
@@ -123,6 +123,79 @@ class LpacTests(unittest.TestCase):
             # initialize it, the first socket/connect must be denied by WFP.
             self.assertTrue(out == {'startup':'10107'} or out == {'startup':'0','socket':'10013'}
                             or out == {'startup':'0','socket':'0','connect':'10013'},out)
+
+    def test_registry_read_capability_is_exactly_the_system_key_grant_and_closed(self):
+        key = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WinSock2\\Parameters'
+        sddl = subprocess.run(['powershell','-NoProfile','-Command',f'(Get-Acl "{key}").Sddl'],
+                              capture_output=True,text=True,timeout=30,check=True).stdout
+        self.assertIn(lpac.capability_sid('registryRead'), sddl)
+        for name in ('internetClient','privateNetworkClientServer','registryWrite','','REGISTRYREAD'):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError,'capability_not_allowed'):
+                lpac.capability_sid(name)
+            with self.subTest(isolated=name), self.assertRaisesRegex(ValueError,'capability_not_allowed'):
+                with lpac.isolated(sys.executable, capabilities=(name,)): pass
+
+    def test_registry_read_reaches_winsock_but_not_writes_or_private_registry(self):
+        # Windows itself names registryRead on some user keys (e.g. HKCU\Software, non-inherited),
+        # so the private canary is a fresh child key with the default, non-AC ACL.
+        import uuid, winreg
+        name = 'Software\\MRH-LPAC-Canary-'+uuid.uuid4().hex
+        canary = winreg.CreateKey(winreg.HKEY_CURRENT_USER, name)
+        try:
+            winreg.SetValueEx(canary, 'synthetic', 0, winreg.REG_SZ, 'never credentials')
+            with self.payload('registry', ('registryRead',)) as sandbox:
+                sandbox.env['MRH_LPAC_USER_KEY'] = win.current_sid()+'\\'+name
+                self.assertEqual(sandbox.capabilities, (lpac.capability_sid('registryRead'),))
+                out = dict(line.split('=') for line in sandbox.capture([],timeout=5).decode().splitlines())
+        finally:
+            winreg.CloseKey(canary); winreg.DeleteKey(winreg.HKEY_CURRENT_USER, name)
+        self.assertEqual(out,{'winsock_read':'0','winsock_write':'5','machine_private':'5','user_private':'5'})
+
+    def test_registry_read_initializes_winsock_but_network_stays_denied(self):
+        with self.payload('network', ('registryRead',)) as sandbox:
+            out = dict(line.split('=') for line in sandbox.capture([],timeout=5).decode().splitlines())
+        # No network capability: Winsock starts, then WFP refuses the first socket/connect.
+        self.assertTrue(out == {'startup':'0','socket':'10013'} or out == {'startup':'0','socket':'0','connect':'10013'},out)
+
+    def test_registry_read_keeps_file_denials_and_lpac(self):
+        with tempfile.TemporaryDirectory(prefix='MRH outside space ') as temp, self.payload('files', ('registryRead',)) as sandbox:
+            outside = Path(temp)/'private-canary'; outside.write_text('synthetic, never credentials')
+            descriptor = lpac.P()
+            sddl = f'D:P(A;;FA;;;{win.current_sid()})(A;;FA;;;SY)(A;;GR;;;S-1-15-2-1)S:(ML;;NW;;;LW)'
+            win.checked(win.convert_sd(sddl, 1, c.byref(descriptor), None))
+            try: win.checked(win.set_security(str(outside), 0x80000014, descriptor))
+            finally: win.local_free(descriptor)
+            sandbox.env['MRH_LPAC_CANARY'] = str(outside)
+            out = dict(line.split('=') for line in sandbox.capture([],timeout=5).decode().splitlines())
+        self.assertEqual(out,{'outside_read':'5','outside_write':'5','image_write':'5','inside_write':'0','secret_inherited':'0'})
+
+    def test_token_with_wrong_capabilities_is_never_resumed(self):
+        # The suspended token must list exactly the requested capability SIDs: an extra
+        # SID, a missing one, or a different one is refused before ResumeThread.
+        registry_read = lpac.capability_sid('registryRead')
+        for requested, observed in (((),[registry_read]),(('registryRead',),[]),
+                                    (('registryRead',),[registry_read,'S-1-15-3-1']),
+                                    (('registryRead',),['S-1-15-3-1'])):
+            with self.subTest(requested=requested,observed=observed), \
+                 lpac.isolated(sys.executable, capabilities=requested) as sandbox:
+                with patch.object(lpac,'_token_capabilities',return_value=sorted(observed)), \
+                     patch.object(lpac,'resume') as resume, self.assertRaisesRegex(OSError,'token_invalid'):
+                    sandbox.capture([],timeout=1)
+                resume.assert_not_called()
+
+    def test_real_token_lists_exactly_the_requested_capabilities(self):
+        registry_read = lpac.capability_sid('registryRead')
+        for requested, expected in (((),[]),(('registryRead',),[registry_read])):
+            with self.subTest(requested=requested), lpac.isolated(sys.executable, capabilities=requested) as sandbox:
+                seen = []
+                original = lpac._token_capabilities
+                def record(token):
+                    seen.append(original(token)); return seen[-1]
+                with patch.object(lpac,'_token_capabilities',side_effect=record), \
+                     patch.object(lpac,'resume',side_effect=OSError('synthetic_stop')), \
+                     self.assertRaisesRegex(OSError,'synthetic_stop'):
+                    sandbox.capture([],timeout=1)
+                self.assertEqual(seen,[expected])
 
 
 if __name__ == '__main__': unittest.main()
