@@ -183,18 +183,6 @@ def _pct_row(parts, width):
     return "".join(row)
 
 
-def _overhead_lines(report, width, p):
-    """One number from `mrh usage overhead`: did stopping and re-issuing pay off? The breakdown stays in that command."""
-    if not report or not report.get("reissues"):
-        return []
-    if report["compared"]:
-        net = report["compared_saving_usd"] - report["compared_overhead_usd"]
-        value = f"淨 {'＋' if net >= 0 else '－'}${abs(net):.4f}（{report['compared']} 次重派）"   # stats_view._usd has no sign
-    else:
-        value = f"{report['reissues']} 次重派，還算不出淨值"
-    return [p("MRH 攔截的淨收益", "text"), p(clip(value, width), "faint"), ""]
-
-
 def _where(data, policy, inner, p, color):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
@@ -238,7 +226,14 @@ def _where(data, policy, inner, p, color):
                      (f"節省（換算）{stats_view._usd(sum(sv.get('known_usd', sv['usd']) for sv in saved))}" +
                       ("（已知部分）" if any(sv['unknown'] for sv in usage['saving'].values()) else "")) if saved else
                      ("舊版未驗證" if usage.get("legacy") else "換算未知"))
-    right += _overhead_lines(data.get("overhead"), right_w, p)
+    ov = data.get("overhead") or {}
+    if ov.get("reissues"):               # one bar, like the others: how much of the re-issue cost the saving paid back
+        if ov["compared"]:
+            saving, cost = ov["compared_saving_usd"], ov["compared_overhead_usd"]
+            right += bar("攔截回本率", round(min(saving, cost) * 1_000_000) or 1, round(cost * 1_000_000) or 1,
+                         f"省 {stats_view._usd(saving)} · 耗 {stats_view._usd(cost)}（{ov['compared']} 次重派）")
+        else:
+            right += [p("攔截回本率：還沒有可比樣本（先 mrh usage collect）", "faint"), ""]
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}
