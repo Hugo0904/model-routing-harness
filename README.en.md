@@ -4,80 +4,122 @@
 
 **Suggests a suitable model and reasoning effort for each subagent task.**
 
-[繁體中文](README.md) · [Installation guide (Traditional Chinese)](docs/install.md) · [Docs index](docs/README.md)
+[Install with AI](#install-with-ai) · [Install yourself](#install-yourself) · [Commands](#commands) · [Uninstall](#uninstall) · [繁體中文](README.md)
 
 </div>
 
-MRH is a hook for Codex and Claude Code. When the main model starts a general-purpose subagent without choosing a model, an effort level or a named role, MRH asks the Jev classifier (TypeSafe API) how hard the task is (Light / Small / Mid / Top) and advises re-issuing the delegation with the model and effort you configured for that tier. The main AI keeps the final say, and the main chat's model is never switched. A model, effort or role you set explicitly always wins. Low confidence or any failure lets the original call through unchanged.
+## What it is
 
-## What it does not do
+When the main AI (Codex or Claude Code) starts a subagent without choosing a model, MRH asks the Jev classifier how hard the task is (Light / Small / Mid / Top) and suggests re-issuing it with the model and reasoning effort you set for that level. Simple work goes to cheaper models; only hard work uses expensive ones.
 
-- It does not change the model of your main conversation.
-- It does not route delegations that already name a model, an effort or a custom role.
-- It does not prove cost savings: usage figures are estimates, not a bill.
+- Your main chat's model is never switched; the main AI keeps the final say.
+- Delegations that already name a model, an effort or a custom role are left alone.
+- If classification fails or is unsure, the original call goes through unchanged.
+- A new install is disabled until you agree to turn it on.
 
-## Platforms
+## Install with AI
 
-| Platform | Status |
-| --- | --- |
-| macOS, Apple Silicon | Supported. The installer brings its own pinned Python 3.11. |
-| Windows x64 (native) | Supported. Needs Git and a native x64 CPython 3.11 or newer; nothing is downloaded. |
-| Linux, WSL, Intel Mac | Not supported. |
+Paste this to an AI that can operate your computer (for example Codex or Claude Code). It stops and asks whenever you need to act or decide:
 
-Hosts: Codex and Claude Code (Claude Code 2.1.296 or newer on macOS). Details and known limits: [compatibility](docs/compatibility.md).
+```text
+Please install MRH: https://github.com/Hugo0904/model-routing-harness
+Follow docs/install.md in the repo (it is in Traditional Chinese) and:
+1. Check my operating system and whether to install for Codex, Claude Code or both; ask me if unsure.
+2. Keep my existing settings, keys, statistics, skills and other hooks. On any conflict or same-named command, stop and tell me; do not overwrite.
+3. I enter the Jev key, log in and approve Codex hook trust myself; just tell me what to run.
+4. Before enabling, ask which projects' task text may be sent to TypeSafe for classification; enable only after I agree.
+5. Finish with --check --json, then run mrh status from an ordinary folder in a fresh terminal environment.
+6. Report separately: install result, whether the mrh command works, hook trust, and tests not done. Do not call Jev or start subagents just to test (it costs money).
+7. Finally ask whether I want the optional delegation skill; install it only if I say yes.
+```
 
-## Install (macOS)
+## Install yourself
 
-You need Git and a logged-in Codex CLI and/or Claude Code CLI.
+**macOS (Apple Silicon)**: needs Git and a logged-in Codex or Claude Code. The installer brings its own Python.
 
 ```sh
 git clone https://github.com/Hugo0904/model-routing-harness.git
 cd model-routing-harness
-./setup --host claude            # or: --host codex, or both
+./setup --host claude        # --host codex for Codex; give both for both
 ```
 
-Open a new shell, then check that the command resolves from an ordinary directory:
+Open a new terminal window, then:
 
 ```sh
-(cd "$HOME" && mrh status)
+mrh key set jev              # store your Jev key (create one at https://console.typesafe.ai/keys)
+mrh ctrl                     # choose the model for each level
 ```
 
-Create a key in the [TypeSafe console](https://console.typesafe.ai/keys), store it (macOS prompts for it and keeps it in the Keychain), and pick the models for each tier:
+Once you agree to send task text to TypeSafe, enable and check from the repo folder:
 
 ```sh
-mrh key set jev
-mrh ctrl
+./setup --host claude --workspace "/" --enable   # "/" means all projects; or give a project path
+./setup --check --json                           # done when "pending" is empty
 ```
 
-A fresh install is **disabled** and does not export anything. Enabling it needs your explicit consent to the scope, for example:
-
-```sh
-./setup --host claude --workspace "/" --enable   # "/" = all projects; use a project path to limit it
-./setup --check --json                           # lists whatever is still pending
-```
-
-The full steps, including Windows, are in the [installation guide](docs/install.md) (Traditional Chinese). You can also paste the install prompt from the [Chinese README](README.md#交給-ai-安裝) to an AI that can operate your computer.
+**Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. See the [Windows section of the install guide](docs/install.md#windows-x64) (Traditional Chinese).
 
 ## Cost and data export
 
-- Classification uses the TypeSafe Jev API. It is billed to your TypeSafe account, separately from any Codex or Claude subscription.
-- Once enabled, the text of each delegated task is sent to TypeSafe for classification: for Claude Code the subagent's prompt (or its description if there is no prompt); for Codex the readable task message, or only the task name when the message is encrypted. The text is sent as is and MRH does not filter its content; your Jev key is used only to authenticate to TypeSafe. The optional Codex full-task classification, extra title/role fields and background summaries send more; see [export and failure handling](docs/design.md#外送與失敗處理) (Traditional Chinese).
-- A new install is disabled and forbids export until you explicitly allow it. `mrh ctrl set enabled off` turns routing off at any time.
+- Classification uses the TypeSafe Jev API, billed to your TypeSafe account, separately from any Codex or Claude subscription.
+- Once enabled, the text of each delegated task is sent to TypeSafe: the subagent's prompt for Claude Code; the task message for Codex, or only the task name when the message is encrypted. It is sent as is; MRH does not filter it.
+- Optional features (Codex full-task classification, extra title and role, background summaries) send more; see [export rules](docs/design.md#外送與失敗處理) (Traditional Chinese).
+- `mrh ctrl set enabled off` turns it off at any time.
 
-## Optional: delegation skill
+## Commands
 
-`setup` never installs this. If you want the main AI to hand bounded work to subagents on its own (the main model as the brain, subagents as workers), you can install an optional skill:
+| Command | Purpose |
+| --- | --- |
+| `mrh ctrl` | Open the settings menu (models, confidence threshold, projects). |
+| `mrh status` | Show the current state. |
+| `mrh stats` | Show classification and delegation statistics. |
+| `mrh usage collect` | Collect subagent usage from local records; no model call. Cost figures are estimates, not a bill. |
+| `mrh key status jev` | Check whether the Jev key is stored (never shows it). |
+| `mrh ctrl set enabled off` | Turn routing off. |
+| `mrh cleanup` | Preview removable scratch files; add `--apply` to remove them. Settings and statistics are untouched. |
+
+After installing or updating, open a new terminal window so the `mrh` command is picked up.
+
+## Optional: let the AI delegate on its own
+
+In normal use the main AI rarely starts subagents, so MRH rarely gets a chance to help. To have the main AI act as the planner and hand bounded work to subagents, install this skill (the installer never does it for you):
 
 ```sh
-mrh skill install --host claude   # or --host codex
+mrh skill install --host claude   # --host codex for Codex
 ```
 
-See [delegation skills](docs/delegation-skills.md) for status, update and removal.
+Status and removal: [delegation skills](docs/delegation-skills.md).
+
+## Update
+
+From the repo folder run `git pull --ff-only`, then rerun `./setup` with the same options as before (for example `./setup --host claude`). `./setup --rollback` returns to the previous version if something goes wrong.
 
 ## Uninstall
 
-On macOS run `./setup --uninstall` from the clone to preview, then add `--yes`. Settings and statistics are kept unless you also pass `--purge-data`, which additionally deletes them and the Jev key in the Keychain. Windows has manual steps only, not verified on a real Windows machine. See [Uninstall](docs/install.md#移除) (Traditional Chinese).
+**macOS**, from the repo folder:
+
+```sh
+./setup --uninstall                      # preview only, changes nothing
+./setup --uninstall --yes                # remove MRH, keep settings and statistics
+./setup --uninstall --yes --purge-data   # also delete settings, statistics and the Jev key in the Keychain
+```
+
+Only what MRH created is removed; other hooks, settings and the rest of your shell startup files stay.
+
+**Windows**: manual steps only, not yet verified on a real Windows machine. See [uninstall](docs/install.md#移除) (Traditional Chinese).
+
+## Support
+
+| Item | Status |
+| --- | --- |
+| macOS (Apple Silicon) | Supported. Brings its own Python 3.11. |
+| Windows (x64) | Supported. Needs Python 3.11 or newer. |
+| Linux, WSL, Intel Mac | Not supported. |
+| Codex, Claude Code | Supported. Claude Code 2.1.296 or newer on macOS. |
+| Gemini | Not supported yet. |
+
+Tested versions and known limits: [compatibility](docs/compatibility.md).
 
 ## License
 
-[MIT](LICENSE). Third-party runtime licenses are in [packaging/macos-arm64/LICENSES.md](packaging/macos-arm64/LICENSES.md).
+[MIT](LICENSE). Third-party runtime licenses: [packaging/macos-arm64/LICENSES.md](packaging/macos-arm64/LICENSES.md).

@@ -6,99 +6,143 @@
 
 [![Version](https://img.shields.io/badge/version-0.4.0-2563eb)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Installer](https://img.shields.io/badge/installer-Windows_x64_%7C_macOS_arm64-111827)](docs/compatibility.md)
-[![Python](https://img.shields.io/badge/macOS_Python-3.11.17-3776AB)](packaging/macos-arm64/runtime-lock.json)
+[![Platforms](https://img.shields.io/badge/platforms-macOS_Apple_Silicon_%7C_Windows_x64-111827)](docs/compatibility.md)
 [![Hosts](https://img.shields.io/badge/hosts-Codex_%7C_Claude_Code-0f766e)](docs/compatibility.md)
 
-[交給 AI 安裝](#交給-ai-安裝) · [手動安裝](docs/install.md) · [常用指令](#常用指令) · [文件](docs/README.md) · [English](README.en.md)
+[交給 AI 安裝](#交給-ai-安裝) · [自己安裝](#自己安裝) · [常用指令](#常用指令) · [移除](#移除) · [English](README.en.md)
 
 </div>
 
+## 這是什麼
+
+主 AI（Codex 或 Claude Code）派子代理做事、卻沒有指定模型時，MRH 會先請 Jev 判斷這件事的難度（Light／Small／Mid／Top），再建議主 AI 改用你為該難度設定的模型與推理強度重新派工。簡單的事交給便宜的模型，難的事才用貴的。
+
+- 主聊天的模型不會被換掉，最後決定權在主 AI。
+- 已經指定模型、推理強度或專門角色的派工，MRH 不插手。
+- 判斷失敗或信心不足時照原樣放行，不影響工作。
+- 新安裝預設停用，要你同意後才會開始運作。
+
 ## 交給 AI 安裝
 
-把下面這段貼給能操作你電腦的 AI，例如 Codex 或 Claude Code：
+把下面這段貼給能操作你電腦的 AI（例如 Codex 或 Claude Code），它會照步驟裝好，需要你動手或決定的地方會停下來問你：
 
 ```text
-請依 repo 的 docs/install.md 幫我安裝 https://github.com/Hugo0904/model-routing-harness 。先辨識作業系統、Codex／Claude Code／兩者，以及允許任務外送的範圍；保留既有設定、金鑰、統計、skill 和其他 Hook。金鑰、登入與原生信任由我操作，取得外送同意後才啟用支援的宿主。安裝器自動處理支援的使用者 PATH，不覆蓋其他 PATH 項目或同名命令；說明既有程序需要如何取得新環境。最後依平台執行 --check --json，並切到一般資料夾確認命令解析後實際執行 mrh status。分開回報安裝、命令可用性、Hook 信任與未做的實測，未支援功能保持停用。MRH 完成後詢問我是否安裝對應平台的選配派工 skill，明確同意才裝，沒有答覆就不裝。
+請幫我安裝 MRH：https://github.com/Hugo0904/model-routing-harness
+照 repo 裡的 docs/install.md 做，並遵守：
+1. 先確認我的作業系統，以及要裝給 Codex、Claude Code 還是兩者；不確定就問我。
+2. 保留我現有的設定、金鑰、統計、skill 和其他 Hook；遇到衝突或同名指令就停下來告訴我，不要覆蓋。
+3. Jev 金鑰、登入和 Codex 的 Hook 信任由我自己操作，你告訴我要執行什麼就好。
+4. 啟用前先問我允許哪些專案的任務內容送到 TypeSafe 分級，我同意後才啟用。
+5. 完成後執行 --check --json，並在新的終端機環境、一般資料夾裡執行 mrh status，確認指令可以用。
+6. 分開回報：安裝結果、mrh 指令能不能用、Hook 信任狀態、還沒做的測試。不要為了測試呼叫 Jev 或派子代理（會花錢）。
+7. 最後問我要不要安裝選配派工 skill，我說要才裝。
 ```
 
-提供 **Windows x64 原生安裝器**與 **macOS Apple Silicon（M 系列）安裝流程**。Windows 的安裝／Hook 接入與真正的 Jev 分類、子代理採用是不同驗證；Claude 模型清單等限制見 [相容性](docs/compatibility.md)。登入、金鑰輸入和原生信任確認仍需你操作。
+## 自己安裝
 
-## 交給 AI 更新
+**Mac（Apple Silicon）**：需要 Git，以及已登入的 Codex 或 Claude Code。安裝器會自備 Python。
 
-```text
-請依目前 checkout 的 docs/install.md 更新 MRH。先辨識系統、已安裝的宿主與安裝參數，保留未提交修改、設定、金鑰、統計、實驗資料、既有 skill 及其他 Hook；有來源或同名命令衝突就具體回報，不覆蓋。確認工作樹可更新後取得更新、重跑原安裝入口，依指南完成 --check --json，從一般資料夾確認命令解析並執行 mrh status。安裝器自動處理支援的使用者 PATH，確認更新不重複加入；既有終端或啟動它的應用程式仍持有舊環境時，說明需要重開的程序。不要為更新重裝派工 skill、改原外送範圍或額外呼叫模型；分開回報已完成與尚未驗證的項目。
+```sh
+git clone https://github.com/Hugo0904/model-routing-harness.git
+cd model-routing-harness
+./setup --host claude        # Codex 用 --host codex；兩個都要就兩個都寫
 ```
 
-## 手動安裝
+開一個新的終端機視窗，再繼續：
 
-從下載程式、取得 Jev 金鑰，到選模型與啟用工作區，照著 [手動安裝教學](docs/install.md) 操作。Windows 需先有 Git 與原生 x64 Python 3.11 以上；Mac 安裝器會處理自己的 Python。兩者都不需要 Jev SDK 或 WSL。
+```sh
+mrh key set jev              # 存入 Jev 金鑰（到 https://console.typesafe.ai/keys 建立）
+mrh ctrl                     # 設定每個難度要用的模型
+```
 
-## 可以做什麼
+同意任務內容送到 TypeSafe 後，回到 repo 資料夾啟用並檢查：
 
-- 用 Jev 將子任務分成 Light／Small／Mid／Top，建議對應模型與推理強度。
-- 用 `mrh ctrl` 調整各級模型、信心門檻與適用資料夾；Top 可交回主 AI 處理。
-- 查看分級、派工、已觀測採用與用量統計。
-- 更新時保留設定、金鑰與統計；支援退回上一個相容版本。
+```sh
+./setup --host claude --workspace "/" --enable   # "/" 代表全部專案；也可以換成某個專案的路徑
+./setup --check --json                           # pending 是空的就完成了
+```
 
-主 AI 保留最後決定權，主聊天的模型不會被切換。你明確指定的模型與角色優先。新安裝預設停用，完成設定並允許外送任務後才啟用。
+**Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
 
 ## 費用與資料外送
 
-- 分級使用 TypeSafe 的 Jev API，費用依你的 TypeSafe 帳號另外計算，與 Codex／Claude 的訂閱分開。
-- 路由啟用後，每次委派的任務文字會送到 TypeSafe 做分級：Claude Code 送子代理的 prompt（沒有時用描述）；Codex 送可讀的任務訊息，訊息被加密時只送任務名稱。文字照原樣送出，MRH 不過濾其中內容；你的 Jev 金鑰只用於向 TypeSafe 驗證。選配的 Codex 完整任務分類、額外標題／角色與背景摘要會再送出更多內容，見[產品設計的外送章節](docs/design.md#外送與失敗處理)與 [Codex 完整任務分類](docs/codex/packet-skill.md)。
-- 新安裝預設停用且禁止外送，需要你明確同意外送範圍後才會啟用；隨時可用 `mrh ctrl set enabled off` 停用。
-
-## 版本與相容性
-
-| 元件 | 版本與範圍 |
-| --- | --- |
-| MRH | 0.4.0，採 MIT 授權。 |
-| Windows Python | 使用本機既有的原生 x64 CPython ≥ 3.11，複製為私有 runtime 並檢查雜湊；不下載 Python。 |
-| Mac 內附 Python | 3.11.17，沿用既有 arm64 runtime lock。 |
-| Windows 宿主觀測 | Codex 0.163.0-alpha.10.2、Claude Code 2.1.303；已安裝／登入不等於路由實測完成。 |
-| Mac 宿主既有驗證 | Codex 0.162.1、Claude Code 2.1.296；Claude 最低 2.1.296，新版清單未知可手動設定，未以 Mac 實機重驗。 |
-| Jev | 預設 `jev-latest`，可改用預覽版或固定版本。 |
-
-完整範圍見 [平台與相容性](docs/compatibility.md)。Gemini 目前只有模型清單接頭，尚不支援安裝與自動路由。
+- 分級使用 TypeSafe 的 Jev API，費用記在你的 TypeSafe 帳號，和 Codex／Claude 的訂閱分開。
+- 啟用後，每次派工的任務文字會送到 TypeSafe：Claude Code 送子代理的 prompt；Codex 送任務訊息，訊息加密時只送任務名稱。內容照原樣送出，MRH 不會過濾。
+- 選配功能（Codex 完整任務分類、額外標題與角色、背景摘要）會送出更多內容，說明見[外送規則](docs/design.md#外送與失敗處理)。
+- 隨時可以用 `mrh ctrl set enabled off` 停用。
 
 ## 常用指令
 
 | 指令 | 用途 |
 | --- | --- |
-| `mrh ctrl` | 開啟設定選單。 |
-| `mrh key status jev` | 確認 Jev 金鑰是否已設定，不顯示內容。 |
-| `mrh status --json` | 查看目前狀態。 |
-| `mrh stats` | 查看統計。 |
-| `mrh usage collect` | 收集本機子代理用量，不呼叫模型。 |
-| `mrh ctrl set enabled off` | 停用路由。 |
-| `mrh cleanup` / `mrh cleanup --apply` | 預覽／清除可丟棄暫存與快取，不動設定、統計與實驗資料。 |
-| `mrh skill status --host codex` | 查看選配派工 skill；Claude 改用 `--host claude`。 |
+| `mrh ctrl` | 開啟設定選單（模型、信心門檻、適用專案）。 |
+| `mrh status` | 查看目前狀態。 |
+| `mrh stats` | 查看分級與派工統計。 |
+| `mrh usage collect` | 收集子代理用量（只讀本機紀錄，不呼叫模型；換算金額只是估計，不是帳單）。 |
+| `mrh key status jev` | 確認 Jev 金鑰是否已存入（不顯示內容）。 |
+| `mrh ctrl set enabled off` | 停用。 |
+| `mrh cleanup` | 預覽可清除的暫存；加 `--apply` 才清除。不動設定與統計。 |
 
-安裝器自動處理支援的使用者 PATH，不依賴特定終端品牌。安裝與更新最後都要在取得新環境的程序中，從一般資料夾確認 `mrh status` 可直接執行。絕對路徑只供排查，不代替這項檢查，詳見[安裝教學](docs/install.md)。用量換算不是帳單，也不代表已證明節省費用。
+安裝或更新後要開新的終端機視窗，`mrh` 指令才會生效。
 
-## 選配派工 skill
+## 選配：讓 AI 主動分派子任務
 
-需要 AI 主動分配合適子任務時，可自行選擇安裝；`setup` 不會自動安裝，也不改你的既有 Router 或其他 skill：
+一般使用時，主 AI 不常自己派子代理，MRH 也就很少有機會出手。想讓主 AI 當「大腦」、把範圍明確的小工作交給子代理，可以安裝這個 skill（安裝器不會自動裝）：
 
 ```sh
-mrh skill install --host codex
-mrh skill install --host claude
+mrh skill install --host claude   # Codex 用 --host codex
 ```
 
-只執行自己選用的平台；查看、更新與移除規則見[選配派工 skill](docs/delegation-skills.md)。Windows 不支援 Codex 完整任務 packet，安裝社群 skill 不會增加該能力。
+查看狀態與移除方式見[選配派工 skill](docs/delegation-skills.md)。
+
+## 更新
+
+貼給 AI：
+
+```text
+請幫我更新 MRH（就在目前這個 repo 資料夾）。照 docs/install.md 的更新步驟做：
+1. 先確認沒有未提交的修改，有就停下來問我。
+2. git pull --ff-only 後，用原本的安裝參數重跑安裝。
+3. 保留設定、金鑰、統計、skill 和其他 Hook；不要改外送範圍，不要重裝 skill。
+4. 執行 --check --json，並在新的終端機環境、一般資料夾裡執行 mrh status。
+5. 回報結果與還沒驗證的項目；不要為了測試呼叫 Jev 或派子代理。
+```
+
+自己更新：在 repo 資料夾執行 `git pull --ff-only`，再用原本的指令重跑一次 `./setup`（例如 `./setup --host claude`）。出問題可以用 `./setup --rollback` 退回上一版。
 
 ## 移除
 
-Mac：在原本的資料夾執行 `./setup --uninstall` 預覽，確認後加 `--yes`。預設保留設定與統計；要連同它們與鑰匙圈裡的 Jev 金鑰一起刪除，再加 `--purge-data`。Windows 目前只有手動步驟（尚未經實機驗證）。完整說明見[安裝指南的移除章節](docs/install.md#移除)。
+**Mac**：在 repo 資料夾執行：
 
-## 進一步設定
+```sh
+./setup --uninstall                      # 預覽會移除什麼，不做任何變更
+./setup --uninstall --yes                # 移除，保留設定與統計
+./setup --uninstall --yes --purge-data   # 連設定、統計和鑰匙圈裡的 Jev 金鑰一起刪除
+```
 
+只會移除 MRH 自己建立的東西；其他 Hook、設定，以及 shell 設定檔裡的其他內容都會保留。
+
+**Windows**：目前只有手動步驟（還沒在 Windows 實機驗證），見[移除說明](docs/install.md#移除)。
+
+## 支援範圍
+
+| 項目 | 說明 |
+| --- | --- |
+| macOS（Apple Silicon） | 支援。安裝器自備 Python 3.11。 |
+| Windows（x64） | 支援。需自備 Python 3.11 以上。 |
+| Linux、WSL、Intel Mac | 不支援。 |
+| Codex、Claude Code | 支援。Mac 上的 Claude Code 需 2.1.296 以上。 |
+| Gemini | 尚未支援。 |
+
+已驗證的版本與已知限制見[平台與相容性](docs/compatibility.md)。
+
+## 更多文件
+
+- [安裝教學](docs/install.md)：完整步驟、更新、退版與移除。
 - [設定與日常操作](docs/usage.md)：模型、信心門檻、進階檔位、Jev 版本與統計。
-- [Codex 完整任務分類](docs/codex/packet-skill.md)：讓分類使用完整任務內容，需明確選配。
-- [疑難排解](docs/troubleshooting.md)：尚未啟用、信任與模型清單問題。
-- [驗證摘要](docs/validation.md) · [開發指南](docs/development.md) · [全部文件](docs/README.md)
+- [疑難排解](docs/troubleshooting.md)：找不到 mrh、尚未啟用、信任與模型清單問題。
+- [全部文件](docs/README.md)
 
 ## 授權
 
-本專案採用 [MIT License](LICENSE)，允許使用、修改、散布與商用，須保留授權及著作權聲明。Mac 第三方 runtime 的授權見 [LICENSES](packaging/macos-arm64/LICENSES.md)；Windows 私有 runtime 保留來源 Python 的 `LICENSE.txt` 與隨附聲明。
+[MIT License](LICENSE)：可自由使用、修改、散布與商用，請保留授權與著作權聲明。第三方 runtime 的授權見 [LICENSES](packaging/macos-arm64/LICENSES.md)。
