@@ -101,3 +101,11 @@ Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時
 僅在該 helper 程序內觀測 System32 `ws2_32.dll` 的 IAT，直接記錄到 `RegOpenKeyExA(HKLM, System\CurrentControlSet\Services\WinSock2\Parameters, ...)` 回傳 `ERROR_ACCESS_DENIED (5)`；隔離外相同 API／資源開啟成功。只追加權限欄位的一次 LPAC 觀測取得 `samDesired=0x00020019 (KEY_READ)`、options=0，並未要求 registry 寫入。隔離外原次沒有記錄 mask／options，未重跑，也不宣稱這兩個參數已完成跨環境對照。
 
 觀測沿用 token、零 capabilities、映像、Job 與清理檢查，沒有加 capability 或修改登錄檔 ACL。這將問題定位到此環境的 LPAC Winsock 資源存取，排除了必須先有 Claude 任務、模型解析或 Hook 逾時才出錯；不是 Claude 程序內部的逐呼叫 trace。IAT 僅作診斷，未加入產品。現有安全契約內沒有可直接採用的修法，Claude 清單與實際子代理仍未通過，路由保持停用。
+
+## 2026-10-23 零 capabilities 契約邊界
+
+- 唯讀讀回 `WinSock2\Parameters` 的 ACL：讀取權限只給 BU、AC（ALL APPLICATION PACKAGES）與 `registryRead` capability SID；沒有個別 package SID，也沒有 ALL RESTRICTED APPLICATION PACKAGES。AppContainer token 除一般檢查外還須通過 package／capability 檢查，零 capabilities 的 LPAC 因此必然被拒。
+- Claude 2.1.303 為 Bun v1.4.4 Windows 編譯，內含 libuv。libuv 的 `uv_loop_init` 先跑 `uv__once_init` → `uv__winsock_init`，`WSAStartup` 失敗即 `uv_fatal_error` 中止；先前 LPAC stderr `WSAStartup: (10107) ...` 與此格式一致。stream-json initialize 需要事件迴圈，沒有旗標、環境變數或 stdin 型態能略過 Winsock。Node 版同樣使用 libuv。
+- 正式入口 `mrh models --host claude` 本日重跑仍為 `claude_catalog_initialize_failed`、exit 2。
+
+結論：在零 capabilities LPAC 契約下，原 initialize 無法成功，除非放寬隔離（`registryRead`、一般 AppContainer 或系統 ACL）或改用另一個清單來源（隔離外 broker、其他 sandbox、版本鎖定的離線快照）。這些都會改變安全邊界或資料語意，須由使用者決定；未做任何一項，Claude profile 維持停用。
