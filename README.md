@@ -79,6 +79,7 @@ mrh ctrl                     # 設定每個難度要用的模型
 | `mrh status` | 查看目前狀態。 |
 | `mrh stats` | 查看分級與派工統計。 |
 | `mrh usage collect` | 收集子代理用量（只讀本機紀錄，不呼叫模型；換算金額只是估計，不是帳單）。 |
+| `mrh usage overhead` | 攔下重派的開銷（等待時間、主模型多跑的一輪）和省下的錢並列（只讀本機紀錄，不花錢）。 |
 | `mrh key status jev` | 確認 Jev 金鑰是否已存入（不顯示內容）。 |
 | `mrh ctrl set enabled off` | 停用。 |
 | `mrh cleanup` | 預覽可清除的暫存；加 `--apply` 才清除。不動設定與統計。 |

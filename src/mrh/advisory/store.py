@@ -426,6 +426,19 @@ class AdviceStore:
             db.execute("BEGIN")
             return [dict(r) for r in db.execute("SELECT * FROM advice")], [dict(r) for r in db.execute("SELECT * FROM children")]
 
+    @classmethod
+    def read_overhead(cls, path, since):
+        """(advice rows, attempts rows, children rows, usage rows) since `since`, read-only, as plain dicts."""
+        reader = cls.__new__(cls)
+        reader.path = str(path)
+        with closing(reader.connect(readonly=True)) as db, db:
+            db.execute("BEGIN")
+            advice = [dict(r) for r in db.execute("SELECT * FROM advice WHERE ts>=? ORDER BY ts", (since,))]
+            ids = {r["request_id"] for r in advice}
+            attempts = [dict(r) for r in db.execute("SELECT * FROM attempts WHERE ts>=? ORDER BY ts", (since,)) if r["request_id"] in ids]
+            children = [dict(r) for r in db.execute("SELECT * FROM children WHERE ts>=?", (since,))]
+        return advice, attempts, children, cls.read_usage(path, since)
+
     def usage_candidates(self, since):
         """Recorded children, including previous snapshots for explicit refresh checks."""
         with closing(self.connect(readonly=True)) as db, db:

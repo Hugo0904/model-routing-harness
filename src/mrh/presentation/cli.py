@@ -51,6 +51,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh stats              文字統計（可加 --days N；0 = 全部）
   mrh stats reset        清除統計（--hours 24／--today／--days N／--all；會先預覽並要你輸入確認）
   mrh usage collect      收集子代理實際用了多少 token（只讀本機紀錄檔；之後 mrh stats 才有用量與換算）
+  mrh usage overhead     攔下重派的開銷（等待時間、主模型多一輪的 token）與省下的錢並列（只讀本機紀錄，不花錢）
   mrh classify "任務"    顧問分級：問分級器這件事算哪一級（不派工；--stdin／--json／--platform／--title／--role）
   mrh ctrl show          目前設定一覽
   mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
@@ -118,6 +119,11 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--days", type=float, default=None, help="only sub-agents from the last N days (default 30)")
     collect.add_argument("--json", action="store_true", help="print the result as JSON")
     collect.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
+
+    overhead = usage_actions.add_parser("overhead", help="what advising costs (classifier wait, extra main-model request) next to what it saves")
+    overhead.add_argument("--days", type=float, default=None, help="only the last N days (default 30)")
+    overhead.add_argument("--json", action="store_true", help="print the result as JSON")
+    overhead.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")
 
     ctrl = commands.add_parser("ctrl", help="control center: every MRH setting in one place")
     ctrl.add_argument("--settings", type=Path, help="settings.json (default: MRH_SETTINGS or the installed pointer)")

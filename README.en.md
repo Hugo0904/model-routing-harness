@@ -74,6 +74,7 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 | `mrh status` | Show the current state. |
 | `mrh stats` | Show classification and delegation statistics. |
 | `mrh usage collect` | Collect subagent usage from local records; no model call. Cost figures are estimates, not a bill. |
+| `mrh usage overhead` | What advising costs (classifier wait, the extra main-model request) next to what it saves; local records only, no cost. |
 | `mrh key status jev` | Check whether the Jev key is stored (never shows it). |
 | `mrh ctrl set enabled off` | Turn routing off. |
 | `mrh cleanup` | Preview removable scratch files; add `--apply` to remove them. Settings and statistics are untouched. |
