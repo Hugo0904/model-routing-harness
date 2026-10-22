@@ -123,3 +123,60 @@ class UserPath:
             changed.append(str(path))
         return {'action': 'configured' if changed else 'unchanged', 'changed_profiles': changed,
                 'existing_processes_refreshed': False}
+
+
+def _shell_files(home, environ):
+    """Every startup file an MRH-written block could be in: the login shell may have changed since install. Pairs of
+    (path, written_by_install_for_this_shell); the second flag decides whether an unreadable file blocks removal."""
+    zsh_dir = environ.get('ZDOTDIR') or str(home)
+    bash_login = [home / name for name in ('.bash_profile', '.bash_login', '.profile')]
+    rows = [(Path(zsh_dir) / '.zprofile', 'zsh'), (Path(zsh_dir) / '.zshrc', 'zsh')]
+    rows += [(path, 'bash') for path in bash_login] + [(home / '.bashrc', 'bash')]
+    return rows
+
+
+def plan_removal(bin_dir, *, user_home=None, environ=None, login_shell=None):
+    """Plan taking MRH's PATH block out again. Only a block that is byte-for-byte what setup writes is removed; a block
+    somebody edited, or one for another bin directory, is kept and reported. Files that cannot be read safely are
+    reported only when they belong to the login shell setup would have used; other shells' files are skipped."""
+    environ = dict(os.environ if environ is None else environ)
+    home = _canonical(user_home or Path.home())
+    if login_shell is None:
+        import pwd
+        login_shell = pwd.getpwuid(os.getuid()).pw_shell
+    block = UserPath(bin_dir, user_home=home, environ=environ, login_shell=login_shell).block()
+    shell = Path(login_shell).name
+    result = {'remove': [], 'keep': [], 'blocked': []}
+    for path, family in _shell_files(home, environ):
+        if not path.exists() and not path.is_symlink():
+            continue
+        try:
+            before, mode = _read(path)
+        except (OSError, PathError) as exc:
+            if family == shell:
+                result['blocked'].append({'path': str(path), 'reason': str(exc) if isinstance(exc, PathError) else 'shell_profile_unreadable'})
+            continue
+        if START.encode() not in before and END.encode() not in before:
+            continue
+        if before.count(START.encode()) != 1 or before.count(END.encode()) != 1 or before.count(block) != 1:
+            result['blocked'].append({'path': str(path), 'reason': 'mrh_shell_block_modified'})
+            continue
+        after = before.replace(block, b'')
+        result['remove'].append({'path': path, 'before': before, 'after': after, 'mode': mode})
+    return result
+
+
+def apply_removal(rows):
+    """Write the planned removals; a file that changed since planning is left alone. A file holding only the block
+    (setup created it) is removed instead of leaving an empty one behind."""
+    changed = []
+    for row in rows:
+        path = row['path']
+        if _read(path) != (row['before'], row['mode']):
+            raise PathError('shell_profile_concurrent_change')
+        if row['after'] == b'':
+            path.unlink()
+        else:
+            owned.replace_owned(path, row['after'], limit=1_000_000, mode=row['mode'])
+        changed.append(str(path))
+    return changed

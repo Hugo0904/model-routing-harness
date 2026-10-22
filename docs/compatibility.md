@@ -5,7 +5,7 @@
 | 環境 | 安裝範圍 | 驗證界線 |
 | --- | --- | --- |
 | Windows x64 | `setup.ps1`／`mrh_windows_setup.py` 原生安裝；需既有 Git、x64 CPython ≥ 3.11 及宿主 CLI。 | 安裝、Credential Manager 與 Hook 接入分開檢查；真正的 Jev 分類與子代理採用仍需各自實測。 |
-| macOS Apple Silicon | 沿用 `setup`、鎖定的 Python runtime 與既有宿主接頭。 | 保留既有驗證紀錄；本次未使用 Mac 實機重驗。 |
+| macOS Apple Silicon | 沿用 `setup`、鎖定的 Python runtime 與既有宿主接頭。 | 保留既有驗證紀錄；未以 Mac 實機重驗。 |
 | macOS Intel | 沒有對應的安裝封裝。 | 沒有本版實機驗證。 |
 | Windows ARM／32 位元 | 沒有對應的原生安裝流程。 | 不以 x64 的結果推論相容。 |
 | Linux／WSL | 尚未提供正式安裝與驗證。 | WSL 不是 Windows 原生流程的替代方式。 |
@@ -37,7 +37,7 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | Claude 插件與 Hook | 使用 Windows 原生註冊接頭，保留其他插件與 Hook；使用獨立的 `config\claude-profile\settings.json`，保持停用及禁止外送。 |
 | Claude 模型清單 | 不可用；不得把 CLI 版本或手動模型輸入當作已驗證清單，保持路由停用。 |
 | Jev 金鑰 | 目前使用者的 Windows Credential Manager，本機持久保存；原生視窗密碼欄輸入 Jev 金鑰。 |
-| Jev 實際分類 | 本次已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
+| Jev 實際分類 | Windows 驗證時已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
 | 真宿主子代理採用 | 原生 Codex 合成任務已驗證：Jev 分為 Small，MRH 建議 `gpt-6.1-sol / high`，重新委派後子代理 session 記錄相同模型與強度，並完成任務。 |
 | Codex／Claude 訂閱分級器 | Windows 不可用。 |
 | Codex 完整任務封包 | Windows 不支援 `--codex-packets`。 |
@@ -58,4 +58,4 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | Claude Code CLI | 安裝設定合併、明示選型保護、實際派工與限定故障通知。 | 宿主未回報的子代理實際推理強度。 |
 | Claude Desktop Code | 預定使用同宿主接頭。 | 本版未另做實機驗證；不含 Chat／Cowork。 |
 
-本次結果見 [Windows 驗證紀錄](windows-validation.md)。Mac 歷史結果見 [驗證摘要](validation.md)，不把它當作本次 Windows 驗證。安裝步驟見 [手動安裝](install.md)。
+Windows 結果見 [Windows 驗證紀錄](windows-validation.md)。Mac 歷史結果見 [驗證摘要](validation.md)，不把它當作 Windows 驗證。安裝步驟見 [手動安裝](install.md)。

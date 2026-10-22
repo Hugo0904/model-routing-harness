@@ -10,6 +10,13 @@ import tempfile
 
 from mrh.adapters.providers import typesafe_models as _models
 
+# MRH refuses paths that go through a symlink, and the default macOS temporary directory does (/var is a link to
+# /private/var). Give the whole run one private, link-free directory so tests pass whatever TMPDIR is set to.
+_root = os.path.realpath(tempfile.mkdtemp(prefix="mrh-tests-"))
+os.environ["TMPDIR"] = _root
+tempfile.tempdir = _root
+atexit.register(shutil.rmtree, _root, ignore_errors=True)
+
 # Anything a test writes under the state directory (the Jev version cache, reports) goes to a throw-away directory.
 _state = tempfile.mkdtemp(prefix="mrh-test-state-")
 os.environ[_models.STATE_ENV] = _state
@@ -18,7 +25,6 @@ os.environ['HOME'] = _state
 os.environ['USERPROFILE'] = _state
 os.environ['CODEX_HOME'] = os.path.join(_state, 'codex-home')
 os.environ.pop('TYPESAFE_API_KEY', None)
-atexit.register(shutil.rmtree, _state, ignore_errors=True)
 
 
 def _refuse(self, headers, timeout):

@@ -213,11 +213,65 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 | 檢查 | `.\setup.ps1 --check --json` | `./setup --check --json` |
 | 退回上一個相容安裝代 | `.\setup.ps1 --rollback` | `./setup --rollback` |
 | 只停用路由 | `mrh ctrl set enabled off` | `mrh ctrl set enabled off` |
+| 移除 MRH，保留設定與統計 | 手動，見[移除](#移除) | `./setup --uninstall`（預覽）、`./setup --uninstall --yes` |
+| 連同設定、統計與金鑰一併刪除 | 手動，見[移除](#移除) | `./setup --uninstall --yes --purge-data` |
 
 相同來源與參數可重複執行。更新會保留設定、金鑰與統計；有本機程式修改時先處理 Git 提示，不要直接覆蓋。第一次安裝沒有可退回的版本；退版保留目前設定、統計與金鑰，不還原舊資料。
 
 Mac 若選用 [Codex 完整任務分類](codex/packet-skill.md)，安裝、啟用與更新時都要保留 `--codex-packets`；Windows 目前不支援此選項。更多細節見 [安裝生命週期](install-lifecycle.md)。
 
+
+## 移除
+
+### Mac：`./setup --uninstall`
+
+在原本 clone 的資料夾執行。不加 `--yes` 只預覽：列出會移除、會保留與無法處理的項目，不變更任何東西。
+
+~~~sh
+./setup --uninstall                    # 預覽
+./setup --uninstall --yes              # 移除 MRH，保留設定與統計
+./setup --uninstall --yes --purge-data # 另外刪除設定、統計資料庫與鑰匙圈裡的 Jev 金鑰
+~~~
+
+`--host codex`／`--host claude` 可限定只處理一個宿主；沒指定時處理已安裝的宿主。`--json` 輸出機器可讀的結果。移除不需要網路，也不會呼叫 Jev。
+
+會移除（只限能確認是 MRH 自己建立的項目）：
+
+| 項目 | 做法 |
+| --- | --- |
+| Claude Code Hook | 只拿掉 `~/.claude/settings.json` 裡 MRH 的 PreToolUse／PostToolUse 項目；其他 Hook 與設定保留。 |
+| Codex 外掛 | 用 Codex 原生 `plugin remove` 與 `plugin marketplace remove`；Codex 自己的 `config.toml` 與信任紀錄不由 MRH 直接修改。 |
+| 選配派工 skill | 內容與發行版相同的才移除；自己改過的保留，並印出帶備份的移除指令。 |
+| shell 的 PATH 區塊 | 拿掉 `~/.zprofile`、`~/.zshrc`（及 bash 對應檔）裡 MRH 標記的區塊；區塊被改過就保留並回報 `mrh_shell_block_modified`。只剩該區塊的檔案會一併刪除。 |
+| 命令入口與安裝代 | `~/.local/bin/mrh` 符號連結、`current` 連結，以及 `~/.local/share/model-routing-harness/setup-state`（安裝代、狀態、紀錄）。 |
+
+預設保留（`--purge-data` 才刪）：設定與指標（`~/.config/model-routing-harness/`）、統計資料庫（在設定資料夾內）、鑰匙圈裡的 Jev 金鑰。設定資料夾必須完全是 MRH 建立的內容才會刪；有其他檔案就整個保留並回報。舊版 `app` 目錄、別人建立的 `mrh` 命令與專案資料夾內的 `runtime/` 都不是安裝程式建立的，一律不動；專案內暫存可用 `mrh cleanup --apply` 清除，或直接刪掉這份 clone。
+
+只要有任何宿主註冊無法移除（例如 Hook 不是 MRH 建立的、Codex CLI 找不到），就不會變更其他項目，也不會刪除資料；處理回報的原因後重跑同一個指令，已移除的項目不會再動。移除過程失敗時狀態可續跑。移除完成後再執行一次：若 PATH 上有 Python 3.11 以上會回報沒有東西可移除；沒有時，因安裝的 runtime 已移除，`./setup` 會回報找不到 Python（`status: unknown`），同樣表示沒有東西可移除，且不會下載。
+
+Claude 的 settings.json 若原本不是 2 空白縮排的格式，移除時會改寫成該格式，內容與順序不變；安裝時也是這樣處理。
+
+### 無法執行 `--uninstall` 時：手動移除（Mac）
+
+例如已刪掉 `~/.local/share/model-routing-harness`、或找不到 Python 3.11。依序：
+
+1. 需要 `mrh` 才能做的先做：`mrh skill remove --host claude`、`mrh skill remove --host codex`、`mrh key delete jev`（刪金鑰）。
+2. Claude：編輯 `~/.claude/settings.json`，刪掉 `hooks.PreToolUse` 與 `hooks.PostToolUse` 裡 command 含 `model-routing-harness`、以 ` claude` 結尾的項目，其他內容不動。
+3. Codex：`codex plugin remove model-routing-harness@model-routing-harness-local`，再 `codex plugin marketplace remove model-routing-harness-local`。
+4. 刪掉 `~/.zprofile`、`~/.zshrc`（或 bash 的對應檔）中 `# >>> model-routing-harness PATH >>>` 到 `# <<< model-routing-harness PATH <<<` 之間的內容。
+5. 刪掉 `~/.local/bin/mrh`（確認是指向 `model-routing-harness/current/mrh` 的符號連結）與 `~/.local/share/model-routing-harness/current`、`~/.local/share/model-routing-harness/setup-state`。
+6. 不再需要設定與統計時才刪 `~/.config/model-routing-harness/`。
+
+### Windows：手動移除（尚未經 Windows 實機驗證）
+
+Windows 安裝器目前沒有 `--uninstall`。以下是依安裝內容整理的步驟，**未在 Windows 實機驗證過**，執行時請對照 `--check --json` 顯示的實際路徑；發現與實際不符請先停下。
+
+1. 先停用路由：`mrh ctrl set enabled off`。
+2. 需要 `mrh` 才能做的先做：`mrh skill remove --host codex`／`--host claude`（有安裝才需要）、`mrh key delete jev`（刪除 Credential Manager 裡的金鑰）。
+3. Codex：`codex plugin remove model-routing-harness@model-routing-harness-local`，再 `codex plugin marketplace remove model-routing-harness-local`。
+4. Claude Code：`claude plugin uninstall model-routing-harness@model-routing-harness-local --scope user --keep-data`，再 `claude plugin marketplace remove model-routing-harness-local --scope user`。
+5. 從使用者環境變數的 `Path` 拿掉 `...\install\bin`（安裝器加到使用者 PATH 的項目），關掉並重開終端與編輯器。
+6. 確認 Hook 都已移除後，才刪除 `$env:ProgramData\ModelRoutingHarness-<SID>`。`install` 是程式，`config` 內有設定與統計；要保留資料就只刪 `install`。
 
 ## AI 代辦的安裝與更新完工條件
 

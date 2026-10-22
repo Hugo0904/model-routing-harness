@@ -5,6 +5,7 @@ mrh_source=$(CDPATH= cd -P "$(/usr/bin/dirname "$0")" && pwd)
 mrh_prefix=${HOME}/.local/share/model-routing-harness
 mrh_cache=
 mrh_readonly=false
+mrh_uninstall=false
 mrh_help=false
 mrh_prev=
 for mrh_arg in "$@"; do
@@ -12,7 +13,7 @@ for mrh_arg in "$@"; do
         --prefix) mrh_prefix=$mrh_arg;;
         --cache-root) mrh_cache=$mrh_arg;;
     esac
-    case "$mrh_arg" in --check|--dry-run) mrh_readonly=true;; -h|--help) mrh_help=true;; esac
+    case "$mrh_arg" in --check|--dry-run) mrh_readonly=true;; --uninstall|--yes|--purge-data) mrh_uninstall=true;; -h|--help) mrh_help=true;; esac
     mrh_prev=$mrh_arg
 done
 mrh_python=
@@ -24,11 +25,15 @@ for mrh_candidate in "$mrh_prefix/current/runtime/bin/python3.11" "$mrh_prefix/a
 done
 if [ -n "$mrh_python" ]; then exec "$mrh_python" -I -B "$mrh_source/mrh_setup.py" "$@"; fi
 if [ "$mrh_help" = true ]; then
-    printf '%s\n' 'Usage: ./setup --host codex [--host claude] [--check|--dry-run|--rollback] [--json]' 'Optional: --codex-packets, --prefix, --config-root, --bin-dir, --cache-root, --settings, --codex-cli, --claude-cli, --claude-settings, --enable --workspace PATH'
+    printf '%s\n' 'Usage: ./setup --host codex [--host claude] [--check|--dry-run|--rollback] [--json]' 'Optional: --codex-packets, --prefix, --config-root, --bin-dir, --cache-root, --settings, --codex-cli, --claude-cli, --claude-settings, --enable --workspace PATH' 'Remove: ./setup --uninstall [--host codex|claude] [--yes] [--purge-data] [--json]  (preview unless --yes; user data kept unless --purge-data)'
     exit 0
 fi
 if [ "$(/usr/bin/uname -s)" != Darwin ] || [ "$(/usr/bin/uname -m)" != arm64 ]; then
     printf '%s\n' '{"status":"incomplete","reason":"unsupported_platform:macOS_arm64_only","writes":false}'
+    exit 2
+fi
+if [ "$mrh_uninstall" = true ]; then
+    printf '%s\n' '{"status":"unknown","reason":"no_python_3_11_found_for_uninstall","writes":false,"downloads":false,"message":"No installed MRH runtime and no Python 3.11 or newer was found. If MRH was already uninstalled there is nothing left to do. Otherwise follow the manual removal list in docs/install.md, or install Python 3.11 or newer and rerun. Uninstall never downloads Python."}'
     exit 2
 fi
 if [ "$mrh_readonly" = true ]; then

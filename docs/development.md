@@ -21,11 +21,11 @@ Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式
 
 ## 測試
 
-在 repository 根目錄先執行 `mkdir -p runtime/tmp/tests`，所有本次測試暫存限此專案；測試 guard 使用假 HOME 並阻擋 TypeSafe 網路。執行直接受影響的測試，例如：
+在 repository 根目錄執行。測試 guard 使用假 HOME 並阻擋 TypeSafe 網路，也會為整次測試自建一個私有、解析過符號連結的暫存目錄（`tests/__init__.py`），不論 `TMPDIR` 設成什麼都能跑；macOS 預設的 `/var/folders/...` 經過符號連結，MRH 的所有權檢查會拒絕，所以測試不直接使用它。執行直接受影響的測試，例如：
 
 ```sh
-TMPDIR="$PWD/runtime/tmp/tests" PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest tests.application.test_advisory_runtime
-TMPDIR="$PWD/runtime/tmp/tests" PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest tests.infrastructure.test_setup
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest tests.application.test_advisory_runtime
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest tests.infrastructure.test_setup
 ```
 
 Windows 的直接受影響測試在 PowerShell 執行；依變更選擇其中一個模組：
@@ -42,7 +42,7 @@ python -B -m unittest tests.windows.test_setup
 需要整體離線回歸時：
 
 ```sh
-TMPDIR="$PWD/runtime/tmp/tests" PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest discover -s tests -t .
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest discover -s tests -t .
 ```
 
 部分測試使用 macOS／POSIX 的程序、PTY 或 sandbox 能力。文件修改檢查語意、連結與相容性說明即可；fixture 修改則驗證資料形狀及直接讀取它的 consumer。

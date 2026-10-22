@@ -102,6 +102,18 @@ shell 入口可使用既有 Python ≥ 3.11；否則僅在 macOS arm64 取得 `r
 
 Mac runtime 的 bytecode 是可變快取。完整性比較只排除 runtime 內、能對應 manifest 所記錄一般 `.py` 檔案的一般 `.pyc`，包含 `__pycache__` 與舊式相鄰快取；新增、改寫、刪除這類快取不影響檢查、更新或退版。無原始碼 bytecode、符號連結、`__pycache__` 中其他檔案、Python 原始碼、binary 及宿主產物仍受檢查。新舊 manifest 都沿用此規則，不重寫已保存內容與 digest，也不需要變更權限、修復快取、刪檔或下載。bytecode 內容不屬於這項比較；`-B` 防止寫入，不會禁止讀取既有快取。Windows 私有 runtime 則依其自身 manifest 核對已複製的檔案。
 
+## 移除
+
+Mac 的 `./setup --uninstall` 沿用安裝時的所有權檢查，只移除能確認是 MRH 自己建立的項目；步驟與使用方式見[安裝指南](install.md#移除)。規則如下：
+
+- 預設只預覽，不變更任何東西、不下載、不連網；加 `--yes` 才執行。設定、統計資料庫與 Jev 金鑰預設保留，只有 `--purge-data` 才刪除，且只在其他項目都已移除時才刪。
+- 順序固定：宿主註冊（Claude Hook、Codex 外掛與 marketplace）→ 選配 skill → shell PATH 區塊 → 命令入口與 `current` 連結 → 安裝代與狀態。宿主註冊有任何一項不能移除（不是 MRH 建立的 Hook、設定檔無法解析、Codex CLI 找不到、原生註冊被別處改過）就停在該處，其他項目都不動，程式本體因此仍在，Hook 不會指向已刪除的路徑。
+- Claude 只移除經 artifact 綁定確認屬於這份設定的 MRH Hook，其餘 Hook 與設定保留，不建立備份。Codex 只走原生 `plugin remove`／`plugin marketplace remove`，不直接編輯 `config.toml` 或信任紀錄。
+- 啟動檔只移除與安裝程式寫入內容完全相同的區塊；被改過、重複或指向別的 bin 目錄的區塊保留並回報。登入 shell 以外的啟動檔若無法安全讀取（例如符號連結）會略過。
+- 只刪除預期的名稱：安裝代必須有 MRH 擁有者記錄，`setup-state` 內有未知檔案就整個保留；不跟隨連結。設定資料夾必須是 MRH 建立且內容全在已知清單內才會刪除。舊版 `app`、他人建立的 `mrh`、專案內 `runtime/` 不動。
+- 每步以讀回確認，失敗保留現場並回報原因；不建立備份、快照或垃圾桶。移除可重跑，已完成的項目不會再動。
+- Windows 沒有對應的 `--uninstall`；文件只提供手動步驟，且未經 Windows 實機驗證。
+
 ## 檢查與驗證界線
 
 `--check` 與 `--dry-run` 不建立 MRH 設定、資料庫或安裝根目錄，後者也不下載。原生 metadata 查詢可能有宿主 CLI 自己的執行行為，但不是 provider／模型呼叫。Codex 政策就緒依公開 CLI 宣告；Mac Claude 合格 CLI 的 catalog 未知時可保留手動選型並標明未確認，不因此列為政策 pending。CLI 不可用、已宣告不支援的模型／effort 與 Windows Claude 停用界線仍保留；兩者都不代表帳號有實際使用權。缺金鑰、外送同意、信任、模型政策或實測證據，都需如實保留待辦。

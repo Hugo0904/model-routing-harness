@@ -10,7 +10,7 @@
 [![Python](https://img.shields.io/badge/macOS_Python-3.11.17-3776AB)](packaging/macos-arm64/runtime-lock.json)
 [![Hosts](https://img.shields.io/badge/hosts-Codex_%7C_Claude_Code-0f766e)](docs/compatibility.md)
 
-[交給 AI 安裝](#交給-ai-安裝) · [手動安裝](docs/install.md) · [常用指令](#常用指令) · [文件](docs/README.md)
+[交給 AI 安裝](#交給-ai-安裝) · [手動安裝](docs/install.md) · [常用指令](#常用指令) · [文件](docs/README.md) · [English](README.en.md)
 
 </div>
 
@@ -42,6 +42,12 @@
 - 更新時保留設定、金鑰與統計；支援退回上一個相容版本。
 
 主 AI 保留最後決定權，主聊天的模型不會被切換。你明確指定的模型與角色優先。新安裝預設停用，完成設定並允許外送任務後才啟用。
+
+## 費用與資料外送
+
+- 分級使用 TypeSafe 的 Jev API，費用依你的 TypeSafe 帳號另外計算，與 Codex／Claude 的訂閱分開。
+- 路由啟用後，每次委派的任務文字會送到 TypeSafe 做分級：Claude Code 送子代理的 prompt（沒有時用描述）；Codex 送可讀的任務訊息，訊息被加密時只送任務名稱。文字照原樣送出，MRH 不過濾其中內容；你的 Jev 金鑰只用於向 TypeSafe 驗證。選配的 Codex 完整任務分類、額外標題／角色與背景摘要會再送出更多內容，見[產品設計的外送章節](docs/design.md#外送與失敗處理)與 [Codex 完整任務分類](docs/codex/packet-skill.md)。
+- 新安裝預設停用且禁止外送，需要你明確同意外送範圍後才會啟用；隨時可用 `mrh ctrl set enabled off` 停用。
 
 ## 版本與相容性
 
@@ -81,6 +87,10 @@ mrh skill install --host claude
 ```
 
 只執行自己選用的平台；查看、更新與移除規則見[選配派工 skill](docs/delegation-skills.md)。Windows 不支援 Codex 完整任務 packet，安裝社群 skill 不會增加該能力。
+
+## 移除
+
+Mac：在原本的資料夾執行 `./setup --uninstall` 預覽，確認後加 `--yes`。預設保留設定與統計；要連同它們與鑰匙圈裡的 Jev 金鑰一起刪除，再加 `--purge-data`。Windows 目前只有手動步驟（尚未經實機驗證）。完整說明見[安裝指南的移除章節](docs/install.md#移除)。
 
 ## 進一步設定
 

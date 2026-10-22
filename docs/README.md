@@ -20,7 +20,6 @@
 | --- | --- |
 | [專案理念](../PHILOSOPHY.md) | 開發、設計與驗收的原則，以及目標、實作與證據的區別。 |
 | [開發指南](development.md) | 原始碼位置、離線測試、fixture 與驗證工具的使用界線。 |
-| [GitHub 重建草案](repository-rebuild-plan.md) | 人工刪除及同名重建前的保留範圍、未知事項與舊 clone 遷移；尚未執行。 |
 | [產品設計](design.md) | 任務分級、明示選型保護、回退與統計原則。 |
 | [新增宿主](host-extension.md) | adapter、安裝流程與原生事件契約。 |
 | [Codex 完整任務 packet](codex/full-task-packets.md) | 明確選配的完整 brief 分類協定。 |

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 if __import__('os').name != 'nt':
     import fcntl
 import hashlib
@@ -28,7 +28,8 @@ import mrh_bundle as bundle
 from mrh.infrastructure import owned, plugin, settings_v2, claude_hook, secrets
 from mrh.infrastructure import temporary as project_temporary
 from mrh.adapters.hosts.registry import REGISTRATIONS
-from mrh.adapters.platforms.macos_path import UserPath, PathError
+from mrh.application import skills
+from mrh.adapters.platforms.macos_path import UserPath, PathError, plan_removal as plan_path_removal, apply_removal as apply_path_removal
 
 OWNER = 'org.model-routing-harness.setup.v1'
 READER = {'settings': [1, 2], 'packet_statistics': 1}
@@ -307,6 +308,28 @@ class CodexInstaller:
         return result
 
 
+def verify_hook_owner(text, settings):
+    """Every MRH hook in this settings.json must belong to an MRH artifact bound to `settings`; otherwise it is not ours."""
+    claude_hook.plan(text, 'model-routing-harness preflight claude')
+    for rows in json.loads(text).get('hooks',{}).values():
+        for entry in rows:
+            if not claude_hook._ours(entry): continue
+            for hook in entry.get('hooks',[]):
+                args=shlex.split(hook.get('command',''))
+                if not args or args[-1]!='claude': continue
+                # A hook written through <prefix>/current has a symlinked root, which plugin.show refuses; its
+                # resolved generation path spells the same stable command.
+                for resolve in (False,True):
+                    try:
+                        launcher=Path(args[-2]);root=(launcher.resolve() if resolve else launcher).parents[2]
+                        info=plugin.show(root)['artifact']
+                        if info['settings_path']!=str(settings) or shlex.split(claude_hook.command_for(root))!=args:
+                            raise ValueError()
+                        break
+                    except Exception:
+                        if resolve:raise SetupError('claude_hook_unowned') from None
+
+
 class ClaudeInstaller:
     def __init__(self, path, executable=None):
         self.path = canonical(path)
@@ -332,25 +355,7 @@ class ClaudeInstaller:
     def preflight(self, settings, packets=False):
         before = snapshot(self.path)
         if self.path.exists():
-            text=regular(self.path).decode()
-            claude_hook.plan(text, 'model-routing-harness preflight claude')
-            for rows in json.loads(text).get('hooks',{}).values():
-                for entry in rows:
-                    if not claude_hook._ours(entry): continue
-                    for hook in entry.get('hooks',[]):
-                        args=shlex.split(hook.get('command',''))
-                        if not args or args[-1]!='claude': continue
-                        # A hook written through <prefix>/current has a symlinked root, which plugin.show refuses; its
-                        # resolved generation path spells the same stable command.
-                        for resolve in (False,True):
-                            try:
-                                launcher=Path(args[-2]);root=(launcher.resolve() if resolve else launcher).parents[2]
-                                info=plugin.show(root)['artifact']
-                                if info['settings_path']!=str(settings) or shlex.split(claude_hook.command_for(root))!=args:
-                                    raise ValueError()
-                                break
-                            except Exception:
-                                if resolve:raise SetupError('claude_hook_unowned') from None
+            verify_hook_owner(regular(self.path).decode(), settings)
         return before
 
     def install(self, artifact, before, progress):
@@ -740,25 +745,365 @@ def install(args, *, build=bundle.build, path_manager=None):
     return result
 
 
+# ---- uninstall -------------------------------------------------------------------------------------------------
+# Everything is planned first (ownership checks, nothing written) and applied only with --yes. Host registrations go
+# first and the generations they point to go last, so a failure leaves a state the same command can finish.
+
+CONTROL_ENTRIES = {'owner.json', 'state.json', 'journal.json', 'lock', 'generations'}
+
+
+def _step(phase, id, target, detail, run):
+    return {'phase': phase, 'id': id, 'target': str(target), 'detail': detail, 'run': run}
+
+
+def _note(id, target, reason, **extra):
+    return {'id': id, 'target': str(target), 'reason': reason, **extra}
+
+
+def _reason(exc):
+    known = (SetupError, owned.OwnedError, settings_v2.SettingsError, bundle.BundleError, PathError, claude_hook.ClaudeHookError)
+    return str(exc) if isinstance(exc, known) else type(exc).__name__
+
+
+def _plan_claude(args, state, settings, plan):
+    configured = (state or {}).get('hosts', {}).get('claude', {}).get('config')
+    wanted = args.claude_settings or configured or Path.home() / '.claude/settings.json'
+    try:
+        path = canonical(wanted)
+        if not path.exists():
+            return
+        text = regular(path).decode()
+        document = json.loads(text)
+        hooks = document.get('hooks', {}) if isinstance(document, dict) else None
+        if not isinstance(hooks, dict):
+            raise SetupError('claude_settings_shape_unexpected')
+        if not any(claude_hook._ours(e) for rows in hooks.values() if isinstance(rows, list) for e in rows):
+            return
+        verify_hook_owner(text, settings)
+    except (ValueError, OSError) as exc:
+        plan['blocked'].append(_note('claude_hook', wanted, _reason(exc) if not isinstance(exc, json.JSONDecodeError) else 'claude_settings_not_json'))
+        return
+    before = snapshot(path)
+
+    def run():
+        if snapshot(path) != before:
+            raise SetupError('claude_native_concurrent_change')
+        after = claude_hook.plan(text, '', remove=True).encode()
+        write(path, after, before)
+        if regular(path) != after:
+            raise SetupError('claude_native_readback_failed')
+    plan['steps'].append(_step('hosts', 'claude_hook', path, '移除 MRH 的 PreToolUse／PostToolUse Hook；其他 Hook 與設定保留', run))
+
+
+def _plan_codex(args, settings, plan, required):
+    try:
+        adapter = CodexInstaller(args.codex_cli)
+        observed = adapter.observe()
+    except (ValueError, OSError, subprocess.SubprocessError) as exc:
+        if required:
+            plan['blocked'].append(_note('codex_plugin', args.codex_cli or 'codex', _reason(exc),
+                                         hint='找不到可用的 Codex CLI；可用 --codex-cli 指定，或自行執行 codex plugin remove ' + plugin.PLUGIN_ID))
+        return
+    if observed['root'] is None and not observed['installed']:
+        return
+    try:
+        if observed['root'] is None or plugin.show(Path(observed['root']))['artifact']['settings_path'] != str(settings):
+            raise SetupError('codex_registration_unowned')
+    except (ValueError, OSError) as exc:
+        plan['blocked'].append(_note('codex_plugin', observed['root'] or 'codex', 'codex_registration_unowned' if not isinstance(exc, SetupError) else str(exc)))
+        return
+
+    def remove_plugin():
+        now = adapter.observe()
+        if now['root'] != observed['root']:
+            raise SetupError('codex_native_concurrent_change')
+        if now['installed']:
+            adapter.call('remove', plugin.PLUGIN_ID)
+        if adapter.observe()['installed']:
+            raise SetupError('codex_native_readback_failed')
+
+    def remove_marketplace():
+        now = adapter.observe()
+        if now['root'] is None:
+            return
+        if now['root'] != observed['root'] or now['installed']:
+            raise SetupError('codex_native_concurrent_change')
+        adapter.call('marketplace', 'remove', plugin.MARKETPLACE)
+        if adapter.observe()['root'] is not None:
+            raise SetupError('codex_native_readback_failed')
+    if observed['installed']:
+        plan['steps'].append(_step('hosts', 'codex_plugin', plugin.PLUGIN_ID, '以 Codex 原生指令移除 MRH 外掛（其 Hook 隨外掛移除；Codex 自己的信任紀錄與 config.toml 不由 MRH 直接修改）', remove_plugin))
+    plan['steps'].append(_step('hosts', 'codex_marketplace', observed['root'], '以 Codex 原生指令移除 MRH 的本機 marketplace', remove_marketplace))
+
+
+def _plan_skills(hosts, plan):
+    for host in hosts:
+        try:
+            info = skills.status(host)
+        except (ValueError, OSError) as exc:
+            plan['keep'].append(_note('skill_' + host, host, 'skill_location_unverified'))
+            continue
+        if info['status'] == 'not_installed':
+            continue
+        if info['status'] in ('latest', 'outdated'):
+            plan['steps'].append(_step('skills', 'skill_' + host, info['path'], '移除選配派工 skill（內容與發行版相同）',
+                                       lambda host=host: skills.run('remove', host)))
+        else:
+            plan['keep'].append(_note('skill_' + host, info['path'], 'skill_' + info['status'],
+                                      hint='mrh skill remove --host ' + host + ' --force --backup-dir <專案外的備份目錄>'))
+
+
+def _plan_path(bin_dir, plan):
+    try:
+        found = plan_path_removal(bin_dir)
+    except (OSError, ValueError) as exc:
+        plan['blocked'].append(_note('shell_path', bin_dir, _reason(exc)))
+        return
+    for item in found['blocked']:
+        plan['blocked'].append(_note('shell_path', item['path'], item['reason'], hint='區塊被改過或無法安全讀取；請自行檢查並刪除 MRH 標記的區塊'))
+    for row in found['remove']:
+        plan['steps'].append(_step('path', 'shell_path', row['path'], '移除 MRH 標記的 PATH 區塊（檔案其餘內容保留）', lambda row=row: apply_path_removal([row])))
+
+
+def _remove_tree(path):
+    """Delete a directory tree without following links; generations may hold read-only directories."""
+    os.chmod(path, 0o700)
+    with os.scandir(path) as entries:
+        children = list(entries)
+    for child in children:
+        if child.is_symlink() or not child.is_dir(follow_symlinks=False):
+            os.unlink(child.path)
+        else:
+            _remove_tree(child.path)
+    os.rmdir(path)
+
+
+def remove_setup_state(control, prefix):
+    names = {p.name for p in control.iterdir()}
+    if names - CONTROL_ENTRIES:
+        raise SetupError('setup_state_unexpected_entry:' + sorted(names - CONTROL_ENTRIES)[0])
+    generations = control / 'generations'
+    if generations.exists():
+        children = sorted(generations.iterdir())
+        for child in children:
+            known = (len(child.name) == 24 and all(c in '0123456789abcdef' for c in child.name)) or child.name.startswith('.stage-')
+            if not known or child.is_symlink() or not child.is_dir():
+                raise SetupError('setup_state_unexpected_entry:generations/' + child.name)
+        for child in children:
+            _remove_tree(child)
+        generations.rmdir()
+    for name in ('state.json', 'journal.json', 'lock', 'owner.json'):
+        (control / name).unlink(missing_ok=True)
+    control.rmdir()
+    try:
+        prefix.rmdir()    # only when nothing else (the legacy app directory) lives there
+    except OSError:
+        pass
+
+
+def _plan_installation(prefix, bin_dir, control, plan):
+    link = bin_dir / 'mrh'
+    try:
+        found = snapshot(link)
+    except (ValueError, OSError):
+        found = {'unreadable': True}
+    if found == {'symlink': str(prefix / 'current/mrh')}:
+        def drop_entry():
+            if snapshot(link) != found:
+                raise SetupError('concurrent_change:mrh')
+            link.unlink()
+        plan['steps'].append(_step('links', 'bin_entry', link, '移除 mrh 命令入口（符號連結）', drop_entry))
+    elif found == {'symlink': str(prefix / 'app/mrh')}:
+        plan['keep'].append(_note('bin_entry', link, 'legacy_app_entry', hint='舊版 app 的入口，不是這個安裝程式建立的'))
+    elif found:
+        plan['keep'].append(_note('bin_entry', link, 'not_an_mrh_link'))
+    current = prefix / 'current'
+    try:
+        shape = snapshot(current)
+    except (ValueError, OSError):
+        shape = {'unreadable': True}
+    if shape:
+        target = shape.get('symlink')
+        if target and Path(target).parent == control / 'generations':
+            def drop_current():
+                if snapshot(current) != shape:
+                    raise SetupError('concurrent_change:current')
+                current.unlink()
+            plan['steps'].append(_step('links', 'current_link', current, '移除 current 連結', drop_current))
+        else:
+            plan['blocked'].append(_note('current_link', current, 'current_generation_conflict'))
+            return
+    if control.exists():
+        plan['steps'].append(_step('state', 'setup_state', control, '移除安裝代、安裝狀態與紀錄（程式本體；不含設定與統計）',
+                                   lambda: remove_setup_state(control, prefix)))
+
+
+def verify_profile(settings):
+    """The profile directory must be exactly what MRH created: marker plus known files, nothing else."""
+    return owned.verify(settings.parent, 'settings', settings_v2.FILES)
+
+
+def remove_profile(settings):
+    root = verify_profile(settings)
+    with owned.locked(root, 'settings', settings_v2.FILES):
+        for child in list(root.iterdir()):
+            if child.name not in (owned.MARKER, '.mrh.lock'):
+                child.unlink()
+    for name in ('.mrh.lock', owned.MARKER):
+        (root / name).unlink(missing_ok=True)
+    root.rmdir()
+
+
+def _plan_data(paths, plan, purge):
+    """User data stays unless --purge-data; it is also never purged while anything else could not be removed."""
+    prefix, config, bin_dir, pointer, settings = paths
+    found = []
+    if settings.parent.exists():
+        try:
+            verify_profile(settings)
+            found.append(('profile_data', settings.parent, '設定、分級與派工統計資料庫', lambda: remove_profile(settings)))
+        except (ValueError, OSError) as exc:
+            plan['keep'].append(_note('profile_data', settings.parent, 'profile_not_verified_as_mrh_owned:' + _reason(exc)))
+    expected = (str(settings) + '\n').encode()
+    if pointer.is_file() and not pointer.is_symlink() and regular(pointer) == expected:
+        def drop_pointer():
+            if regular(pointer) != expected:
+                raise SetupError('concurrent_change:active-settings')
+            pointer.unlink()
+            try:
+                config.rmdir()
+            except OSError:
+                pass
+        found.append(('settings_pointer', pointer, '指向設定檔的指標', drop_pointer))
+    if secrets.is_set('jev'):
+        def drop_key():
+            if not secrets.delete('jev'):
+                raise SetupError('keychain_delete_failed')
+        found.append(('keychain_jev', 'macOS 鑰匙圈：model-routing-harness／typesafe', 'Jev API 金鑰', drop_key))
+    if (prefix / 'app').exists():
+        plan['keep'].append(_note('legacy_app', prefix / 'app', 'legacy_app_preserved', hint='舊版 app 目錄，不是這個安裝程式建立的；確認沒有程序使用後可自行刪除'))
+    for id, target, detail, run in found:
+        if purge and not plan['blocked']:
+            plan['steps'].append(_step('purge', id, target, '（--purge-data）刪除' + detail, run))
+        elif purge:
+            plan['keep'].append(_note(id, target, 'skipped_uninstall_incomplete', hint=detail))
+        else:
+            plan['keep'].append(_note(id, target, 'user_data_kept', hint=detail + '；加 --purge-data 才會刪除'))
+
+
+def uninstall(args):
+    if platform.system() != 'Darwin' or platform.machine() != 'arm64':
+        raise SetupError('unsupported_platform:macOS_arm64_only')
+    if args.enable or args.workspace or args.codex_packets:
+        raise SetupError('uninstall_does_not_change_policy_or_packet_mode')
+    paths = resolve_paths(args)
+    prefix, config, bin_dir, pointer, settings = paths
+    control = prefix / 'setup-state'
+    state = read_state(control)
+    if args.host:
+        hosts, required = list(dict.fromkeys(args.host)), True
+    elif state and state.get('hosts'):
+        hosts, required = list(state['hosts']), True
+    else:
+        hosts, required = ['claude', 'codex'], False
+    plan = {'steps': [], 'keep': [], 'blocked': []}
+    if 'claude' in hosts:
+        _plan_claude(args, state, settings, plan)
+    if 'codex' in hosts:
+        _plan_codex(args, settings, plan, required)
+    if plan['blocked']:
+        # A host registration that cannot be removed still points at the installation: change nothing else until it is fixed.
+        plan['keep'].append(_note('everything_else', control, 'skipped_host_registrations_remain', hint='Hook 仍指向安裝代；先解決阻擋項目，再重跑同一個指令'))
+    else:
+        _plan_skills(args.host or ['claude', 'codex'], plan)
+        _plan_path(bin_dir, plan)
+        _plan_installation(prefix, bin_dir, control, plan)
+    _plan_data(paths, plan, args.purge_data)
+    return _finish_uninstall(args, plan, hosts, control)
+
+
+def _finish_uninstall(args, plan, hosts, control):
+    def public(step):
+        return {k: step[k] for k in ('id', 'target', 'detail')}
+    result = {'hosts': hosts, 'purge_data': args.purge_data, 'writes': False, 'provider_probe_performed': False}
+    steps = plan['steps']
+    if not args.yes:
+        result.update(mode='preview', remove=[public(s) for s in steps], keep=plan['keep'], blocked=plan['blocked'])
+        result['status'] = 'blocked' if plan['blocked'] else 'planned' if steps else 'not_installed'
+        result['next'] = '預覽，尚未變更任何東西；確認後加 --yes 執行' if steps else None
+        return result
+    removed, blocked, keep = [], list(plan['blocked']), list(plan['keep'])
+    halted = set()
+    with (locked(control) if control.exists() else nullcontext()):
+        for phase in ('hosts', 'skills', 'path', 'links', 'state', 'purge'):
+            for step in [s for s in steps if s['phase'] == phase]:
+                if phase in halted or (phase == 'purge' and blocked):
+                    keep.append(_note(step['id'], step['target'], 'skipped_uninstall_incomplete'))
+                    continue
+                try:
+                    step['run']()
+                    removed.append(public(step))
+                    result['writes'] = True
+                except (ValueError, OSError, subprocess.SubprocessError, KeyError) as exc:
+                    blocked.append(_note(step['id'], step['target'], _reason(exc)))
+                    if phase == 'hosts':
+                        halted.update(('skills', 'path', 'links', 'state'))
+                    result['writes'] = True
+    result.update(mode='apply', removed=removed, keep=keep, blocked=blocked)
+    result['status'] = 'incomplete' if blocked else 'uninstalled' if removed else 'not_installed'
+    if blocked:
+        result['recovery'] = '處理 blocked 內的原因後，重跑同一個指令；已移除的項目不會再動。'
+    return result
+
+
 def parser():
     p=argparse.ArgumentParser(description='Install/update this checkout; never git pull or call a classifier.')
     p.add_argument('--host',action='append',choices=tuple(REGISTRATIONS),default=[])
-    mode=p.add_mutually_exclusive_group();mode.add_argument('--check',action='store_true');mode.add_argument('--dry-run',action='store_true');mode.add_argument('--rollback',action='store_true')
+    mode=p.add_mutually_exclusive_group();mode.add_argument('--check',action='store_true');mode.add_argument('--dry-run',action='store_true');mode.add_argument('--rollback',action='store_true');mode.add_argument('--uninstall',action='store_true',help='preview (default) or, with --yes, remove MRH; user data is kept unless --purge-data')
     p.add_argument('--json',action='store_true');p.add_argument('--codex-packets',action='store_true',help='explicit optional full-task packet artifact/skill; not default')
     for name in ('prefix','config-root','bin-dir','cache-root','settings','codex-cli','claude-cli','claude-settings'):
         p.add_argument('--'+name,type=Path)
     p.add_argument('--workspace',action='append',type=Path,default=[]);p.add_argument('--enable',action='store_true')
+    p.add_argument('--yes',action='store_true',help='with --uninstall: actually remove (otherwise preview only)')
+    p.add_argument('--purge-data',action='store_true',help='with --uninstall --yes: also delete settings, statistics and the Jev key')
     return p
+
+
+def print_uninstall(result):
+    apply = result['mode'] == 'apply'
+    print('MRH setup --uninstall: ' + result['status'] + ('' if apply else '（預覽，尚未變更任何東西）'))
+    rows = result['removed'] if apply else result['remove']
+    if rows:
+        print('已移除：' if apply else '將移除：')
+        for row in rows:
+            print('  - ' + row['target'] + '　' + row['detail'])
+    if result['keep']:
+        print('保留：')
+        for row in result['keep']:
+            print('  - ' + row['target'] + '　' + row['reason'] + ('　' + row['hint'] if row.get('hint') else ''))
+    if result['blocked']:
+        print('未能處理：')
+        for row in result['blocked']:
+            print('  - ' + row['target'] + '　' + row['reason'] + ('　' + row['hint'] if row.get('hint') else ''))
+    if result.get('recovery'):
+        print(result['recovery'])
+    if result.get('next'):
+        print(result['next'])
+    print('No classifier/model request was made.')
 
 
 def main(argv=None):
     args=parser().parse_args(argv)
     try:
-        result=install(args);code=0
+        if (args.yes or args.purge_data) and not args.uninstall:
+            raise SetupError('yes_and_purge_data_require_uninstall')
+        result=uninstall(args) if args.uninstall else install(args)
+        code=2 if result.get('status') in ('blocked','incomplete') else 0
     except (ValueError,OSError,subprocess.SubprocessError,KeyError) as exc:
         reason = str(exc) if isinstance(exc,(SetupError,owned.OwnedError,settings_v2.SettingsError,bundle.BundleError,PathError)) else type(exc).__name__
         result={'status':'incomplete','reason':reason,'provider_probe_performed':False,'recovery':'Correct the cause, then rerun the same setup arguments; retain setup-state/journal.json.'};code=2
     if args.json: print(json.dumps(result,indent=2,sort_keys=True))
+    elif args.uninstall and result.get('mode'): print_uninstall(result)
     else:
         print('MRH setup: '+result['status'])
         if result.get('reason'):print(result['reason'])
