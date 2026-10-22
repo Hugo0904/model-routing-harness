@@ -90,6 +90,14 @@ Windows Hook 現在於同一個 Python gate 執行 runtime：先加入 kill-on-c
 
 - 新 gate 與既有程序樹清理共 **4 PASS**，包含 Job 綁定拒絕時不執行目標、同程序執行、UTF-8 stdin 及逾時清除後代。
 - 受影響的 supervisor 與路由檢查 **7 PASS、0 FAIL／ERROR／SKIP**：完整性拒絕、PowerShell 含空白路徑、UTF-8 控制管線與期限、Claude 停用／建議／明示選型、DB 故障、設定競態及保留封包拒絕。均使用本機合成事件／分類替身，不代表實際 Jev 或 Claude 子代理採用。
-- 正式安裝與原生宿主讀回另行驗收，不以候選測試代替。Claude 模型清單的 Winsock 問題不因 Hook 修正而視為解決；路由仍保持停用。
+- `27edf8f` 正式安裝世代 `e601b55c557ae31b8be4cbc9` 的 Claude 原生 Pre／Post 均 exit 0、輸出 `{}`，停用 profile 的啟動路徑通過。外層總時間約 1.50／1.41 秒，含 PowerShell 與 bootstrap，不能當成 supervisor 的 1 秒耗時。設定／統計、舊髒檔及其他插件保全已核對；Claude 仍為 enabled=false、export=false。成功 Post 記錄另追加同一案例驗證，不與前述 7 項重複相加。
 
 Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時機及 Codex 封包辨識已改；若要宣稱 Mac 實機相容，最小追加驗證是停用 profile 的 Pre／Post、啟用後一般建議與明示選型／Post 記錄，以及保留封包的拒絕或原有處理。Windows 的上述結果不能代替這些 Mac 宿主觀測。
+
+## 2026-10-23 Winsock 原因定位
+
+自行編譯的 x64 Win32 helper 在隔離外呼叫 WSAStartup／WSACleanup 均回傳 0；相同映像經既有零 capabilities LPAC 接頭執行，WSAStartup 回傳 10107。helper 只初始化 Winsock，沒有呼叫 socket、connect、模型或任務。
+
+僅在該 helper 程序內觀測 System32 `ws2_32.dll` 的 IAT，直接記錄到 `RegOpenKeyExA(HKLM, System\CurrentControlSet\Services\WinSock2\Parameters, ...)` 回傳 `ERROR_ACCESS_DENIED (5)`；隔離外相同 API／資源開啟成功。只追加權限欄位的一次 LPAC 觀測取得 `samDesired=0x00020019 (KEY_READ)`、options=0，並未要求 registry 寫入。隔離外原次沒有記錄 mask／options，未重跑，也不宣稱這兩個參數已完成跨環境對照。
+
+觀測沿用 token、零 capabilities、映像、Job 與清理檢查，沒有加 capability 或修改登錄檔 ACL。這將問題定位到此環境的 LPAC Winsock 資源存取，排除了必須先有 Claude 任務、模型解析或 Hook 逾時才出錯；不是 Claude 程序內部的逐呼叫 trace。IAT 僅作診斷，未加入產品。現有安全契約內沒有可直接採用的修法，Claude 清單與實際子代理仍未通過，路由保持停用。

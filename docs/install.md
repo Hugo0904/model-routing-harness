@@ -103,7 +103,7 @@ mrh models --host claude --json
 mrh ctrl --settings $claudeProfile
 ~~~
 
-只有第一條清單查詢成功後，才從回傳清單設定 Claude 的 Light、Small、Mid；不要硬填清單或刪除版本／隔離檢查。目前 Windows 10 LTSC 19044 的零 capabilities LPAC 在 Winsock 初始化失敗，應停在這一步，保留 profile 停用。增加 capability 會改變權限範圍，不能作為自動修復。
+只有第一條清單查詢成功後，才從回傳清單設定 Claude 的 Light、Small、Mid；不要硬填清單或刪除版本／隔離檢查。目前 Windows 10 LTSC 19044 的零 capabilities LPAC 在 Winsock 初始化失敗；原生觀測已確認讀取系統 WinSock2 登錄檔被拒，這不是 Jev 金鑰檢查失敗。應停在這一步，保留 profile 停用，不增加 capability、修改系統 ACL 或強制打開開關。
 
 ### 4. 明確啟用全部專案
 
@@ -139,7 +139,7 @@ Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的
 | `hosts` 中的 `registration`、`trust` | Hook 是否已註冊；Codex 信任仍需原生 `/hooks` 確認。 |
 | `key_present`、`policy_ready` | 金鑰是否存在、模型政策是否可驗證。Claude catalog 不可用時不能視為就緒。 |
 | `enabled`、`workspace_ready`、`export_permitted` | 是否已明確啟用、設定全部或指定專案，並允許外送任務。 |
-| `routing`、`pending` | 主 profile 尚缺哪些條件；Claude 另看 `hosts.claude.routing`，目前為 `disabled_pending_windows_catalog`。 |
+| `routing`、`pending` | 彙整選定宿主尚缺的條件；Claude 另看 `hosts.claude.routing`，目前為 `disabled`，且 `catalog.verified`、`policy_ready` 均為 false。 |
 
 檢查不會呼叫 Jev 或派工，`provider_probe_performed: false` 就是未做分級服務實測。安裝、登入與設定完成不代表已驗證金鑰額度、Jev 回應或子代理採用；這些結果需另有實測證據。
 

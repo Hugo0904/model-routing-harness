@@ -34,8 +34,8 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | 安裝、更新、退版 | 原生 x64 入口、私有 runtime、世代完整性檢查與持久設定保留；以 `--check --json` 回報本機結果。 |
 | 全部專案範圍 | 明確選用 `--all-workspaces` 後，以持久設定涵蓋所有本機磁碟及支援的 UNC 專案路徑；可改用有限的 `--workspace`，兩者互斥。這不增加宿主檔案系統權限。 |
 | Codex 插件與 Hook | 透過原生介面註冊並讀回；信任仍需使用者在 `/hooks` 確認。模型政策需通過公開 catalog 驗證才可啟用。 |
-| Claude 插件與 Hook | 使用 Windows 原生註冊接頭及獨立的 `config\claude-profile\settings.json`，保留其他插件與 Hook。每個宿主分開驗證模型政策、金鑰、範圍與開關。 |
-| Claude 模型清單 | 已加入零 capabilities LPAC 接頭，先在懸停狀態核對 token、映像與 Job，再只送 initialize。Windows 10 LTSC 19044／Claude 2.1.303 可讀版本，但 initialize 在 Winsock 啟動失敗，清單尚未通過，路由保持停用。 |
+| Claude 插件與 Hook | 使用 Windows 原生註冊接頭及獨立的 `config\claude-profile\settings.json`，保留其他插件與 Hook。停用 profile 的原生 Pre／Post 已通過本機驗收；每個宿主仍分開驗證模型政策、金鑰、範圍與開關。 |
+| Claude 模型清單 | 已加入零 capabilities LPAC 接頭，先在懸停狀態核對 token、映像與 Job，再只送 initialize。Windows 10 LTSC 19044／Claude 2.1.303 可讀版本，但 initialize 在 Winsock 啟動失敗。同一 LPAC 接頭的原生觀測確認 Winsock 讀取 `HKLM\System\CurrentControlSet\Services\WinSock2\Parameters` 被拒；清單尚未通過，路由保持停用。 |
 | Jev 金鑰 | 目前使用者的 Windows Credential Manager，本機持久保存；原生視窗密碼欄輸入 Jev 金鑰。 |
 | Jev 實際分類 | Windows 驗證時已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
 | 真宿主子代理採用 | 原生 Codex 合成任務已驗證：Jev 分為 Small，MRH 建議 `gpt-6.1-sol / high`，重新委派後子代理 session 記錄相同模型與強度，並完成任務。 |
