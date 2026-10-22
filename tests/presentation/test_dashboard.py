@@ -25,6 +25,19 @@ EMPTY = {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
 
 
 class DashboardTests(unittest.TestCase):
+    def test_overhead_without_comparable_samples_wraps_within_card(self):
+        data = {**DATA, "overhead": {"reissues": 1, "compared": 0}}
+        for width in (80, 100, 120):
+            for color in (False, True):
+                with self.subTest(width=width, color=color):
+                    text = dashboard.render(settings(), data, "過去 7 天", width, color)
+                    plain = ANSI.sub("", text)
+                    self.assertEqual(bool(ANSI.search(text)), color)
+                    card_lines = [line for line in plain.splitlines() if line[:1] in "│╭╰" and cell_width(line) > 40]
+                    self.assertEqual({cell_width(line) for line in card_lines}, {width})
+                    self.assertIn("還沒有可比樣本", plain)
+                    self.assertIn("mrh usage collect", plain)
+
     def test_every_card_line_has_the_same_width_with_or_without_colour_at_each_size(self):
         for width in (80, 100, 120):
             for color in (False, True):

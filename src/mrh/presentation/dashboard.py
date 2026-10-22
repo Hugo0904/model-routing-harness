@@ -234,7 +234,8 @@ def _where(data, policy, inner, p, color):
                          f"改用便宜模型省 {stats_view._usd(saving)}",
                          f"重派多花 {stats_view._usd(cost)}（{ov['compared']} 次重派）")
         else:
-            right += [p("攔截回本率：還沒有可比樣本（先 mrh usage collect）", "faint"), ""]
+            right += [p(line, "faint") for note in ("攔截回本率：還沒有可比樣本", "（先 mrh usage collect）")
+                      for line in wrap(note, right_w)] + [""]
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
         c = conf.get(key) or {}
