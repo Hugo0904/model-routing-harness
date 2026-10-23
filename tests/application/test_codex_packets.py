@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -7,6 +8,7 @@ from unittest.mock import patch
 
 from mrh.adapters.hosts import codex_packets as p
 from mrh.application import advisory_runtime as rt
+from mrh.advisory.store import AdviceStore, PacketStore
 from mrh.infrastructure import settings_v2 as v2
 from mrh.routing.core import ClassifierFailure
 from mrh.routing.types import Classification
@@ -74,6 +76,79 @@ class PacketTests(unittest.TestCase):
         self.assertEqual((row["state"], row["child_id"]), ("completed", "child-one"))
         self.assertFalse(Path(packet["body_path"]).exists()); self.assertNotIn(TASK, json.dumps(row))
         self.assertIn("already_completed", self.reason(self.run_hook(release)))
+
+    def test_public_packet_operations_close_sqlite_connections_without_gc(self):
+        # Retain every real connection: refcounting/GC cannot hide an open handle.
+        connections = []
+        original_connect = AdviceStore.connect
+        original_classify = self.fake.classify
+
+        def assert_closed(selected, stage):
+            for index, connection in enumerate(selected):
+                with self.subTest(stage=stage, connection=index):
+                    # The classifier runs on another thread. This property checks
+                    # closed state without mistaking check_same_thread for close.
+                    with self.assertRaises(sqlite3.ProgrammingError):
+                        _ = connection.in_transaction
+                    if stage != 'before classifier':
+                        with self.assertRaises(sqlite3.ProgrammingError):
+                            connection.execute('SELECT 1')
+
+        def connect(store, *args, **kwargs):
+            connection = original_connect(store, *args, **kwargs)
+            connections.append(connection)
+            return connection
+
+        def classify(*args):
+            assert_closed(connections, 'before classifier')
+            return original_classify(*args)
+
+        def invoke(event, stage):
+            start = len(connections)
+            result = self.run_hook(event)
+            self.assertGreater(len(connections), start)
+            assert_closed(connections[start:], stage)
+            return result
+
+        self.fake.classify = classify
+        try:
+            with patch.object(AdviceStore, 'connect', connect):
+                packet = self.prep(user_model='gpt-6-luna', user_effort='max')
+                self.assertIn('classification ready', self.reason(invoke(self.event(packet), 'query')))
+                self.assertIn('classification ready', self.reason(invoke(self.event(packet), 'repeated query')))
+                self.assertEqual(self.fake.calls, 1)
+                denied = self.event(packet, True)
+                denied['tool_input']['reasoning_effort'] = 'high'
+                self.assertIn('must_be_preserved', self.reason(invoke(denied, 'profile deny')))
+
+                original_write = p._write
+                def lost_receipt(path, row):
+                    if row.get('state') == 'released':
+                        raise OSError('isolated receipt write fault')
+                    return original_write(path, row)
+                with patch.object(p, '_write', lost_receipt):
+                    self.assertIn('unknown', self.reason(invoke(self.event(packet, True), 'receipt failure')))
+                self.assertIn('spawn_outcome_unknown', self.reason(invoke(self.event(packet, True), 'claimed release deny')))
+                self.assertEqual(self.fake.calls, 1)
+
+                packet = self.prep()
+                self.assertIn('classification ready', self.reason(invoke(self.event(packet), 'second query')))
+                release = self.event(packet, True)
+                self.assertEqual(invoke(release, 'release')['hookSpecificOutput']['permissionDecision'], 'allow')
+                post = {**release, 'hook_event_name': 'PostToolUse', 'tool_response': {'task_name': 'child-closed'}}
+                self.assertEqual(invoke(post, 'completion'), {})
+                self.assertEqual(p.status(self.settings, packet['packet_id'], clock=lambda: 1001)['state'], 'completed')
+                self.assertFalse(Path(packet['body_path']).exists())
+                self.assertEqual(self.fake.calls, 2)
+
+                packet = self.prep()
+                self.assertIn('classification ready', self.reason(invoke(self.event(packet), 'third query')))
+                with patch.object(PacketStore, 'link', side_effect=ValueError('isolated link failure')):
+                    self.assertIn('unknown', self.reason(invoke(self.event(packet), 'link exception')))
+                self.assertEqual(self.fake.calls, 3)
+        finally:
+            for connection in connections:
+                connection.close()
 
     def test_invalid_scope_revision_hash_never_export(self):
         for kind in ("scope", "revision", "hash"):
@@ -146,7 +221,7 @@ class PacketTests(unittest.TestCase):
         self.assertIn("not_enabled",self.reason(out)); self.assertEqual(self.fake.calls,0)
 
     def test_all_export_workspace_gates_block_opt_in(self):
-        for update in ({"enabled":False},{"task_export_permitted":False},{"allowed_workspaces":["/elsewhere"]}):
+        for update in ({"enabled":False},{"task_export_permitted":False},{"allowed_workspaces":[str(self.root/"elsewhere")]}):
             packet=self.prep(); v2.update(self.settings,**update)
             self.reason(self.run_hook(self.event(packet)))
             v2.update(self.settings,enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.root)])

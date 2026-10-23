@@ -1,4 +1,5 @@
 """Identity, accounting and upgrade guarantees at the public hook/CLI boundary."""
+from contextlib import closing
 import io
 import json
 import os
@@ -81,7 +82,7 @@ class CoreTests(unittest.TestCase):
         fake.classify=classify
         self.f.reason(self.f.run_hook(self.f.event(packet)))
         data=self.public_stats();self.assertEqual(data['decisions'],{});self.assertEqual(data['classifier_requests'],0)
-        with AdviceStore(self.db).connect() as db:
+        with closing(AdviceStore(self.db).connect()) as db:
             self.assertEqual(db.execute('SELECT COUNT(*) FROM packet_links').fetchone()[0],0)
 
     def test_parallel_same_profile_exact_association_and_other_profile_not_followed(self):
@@ -90,7 +91,7 @@ class CoreTests(unittest.TestCase):
         data=self.public_stats()
         self.assertEqual(data['decisions'],{'advise':2});self.assertEqual(data['children_started'],2)
         self.assertEqual((data['children_following_advice'],data['packet_children_started']),(1,2))
-        with AdviceStore(self.db).connect() as db:
+        with closing(AdviceStore(self.db).connect()) as db:
             for packet,followed in ((a,1),(b,0)):
                 link=db.execute('SELECT * FROM packet_links WHERE packet_id=?',(packet['packet_id'],)).fetchone()
                 child=db.execute('SELECT * FROM children WHERE call_id=?',(self.f.event(packet,True)['tool_use_id'],)).fetchone()
@@ -140,11 +141,20 @@ class CoreTests(unittest.TestCase):
         p._write(directory/'receipt.json',row)
         return packet,row,directory
 
+    def remove_legacy_body(self, packet, directory):
+        body = Path(packet['body_path'])
+        self.assertEqual(directory, p._directory(self.f.settings, packet['packet_id']))
+        self.assertEqual(body, directory/'packet.json')
+        self.assertTrue(body.is_relative_to(self.f.root))
+        p._private(body)
+        if os.name == 'nt':
+            os.chmod(body, 0o600)
+        body.unlink()
+
     def test_v1_import_twice_preserves_original_rows_and_live_packet_compatibility(self):
         packet,row,directory=self.legacy()
         # Freeze the complete historical database before byte comparison. WAL
         # checkpointing by a later GC/close is not a modification of its facts.
-        from contextlib import closing
         with closing(sqlite3.connect(directory/'query.sqlite3')) as db:
             db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
         before=(directory/'query.sqlite3').read_bytes()
@@ -163,22 +173,22 @@ class CoreTests(unittest.TestCase):
         engine.decide(AdvisoryRequest('codex',SESSION,TURN,call,TASK,explicit_model='gpt-6-luna',explicit_effort='max'),settings,store,lambda:self.f.fake,lambda:1002)
         store.record_child(Child('codex',SESSION,call,'gpt-6-luna','max',None,'legacy-child'),1003)
         row.update(state='completed',release_call=call,released=1002,completed=1003,requested_model='gpt-6-luna',requested_effort='max',child_id='legacy-child',transport_observation={'outbound':{'task_sha256':row['sha256'],'task_length':row['length']}})
-        p._write(directory/'receipt.json',row);Path(packet['body_path']).unlink()
+        p._write(directory/'receipt.json',row);self.remove_legacy_body(packet,directory)
         self.assertEqual(import_history(self.f.settings)['imported'],1);self.assertEqual(import_history(self.f.settings)['already_imported'],1)
         data=self.public_stats();self.assertEqual((data['classifier_calls'],data['classifier_input_tokens']),(1,50))
         self.assertEqual((data['packet_children_started'],data['children_following_advice']),(1,0));self.assertEqual(data['decisions'],{'advise':1})
-        with store.connect() as db:self.assertEqual([r[0] for r in db.execute("SELECT ts FROM attempts WHERE outcome IN ('started','returned') ORDER BY ts")],[1001.1,1001.2])
+        with closing(store.connect()) as db:self.assertEqual([r[0] for r in db.execute("SELECT ts FROM attempts WHERE outcome IN ('started','returned') ORDER BY ts")],[1001.1,1001.2])
 
     def test_import_failure_rolls_back_then_recovers_and_reset_prevents_resurrection(self):
         packet,row,directory=self.legacy();store=AdviceStore(self.db)
-        with store.connect() as db:db.execute("CREATE TRIGGER reject_import BEFORE INSERT ON packet_imports BEGIN SELECT RAISE(ABORT,'isolated interruption'); END")
+        with closing(store.connect()) as db, db:db.execute("CREATE TRIGGER reject_import BEFORE INSERT ON packet_imports BEGIN SELECT RAISE(ABORT,'isolated interruption'); END")
         result=import_history(self.f.settings);self.assertEqual(len(result['unknown']),1);self.assertEqual(store.stats(0)['decisions'],{})
-        with store.connect() as db:db.execute('DROP TRIGGER reject_import')
+        with closing(store.connect()) as db, db:db.execute('DROP TRIGGER reject_import')
         self.assertEqual(import_history(self.f.settings)['imported'],1)
         self.query(packet);self.release(packet,'high')
         preview=store.preview_since(0);deleted=store.delete_since(0);self.assertEqual(deleted,preview['delete'])
         self.assertEqual(store.stats(0)['decisions'],{});self.assertEqual(store.stats(0)['children_started'],0)
-        with store.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM packet_links').fetchone()[0],0)
+        with closing(store.connect()) as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM packet_links').fetchone()[0],0)
         # Native completion altered the receipt. Its old source is preserved but
         # cannot be relabelled as a new import, nor resurrect deleted statistics.
         result=import_history(self.f.settings);self.assertEqual(result['imported'],0);self.assertEqual(store.stats(0)['decisions'],{})
@@ -187,10 +197,10 @@ class CoreTests(unittest.TestCase):
         packet=self.f.prep();self.query(packet);self.release(packet,'high');store=AdviceStore(self.db)
         store.prune_before(1001.5)
         data=store.stats(0);self.assertEqual(data['decisions'],{});self.assertEqual(data['children_started'],0)
-        with store.connect() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM packet_links').fetchone()[0],0)
+        with closing(store.connect()) as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM packet_links').fetchone()[0],0)
 
     def test_legacy_missing_hash_or_conflicting_native_scope_stays_unknown(self):
-        packet,row,directory=self.legacy();Path(packet['body_path']).unlink()
+        packet,row,directory=self.legacy();self.remove_legacy_body(packet,directory)
         result=import_history(self.f.settings);self.assertEqual(result['unknown'][0]['reason'],'legacy_body_hash_unknown');self.assertFalse(self.db.exists())
 
 

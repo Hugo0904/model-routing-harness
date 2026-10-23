@@ -1,4 +1,5 @@
 """Native filesystem lifecycle evidence; host API effects use bounded fakes."""
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -81,11 +82,11 @@ class WindowsSetupTests(unittest.TestCase):
         self.catalog = self.enterContext(patch(
             "mrh.adapters.catalogs.catalog.public_models",
             side_effect=CatalogError("host_unavailable")))
-        evidence_root = Path(__file__).resolve().parents[2]/'runtime'
-        evidence_root.mkdir(exist_ok=True)
-        self.temporary = tempfile.TemporaryDirectory(prefix="s ", dir=evidence_root)
+        # Use the canonical private temporary root owned by tests.__init__,
+        # independently of checkout depth; preserve spaces and native ACLs.
+        self.temporary = tempfile.TemporaryDirectory(prefix="s ")
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         # This newly created fixture belongs to the current token. Host Python
         # and checkout ACLs are deliberately not changed to make a test pass.
         setup.native().protect(self.root)
@@ -476,7 +477,7 @@ class WindowsSetupTests(unittest.TestCase):
         settings_v2.update(self.profile(), enabled=True, task_export_permitted=True,
                            allowed_workspaces=[str(self.root)])
         database = self.profile().parent / 'advice.sqlite3'
-        with sqlite3.connect(database) as connection:
+        with closing(sqlite3.connect(database)) as connection, connection:
             connection.execute('CREATE TABLE preserved_stat(value TEXT)')
             connection.execute("INSERT INTO preserved_stat VALUES ('keep')")
         saved_profile, saved_database = self.profile().read_bytes(), database.read_bytes()
@@ -583,7 +584,7 @@ class WindowsSetupTests(unittest.TestCase):
         hook.write_text('def run(platform,settings,stdin,stdout,stderr,**kwargs):\n    stdout.write(\'{"systemMessage":"editable Hook changed"}\\n\')\n    return 0\n',encoding='utf-8')
         def invoke(*arguments,input=None):
             return subprocess.run([self.python['executable'],'-I','-B','-X','utf8',str(self.prefix/'bootstrap.py'),*arguments],
-                input=input,capture_output=True,text=True,timeout=15)
+                input=input,capture_output=True,text=True,encoding='utf-8',timeout=15)
         result=invoke();self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(result.stdout.strip(),'editable CLI changed')
         result=invoke('--native-hook','codex',input=json.dumps({'hook_event_name':'PreToolUse'}))
@@ -595,7 +596,8 @@ class WindowsSetupTests(unittest.TestCase):
         self.run_setup(self.args('--codex-packets'))
         self.source.rename(offline)
         result=invoke('--help');self.assertEqual(result.returncode,0,result.stderr)
-        self.assertIn('usage:',result.stdout.lower())
+        self.assertIn('mrh',result.stdout)
+        self.assertIn('--help',result.stdout)
 
     def test_outer_bootstrap_faults_deny_packets_without_denying_ordinary_events(self):
         claude,_=self.native_claude()

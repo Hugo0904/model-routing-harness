@@ -5,7 +5,7 @@ host identity; the random packet identifier is never a native request identifier
 """
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from dataclasses import replace
 if __import__('os').name != 'nt':
     import fcntl
@@ -259,7 +259,7 @@ def _classification(query):
 
 
 def _query(store, row):
-    with store.connect() as db:
+    with closing(store.connect()) as db, db:
         link = store.link(db)
     binding = row.get('binding') or row['scope']
     if (link['session_id'] != binding.get('session') or link['turn_id'] != binding.get('turn')
@@ -391,7 +391,7 @@ def handle(event, settings_path, settings, host, factory, clock=time.time):
                 return _deny('packet_query_unbound')
             store = _store(settings_path,identifier,'release')
             classification = _classification(_query(store,row))
-            with store.connect() as db:
+            with closing(store.connect()) as db, db:
                 if store.link(db)['release_request_id']:
                     return _deny('packet_spawn_outcome_unknown')
             user = row["user_profile"]
