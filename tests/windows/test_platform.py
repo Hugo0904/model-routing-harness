@@ -215,9 +215,9 @@ class PlatformTests(unittest.TestCase):
                 self.assertGreater(elapsed,2.4);self.assertLess(elapsed,3.6)
                 self.assertIn('time budget exhausted',out['systemMessage'])
 
-    def delayed_startup_launcher(self, delay):
+    def delayed_startup_launcher(self, delay, name='artifact'):
         """Installed Windows launcher whose runtime import takes `delay` s, i.e. before it reports a policy."""
-        settings = self.root/'profile/settings.json'; artifact = self.root/'artifact'
+        settings = self.root/'profile/settings.json'; artifact = self.root/name
         plugin.prepare(artifact, settings, advisory=True)
         v2.update(settings, enabled=True, task_export_permitted=True, allowed_workspaces=['*'],
             policy={'tiers':{'Light':{'codex':[{'model':'gpt-6-luna','effort':'max'}]}}})
@@ -237,23 +237,19 @@ class PlatformTests(unittest.TestCase):
         value['runtime_sha256'] = hashlib.sha256(runtime.read_bytes()).hexdigest(); binding.write_text(json.dumps(value), encoding='utf-8')
         return launcher
 
-    def run_launcher(self, launcher, phase):
+    def run_launcher(self, launcher, phase, tool_input=None):
         event = {'hook_event_name':phase,'tool_name':'spawn_agent','session_id':'s','turn_id':'t','tool_use_id':'c',
-                 'cwd':str(self.root),'tool_input':{'message':'synthetic'},'tool_response':{'agent_id':'a'}}
+                 'cwd':str(self.root),'tool_input':tool_input or {'message':'synthetic'},'tool_response':{'agent_id':'a'}}
         start = time.monotonic()
         result = subprocess.run([sys.executable,'-I','-B',str(launcher)], input=json.dumps(event).encode(), capture_output=True, timeout=8)
         return json.loads(result.stdout), time.monotonic()-start
 
-    def test_pre_waits_up_to_the_jev_window_for_a_slow_startup_but_post_keeps_one_second(self):
+    def test_pre_waits_up_to_the_jev_window_for_a_slow_startup(self):
         # Startup that reports its policy at ~1.3 s used to be killed at the 1.0 s first-stage deadline.
         launcher = self.delayed_startup_launcher(1.3)
         out, elapsed = self.run_launcher(launcher, 'PreToolUse')
         self.assertGreater(elapsed, 1.3)
         self.assertEqual(out['hookSpecificOutput']['permissionDecision'], 'deny')  # real advice, not a fault
-        out, elapsed = self.run_launcher(launcher, 'PostToolUse')
-        self.assertLess(elapsed, 1.9)  # killed at the unchanged 1.0 s Post deadline, not 2.5 s
-        self.assertIn('time budget exhausted', out['systemMessage'])
-        self.assertIn('do not repeat a successful tool', out['hookSpecificOutput']['additionalContext'])
 
     def test_pre_startup_beyond_the_jev_window_still_times_out_without_a_decision(self):
         launcher = self.delayed_startup_launcher(3.0)
@@ -262,6 +258,41 @@ class PlatformTests(unittest.TestCase):
         self.assertIn('time budget exhausted', out['systemMessage'])
         self.assertNotIn('permissionDecision', out['hookSpecificOutput'])
 
+    def test_local_policy_pre_and_post_use_the_windows_deadlines_and_still_time_out_beyond_them(self):
+        # Explicit-model Pre (local policy 2.5 s) and Post (2.0 s) survive a 1.3 s startup...
+        slow = self.delayed_startup_launcher(1.3)
+        out, elapsed = self.run_launcher(slow, 'PreToolUse', {'message':'synthetic','model':'gpt-6-luna'})
+        self.assertGreater(elapsed, 1.3); self.assertEqual(out, {})  # preserved: no fault, no decision
+        out, elapsed = self.run_launcher(slow, 'PostToolUse')
+        self.assertGreater(elapsed, 1.3); self.assertEqual(out, {})
+        # ...but are still cut off at their own limits, without a decision or a long wait.
+        hung = self.delayed_startup_launcher(3.5, 'artifact-hung')
+        out, elapsed = self.run_launcher(hung, 'PreToolUse', {'message':'synthetic','model':'gpt-6-luna'})
+        self.assertGreater(elapsed, 2.4); self.assertLess(elapsed, 3.4)
+        self.assertIn('time budget exhausted', out['systemMessage']); self.assertNotIn('permissionDecision', out['hookSpecificOutput'])
+        out, elapsed = self.run_launcher(hung, 'PostToolUse')
+        self.assertGreater(elapsed, 1.9); self.assertLess(elapsed, 2.9)  # 2.0 s, not 1.0 s and not 2.5 s
+        self.assertIn('do not repeat a successful tool', out['hookSpecificOutput']['additionalContext'])
+
+    def test_budget_constants_are_windows_only_and_other_platforms_keep_one_second(self):
+        import importlib
+        from mrh.advisory import hook_budget
+        self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))
+        try:
+            with patch.object(sys, 'platform', 'darwin'):
+                importlib.reload(hook_budget)
+                self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (1.0, 1.0))
+                settings = {'classifier':{'provider':'jev'},'enabled':True,'task_export_permitted':True}
+                self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', settings), 1.0)
+        finally:
+            importlib.reload(hook_budget)
+        self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))
+        self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', {'classifier':{'provider':'jev'}}), 2.0)
+
+    def test_claude_post_host_timeout_leaves_room_for_the_supervisor_deadline(self):
+        import mrh_windows_setup  # noqa: F401 (import proves the module still loads)
+        source = Path(mrh_windows_setup.__file__).read_text(encoding='utf-8')
+        self.assertIn("'timeout':50 if event=='PreToolUse' else 5", source)
     def test_key_status_never_prints_secret(self):
         from mrh.presentation import key_cli
         backend = type('Fake', (), {'is_set': staticmethod(lambda name: True)})

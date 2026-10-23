@@ -4,10 +4,16 @@ from contextvars import ContextVar
 import hashlib
 import json
 from pathlib import Path
+import sys
 import threading
 import time
 
 CURRENT = ContextVar('mrh_hook_budget', default=None)
+
+# Windows process creation plus runtime import takes 0.4-1.1 s, so there a local-only PreToolUse
+# decision gets the Jev window and PostToolUse gets 2.0 s. Other platforms keep 1.0 s unchanged.
+LOCAL_SECONDS = 2.5 if sys.platform == 'win32' else 1.0
+POST_SECONDS = 2.0 if sys.platform == 'win32' else 1.0
 
 
 def settings_digest(settings):
@@ -21,7 +27,7 @@ def launch_seconds(event, platform, settings):
     if provider not in v2.PROVIDERS:
         raise ValueError('invalid_hook_provider')
     if not isinstance(event, dict) or event.get('hook_event_name') != 'PreToolUse':
-        return 1.0
+        return POST_SECONDS if isinstance(event, dict) and event.get('hook_event_name') == 'PostToolUse' else 1.0
     data = event.get('tool_input')
     packet_query = (platform == 'codex' and isinstance(data, dict)
                     and event.get('tool_name') in ('spawn_agent', 'collaborationspawn_agent')
@@ -32,20 +38,20 @@ def launch_seconds(event, platform, settings):
         from mrh.routing.types import safe_id
         effort = data.get('reasoning_effort') if platform == 'codex' else data.get('effort')
         if data.get('model') is not None or (effort is not None and (platform == 'codex' or safe_id(effort))):
-            return 1.0
+            return LOCAL_SECONDS
     from mrh.adapters.hosts.registry import HOSTS
     host = HOSTS.get(platform)
     if host is None:
-        return 1.0
+        return LOCAL_SECONDS
     pre = host.request(event)
     if pre is None or not settings['enabled'] or not settings['task_export_permitted']:
-        return 1.0
+        return LOCAL_SECONDS
     cwd = event.get('cwd')
     if not isinstance(cwd, str) or not Path(cwd).is_absolute() or not v2.workspace_allowed(settings, str(Path(cwd).resolve())):
-        return 1.0
+        return LOCAL_SECONDS
     if not packet_query and (pre.explicit_model is not None or pre.explicit_effort is not None
             or pre.role is not None and pre.role not in v2.generic_roles(settings['policy'], pre.platform)):
-        return 1.0
+        return LOCAL_SECONDS
     return 2.5 if provider == 'jev' else 48.0
 
 
@@ -83,7 +89,7 @@ class HookBudget:
             raise HookExpired()
 
     def local(self):
-        self.establish(1.0)
+        self.establish(LOCAL_SECONDS)
 
     def provider(self, provider):
         if provider == 'jev':

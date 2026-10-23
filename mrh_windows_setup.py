@@ -269,7 +269,9 @@ def build_generation(stage, destination, settings, selected, source, python):
             hooks = portable.parent/'hooks/hooks.json'
             command = native().codex_hook_command(python['executable'],destination.parents[2]/'bootstrap.py','claude')
             write(artifact/hooks, encoded({'hooks':{event:[{'matcher':'Agent|Task','hooks':[{'type':'command','command':command,'shell':'powershell',
-                'timeout':50 if event=='PreToolUse' else 2}]}] for event in ('PreToolUse','PostToolUse')}}))
+                # Post: the 2.0 s supervisor deadline starts after PowerShell and bootstrap (~1-1.5 s), so the
+                # host's own limit must leave room. Codex's hooks file is untouched (a change forces re-trust).
+                'timeout':50 if event=='PreToolUse' else 5}]}] for event in ('PreToolUse','PostToolUse')}}))
             (artifact/portable).unlink()
             del meta['files'][portable.as_posix()]
             for name in (target.as_posix(), '.claude-plugin/marketplace.json', hooks.as_posix()):

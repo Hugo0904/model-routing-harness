@@ -186,13 +186,20 @@ def _windows_launcher():
     source = source.replace('str(writer),"1"', 'str(control_handle),"1"')
     source = source.replace('args=[python,"-I","-B",', 'args=[python,"-I","-B","-X","utf8",')
     # Windows process creation and runtime import routinely take 0.4-1.1 s, and the child can only
-    # report its policy after that. PreToolUse may therefore wait up to the Jev window (2.5 s) for
-    # the first policy line; PostToolUse keeps 1.0 s. The reported policy still replaces this
-    # deadline, so local-only (1.0 s) and Jev (2.5 s) policies and the 48 s verified path are unchanged.
-    first_stage = '        deadline=started+1.0\n'
-    if source.count(first_stage) != 1:
-        raise owned.OwnedError('windows_launcher_first_stage_template_mismatch')
-    source = source.replace(first_stage, '        deadline=started+(2.5 if event.get("hook_event_name")=="PreToolUse" else 1.0)\n', 1)
+    # report its policy after that. The first policy line may therefore take up to 2.5 s for
+    # PreToolUse and 2.0 s for PostToolUse, and a reported local-only Pre policy is 2.5 s (see
+    # hook_budget.LOCAL_SECONDS/POST_SECONDS). The reported policy still replaces the first-stage
+    # deadline; the Jev (2.5 s) and verified (48 s) policies, the integrity, settings and Job
+    # checks, and the policy-value validation itself are unchanged.
+    for old, new in (
+        ('        deadline=started+1.0\n',
+         '        deadline=started+(2.5 if event.get("hook_event_name")=="PreToolUse" else 2.0)\n'),
+        ('seconds not in (1.0,2.5,48.0)', 'seconds not in (1.0,2.0,2.5,48.0)'),
+        ('seconds=min(seconds,1.0)', 'seconds=min(seconds,2.0)'),
+    ):
+        if source.count(old) != 1:
+            raise owned.OwnedError('windows_launcher_deadline_template_mismatch')
+        source = source.replace(old, new, 1)
     source = source.replace('process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,pass_fds=(writer,))',
                             'process=popen_python(python,code,args[7:],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,startupinfo=startup,close_fds=True)')
     control_read = 'try:chunk=os.read(reader,1025)\n                except BlockingIOError:chunk=b""'

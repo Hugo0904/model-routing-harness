@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from mrh.advisory import engine
-from mrh.advisory.hook_budget import HookBudget, HookExpired, HookStoreBusy, launch_seconds, settings_digest
+from mrh.advisory.hook_budget import HookBudget, HookExpired, HookStoreBusy, LOCAL_SECONDS, launch_seconds, settings_digest
 from mrh.advisory.store import AdviceStore
 from mrh.application import advisory_runtime as rt
 from mrh.infrastructure import settings_v2 as v2
@@ -35,8 +35,8 @@ class BudgetTests(unittest.TestCase):
         with self.assertRaises(HookExpired):budget.classification_timeout(10, 'jev')
         now[0] = 2.6
         with self.assertRaises(HookExpired):budget.check()
-        local = HookBudget(started=2.0, clock=lambda: now[0]);local.local();now[0]=3.01
-        with self.assertRaises(HookExpired):local.local()  # no fresh 1s per phase
+        local = HookBudget(started=2.0, clock=lambda: now[0]);local.local();now[0]=2.0+LOCAL_SECONDS+.01
+        with self.assertRaises(HookExpired):local.local()  # no fresh local window per phase (1.0 s; 2.5 s on Windows)
 
     def test_sqlite_wait_is_shared_and_cli_default_unchanged(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -147,7 +147,7 @@ class HookRuntimeBudgetTests(unittest.TestCase):
         packet=codex_pre(task_name='mrh_packet_'+'f'*32,model='gpt-6-luna')
         self.assertEqual(launch_seconds(packet,'codex',settings),2.5)
         packet['tool_input']['task_name']='mrh_release_'+'f'*32
-        self.assertEqual(launch_seconds(packet,'codex',settings),1.0)
+        self.assertEqual(launch_seconds(packet,'codex',settings),LOCAL_SECONDS)
 
     def test_factory_time_is_charged_once_and_busy_telemetry_does_not_start_classifier(self):
         seen=[];call=engine.bounded_call
