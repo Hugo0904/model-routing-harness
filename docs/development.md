@@ -23,7 +23,7 @@ Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式
 
 只改文件不會產生新版本：安裝版本只由會裝進去的程式內容決定，與 git commit 無關，重跑 `./setup` 會回報沒有變更。程式有改時，一般安裝仍要重跑 `./setup` 才會生效。
 
-自己開發時可使用 `--dev`。候選保留打包入口，再由 CLI 與 Hook 載入同一份來源：
+自己開發時可使用 `--dev`。此模式保留打包入口，再由 CLI 與 Hook 載入同一份來源：
 
 ~~~sh
 ./setup --host claude --host codex --dev --codex-packets
@@ -32,14 +32,19 @@ Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式
 Windows 在 PowerShell 使用 `.\setup.ps1 --host codex --host claude --dev --codex-packets`。不需要 packets 時省略該選項；仍只選實際使用的宿主。
 
 - CLI 與 Hook 在下次啟動時讀取來源 `src/`；一般程式修改存檔即可生效，已在執行的程序不熱更新。
-- 兩種模式都保留打包 bootstrap，安裝／檢查時核對安裝代。Hook 啟動前驗證 runtime 與 PEP 660 連結雜湊，CLI 經打包入口檢查連結及來源安全性；Windows bootstrap 另核對啟動檔與 manifest。Windows 保留 site-free `_pth`，不載入全域 site-packages，也不執行任意 `.pth` 程式。
+- 兩種模式都保留打包 bootstrap，安裝／檢查時核對安裝代。PEP 660 連結使用純路徑 `.pth` 與 JSON descriptor；Hook 啟動前驗證 runtime 與連結雜湊，CLI 經打包入口檢查連結及來源安全性；Windows bootstrap 另核對啟動檔與 manifest。Windows 保留 site-free `_pth`，不載入全域 site-packages，也不執行任意 `.pth` 程式。
 - 來源必須由目前使用者控制、不可供其他人改寫，且不經符號連結／reparse point；來源不可用時 CLI 明確失敗。Hook 對一般呼叫保留原呼叫並通知；Codex reserved packet 派工（`mrh_packet_`／`mrh_release_`）則在 runtime unavailable 時拒絕，結果為 outcome unknown；不得自動重試，也不得退回 title classification。可變來源本身不宣稱是 immutable artifact。
+- Windows 的開發來源須由目前使用者控制且不能讓其他帳號改寫。共用可寫 workspace 應選用合格的既有正式 checkout，不放寬來源安全檢查，也不為安裝大範圍修改 workspace ACL。以 `--check --json` 的實際 `dev_source`／`source` 為準：只有該 checkout 的修改會在下次呼叫生效，其他副本不會自動同步。
 - 安裝程式、建置後端、`execution.py`、`owned.py`、`plugin.py` 或平台 bootstrap 相依改變，仍需重跑同一安裝命令；換 checkout 也需重跑。來源指紋區分這些 bootstrap 與日常 mutable 來源。
 - `--check --json` 的 `execution_mode`、`source`、`runtime_root` 顯示綁定。一般模式不含 dev 來源，刪除來源不影響打包程式；舊 profile／外部白名單原本引用的檔案仍須保留。
 - 要回到一般安裝，不帶 `--dev` 重跑。兩種模式都可保留 `--codex-packets`，不與 `--rollback`／`--uninstall` 同時指定 dev。設定、金鑰、統計及原指標不遷移、不重設。
 - 切換前完成舊 packet。新協議以根鎖互斥 prepare 與切換；不保證舊版在途程序或程序退出後的 admission。遇到 `installation_recovery` 先用原參數恢復，再做新 packet，詳見[失敗與復原](install-lifecycle.md#失敗與復原)。
 
-Mac 一般／開發模式已完成隔離驗證；Mac `--dev --codex-packets` 也已完成隔離驗證，正式開發安裝已驗收。Windows 的雙模式與 packets 仍待原生驗證及正式採用。標準 Python frontend 可使用離線 `pip install -e . --no-deps --no-build-isolation`（需已有支援 PEP 660 的 pip）；這只安裝套件，不替代宿主安裝器或修改 Hook。
+Mac 一般／開發模式及 dev+packets 已有隔離驗證。程式 `670272f` 已在 macOS Apple Silicon 與 Windows x64 的既有個人安裝正式採用 `--dev --codex-packets`，完成兩宿主的安裝、來源／runtime 綁定與資料保全讀回。Windows 合法事件與模式尾段的直接證據、保留的歷史失敗限制見[Windows 驗證紀錄](windows-validation.md)。
+
+標準 Python frontend 可使用離線 `pip install -e . --no-deps --no-build-isolation`（需已有支援 PEP 660 的 pip）；這只安裝套件，不替代宿主安裝器或修改 Hook。
+
+後續若只增加說明文件的 commit，發布 HEAD 可以不同於已安裝的程式 commit；應以程式 `670272f` 與相同 source／artifact bytes 對應，無須為文件 commit 重新安裝或重測。
 
 ## 測試
 

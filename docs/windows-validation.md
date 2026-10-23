@@ -183,3 +183,19 @@ Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
 - **Small／Mid 並行**（全新無頭 Claude 工作階段，載入新的 `hooks.json`）：3 Small ＋ 3 Mid 同時送出；5 個建議（Small 0.68、0.69，Mid 0.75×3）→ 重發 5/5 有記錄 → Post 5/5、followed=1，模型為 `sonnet/high`×2、`opus/xhigh`×3。Mid 子代理因我給的 Bash 許可範圍太窄無法執行 Python，與 MRH 無關。
 - **新發現的缺陷與修正**：同一批中第 6 個 Pre 回報「settings unavailable」，沒有任何記錄，原呼叫照常執行。根因是 `owned.verify` 走訪設定資料夾後逐一 `lstat`，並行 Hook 讓 SQLite 刪除 `-wal`／`-shm`，列舉與檢查之間檔案消失（`FileNotFoundError`）被當成 `settings_unowned`。180 次單純並行讀取全部成功（不是讀檔衝突）；在私有複本上以 3 個讀取程序加 3 個不斷開關 SQLite 的程序重現，修正前約 4100 次檢查有 10 次（約 0.24%），修正後 3776 次為 0。修正只在 Windows 略過消失的 `-wal`／`-shm`；未知檔名仍拒絕、其他消失的檔案仍失敗、非 Windows 不變。新測試在舊程式碼上失敗。
 - **範圍與限制**：這次修的是低機率的並行競態，無法用少量實測證明「不再發生」，證據是確定性測試加修正前後的壓力對照。Windows 受影響測試 98 項中 97 通過，失敗的是跨程序鎖測試（在受保護 Python `-I` 的執行方式下子程序找不到 `mrh`，標準 `PYTHONPATH` 方式通過）。
+
+## 2026-10-24 雙模式與 packets 正式採用（程式 `670272f`）
+
+本輪一般打包模式與 `--dev --codex-packets` 的保證分開驗證。來源保留經驗證的 bootstrap、獨立 `runtime_root`、PEP 660 純路徑連結與 site-free runtime；一般模式不依賴 checkout，設定、統計、憑證及外部資料引用不自動搬移。原 LPAC capabilities、Job、完整性檢查與時限維持，詳見[開發指南](development.md#本機開發安裝--dev)。
+
+分批保留原有 70 PASS／1 預期 SKIP，後續 workspace gate、兩個 legacy 情境與不靠 GC 的真 SQLite 關閉案例四項 PASS，以及 staging 重複 UUID 修正後的 lost-ACK PASS。修正後的兩項補驗未再出現先前 staging 深層檔案建立錯誤；這不宣稱支援任意長路徑。
+
+原 77 個唯一 ID 的歷史仍為 75 PASS、1 FAIL、1 預期 SKIP，不是同一輪全套通過。原不完整事件的 dev Hook FAIL 原樣保留，原因未定。插樁的 marker 成功與五次失敗限定捕捉未重現都只是診斷，不能增加原生 PASS、改判原 ID，或據此宣稱 fixture 錯誤、產品已確認有缺陷或已修復。
+
+程式 `670272f` 另以唯一一次未插樁、完整合法普通事件取得精確開發 Hook 標記，耗時 0.438 秒；開發來源移走後 CLI exit 2 並明確回報來源不可用，切到一般模式且來源仍移走時 help exit 0。原啟動鏈、Job 與 2.5 秒期限保留，fixture 清理成功。這三項按正常輸入及模式邊界各自補證，不覆寫原歷史失敗。
+
+正式更新已完成 development＋codex-packets。兩宿主原生註冊及路由讀回就緒，Codex trusted／packets=true，pending 為空、沒有待恢復交易；從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均成功。CLI 與兩 Hook 的 manifest、binding、PEP 660 descriptor／PTH、開發來源及獨立 runtime 一致。安裝器耗時 107.61 秒；本輪沒有 provider、真實宿主派工或產品測試重跑。
+
+開發來源採用符合安全條件的既有受保護 Git checkout。共用可寫 workspace 不符合目前使用者控制且不可由其他帳號改寫的條件；未放寬來源檢查、修改整個 workspace ACL、變更 PowerShell 政策或另建 clone。只有實際 `dev_source` 中的修改在下次呼叫生效，其他保留副本不會自動同步。
+
+兩份 profile、active pointer、外部白名單、非 MRH 宿主設定語意、PATH 及憑證存在狀態均保留；兩份 SQLite 的 schema 與全部原資料列 multiset 完整保存。既有統計完整保留，不宣稱 DB bytes 或總列數相同。獨立 runtime 沿既定設計建立，原 runtime、舊安裝代、私有備份與 Git 歷史完整保留；自有暫存已清，無 stage 異常。Mac 程式 `670272f` 的正式採用與資料保全另見[驗證摘要](validation.md)。

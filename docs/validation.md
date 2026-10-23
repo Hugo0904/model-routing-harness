@@ -15,6 +15,16 @@
 
 宿主、安裝平台與版本限制見 [相容性](compatibility.md)。測試 fixture 經去識別化，用於驗證資料形狀與處理規則，不能作為新的真實執行證據。
 
+## 2026-10-24 雙模式與 packets 正式採用（程式 `670272f`）
+
+Mac 與 Windows 的既有個人安裝均已完成 `--dev --codex-packets` 更新及讀回。兩宿主的 CLI／Hook、manifest、PEP 660 descriptor／純路徑 PTH、開發來源與獨立 `runtime_root` 綁定一致；Codex 信任與 packets 保留，沒有待恢復交易。設定、外部白名單、非 MRH 宿主設定語意、PATH、憑證存在狀態與舊安裝歷史保留；SQLite schema 及全部原資料列與重數完整保存。這是既有資料保全，不宣稱資料庫 bytes 或總列數完全相同。本次未重跑 provider、真實委派或既有通過測試。
+
+Windows 另有一次未插樁、完整合法普通事件的開發 Hook 標記精確成功（0.438 秒）；開發來源移走後 CLI exit 2 並明確回報來源不可用，切到一般模式且來源仍移走時 help exit 0。原 bootstrap／Job／2.5 秒期限未變。正式採用使用符合來源安全檢查的既有 checkout；共用可寫副本不是開發來源，其修改不會自動同步。
+
+歷史分批 77 個唯一 ID 保留為 75 PASS、1 FAIL、1 預期 SKIP，並非同一輪套件全過。原不完整事件案例的 FAIL 原因未定；插樁觀測成功及五次失敗限定捕捉未重現都只作診斷，不增加原生 PASS，也不證明 fixture 錯誤、產品存在已確認缺陷或已修好。正常使用的合法事件、模式尾段及實際正式採用依各自直接證據驗收；完整限制見 [Windows 驗證紀錄](windows-validation.md)。
+
+一般安裝預設打包版本；開發模式、獨立 runtime、來源安全與切換復原見[開發指南](development.md#本機開發安裝--dev)。後續純文件 commit 不改程式指紋；文件 HEAD 與已安裝程式 `670272f` 以相同程式／產物 bytes 對應，無須為顯示 HEAD 不同重新安裝或測試。
+
 ## 2026-10-23 Mac 本輪收尾（6b0ebd8）
 
 本輪已採用 `6b0ebd8`，五模組 81 PASS，discover 458 PASS／112 SKIP／0 FAIL／ERROR；兩宿主原生一般委派、明示選型保護、Codex 保留封包及 Claude 隔離清單通過。Mac 時限不變，Codex Hook 定義與信任前後相同。Codex 明示模型案例本輪已有獨立 child 終結證據；disabled 依原交接例外維持 SKIP。所有原 MRH 資料保留，Claude 非 MRH Hook 有來源未知差異，不宣稱整份設定完全相同。

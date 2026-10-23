@@ -59,7 +59,10 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 
 **Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Both Codex and Claude Code have native evidence of classification, advice adoption and completed subagents. Claude catalog initialization runs in LPAC with only the `registryRead` capability added for Winsock initialization; network access stays denied. Remaining concurrency limits are documented in the [Windows validation record](docs/windows-validation.md). See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
 
-Normal installs run the packaged application without a source checkout. Developers can select `--dev` so the next CLI or hook process reads source edits, including with `--codex-packets`. Both modes retain settings and statistics without migration. Dual-mode installation and Windows packets are candidate features awaiting native acceptance; see [development mode](docs/development.md#本機開發安裝--dev).
+Normal installs use the packaged application without a source checkout. Developers can select `--dev` so each new CLI or Hook process reads the checkout source while retaining a verified packaged bootstrap. Ordinary source edits take effect on the next invocation; installer, build backend or bootstrap security changes require rerunning the installer. Both modes keep settings, statistics and credentials in place; explicit external allowlist references still need their original files. See [development mode](docs/development.md#本機開發安裝--dev).
+
+Mac normal/development modes and dev+packets have isolated validation. The existing personal installations on macOS Apple Silicon and Windows x64 have been updated to code `670272f` with `--dev --codex-packets`, with installation readback and preservation of existing data verified. The Windows development source must be a qualified checkout controlled by the current user; edits in other copies do not synchronize. See [development mode](docs/development.md#本機開發安裝--dev) and the [validation summary](docs/validation.md) for evidence and historical limits.
+
 
 ## Cost and data export
 

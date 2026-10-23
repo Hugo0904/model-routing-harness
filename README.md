@@ -64,7 +64,10 @@ mrh ctrl                     # 設定每個難度要用的模型
 
 **Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。Codex 與 Claude Code 都已有實機分級與子代理採用證據。Claude 模型清單在 LPAC 隔離下讀取，初始化只加 `registryRead` 權限；高並行的剩餘限制見[Windows 驗證紀錄](docs/windows-validation.md)。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
 
-一般安裝預設使用打包版本，執行時不需要原始碼目錄；更新仍在 repo 重跑安裝。開發者可用 `--dev`，讓 CLI 與 Hook 在下次啟動時讀取 checkout 的 `src/`；一般來源修改於下次啟動生效，安裝器或 bootstrap 修改後須重跑安裝。Mac 一般／開發模式已完成隔離驗證；Mac `--dev --codex-packets` 也已完成隔離驗證，正式開發安裝已驗收。Windows 雙模式與 packets 仍待 Windows 原生驗證及正式採用。兩種模式保留既有設定與統計，不自動搬移；既有外部白名單引用仍須保留。詳見[開發模式](docs/development.md#本機開發安裝--dev)。
+一般安裝預設使用打包版本，執行時不需要原始碼目錄；更新仍在 repo 重跑安裝。開發者可用 `--dev`，讓 CLI 與 Hook 在下次啟動時讀取 checkout 的 `src/`，入口仍保留經驗證的打包 bootstrap。一般來源修改於下次啟動生效，安裝器、建置後端或 bootstrap 安全相依修改後須重跑安裝。兩種模式保留既有設定、統計與憑證，不自動搬移；既有外部白名單引用仍須保留。詳見[開發模式](docs/development.md#本機開發安裝--dev)。
+
+Mac 一般／開發模式及 dev+packets 已有隔離驗證；macOS Apple Silicon 與 Windows x64 的既有個人安裝均已更新至程式 `670272f`，採用 `--dev --codex-packets`，並完成安裝讀回與既有資料保全。Windows 開發來源須為合格、由目前使用者控制的 checkout，只有該來源下的修改會生效；詳見[開發模式](docs/development.md#本機開發安裝--dev)。本輪證據與歷史限制見[驗證摘要](docs/validation.md)。
+
 
 ## 費用與資料外送
 

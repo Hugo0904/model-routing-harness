@@ -12,6 +12,12 @@
 
 `setup`／`mrh_setup.py` 仍處理 macOS arm64；Windows 使用獨立入口，不繞過 Mac 平台檢查。Windows runtime 取自本機 CPython，複製標準函式庫、DLL 與授權，排除 `site-packages`，以雜湊固定私有複本；不下載 Python、不執行 pip。Python 核心可執行不等於整套宿主整合已通過驗證。
 
+## 安裝模式與本輪狀態
+
+一般模式使用打包程式，執行時不依賴 checkout；明示外部白名單等資料引用仍須保留。`--dev --codex-packets` 可在兩平台使用：日常來源變更在下次啟動讀取，安裝器／bootstrap 安全相依變更須重跑安裝；設定、統計與憑證不遷移。獨立 `runtime_root`、純路徑 `.pth`／descriptor、Windows site-free 及在途 packet 切換規則見[開發指南](development.md#本機開發安裝--dev)。
+
+程式 `670272f` 已在 Mac 與 Windows 的既有個人安裝完成正式開發模式與 packets 採用、兩宿主讀回及原資料保全。Windows 使用符合目前使用者控制與不可供其他帳號改寫條件的既有 checkout；只有實際開發來源的修改生效，其他副本不同步。既有一般路由與 LPAC 證據、正常流程補證與歷史失敗各有範圍，詳見[驗證摘要](validation.md)與[Windows 驗證紀錄](windows-validation.md)。
+
 ## 版本來源
 
 | 元件 | Windows | Mac 已驗範圍 |
@@ -40,10 +46,10 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | Jev 實際分類 | Windows 驗證時已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
 | 真宿主子代理採用 | 原生 Codex 合成任務已驗證：Jev 分為 Small，MRH 建議 `gpt-6.1-sol / high`，重新委派後子代理 session 記錄相同模型與強度，並完成任務。 |
 | Codex／Claude 訂閱分級器 | Windows 不可用。 |
-| Codex 完整任務封包 | 候選已接上 `--codex-packets`，可與 `--dev` 併用；Windows 原生 ACL、鎖及完整生命週期仍待本候選實機驗收，不沿用普通委派的既有結果。 |
+| Codex 完整任務封包 | `--codex-packets` 可與 `--dev` 併用；程式 `670272f` 已完成 Windows 個人正式採用及原資料保全，分批原生證據與歷史限制見[Windows 驗證紀錄](windows-validation.md)，不以普通委派結果代替封包證據。 |
 | Gemini | Windows 不可用，不能視為可路由宿主。 |
 
-目前 Codex 原生委派的 `message` 可能是加密內容；Hook 依既有契約退回以可讀的 `task_name` 分級。這不能當作完整任務內容已經送入分類的證據。UNC 已完成路徑規則測試，本次沒有可用的真實網路分享供實機驗證。
+目前 Codex 原生委派的 `message` 可能是加密內容；Hook 依既有契約退回以可讀的 `task_name` 分級。這不能當作完整任務內容已經送入分類的證據。退回名稱的規則只適用一般委派；reserved packet 在 runtime unavailable 時拒絕，outcome unknown 不自動重試或退回 title classification。UNC 已完成路徑規則測試，本次沒有可用的真實網路分享供實機驗證。
 
 新安裝預設停用、禁止外送任務。全部專案的外送同意與設定持續有效時，不因切換專案重新要求個別授權。Windows 內部以 `allowed_workspaces: ["*"]` 表示全部；Mac 仍用 `/`，Windows 不把 `/` 視為全機範圍。
 
