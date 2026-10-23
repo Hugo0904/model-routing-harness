@@ -552,7 +552,12 @@ def readiness(args, state, paths, hosts=None):
         result.update(execution_mode='development' if dev_source else 'installed', source=source, runtime_root=runtime)
         if dev_source:
             try:
-                execution.editable_source(root / 'app/editable', dev_source)
+                if 'runtime_root' in metadata:
+                    execution.editable_source(root / 'app/editable', dev_source)
+                elif 'project_root' in metadata:
+                    execution.legacy_source(dev_source)
+                else:
+                    raise owned.OwnedError('editable_link_missing')
                 result['source_ready'] = True
             except (OSError, ValueError) as exc:
                 result.update(source_ready=False, source_error=str(exc))

@@ -27,6 +27,13 @@ def editable_source(directory, expected=None):
         raise owned.OwnedError('editable_link_invalid')
     if owned.read_regular(directory / PTH).decode('utf-8') != str(source) + '\n':
         raise owned.OwnedError('editable_link_invalid')
+    return legacy_source(root)
+
+
+def legacy_source(root):
+    """Validate mutable source without inventing editable links for old generations."""
+    root = owned.canonical_path(Path(root))
+    source = owned.canonical_path(root / 'src')
     if not (source / 'mrh/__init__.py').is_file():
         raise owned.OwnedError('editable_source_unavailable')
     # Mutable source is explicitly trusted only in development mode. The

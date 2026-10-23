@@ -597,6 +597,37 @@ class WindowsSetupTests(unittest.TestCase):
         result=invoke('--help');self.assertEqual(result.returncode,0,result.stderr)
         self.assertIn('usage:',result.stdout.lower())
 
+    def test_outer_bootstrap_faults_deny_packets_without_denying_ordinary_events(self):
+        claude,_=self.native_claude()
+        self.run_setup(self.args('--dev','--codex-packets','--host','claude'),{'codex':self.codex,'claude':claude})
+        generation=self.prefix/'setup-state/generations'/self.state()['current']
+        runtimes=[generation/('hosts/'+host+'/plugins/model-routing-harness/runtime.pyz') for host in ('codex','claude')]
+        manifest=generation/'manifest.json'
+        originals={path:path.read_bytes() for path in [*runtimes,manifest]}
+        offline=self.source.with_name('source offline')
+        def invoke(event,host='codex'):
+            return subprocess.run([self.python['executable'],'-I','-B','-X','utf8',str(self.prefix/'bootstrap.py'),'--native-hook',host],
+                input=json.dumps(event),capture_output=True,text=True,timeout=10)
+        for fault in ('source','runtime','manifest'):
+            if fault=='source':self.source.rename(offline)
+            elif fault=='runtime':
+                for runtime in runtimes:runtime.write_bytes(b'corrupted fixture runtime')
+            else:manifest.write_bytes(b'corrupted fixture manifest')
+            try:
+                for prefix in ('mrh_packet_','mrh_release_'):
+                    event={'hook_event_name':'PreToolUse','tool_name':'spawn_agent','tool_input':{'task_name':prefix+'a'*32}}
+                    result=invoke(event);self.assertEqual(result.returncode,0,result.stderr)
+                    self.assertEqual(json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'],'deny')
+                for host,event in [('codex',{'hook_event_name':'PreToolUse','tool_name':'spawn_agent','tool_input':{'task_name':'ordinary'}}),
+                                   ('codex',{**event,'hook_event_name':'PostToolUse'}),('claude',event)]:
+                    result=invoke(event,host);self.assertEqual(result.returncode,0,result.stderr)
+                    self.assertIn('systemMessage',json.loads(result.stdout));self.assertNotIn('permissionDecision',result.stdout)
+                    self.assertIn('bound runtime' if fault=='source' else 'integrity check failed',result.stdout)
+            finally:
+                if fault=='source':offline.rename(self.source)
+                else:
+                    for path,data in originals.items():path.write_bytes(data)
+
     def test_runtime_change_checks_unselected_host_profile_and_root_lock(self):
         from mrh.adapters.hosts import codex_packets as packets
         claude,_=self.native_claude();adapters={'codex':self.codex,'claude':claude}

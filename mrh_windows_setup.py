@@ -340,6 +340,21 @@ os.environ.pop('MRH_RUNTIME_ROOT',None)
 
 class ProjectRootError(ValueError):pass
 
+def hook_failure(message):
+    # Before the verified launcher runs, stdin still belongs to this bootstrap.
+    # Failure handling uses only stdlib and never trusts generation packet flags.
+    if len(sys.argv)>2 and sys.argv[2]=='codex':
+        try:
+            event=json.loads(sys.stdin.buffer.read(1048576))
+            if (isinstance(event,dict) and event.get('hook_event_name')=='PreToolUse'
+                and event.get('tool_name') in ('spawn_agent','collaborationspawn_agent')
+                and isinstance(event.get('tool_input'),dict)
+                and str(event['tool_input'].get('task_name','')).startswith(('mrh_packet_','mrh_release_'))):
+                return {'hookSpecificOutput':{'hookEventName':'PreToolUse','permissionDecision':'deny',
+                    'permissionDecisionReason':'MRH Codex packet: runtime unavailable; dispatch stopped, outcome unknown. Do not retry or fall back to title classification. Continue independent work and briefly inform the user.'}}
+        except (OSError,ValueError,TypeError):pass
+    return {'systemMessage':message}
+
 def bind_runtime(meta,runtime,generation,manifest):
     if 'runtime_root' not in meta and 'project_root' not in meta:return
     try:
@@ -406,13 +421,13 @@ try:
         runpy.run_path(sys.argv[0],run_name="__main__")
 except ProjectRootError:
     if native_hook:
-        print(json.dumps({'systemMessage':'MRH: bound runtime or development source is not ready; original tool call preserved. Inform the user; no system temporary-directory fallback was used.'}))
+        print(json.dumps(hook_failure('MRH: bound runtime or development source is not ready; original tool call preserved. Inform the user; no system temporary-directory fallback was used.')))
         raise SystemExit(0)
     print('MRH bound runtime or development source is not ready; rerun setup.ps1 --check --json. No system temporary-directory fallback was used.',file=sys.stderr)
     raise SystemExit(2)
 except (OSError,ValueError,KeyError,TypeError):
     if native_hook:
-        print(json.dumps({'systemMessage':'MRH: installed Hook integrity check failed; original tool call preserved. Inform the user; do not retry a successful tool.'}))
+        print(json.dumps(hook_failure('MRH: installed Hook integrity check failed; original tool call preserved. Inform the user; do not retry a successful tool.')))
         raise SystemExit(0)
     print("MRH installation integrity check failed; rerun setup.ps1 --check --json.",file=sys.stderr)
     raise SystemExit(2)

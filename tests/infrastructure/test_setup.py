@@ -229,6 +229,37 @@ print(json.dumps(out))
         self.assertEqual((self.config/'active-settings').read_bytes(),pointer)
         self.assertEqual((legacy/'keep').read_bytes(),b'Claude interpreter anchor')
 
+    def reseal_fixture(self, identifier):
+        root=self.prefix/'setup-state/generations'/identifier
+        manifest=setup.document(root/'manifest.json');manifest['files']=bundle.file_manifest(root)
+        setup.write(root/'manifest.json',setup.encoded(manifest))
+        state=self.state();state['generations'][identifier]=bundle.sha256(root/'manifest.json')
+        setup.write(self.prefix/'setup-state/state.json',setup.encoded(state))
+
+    def test_legacy_dev_rollback_keeps_old_entry_and_reports_source_ready(self):
+        self.run_setup();first=self.state()['current']
+        root=self.prefix/'setup-state/generations'/first
+        meta=setup.document(root/'generation.json');meta.pop('runtime_root')
+        meta.update(project_root=str(setup.ROOT),dev_source=str(setup.ROOT))
+        setup.write(root/'generation.json',setup.encoded(meta))
+        setup.write(root/'app/dev_main.py',b'legacy entry preserved\n')
+        self.reseal_fixture(first)
+        before={str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        self.revision='two';self.run_setup()
+        result=self.run_setup(self.args('--rollback'))
+        self.assertEqual(self.state()['current'],first)
+        self.assertTrue(result['source_ready']);self.assertNotIn('development_source',result['pending'])
+        self.assertEqual(before,{str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()})
+        self.assertFalse((root/'app/editable').exists())
+
+    def test_modern_dev_missing_link_remains_unready(self):
+        self.run_setup(self.args('--dev'));identifier=self.state()['current']
+        root=self.prefix/'setup-state/generations'/identifier
+        (root/'app/editable/model_routing_harness-editable.pth').unlink()
+        self.reseal_fixture(identifier)
+        result=self.run_setup(self.args('--check'))
+        self.assertFalse(result['source_ready']);self.assertIn('development_source',result['pending'])
+
     def test_unknown_reader_rollback_refuses_before_native_mutation(self):
         self.run_setup();self.revision='two';self.run_setup();state=self.state()
         previous=state['previous']['current'];root=self.prefix/'setup-state/generations'/previous
