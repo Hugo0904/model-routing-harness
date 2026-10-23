@@ -7,8 +7,8 @@
 ## 1. 起點
 
 - Repo：`https://github.com/Hugo0904/model-routing-harness`，分支 `main`。
-- Windows 交付版本：`origin/main` = `9d50280`。上一次 push 範圍是 `6d10f9f..9d50280`（12 個提交，快轉，未強制推送）。
-- Mac 先執行 `git pull --ff-only`，確認 `HEAD` 是 `9d50280`。遠端若已前進，以實際 HEAD 為準，並另外說明差異。
+- Windows 交付版本：程式碼 `0aac0c0`（含其後只改文件的提交）。`9d50280` 之前的 12 個提交已 push（`6d10f9f..9d50280`，快轉），其後的提交（見第 3 節）以 `git log` 為準；若尚未在 `origin/main`，請向使用者確認 Windows 端是否已 push。
+- Mac 先執行 `git pull --ff-only`，確認包含 `0aac0c0`（`git merge-base --is-ancestor 0aac0c0 HEAD`）。遠端若已前進，以實際 HEAD 為準，並另外說明差異。
 - Windows 端的原始工作紀錄與證據檔只在 Windows 機器上，Mac 拿不到。需要的事實都已整理在本文；完整的 Windows 驗證紀錄見 [windows-validation.md](windows-validation.md)。
 
 ## 2. Windows 做了什麼（已實測）
@@ -46,6 +46,8 @@ Windows 10 Enterprise LTSC 19044 x64、Claude Code 2.1.303、Codex 0.163.0-alpha
 | `dc71528` | Pre 第一階段 2.5 秒 | `plugin.py` 的 `_windows_launcher()` 轉換 | POSIX 的 `LAUNCHER` 文字沒變，**需確認位元組相同** |
 | `8a2fcee` | 本機 Pre 2.5 秒、Post 2.0 秒 | `advisory/hook_budget.py`（`LOCAL_SECONDS`／`POST_SECONDS` 依 `sys.platform` 取值）、`plugin.py`（Windows 轉換）、`tests/application/test_hook_budget.py`（斷言改依平台） | Mac 數值應仍為 1.0 秒，**需跑測試確認** |
 | `9d50280` | `setup.ps1` | 只有 Windows | 無 |
+| `212b002` | Codex 外掛 `hooks.json` 的 Post 宿主逾時：Windows 5 秒 | `infrastructure/plugin.py`（新增 `codex_hook_timeout(event, windows=None)`） | 非 Windows 回傳 2，產生的 `hooks.json` 應與改動前位元組相同；**請確認 Mac 的 Codex Hook 沒有因此要求重新信任** |
+| `0aac0c0` | `owned.verify` 在 Windows 略過列舉後消失的 SQLite `-wal`／`-shm` | `infrastructure/owned.py`（共用，僅 `os.name == 'nt'` 時生效） | Mac 行為不變；POSIX 同樣的競態見第 5 節「新發現」 |
 | 其他（`6edeefb`、`8f8c7f2`、`b2e7923`、`c89245f`、`26dbb48`、`fa6ddc7`） | 只有文件 | — | 無 |
 
 ## 4. Mac 必做驗收
@@ -96,16 +98,22 @@ sqlite3 "file:<設定目錄>/advice.sqlite3?mode=ro" \
 
 `mrh models --host claude --json`，確認是在 `sandbox-exec` 隔離下取得清單，沒有退回無隔離。這條路徑沒改過，但 `claude_catalog.py` 有重構。
 
-## 5. 未決項目（不擋 Mac 收尾，需使用者決定）
+## 5. 未決項目與已解決項目
 
-1. **Windows 的 Codex Post 宿主逾時仍是 2 秒**（使用者要求寫進交接）。
-   - 影響：Windows 的 Codex 在高並行下，Post 仍可能被宿主先殺掉，少一筆子代理記錄；原委派不受影響。Claude 已經改成 5 秒並驗證過。
-   - 沒改的原因：要改 Codex 的 `hooks.json`，而 Codex 會因定義變動要求使用者到原生 `/hooks` 重新審閱信任。
-   - 若要改：在 `src/mrh/infrastructure/plugin.py` 產生 Codex `hooks.json` 的地方（`9d50280` 的第 290 行，`"timeout": 50 if event == "PreToolUse" else 2`），**只在 Windows**（`os.name == 'nt'`）把 Post 改成 5。Mac 必須維持原值，否則會改變 Mac 的 Codex 定義並要求 Mac 重新信任。之後要在 Windows 重裝、使用者重新信任，再用並行委派驗證。**這一項必須在 Windows 上做**，Mac Codex 不要代做。
-2. Small、Mid 還沒在並行負載下測過；Codex 的 Post 也還沒在高並行下測過（Windows）。
-3. Windows 的 `.codex/config.toml` 有幾個非 MRH 的鍵（`model`、`model_reasoning_effort`、`service_tier`）和 10 月 22 日的備份不同。安裝器不會寫這些鍵，Codex 當時也在執行，所以判斷是 Codex 自己改的，但無法證明改動時間。
-4. 已開著的 Claude 工作階段（Windows）要重開或重新載入外掛，才會用到新的 Post 宿主逾時 5 秒。
+已解決（Windows，2026-10-23，使用者在 Codex 原生 `/hooks` 信任後驗證）：
 
+- **Codex Post 宿主逾時**：改為 Windows 5 秒（`212b002`），Mac 仍為 2 秒。信任後 `trust: trusted`、路由 ready；真實 `codex exec` 並行 4 個 `spawn_agent`，4 個 Pre 與 4 個 Post 全部有記錄。
+- **Small／Mid 並行**：全新 Claude 工作階段並行 3 Small ＋ 3 Mid，5 個建議（Small 0.68／0.69、Mid 0.75×3）→ 重發 5/5 → Post 5/5 記錄、followed=1。
+
+新發現（需 Mac 評估，不要代替 Windows 結論）：
+
+1. **並行 Hook 的設定讀取競態**：`owned.verify` 走訪設定資料夾並逐一 `lstat`，並行的 Hook 讓 SQLite 刪除 `-wal`／`-shm`，列舉與檢查之間檔案消失會變成 `settings_unowned`，使用者看到「settings unavailable」且該次 Pre 沒有任何記錄。Windows 已修（`0aac0c0`，私有複本壓力測試修正前約 0.24%、修正後 0 次）。**POSIX 的同一段程式（`os.name != 'nt'` 分支的 `path.lstat()`）理論上有同樣的競態，這次刻意沒改**；Mac 可以先用多個並行 Hook 加 SQLite 開關壓力確認是否可重現，再決定是否採用相同修正（拿掉 `os.name == 'nt'` 條件即可，`test_platform` 的 `test_owned_directory_check_tolerates_sqlite_sidecars_vanishing_but_nothing_else` 可改寫成 POSIX 版）。
+
+仍未決（不擋 Mac 收尾）：
+
+2. Windows 的 `.codex/config.toml` 有幾個非 MRH 的鍵（`model`、`model_reasoning_effort`、`service_tier`）和 10 月 22 日的備份不同。安裝器不會寫這些鍵，Codex 當時也在執行，所以判斷是 Codex 自己改的，但無法證明改動時間。之後的比對只有 MRH 自己的信任雜湊與 marketplace 指標有變。
+3. 已開著的 Claude 工作階段（Windows）要重開或重新載入外掛，才會用到新的 Post 宿主逾時 5 秒；新工作階段已實測載入。
+4. 並行驗證只用合成的小任務；Codex 並行這次的 Jev 判斷都低於 0.5 門檻（全部保留原呼叫），建議→重發→Post 關聯在稍早一次 Codex 執行（Post 定義變更前）已驗過。
 ## 6. 邊界
 
 - 不要 push、發布或改動其他機器，除非使用者當下明確同意。
