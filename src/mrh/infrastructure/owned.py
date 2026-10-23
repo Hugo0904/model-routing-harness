@@ -77,11 +77,19 @@ def verify(root, kind, allowed=None):
         for path in root.iterdir():
             if path.name not in set(allowed) | {MARKER, ".mrh.lock"}:
                 raise OwnedError("unknown_owned_contents")
-            info = path.lstat()
-            if os.name == 'nt':
-                assert_safe(path, private=True)
-            elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
-                raise OwnedError("unsafe_owned_file")
+            try:
+                info = path.lstat()
+                if os.name == 'nt':
+                    assert_safe(path, private=True)
+                elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
+                    raise OwnedError("unsafe_owned_file")
+            except FileNotFoundError:
+                # Concurrent Hook processes open and close the SQLite store, which deletes its -wal/-shm
+                # sidecars between this listing and the check. A vanished sidecar is not an ownership
+                # problem; any other allowed file that disappears still fails. Windows only so far:
+                # the same race exists on POSIX and is left for that platform's own verification.
+                if not (os.name == 'nt' and path.name.endswith(("-wal", "-shm"))):
+                    raise
     return root
 
 

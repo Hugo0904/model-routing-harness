@@ -289,6 +289,27 @@ class PlatformTests(unittest.TestCase):
         self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))
         self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', {'classifier':{'provider':'jev'}}), 2.0)
 
+    def test_owned_directory_check_tolerates_sqlite_sidecars_vanishing_but_nothing_else(self):
+        # Parallel Hook processes make SQLite delete its -wal/-shm between listing and checking; that used
+        # to surface as "settings unavailable" and lose the whole Pre event.
+        root = owned.initialize(self.root/'profile-race', 'settings', v2.FILES)
+        for name in ('settings.json', 'advice.sqlite3', 'advice.sqlite3-wal', 'advice.sqlite3-shm'):
+            (root/name).write_bytes(b'x')
+        real = win.assert_safe
+        def vanishing(vanished):
+            def check(path, *args, **kwargs):
+                if Path(path).name == vanished: raise FileNotFoundError(2, 'synthetic: deleted after listing', str(path))
+                return real(path, *args, **kwargs)
+            return check
+        for sidecar in ('advice.sqlite3-wal', 'advice.sqlite3-shm'):
+            with self.subTest(sidecar=sidecar), patch.object(win, 'assert_safe', vanishing(sidecar)):
+                self.assertEqual(owned.verify(root, 'settings', v2.FILES), root)
+        for other in ('settings.json', 'advice.sqlite3'):
+            with self.subTest(other=other), patch.object(win, 'assert_safe', vanishing(other)):
+                with self.assertRaises(FileNotFoundError): owned.verify(root, 'settings', v2.FILES)
+        (root/'unexpected.txt').write_bytes(b'x')  # unknown names are still refused
+        with self.assertRaisesRegex(owned.OwnedError, 'unknown_owned_contents'): owned.verify(root, 'settings', v2.FILES)
+
     def test_codex_post_host_timeout_is_five_seconds_on_windows_only(self):
         self.assertEqual((plugin.codex_hook_timeout('PreToolUse'), plugin.codex_hook_timeout('PostToolUse')), (50, 5))
         self.assertEqual((plugin.codex_hook_timeout('PreToolUse', windows=False), plugin.codex_hook_timeout('PostToolUse', windows=False)), (50, 2))
