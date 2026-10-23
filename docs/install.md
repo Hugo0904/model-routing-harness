@@ -23,7 +23,7 @@ cd model-routing-harness
 .\setup.ps1 --host codex --host claude
 ~~~
 
-Windows Claude 目前提供原生插件／Hook 註冊及 LPAC 清單接頭，但實測 initialize 尚未通過，使用獨立 profile 保持路由停用。Codex 可在後續條件完成後啟用。若 PowerShell 執行原則擋住 `.ps1`，直接使用同一個 Python 安裝器，不必修改執行原則：
+Windows Codex 與 Claude 均已有原生路由驗證；Claude 的 LPAC initialize 使用單一 `registryRead` capability，並以獨立 profile 驗證清單、政策、金鑰與外送同意。新安裝預設停用，完成各宿主條件後才明確啟用。若 PowerShell 執行原則擋住 `.ps1`，直接使用同一個 Python 安裝器，不必修改執行原則：
 
 ~~~powershell
 python -I -B .\mrh_windows_setup.py --host codex --host claude
@@ -121,7 +121,7 @@ mrh ctrl --settings $claudeProfile
 .\setup.ps1 --host codex --workspace 'C:\Projects\Example' --enable
 ~~~
 
-Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 清單、政策與金鑰日後都通過時，才可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。Windows 10 LTSC 19044／Claude 2.1.303 已用上述方式取得清單並完成啟用與真實子代理驗證（見 [Windows 驗證紀錄](windows-validation.md)）；啟用 Claude 同樣需要你明確同意任務內容送往 Jev。
+Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 自己的清單、政策與金鑰都通過時，可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。Windows 10 LTSC 19044／Claude 2.1.303 已用上述方式取得 LPAC 清單，完成啟用與 Light／Small／Mid 真實子代理驗證（見 [Windows 驗證紀錄](windows-validation.md) 與 [交接摘要](mac-handoff.md)）；啟用 Claude 同樣需要你明確同意任務內容送往 Jev。
 
 更新指定專案的範圍時，需列出所有要保留的專案。Windows 目前不提供訂閱分級器、Codex 完整任務封包（`--codex-packets`）或 Gemini 整合。
 
@@ -139,7 +139,7 @@ Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的
 | `hosts` 中的 `registration`、`trust` | Hook 是否已註冊；Codex 信任仍需原生 `/hooks` 確認。 |
 | `key_present`、`policy_ready` | 金鑰是否存在、模型政策是否可驗證。Claude catalog 不可用時不能視為就緒。 |
 | `enabled`、`workspace_ready`、`export_permitted` | 是否已明確啟用、設定全部或指定專案，並允許外送任務。 |
-| `routing`、`pending` | 彙整選定宿主尚缺的條件；Claude 另看 `hosts.claude.routing`，目前為 `disabled`，且 `catalog.verified`、`policy_ready` 均為 false。 |
+| `routing`、`pending` | 彙整選定宿主尚缺的條件；Claude 另看 `hosts.claude.routing`、`catalog.verified`、`policy_ready` 與 `enabled`。新 profile 或條件未齊時維持 disabled，通過本機驗證並明確啟用後才可就緒；不把早期 catalog 失敗狀態當成所有 Windows 安裝的現況。 |
 
 檢查不會呼叫 Jev 或派工，`provider_probe_performed: false` 就是未做分級服務實測。安裝、登入與設定完成不代表已驗證金鑰額度、Jev 回應或子代理採用；這些結果需另有實測證據。
 
@@ -190,7 +190,7 @@ mrh ctrl set classifier.provider jev
 mrh ctrl set classifier.model jev-latest
 ~~~
 
-在 `mrh ctrl` 的「各難度要用的模型」選 Codex 或 Claude Code，分別設定 Light、Small、Mid；兩者都有安裝就各設一遍。模型與推理強度優先從已確認的宿主清單選取。Mac Claude CLI 須為 2.1.296 或更新，版本格式不明則拒絕；合格 CLI 的新版模型清單若無法取得，可用「直接輸入模型」或 `mrh ctrl set tiers.Light.claude "模型ID:推理強度"` 手動保存，Small、Mid 同理。這只表示手動設定，不代表模型或帳號已驗證；已確認下架／不支援的模型或 effort 不能新增。CLI 不可用仍需先處理。Windows Claude 不套用此路徑，仍停用。Top 建議先選 Main；選 Fixed 時需補齊 Top 模型。信心門檻與進階檔位可先保留預設。
+在 `mrh ctrl` 的「各難度要用的模型」選 Codex 或 Claude Code，分別設定 Light、Small、Mid；兩者都有安裝就各設一遍。模型與推理強度優先從已確認的宿主清單選取。Mac Claude CLI 須為 2.1.296 或更新，版本格式不明則拒絕；合格 CLI 的新版模型清單若無法取得，可用「直接輸入模型」或 `mrh ctrl set tiers.Light.claude "模型ID:推理強度"` 手動保存，Small、Mid 同理。這只表示手動設定，不代表模型或帳號已驗證；已確認下架／不支援的模型或 effort 不能新增。CLI 不可用仍需先處理。Windows Claude 必須通過自己的 LPAC 清單與獨立 profile 驗證，不套用此手動例外。Top 建議先選 Main；選 Fixed 時需補齊 Top 模型。信心門檻與進階檔位可先保留預設。
 
 ### 3. 啟用並檢查
 
@@ -208,7 +208,7 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 ./setup --check --json
 ~~~
 
-若 `pending` 有內容，依項目補齊：`credential_present` 是金鑰；`policy_ready` 是模型政策；`workspace_ready`、`enabled`、`export_permitted` 是範圍與啟用；`native_trust_or_unverified` 需回到 Codex `/hooks`。安裝或宿主設定問題見 [疑難排解](troubleshooting.md)。這項檢查不呼叫 Jev 或派工，不能驗證餘額或模型實際使用權。這次 Windows 工作沒有 Mac 實機重驗結果。
+若 `pending` 有內容，依項目補齊：`credential_present` 是金鑰；`policy_ready` 是模型政策；`workspace_ready`、`enabled`、`export_permitted` 是範圍與啟用；`native_trust_or_unverified` 需回到 Codex `/hooks`。安裝或宿主設定問題見 [疑難排解](troubleshooting.md)。這項檢查不呼叫 Jev 或派工，不能驗證餘額或模型實際使用權。2026-10-23 已完成修復後的 Mac 安裝與限定原生驗收，個別 SKIP、版本及證據界線見 [驗證摘要](validation.md)；不需為閱讀或整理文件再跑一輪。
 
 ## 更新、退版與停用
 

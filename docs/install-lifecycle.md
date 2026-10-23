@@ -62,9 +62,9 @@ Windows 用受管理的狀態檔選取目前安裝代，不使用 Mac 的 `curre
 
 有限範圍改用一個或多個 `--workspace`，與 `--all-workspaces` 互斥。Windows 只接受有效的絕對本機／支援 UNC 路徑；Mac 的 `/` 語意不套用到 Windows。
 
-Windows 的 Codex 主 profile 位於 `config\profile\settings.json`，原生 Claude 插件使用獨立的 `config\claude-profile\settings.json`；CLI 預設使用安裝狀態指向的主設定。兩宿主一起選用時，範圍可同步保存，但 `--enable` 只啟用通過條件的 Codex 主 profile；Claude 仍停用並禁止外送。檢查需保留 Claude 的 `disabled_pending_windows_catalog`，不能用主 profile 的就緒值代替。
+Windows 的 Codex 主 profile 位於 `config\profile\settings.json`，原生 Claude 插件使用獨立的 `config\claude-profile\settings.json`；CLI 預設使用安裝狀態指向的主設定。`--enable` 驗證並更新所選宿主各自的 profile；任一選定宿主的清單或政策未通過，就拒絕啟用。不能用 Codex 主 profile 的就緒值代替 Claude 的清單、政策、金鑰、範圍與開關。
 
-Windows Claude 模型清單、訂閱分級器、Codex packets 與 Gemini 仍有明確的不可用邊界。安裝／Hook 註冊成功不代表可以啟用完整 Claude 路由，詳見 [相容性](compatibility.md)。
+Windows Claude 2.1.303 已在 LPAC initialize 僅加 `registryRead` 的條件下取得模型清單，並完成明確啟用與真實委派；版本探測仍是零 capabilities。新安裝或本機條件未齊仍維持停用，不能由註冊成功推定路由就緒。Windows 訂閱分級器、Codex packets 與 Gemini 仍不可用，詳見 [相容性](compatibility.md)。
 
 ## macOS arm64 既有流程
 
@@ -116,7 +116,7 @@ Mac 的 `./setup --uninstall` 沿用安裝時的所有權檢查，只移除能�
 
 ## 檢查與驗證界線
 
-`--check` 與 `--dry-run` 不建立 MRH 設定、資料庫或安裝根目錄，後者也不下載。原生 metadata 查詢可能有宿主 CLI 自己的執行行為，但不是 provider／模型呼叫。Codex 政策就緒依公開 CLI 宣告；Mac Claude 合格 CLI 的 catalog 未知時可保留手動選型並標明未確認，不因此列為政策 pending。CLI 不可用、已宣告不支援的模型／effort 與 Windows Claude 停用界線仍保留；兩者都不代表帳號有實際使用權。缺金鑰、外送同意、信任、模型政策或實測證據，都需如實保留待辦。
+`--check` 與 `--dry-run` 不建立 MRH 設定、資料庫或安裝根目錄，後者也不下載。原生 metadata 查詢可能有宿主 CLI 自己的執行行為，但不是 provider／模型呼叫。Codex 政策就緒依公開 CLI 宣告；Mac Claude 合格 CLI 的 catalog 未知時可保留手動選型並標明未確認，不因此列為政策 pending。CLI 不可用、已宣告不支援的模型／effort 與 Windows Claude 必須通過自身清單驗證的界線仍保留；清單與設定都不代表帳號有實際使用權。缺金鑰、外送同意、信任、模型政策或實測證據，都需如實保留待辦。
 
 Python 驗證一律帶 `-B`；由 Python console script 啟動的子程序，另設 `PYTHONDONTWRITEBYTECODE=1`。每個 Python 子程序仍需明確帶 `-B`，尤其 `-I`／`-E` 會忽略 Python 環境設定。測試範例見 [開發指南](development.md)。
 

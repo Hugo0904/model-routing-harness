@@ -54,10 +54,10 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 
 ```sh
 ./setup --host claude --workspace "/" --enable   # "/" means all projects; or give a project path
-./setup --check --json                           # done when "pending" is empty
+./setup --check --json                           # check routing, trust and pending; this does not prove a real delegation
 ```
 
-**Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Codex routing has native evidence. Claude plugin registration works, and its model catalog is read through an LPAC process holding only the `registryRead` capability (needed for Winsock initialization; network stays denied). See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
+**Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Both Codex and Claude Code have native evidence of classification, advice adoption and completed subagents. Claude catalog initialization runs in LPAC with only the `registryRead` capability added for Winsock initialization; network access stays denied. Remaining concurrency limits are documented in the [Windows validation record](docs/windows-validation.md). See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
 
 ## Cost and data export
 
@@ -116,10 +116,10 @@ Only what MRH created is removed; other hooks, settings and the rest of your she
 | macOS (Apple Silicon) | Supported. Brings its own Python 3.11. |
 | Windows (x64) | Supported. Needs Python 3.11 or newer. |
 | Linux, WSL, Intel Mac | Not supported. |
-| Codex, Claude Code | Claude Code 2.1.296 or newer on macOS. Windows Claude routing still awaits isolated catalog verification. |
+| Codex, Claude Code | Native classification, advice adoption and completed subagents verified on macOS and Windows. Claude Code 2.1.296 or newer on macOS. |
 | Gemini | Not supported yet. |
 
-Tested versions and known limits: [compatibility](docs/compatibility.md).
+The 2026-10-23 Mac acceptance covered the installed `6b0ebd8` update and native delegations on both hosts; Claude Code runs used 2.1.309. A subsequent minimal fix for disappearing SQLite sidecars is installed on both local hosts and passed the affected regressions and agreed concurrent workload. This fix follows commit `6b0ebd8`; that earlier commit does not contain it. Local installation and Git publication are verified separately. The native Codex disabled-profile case remains skipped under the handoff exception. See [validation](docs/validation.md) and [compatibility](docs/compatibility.md).
 
 ## License
 

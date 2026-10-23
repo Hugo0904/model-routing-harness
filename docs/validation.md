@@ -15,13 +15,54 @@
 
 宿主、安裝平台與版本限制見 [相容性](compatibility.md)。測試 fixture 經去識別化，用於驗證資料形狀與處理規則，不能作為新的真實執行證據。
 
+## 2026-10-23 Mac 本輪收尾（6b0ebd8）
+
+本輪已採用 `6b0ebd8`，五模組 81 PASS，discover 458 PASS／112 SKIP／0 FAIL／ERROR；兩宿主原生一般委派、明示選型保護、Codex 保留封包及 Claude 隔離清單通過。Mac 時限不變，Codex Hook 定義與信任前後相同。Codex 明示模型案例本輪已有獨立 child 終結證據；disabled 依原交接例外維持 SKIP。所有原 MRH 資料保留，Claude 非 MRH Hook 有來源未知差異，不宣稱整份設定完全相同。
+
+指定 POSIX 原次自然壓測完成：4 個 Hook worker＋1 個 SQLite writer，36 個 Hook／1,090 次 SQLite 開關中有 1 次 settings unavailable，首次觀測後停止。原次沒有內層例外堆疊；後續隔離診斷直接確認暫存檔消失會呈現 `FileNotFoundError` 或 POSIX `st_nlink == 0`，兩者都曾被誤判成設定不可信。這些新診斷不是原次的事後堆疊，也不代表日常故障率。原交接分項結果見 [本輪 Mac 驗收結果](mac-handoff.md#本輪-mac-驗收結果6b0ebd8)。
+
+### 同日 POSIX 最小修正收尾
+
+只修改 `owned.verify`：四個已允許的 SQLite `-wal`／`-shm` 檔案消失時可略過；POSIX 若仍讀得到 metadata，也只容忍 regular、owner 正確且連結數為 0 的同名暫存檔。主檔、陌生檔案、不安全連結、錯誤 owner 及其他錯誤仍拒絕，Windows ACL 檢查不變。
+
+| 必要條件 | 最終結果 |
+| --- | --- |
+| 受影響回歸 | `tests.infrastructure.test_owned_sidecars` 共 6 項，新增連結數 0 的四種正向子案例修前失敗、修後全過；其他檔案與安全負向保護通過。 |
+| 實際套用 | Claude 與 Codex 已採用安裝代 `1e33d5b63efdd39756afe1ea`；兩份 runtime、應用程式 archive 及 Codex 原生快取中的修正與工作目錄一致。 |
+| 原工作量自然驗收 | 未加 trace 或函式包裝，4 個 worker＋1 個 SQLite writer，3.365 秒完成 44 個 Hook／1,090 次 SQLite 開關，44 個 `{}`、0 故障／逾時；每個 worker 完成 5 組 Pre／Post，達標即停。 |
+| 保全與清理 | 原 MRH 設定、7 張表的原資料列、金鑰存在狀態、Hook 信任與時限保留；自有 fixture 與程序已清理，原證據及備份保留。 |
+
+本次沒有真實 provider 呼叫或子代理；不受影響的五模組、完整 discover、原生委派與清單驗證沿用，沒有重跑或改算成本次結果。修正接續 `6b0ebd8`；該提交本身不包含修正，實際安裝以以下證據記錄的來源雜湊為準。此問題的修正、必要驗證、本機套用與文件已完成，沒有新增待辦；既有平台與原生驗證界線維持。細節見[修正與收尾結果](mac-handoff.md#posix-最小修正與收尾結果)。
+
+## 2026-10-23 Mac 前輪驗收（ddc4e4157）
+
+Windows 程式碼 `9d50280` 加上交接文件的 `ddc4e4157`，已在 macOS arm64 更新安裝並完成限定驗收。這組結果取代「Windows 修復後尚無 Mac 重驗」的舊狀態，較早失敗與各批證據仍保留。詳見 [Mac 驗收紀錄](mac-handoff.md)。
+
+| 項目 | 結果與限制 |
+| --- | --- |
+| 指定五模組 | hook_budget 12、hook_supervisor 7、context_contract 9、advisory_runtime 10、setup 43，共 **81 PASS、0 FAIL／ERROR／SKIP**，46.271 秒。 |
+| 完整 discover | 568 run = **458 PASS、110 SKIP、0 FAIL／ERROR**，91.487 秒；SKIP 不計 PASS。沒有失敗案例，未另跑舊版本來補基準數字。 |
+| Mac Hook 時限與 launcher | LOCAL_SECONDS／POST_SECONDS 仍為 1.0；POSIX launcher 與 `6d10f9f` 及兩宿主安裝產物逐位元組相同。 |
+| 正式安裝 | 新安裝代來源為 `ddc4e4157`；兩宿主 configured、Codex trusted、pending 為空，金鑰仍存在。保留既有 packets 選配。 |
+| Codex 0.163.0 一般委派 | 真 Jev Light/0.77 → 建議 `gpt-6-luna/high` → 一次重發 → 官方 child completed/OK；實際模型與強度另由 child metadata 核對，Post followed=1，Post resolved_model 本身仍為 null。 |
+| Codex 保護與停用 | explicit_model 保留且不呼叫 Jev；該 child 終結僅 parent 回報，未取得獨立 child 身分。reserved packet 被原生拒絕。disabled 原生依既有已啟用 Mac 例外列 **SKIP**，不以離線測試冒充原生 `{}`。 |
+| Claude Code 2.1.309 一般與明示委派 | 真 Jev Light/0.87 → haiku/medium → 一次重發 → child completed/OK；Post resolved `claude-haiku-5-5`、followed=1。明示 haiku 保留且無 Jev，另一 child 同樣 completed/OK。requested effort 與獨立實際 effort 仍分開。 |
+| Claude 停用 | 獨立臨時 profile、單次宿主設定；真實原生 Pre／Post 均回 `{}`、exit 0，child completed/OK，沒有建立臨時 MRH 統計 DB。 |
+| Claude 清單 | 初期 2.1.296 的實際命令取得 5 模型；最終 2.1.309 政策查詢來源仍為 isolated-defaults。安裝版 catalog 與來源一致，Mac 路徑使用 `sandbox-exec`；沒有無隔離 fallback，未宣稱外部 syscall tracing。 |
+
+本包 Jev 真實 transport 共 **3 次**：Codex 2 次（包含初次低信心保留的請求）、Claude 1 次。12 筆 lifecycle 狀態不是 12 次請求。初次 Codex 一般委派因 runner 的 ephemeral parent 缺 rollout 而失敗；保留該結果，只修 runner 並補原失敗案例一次，沒有重跑已通過的明示模型或 packet 情境。沒有觀測到 MRH Hook 逾時或重複成功委派，四個自有 CLI 程序群組均已退出。
+
+MRH 設定、Claude 設定、適用範圍、原統計資料列與金鑰保留。整份 Codex `config.toml` 不能稱完全相同：除預期的新 marketplace 來源，另觀測非 MRH `service_tier` 從 `default` 變成 `priority`，寫入者與確切改動時間未知；保留目前值，不歸因或回寫。這項差異不是已證明的分級故障，也不自動增加工程待辦。原始證據、備份與官方 session 保留，自有臨時材料已清理。
+
+Mac 本包已由督導接受，以上 SKIP 與證據邊界一併保留；不代表 Windows 後續事項或所有平台已完成驗證。後續 Windows 的 Codex Post 5 秒與 Small／Mid 並行已完成驗證；目前已解決事項、POSIX 競態評估與保留限制見 [Mac 交接第 5 節](mac-handoff.md#5-未決項目與已解決項目)。本節 ddc4e4157 證據不代替新版 6b0ebd8 的驗收結果。
+
 ## 安裝與移除的補充驗證
 
 - **Mac 安裝與 shell**：在隔離的 HOME 內用真的 zsh／bash 登入與互動 shell 驗證：PATH 衝突與保留原檔、同一安裝代的 PATH 修復、skill 位置與覆寫前的復原副本、原子更新的成功與失敗清理，共 9 項直接案例。安裝器判斷「新 shell 是否就緒」時檢查持久的啟動檔，不以目前程序繼承到的 PATH 為準；這一點有 4 項直接案例。
 - **Mac 移除（`./setup --uninstall`）**：離線單元測試涵蓋預覽不寫入、保留其他 Hook 與設定、被改過的 shell 區塊不動、可重跑、原生註冊失敗後續跑、`--purge-data`，以及不跟隨符號連結。另在隔離 HOME 用真實安裝產生的安裝代做過一次完整往返：Claude Code 的 `settings.json` 與 `.zshrc` 在移除後與安裝前逐位元組相同。Codex 部分只用假的 CLI fixture 驗證，沒有對真實的 Codex 執行；鑰匙圈操作在測試中以替身取代。
 - **Windows**：`0007b77` 的六個 Windows 模組共 68 個案例，首次 51 項通過、17 項因 runner 未隔離真實模型清單查詢而失敗；補上清單不可用的替身後，只重測原 17 項，全部通過，0 錯誤、0 略過。產品程式與測試斷言未更動，原次 51 項結果沿用。另有較早的 5 項選定案例，其中 4 項通過、1 項因無法建立 symlink 而略過；該略過案例仍不能算通過。來源、案例與限制見 [Windows 驗證紀錄](windows-validation.md)。Windows 沒有 `--uninstall`，手動移除步驟未經實機驗證。
 
-以上都是指定版本與情境的觀測；沒有呼叫 Jev 或子代理，也不代表所有真帳號環境。
+本節安裝／移除的隔離案例沒有呼叫 Jev 或子代理；它們不能代替上節的真實派工證據，也不代表所有真帳號環境。
 
 Windows 測試的清單隔離後續已納入正式測試檔；原 17 項安裝案例及加強後的來源指紋案例另經原生 Windows 差異驗證，18 項全部通過，0 失敗／錯誤／略過。此次不涵蓋同期新增的分析資料與 `mrh status` 功能。
 

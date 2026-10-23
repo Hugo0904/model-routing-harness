@@ -59,10 +59,10 @@ mrh ctrl                     # 設定每個難度要用的模型
 
 ```sh
 ./setup --host claude --workspace "/" --enable   # "/" 代表全部專案；也可以換成某個專案的路徑
-./setup --check --json                           # pending 是空的就完成了
+./setup --check --json                           # 檢查各宿主 routing、信任及 pending；不代表已做真實派工驗證
 ```
 
-**Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。Codex 已有實機路由證據；Claude 的原生插件可安裝，但零權限 LPAC 模型清單尚未通過，仍保持停用。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
+**Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。Codex 與 Claude Code 都已有實機分級與子代理採用證據。Claude 模型清單在 LPAC 隔離下讀取，初始化只加 `registryRead` 權限；高並行的剩餘限制見[Windows 驗證紀錄](docs/windows-validation.md)。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
 
 ## 費用與資料外送
 
@@ -132,10 +132,10 @@ mrh skill install --host claude   # Codex 用 --host codex
 | macOS（Apple Silicon） | 支援。安裝器自備 Python 3.11。 |
 | Windows（x64） | 支援。需自備 Python 3.11 以上。 |
 | Linux、WSL、Intel Mac | 不支援。 |
-| Codex、Claude Code | Mac Claude Code 需 2.1.296 以上；Windows Claude 路由仍待隔離清單驗證，不能視為已可用。 |
+| Codex、Claude Code | Mac 與 Windows 均有實際分級、建議採用及子代理完成證據。Mac Claude Code 需 2.1.296 以上。 |
 | Gemini | 尚未支援。 |
 
-已驗證的版本與已知限制見[平台與相容性](docs/compatibility.md)。
+2026-10-23 的 Mac 驗收已完成 `6b0ebd8` 更新與兩宿主原生委派；Claude Code 實際版本為 2.1.309。後續 SQLite 暫存檔消失的最小修正已在本機兩宿主套用，受影響回歸及原定並行工作量驗收通過；此修正接續 `6b0ebd8`，不代表該提交本身包含修正；本機套用與 Git 發布狀態分開核對。Codex 停用狀態的原生測試依交接例外略過；詳見[驗證摘要](docs/validation.md)及[平台與相容性](docs/compatibility.md)。
 
 ## 更多文件
 
