@@ -918,7 +918,8 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
                 mkdir(control / "generations")
                 # Interrupted staging is retained as evidence. A rerun builds in
                 # a fresh owned leaf instead of deleting or adopting partial bytes.
-                stage = control / (".stage-" + pending["operation"] + "-" + uuid.uuid4().hex)
+                # The journal owns operation identity; staging needs only its fresh UUID.
+                stage = control / (".stage-" + uuid.uuid4().hex)
                 build(stage, generation, settings, selected, source, python, args.dev)
                 verify_generation(stage)
                 stage.rename(generation)
