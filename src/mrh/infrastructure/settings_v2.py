@@ -343,18 +343,5 @@ def write_allowlist_file(path, roots):
 
 
 def resolve_settings_path(explicit=None, environ=None, home=None):
-    """--settings > MRH_SETTINGS > ~/.config/model-routing-harness/active-settings."""
-    environ = os.environ if environ is None else environ
-    raw = str(explicit) if explicit else environ.get("MRH_SETTINGS", "").strip()
-    if not raw:
-        pointer = Path(home or Path.home()) / ".config" / "model-routing-harness" / "active-settings"
-        try:
-            raw = pointer.read_text(encoding="utf-8").strip()
-        except OSError:
-            raw = ""
-    if not raw:
-        raise SettingsError("settings_path_invalid")
-    path = Path(raw)
-    if not path.is_absolute() or path.name != "settings.json":
-        raise SettingsError("settings_path_invalid")
-    return path
+    from mrh.infrastructure.locations import resolve_settings_path as resolve
+    return resolve(explicit, environ, home)

@@ -23,20 +23,23 @@ Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式
 
 只改文件不會產生新版本：安裝版本只由會裝進去的程式內容決定，與 git commit 無關，重跑 `./setup` 會回報沒有變更。程式有改時，一般安裝仍要重跑 `./setup` 才會生效。
 
-自己開發時不想每次改程式都重裝，用開發安裝（只支援 Mac）：
+自己開發時可使用 `--dev`，兩平台的候選都保留打包入口，再載入同一份來源：
 
 ~~~sh
-./setup --host claude --dev        # 依需要加 --host codex
+./setup --host claude --host codex --dev --codex-packets
 ~~~
 
-- Hook 與 `mrh` 指令直接執行這份 checkout 的 `src/`，改完存檔就生效，不用重跑 `./setup`。
-- 這個模式不驗證打包 runtime 的雜湊，所以只用在你自己的 checkout；`src/` 必須是你自己的、群組與其他人不可寫的目錄，否則 Hook 會退回安全通知並照原樣放行。
-- Hook 指令與 `hooks.json` 位元組和一般安裝相同，Codex 的信任不會因切換而失效。
-- 改到 `setup`、`mrh_setup.py`、`mrh_bundle.py` 等安裝程式本身，或要換成別的 checkout 時，才需要重跑 `./setup --dev`。
-- `./setup --check --json` 的 `dev_source` 會顯示目前綁定的 checkout。
-- 要回到一般安裝：不帶 `--dev` 重跑 `./setup`（會建立新的安裝代，之後程式有改才需更新）。
-- 不能與 `--rollback`、`--codex-packets`、`--uninstall` 併用。
-- 開發中的程式出錯，Hook 的錯誤會影響你正在用的派工；改到一半先確認測試能跑。
+Windows 在 PowerShell 使用 `.\setup.ps1 --host codex --host claude --dev --codex-packets`。不需要 packets 時省略該選項；仍只選實際使用的宿主。
+
+- CLI 與 Hook 在下次啟動時讀取來源 `src/`；一般程式修改存檔即可生效，已在執行的程序不熱更新。
+- 兩種模式都保留打包 bootstrap，安裝／檢查時核對安裝代。Hook 啟動前驗證 runtime 與 PEP 660 連結雜湊，CLI 經打包入口檢查連結及來源安全性；Windows bootstrap 另核對啟動檔與 manifest。Windows 保留 site-free `_pth`，不載入全域 site-packages，也不執行任意 `.pth` 程式。
+- 來源必須由目前使用者控制、不可供其他人改寫，且不經符號連結／reparse point；來源不可用時 CLI 明確失敗，Hook 保留原呼叫並通知。可變來源本身不宣稱是 immutable artifact。
+- 安裝程式、建置後端、`execution.py`、`owned.py`、`plugin.py` 或平台 bootstrap 相依改變，仍需重跑同一安裝命令；換 checkout 也需重跑。來源指紋區分這些 bootstrap 與日常 mutable 來源。
+- `--check --json` 的 `execution_mode`、`source`、`runtime_root` 顯示綁定。一般模式不含 dev 來源，刪除來源不影響打包程式；舊 profile／外部白名單原本引用的檔案仍須保留。
+- 要回到一般安裝，不帶 `--dev` 重跑。兩種模式都可保留 `--codex-packets`，不與 `--rollback`／`--uninstall` 同時指定 dev。設定、金鑰、統計及原指標不遷移、不重設。
+- 切換前完成舊 packet。新協議以根鎖互斥 prepare 與切換；不保證舊版在途程序或程序退出後的 admission。遇到 `installation_recovery` 先用原參數恢復，再做新 packet，詳見[失敗與復原](install-lifecycle.md#失敗與復原)。
+
+雙模式與 Windows packets 的正式原生驗收仍待完成，不把本機隔離測試當成已部署。標準 Python frontend 可使用離線 `pip install -e . --no-deps --no-build-isolation`（需已有支援 PEP 660 的 pip）；這只安裝套件，不替代宿主安裝器或修改 Hook。
 
 ## 測試
 
@@ -88,7 +91,7 @@ Windows 範圍設定另需保留兩種語意：`--all-workspaces` 保存 `allowe
 
 `scripts/verification/` 不是可無差別批次執行的測試套件。執行前先讀腳本：有些需要指定的 bundle、原生 CLI、帳號、宿主註冊或外部請求。離線單元測試不能替代真宿主採用；反過來也不必為文件整理重新呼叫模型。
 
-Windows 的驗證分開記錄私有 runtime／檔案完整性、原生插件與 Hook 註冊、信任、金鑰狀態、模型政策、Jev 回應及子代理採用。`--check --json` 不呼叫 provider；CLI 已登入或模型 metadata 可讀，也不能補成後兩項成功。Claude 模型清單、訂閱分級器、Codex packets、Gemini 的 Windows 不可用狀態須保留，不能以 Mac 歷史結果填補；本次沒有 Mac 實機重驗。
+Windows 的驗證分開記錄私有 runtime／檔案完整性、原生插件與 Hook 註冊、信任、金鑰狀態、模型政策、Jev 回應及子代理採用。`--check --json` 不呼叫 provider；CLI 已登入或模型 metadata 可讀，也不能補成後兩項成功。Claude 清單沿用其 LPAC 驗證；Windows 訂閱分級器與 Gemini 仍不可用。新增雙模式及 packets 的 Windows 原生驗收須獨立補齊，不能以 Mac 隔離結果或普通委派歷史填補。
 
 ## 開發用 CLI 探測
 

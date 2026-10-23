@@ -6,6 +6,7 @@ to every immutable generation; settings and statistics live outside generations.
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import hashlib
 import json
 import os
@@ -19,6 +20,8 @@ import uuid
 ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from mrh.infrastructure import owned, plugin, settings_v2, claude_hook, secrets
+from mrh.infrastructure import execution, locations
+import mrh_bundle as bundle
 
 OWNER = "org.model-routing-harness.windows-setup.v1"
 READER = {"settings": [1, 2], "packet_statistics": 1, "windows_all_workspaces": 1}
@@ -128,26 +131,30 @@ def python_metadata(executable=None):
             "architecture": "x64", "platform": "win32", "license_sha256": digest(regular(license_path))}
 
 
-def source_identity(hosts, packets, settings, python):
-    project_root = str(canonical(ROOT))
+def source_identity(hosts, packets, settings, python, dev=False):
     result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
                             text=True, check=True, timeout=10)
     head = result.stdout.strip()
     if len(head) != 40 or any(c not in "0123456789abcdef" for c in head):
         raise SetupError("source_commit_unavailable")
-    files = [p for p in (ROOT / "src/mrh").rglob("*")
+    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py')]
+             + list((ROOT / 'src/mrh/adapters/platforms').glob('*.py'))) if dev else [
+             p for p in (ROOT / "src/mrh").rglob("*")
              if p.is_file() and "__pycache__" not in p.parts and (p.suffix == ".py" or "resources" in p.parts)]
     files += [ROOT / name for name in ("mrh_windows_setup.py", "mrh_setup.py", "setup.ps1", "mrh_build.py",
                                       "mrh_bundle.py", "pyproject.toml", "LICENSE")]
     h = hashlib.sha256()
-    for path in sorted(set(files)):
+    for path in sorted(set(p for p in files if p.is_file())):
         # The checkout is a user-editable input, not an installed artifact.
         # The second source identity check before publication catches changes.
         h.update(path.relative_to(ROOT).as_posix().encode() + b"\0" + path.read_bytes())
     # The commit id is recorded for display only: a docs-only commit must not make a new version.
     h.update(encoded({"hosts": hosts, "packets": packets, "settings": str(settings), "python": python,
-                      "project_root": project_root}))
-    return {"head": head, "fingerprint": h.hexdigest(), "project_root": project_root}
+                      "runtime_root": str(locations.default_runtime_root()),
+                      "execution_mode": "development" if dev else "installed",
+                      **({"dev_source": str(canonical(ROOT))} if dev else {})}))
+    return {"head": head, "fingerprint": h.hexdigest(),
+            **({"dev_source": str(canonical(ROOT))} if dev else {})}
 
 
 def project_root(value):
@@ -162,7 +169,23 @@ def project_root(value):
         raise SetupError('project_root_not_ready:' + reason) from None
 
 
-def project_root_readiness(meta):
+def runtime_root(value):
+    path = owned.canonical_path(value)
+    canonical(path)
+    if path.exists():
+        native().assert_safe(path, directory=True)
+    return path
+
+
+def project_root_readiness(meta, generation=None):
+    if 'runtime_root' in meta:
+        try:
+            runtime_root(meta['runtime_root'])
+            if 'dev_source' in meta:
+                execution.editable_source(generation / 'app/editable', meta['dev_source'])
+            return {'status': 'development' if 'dev_source' in meta else 'not_required', 'ready': True}
+        except (OSError, ValueError, TypeError) as exc:
+            return {'status': 'not_ready', 'ready': False, 'reason': str(exc)}
     if 'project_root' not in meta:
         return {'status': 'legacy_unbound', 'ready': True}
     try:
@@ -170,6 +193,15 @@ def project_root_readiness(meta):
         return {'status': 'bound', 'ready': True}
     except SetupError as exc:
         return {'status': 'not_ready', 'ready': False, 'reason': str(exc)}
+
+
+def execution_fields(meta):
+    root = meta.get('runtime_root')
+    if root is None and meta.get('project_root'):
+        root = str(Path(meta['project_root']) / 'runtime')
+    return {'execution_mode': 'development' if 'dev_source' in meta else 'installed',
+            'source': meta.get('dev_source'),
+            'runtime_root': root or str(locations.default_runtime_root())}
 
 
 def file_manifest(root):
@@ -222,11 +254,20 @@ def compatible(root, settings):
         raise SetupError('rollback_workspace_scope_incompatible')
 
 
-def build_generation(stage, destination, settings, selected, source, python):
+def build_generation(stage, destination, settings, selected, source, python, dev=False):
     initialize(stage, "windows-generation")
     mkdir(stage / "app")
     mkdir(stage / "licenses")
-    write(stage / "app/mrh.pyz", plugin._runtime_archive(), None)
+    bundle.application_archive(stage / "app/mrh.pyz")
+    native().protect(stage / "app/mrh.pyz")
+    archive = regular(stage / "app/mrh.pyz")
+    editable = bundle.editable_files() if dev else None
+    if editable is not None:
+        for name, data in editable.items():
+            target = stage / 'app/editable' / name
+            mkdir(target.parent)
+            write(target, data, None)
+    runtime = runtime_root(locations.default_runtime_root())
     write(stage / "licenses/LICENSE", (ROOT / "LICENSE").read_bytes(), None)
     write(stage / "licenses/Python-LICENSE.txt", regular(Path(python["base_prefix"]) / "LICENSE.txt"), None)
     for host, info in selected.items():
@@ -235,7 +276,9 @@ def build_generation(stage, destination, settings, selected, source, python):
         host_settings = Path(info.get('settings', settings))
         if host_settings != settings:
             mkdir(host_settings.parent.parent)
-        plugin.prepare(artifact, host_settings, python["executable"], advisory=True, codex_packets=info["packets"], project_root=ROOT)
+        plugin.prepare(artifact, host_settings, python["executable"], advisory=True, codex_packets=info["packets"],
+                       runtime_archive=archive, editable_files=editable, runtime_root=runtime,
+                       dev_source=ROOT if dev else None)
         meta = document(artifact / "artifact.json")
         if host == "codex":
             portable = Path("plugins") / plugin.NAME / "plugin.json"
@@ -281,7 +324,8 @@ def build_generation(stage, destination, settings, selected, source, python):
         # so publishing does not require rewriting any staging paths.
         plugin.show(artifact)
     write(stage / "generation.json", encoded({"owner": OWNER, "reader": READER,
-          "source": source, "python": python, "hosts": selected, "project_root": str(canonical(ROOT))}), None)
+          "source": source, "python": python, "hosts": selected, "runtime_root": str(runtime),
+          **({"dev_source": str(canonical(ROOT))} if dev else {})}), None)
     write(stage / "manifest.json", encoded({"owner": OWNER, "schema_version": 1, **file_manifest(stage)}), None)
     verify_generation(stage)
 
@@ -292,24 +336,33 @@ from pathlib import Path
 root=Path(__file__).absolute().parent
 native_hook=len(sys.argv)>1 and sys.argv[1]=='--native-hook'
 os.environ.pop('MRH_PROJECT_ROOT',None)
+os.environ.pop('MRH_RUNTIME_ROOT',None)
 
 class ProjectRootError(ValueError):pass
 
-def bind_project(meta,runtime):
-    if 'project_root' not in meta:return
+def bind_runtime(meta,runtime,generation,manifest):
+    if 'runtime_root' not in meta and 'project_root' not in meta:return
     try:
-        value=meta['project_root']
+        modern='runtime_root' in meta
+        value=meta['runtime_root'] if modern else meta['project_root']
         if not isinstance(value,str) or not value or any(ord(c)<32 for c in value):raise ValueError()
         path=Path(value)
         if not path.is_absolute() or path!=path.resolve():raise ValueError()
         for item in (path,*path.parents):
+            if modern and not item.exists():continue
             if getattr(item.lstat(),'st_file_attributes',0)&0x400:raise ValueError()
         sys.path.insert(0,str(runtime))
         try:
             from mrh.adapters.platforms.windows import assert_safe
-            assert_safe(path,directory=True)
+            if not modern or path.exists():assert_safe(path,directory=True)
+            if 'dev_source' in meta:
+                for name in ('model_routing_harness-editable.pth','model_routing_harness-editable.json'):
+                    relative='app/editable/'+name
+                    if hashlib.sha256(read(generation/relative)).hexdigest()!=manifest['files'][relative]:raise ValueError()
+                from mrh.infrastructure.execution import editable_source
+                editable_source(generation/'app/editable',meta['dev_source'])
         finally:sys.path.pop(0)
-        os.environ['MRH_PROJECT_ROOT']=str(path)
+        os.environ['MRH_RUNTIME_ROOT' if modern else 'MRH_PROJECT_ROOT']=str(path)
     except (OSError,ValueError,TypeError):raise ProjectRootError() from None
 def read(path):
     if path.is_symlink() or getattr(path.lstat(),"st_file_attributes",0)&0x400:
@@ -344,18 +397,18 @@ try:
         host_meta=json.loads(read(generation/'generation.json'))
         for name in ('launcher.py','runtime.pyz','binding.json'):
             if hashlib.sha256(read(generation/(relative+name))).hexdigest()!=manifest['files'][relative+name]:raise ValueError()
-        bind_project(host_meta,generation/(relative+'runtime.pyz'))
+        bind_runtime(host_meta,generation/(relative+'runtime.pyz'),generation,manifest)
         sys.argv=[str(generation/(relative+'launcher.py')),host]
         runpy.run_path(sys.argv[0],run_name='__main__')
     else:
-        bind_project(meta,generation/'app/mrh.pyz')
+        bind_runtime(meta,generation/'app/mrh.pyz',generation,manifest)
         sys.argv[0]=str(generation/"app/mrh.pyz")
         runpy.run_path(sys.argv[0],run_name="__main__")
 except ProjectRootError:
     if native_hook:
-        print(json.dumps({'systemMessage':'MRH: bound project root is not ready; original tool call preserved. Inform the user; no system temporary-directory fallback was used.'}))
+        print(json.dumps({'systemMessage':'MRH: bound runtime or development source is not ready; original tool call preserved. Inform the user; no system temporary-directory fallback was used.'}))
         raise SystemExit(0)
-    print('MRH bound project root is not ready; restore the authorized checkout or rerun setup --check --json. No system temporary-directory fallback was used.',file=sys.stderr)
+    print('MRH bound runtime or development source is not ready; rerun setup.ps1 --check --json. No system temporary-directory fallback was used.',file=sys.stderr)
     raise SystemExit(2)
 except (OSError,ValueError,KeyError,TypeError):
     if native_hook:
@@ -592,6 +645,7 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
               "idempotent": False, "provider_probe_performed": False, "macos": "not_verified",
               "downloads": False, "pending": []}
     result['project_root'] = {'status':'not_installed', 'ready':False}
+    result.update(execution_mode=None, source=None, runtime_root=None)
     if operation:
         result["operation"] = operation
     selected = list(dict.fromkeys(args.host or list((state or {}).get("hosts", {}))))
@@ -603,6 +657,7 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
         _, catalog = catalog_validation(host, catalogs)
         result["hosts"][host] = {"registration": "missing", "trust": "unknown", "settings": str(profile),
             "project_root": {"status": "not_installed", "ready": False}, "catalog": catalog,
+            "execution_mode": None, "source": None, "runtime_root": None,
             "classifier": value["classifier"] if value else None, "key_present": key_status(value),
             "policy_ready": policy_ready(value, [host], catalogs=catalogs),
             "enabled": bool(value and value["enabled"]),
@@ -611,7 +666,8 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
     if state:
         generation = prefix / "setup-state/generations" / state["current"]
         meta = verify_generation(generation, state["generations"][state["current"]])
-        result['project_root'] = project_root_readiness(meta)
+        result['project_root'] = project_root_readiness(meta, generation)
+        result.update(execution_fields(meta))
         result.update(generation=state["current"], commit=meta["source"]["head"], generation_integrity="verified")
         result["installed"] = (snapshot(bin_dir / "mrh.cmd") == {"sha256": digest(launcher_bytes(prefix, meta["python"]))}
                                and snapshot(prefix / "bootstrap.py") == {"sha256": digest(BOOTSTRAP)}
@@ -627,7 +683,8 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
                 observed = configured(host, adapter, Path(info["artifact"]))
                 trust = adapter.trust(Path.cwd()) if host == "codex" else "not_applicable_native_settings"
                 result["hosts"][host].update({"registration": "observed" if observed else "missing", "trust": trust,
-                    'project_root': project_root_readiness(host_meta),
+                    'project_root': project_root_readiness(host_meta, prefix/'setup-state/generations'/info['generation']),
+                    **execution_fields(host_meta),
                     **({"cli": adapter.cli} if host == "claude" else {})})
             except (ValueError, OSError, subprocess.SubprocessError):
                 result["hosts"][host].update(registration="unknown", trust="unknown")
@@ -635,7 +692,9 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
         result["transaction_pending"] = journal.exists() and document(journal).get("phase") != "complete"
         result["idempotent"] = bool(result["installed"] and not result["transaction_pending"]
             and all(info["registration"] == "observed" for info in result["hosts"].values()))
-        result["status"] = "installed" if result["installed"] else "pending"
+        result["status"] = "installed" if result["installed"] and not result["transaction_pending"] else "pending"
+        if result['transaction_pending']:
+            result['pending'].append('installation_recovery')
     host_results = list(result["hosts"].values())
     for key in ("enabled", "export_permitted", "workspace_ready", "policy_ready", "key_present"):
         result[key] = bool(host_results) and all(info[key] for info in host_results)
@@ -687,9 +746,9 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
     hosts = list(dict.fromkeys(args.host or list((state or {}).get("hosts", {}))))
     if not hosts:
         raise SetupError("host_required")
-    if args.codex_packets:
-        raise SetupError("codex_packets_unsupported_on_windows")
-    if args.rollback and (args.enable or args.workspace or args.all_workspaces or args.codex_packets):
+    if args.codex_packets and 'codex' not in hosts:
+        raise SetupError("codex_packets_requires_codex_host")
+    if args.rollback and (args.enable or args.workspace or args.all_workspaces or args.codex_packets or args.dev):
         raise SetupError("rollback_does_not_change_policy_or_packet_mode")
     if args.enable and not (args.workspace or args.all_workspaces):
         raise SetupError("enable_requires_explicit_workspace")
@@ -756,14 +815,18 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
         raise SetupError("bootstrap_conflict")
     adapters = adapters if adapters is not None else adapters_for(args, hosts, state)
     adapters = {host: adapters[host] for host in hosts}
-    source = source_identity(hosts, args.codex_packets, settings, python)
+    source = source_identity(hosts, args.codex_packets, settings, python, args.dev)
     intent = {"hosts": hosts, "rollback": args.rollback, "source": source, "enable": args.enable,
+              "dev": args.dev,
               "workspaces": ['*'] if args.all_workspaces else [str(canonical(path)) for path in args.workspace], "settings": str(settings),
               "claude_settings": str(host_settings('claude',adapters['claude'],settings,state)) if 'claude' in adapters else None}
     if args.dry_run:
         for host, adapter in adapters.items():
             adapter.preflight(host_settings(host,adapter,settings,state), args.codex_packets if host == "codex" else False)
         return {"status": "planned", "writes": False, "downloads": False, "hosts": hosts,
+                "execution_mode": "development" if args.dev else "installed",
+                "source": str(canonical(ROOT)) if args.dev else None,
+                "runtime_root": str(locations.default_runtime_root()),
                 "settings": str(settings), "rollback": args.rollback, "provider_probe_performed": False,
                 "command_path": {**path_manager.report(), 'planned_change': path_plan['action']}}
     initialize(prefix, "windows-install")
@@ -807,7 +870,7 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
             python = rolled['python']
             launcher = launcher_bytes(prefix, python)
             compatible(generation, settings)
-            if not project_root_readiness(rolled)['ready']:
+            if not project_root_readiness(rolled, generation)['ready']:
                 raise SetupError('project_root_not_ready:rollback_binding')
         else:
             identifier = source["fingerprint"][:24]
@@ -841,71 +904,79 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
                 # Interrupted staging is retained as evidence. A rerun builds in
                 # a fresh owned leaf instead of deleting or adopting partial bytes.
                 stage = control / (".stage-" + pending["operation"] + "-" + uuid.uuid4().hex)
-                build(stage, generation, settings, selected, source, python)
+                build(stage, generation, settings, selected, source, python, args.dev)
                 verify_generation(stage)
                 stage.rename(generation)
             else:
                 meta = verify_generation(generation, pending.get("manifest"))
                 if meta.get("source") != source or meta.get("python") != python:
                     raise SetupError("generation_unowned")
-            if source_identity(hosts, args.codex_packets, settings, python) != source:
+            if source_identity(hosts, args.codex_packets, settings, python, args.dev) != source:
                 raise SetupError("source_concurrent_change")
             project_root(str(ROOT))
-        pending.update(target=identifier, manifest=digest(regular(generation / "manifest.json")), phase="registering")
-        write(pending_path, encoded(pending))
-        for host, adapter in adapters.items():
-            if host in pending["completed_hosts"]:
-                continue
-            def progress(step):
-                pending["native_step"] = {"host": host, "step": step}
-                write(pending_path, encoded(pending))
-            adapter.install(Path(selected[host]["artifact"]), pending["before_hosts"][host], progress)
-            pending["completed_hosts"].append(host)
+        changed_binding = state and any(
+            execution.runtime_binding(document(control / 'generations' / old_id / 'generation.json'))
+            != execution.runtime_binding(document(generation / 'generation.json'))
+            for old_id in {state['current'], *(item['generation'] for item in state['hosts'].values())})
+        all_profiles = [*profile_paths, *(Path(info.get('settings', settings)) for info in (state or {}).get('hosts', {}).values())]
+        admission = execution.packet_mode_transition(all_profiles) if changed_binding else nullcontext()
+        with admission:
+            pending.update(target=identifier, manifest=digest(regular(generation / "manifest.json")), phase="registering")
             write(pending_path, encoded(pending))
-        if not all(configured(h, adapters[h], Path(selected[h]["artifact"])) for h in hosts):
-            raise SetupError("native_registration_concurrent_change")
-        pending["phase"] = "committing"
-        write(pending_path, encoded(pending))
-        expected_pointer = (str(settings) + "\n").encode()
-        if snapshot(pointer) != pending["before_pointer"] and not (pointer.exists() and regular(pointer) == expected_pointer):
-            raise SetupError("active_pointer_concurrent_change")
-        if args.enable or args.workspace or args.all_workspaces:
-            for profile in dict.fromkeys(profiles.values()):
-                if snapshot(profile) != pending["before_profiles"][str(profile)]:
-                    raise SetupError("profile_concurrent_change")
-            changes = {"allowed_workspaces": intent["workspaces"], "workspace_allowlist_file": None} if args.workspace or args.all_workspaces else {}
-            if args.enable:
-                changes.update(enabled=True, task_export_permitted=True)
-            for profile in dict.fromkeys(profiles.values()):
-                current_profile = settings_v2.read(profile)
-                if args.enable and current_profile != profile_values[profile]:
-                    raise SetupError("profile_concurrent_change")
-                settings_v2.update(profile, expected_revision=current_profile["revision"], **changes)
-                pending["before_profiles"][str(profile)] = snapshot(profile)
-                pending["before_profile"] = pending["before_profiles"][str(settings)]
+            for host, adapter in adapters.items():
+                if host in pending["completed_hosts"]:
+                    continue
+                def progress(step):
+                    pending["native_step"] = {"host": host, "step": step}
+                    write(pending_path, encoded(pending))
+                adapter.install(Path(selected[host]["artifact"]), pending["before_hosts"][host], progress)
+                pending["completed_hosts"].append(host)
                 write(pending_path, encoded(pending))
-            pending["before_profile"] = snapshot(settings)
+            if not all(configured(h, adapters[h], Path(selected[h]["artifact"])) for h in hosts):
+                raise SetupError("native_registration_concurrent_change")
+            pending["phase"] = "committing"
             write(pending_path, encoded(pending))
-        initialize(config, "windows-config")
-        mkdir(bin_dir)
-        if not pointer.exists():
-            write(pointer, expected_pointer, pending["before_pointer"])
-        if snapshot(prefix / "bootstrap.py") != {"sha256": digest(BOOTSTRAP)}:
-            write(prefix / "bootstrap.py", BOOTSTRAP, pending["before_bootstrap"])
-        if snapshot(bin_dir / "mrh.cmd") != {"sha256": digest(launcher)}:
-            write(bin_dir / "mrh.cmd", launcher, pending["before_bin"])
-        history = dict((state or {}).get("generations", {}))
-        history[identifier] = pending["manifest"]
-        new = {"owner": OWNER, "version": 1, "last_operation": pending["operation"], "current": identifier,
-               "hosts": {**(state or {}).get("hosts", {}), **selected}, "settings": str(settings), "generations": history,
-               "entrypoints":{'mrh.cmd':digest(launcher),'bootstrap.py':digest(BOOTSTRAP)},
-               "previous": {"current": state["current"], "hosts": state["hosts"]} if state else None}
-        # One replace both records the receipt and selects the active generation.
-        write(control / "state.json", encoded(new), pending["before_state"])
-        path_change = path_manager.apply(path_plan)
-        pending["phase"] = "complete"
-        write(pending_path, encoded(pending))
-        return readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change, catalogs=catalogs)
+            expected_pointer = (str(settings) + "\n").encode()
+            if snapshot(pointer) != pending["before_pointer"] and not (pointer.exists() and regular(pointer) == expected_pointer):
+                raise SetupError("active_pointer_concurrent_change")
+            if args.enable or args.workspace or args.all_workspaces:
+                for profile in dict.fromkeys(profiles.values()):
+                    if snapshot(profile) != pending["before_profiles"][str(profile)]:
+                        raise SetupError("profile_concurrent_change")
+                changes = {"allowed_workspaces": intent["workspaces"], "workspace_allowlist_file": None} if args.workspace or args.all_workspaces else {}
+                if args.enable:
+                    changes.update(enabled=True, task_export_permitted=True)
+                for profile in dict.fromkeys(profiles.values()):
+                    current_profile = settings_v2.read(profile)
+                    if args.enable and current_profile != profile_values[profile]:
+                        raise SetupError("profile_concurrent_change")
+                    settings_v2.update(profile, expected_revision=current_profile["revision"], **changes)
+                    pending["before_profiles"][str(profile)] = snapshot(profile)
+                    pending["before_profile"] = pending["before_profiles"][str(settings)]
+                    write(pending_path, encoded(pending))
+                pending["before_profile"] = snapshot(settings)
+                write(pending_path, encoded(pending))
+            initialize(config, "windows-config")
+            mkdir(bin_dir)
+            if not pointer.exists():
+                write(pointer, expected_pointer, pending["before_pointer"])
+            if snapshot(prefix / "bootstrap.py") != {"sha256": digest(BOOTSTRAP)}:
+                write(prefix / "bootstrap.py", BOOTSTRAP, pending["before_bootstrap"])
+            if snapshot(bin_dir / "mrh.cmd") != {"sha256": digest(launcher)}:
+                write(bin_dir / "mrh.cmd", launcher, pending["before_bin"])
+            history = dict((state or {}).get("generations", {}))
+            history[identifier] = pending["manifest"]
+            new = {"owner": OWNER, "version": 1, "last_operation": pending["operation"], "current": identifier,
+                   "hosts": {**(state or {}).get("hosts", {}), **selected}, "settings": str(settings), "generations": history,
+                   "entrypoints":{'mrh.cmd':digest(launcher),'bootstrap.py':digest(BOOTSTRAP)},
+                   "previous": {"current": state["current"], "hosts": state["hosts"]} if state else None}
+            # One replace both records the receipt and selects the active generation.
+            write(control / "state.json", encoded(new), pending["before_state"])
+            path_change = path_manager.apply(path_plan)
+            pending["phase"] = "complete"
+            write(pending_path, encoded(pending))
+            return readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change, catalogs=catalogs)
+
 
 
 def parser():
@@ -916,6 +987,7 @@ def parser():
         modes.add_argument("--" + name, action="store_true")
     result.add_argument("--json", action="store_true")
     result.add_argument("--codex-packets", action="store_true")
+    result.add_argument("--dev", action="store_true", help="explicitly run this editable checkout from the managed installation")
     for name in ("prefix", "config-root", "settings", "bin-dir", "claude-settings", "codex-executable", "claude-executable", "python"):
         aliases = ["--" + name]
         if name.endswith("-executable"):

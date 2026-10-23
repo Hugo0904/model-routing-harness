@@ -20,7 +20,7 @@ class Registration:
         windows = os.name == 'nt'
         return {'host':self.name, 'tools':list(self.adapter.tools),
                 'installation':'official-plugin' if windows and self.name == 'claude' else self.installation,
-                'surfaces':list(self.surfaces), 'codex_packet':self.packet and not windows, 'hook_supported':True}
+                'surfaces':list(self.surfaces), 'codex_packet':self.packet, 'hook_supported':True}
 
 
 REGISTRATIONS = {

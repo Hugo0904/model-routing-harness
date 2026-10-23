@@ -38,7 +38,7 @@ remain compatible until expiry after explicit history upgrade.
 
 Preparation atomically creates a random packet ID, exact UTF-8 task hash and
 length, and a ten-minute immutable packet. New plaintext lives in an owner-only
-subdirectory of the fixed MRH project runtime/tmp/mrh; dispatch receipts remain
+subdirectory of the bound `<runtime_root>/tmp/mrh`; dispatch receipts remain
 in the owned sibling of the settings profile. Legacy bodies remain under their
 original lifecycle and are not swept by project cleanup. Regular-file, owner, permissions, no-symlink,
 size, hash, scope, revision and expiry checks precede export. The packet ID is
@@ -111,5 +111,6 @@ classification interrupted by cleanup fails without another query. Unknown
 release identity remains unknown, with retries denied; a new task can prepare
 its own independent packet. Cleanup does not invoke `finish`, statistics reset
 or retention. See [disposable storage](../usage.md#清除可丟棄暫存).
-Windows does not support the packet protocol; a community delegation skill does
-not enable it. See [platform capabilities](../compatibility.md).
+The Windows packet protocol is implemented in this candidate, with native ACL,
+locking and lifecycle acceptance still pending. A community delegation skill
+does not enable the explicit packet installation option. See [platform capabilities](../compatibility.md).

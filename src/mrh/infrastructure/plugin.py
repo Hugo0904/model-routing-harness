@@ -71,7 +71,7 @@ try:
     root=Path(__file__).resolve().parent
     binding=json.loads((root/"binding.json").read_bytes())
     base={"schema_version","python","settings_path","runtime_sha256"}
-    if set(binding)-{"project_root","dev_source"} not in (base,base|{"platform"},base|{"platform","codex_packets"}) or binding["schema_version"]!=1:raise ValueError()
+    if set(binding)-{"project_root","runtime_root","dev_source","editable_sha256"} not in (base,base|{"platform"},base|{"platform","codex_packets"}) or binding["schema_version"]!=1:raise ValueError()
     platform=sys.argv[1] if len(sys.argv)>1 else binding.get("platform","codex")
     if platform not in (None,"codex","claude"):raise ValueError()
     packets=binding.get("codex_packets",False)
@@ -79,16 +79,23 @@ try:
     runtime=root/"runtime.pyz"
     reason="runtime_integrity"
     dev=binding.get("dev_source")
-    if dev is None:
-        if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
-    else:
-        # Developer checkout (setup --dev): run the source tree as is, without the packaged-runtime hash.
-        runtime=Path(dev)/"src";info=runtime.stat()
-        if not isinstance(dev,str) or not Path(dev).is_absolute() or runtime.resolve()!=runtime or not (runtime/"mrh").is_dir() or info.st_uid!=os.getuid() or info.st_mode&0o022:raise ValueError()
+    if hashlib.sha256(runtime.read_bytes()).hexdigest()!=binding["runtime_sha256"]:raise ValueError()
+    if dev is not None:
+        if not isinstance(dev,str) or not Path(dev).is_absolute():raise ValueError()
+        links=binding["editable_sha256"]
+        if set(links)!={"model_routing_harness-editable.pth","model_routing_harness-editable.json"}:raise ValueError()
+        for name,digest in links.items():
+            if hashlib.sha256((root/"editable"/name).read_bytes()).hexdigest()!=digest:raise ValueError()
     python=binding["python"];settings=binding["settings_path"]
-    project=Path(binding.get("project_root") or os.environ["MRH_PROJECT_ROOT"])
-    if not project.is_absolute() or project.resolve()!=project or not project.is_dir():raise ValueError()
-    os.environ["MRH_PROJECT_ROOT"]=str(project)
+    if "runtime_root" in binding:
+        area=Path(binding["runtime_root"])
+        if not area.is_absolute() or area.resolve()!=area:raise ValueError()
+        os.environ.pop("MRH_PROJECT_ROOT",None)
+        os.environ["MRH_RUNTIME_ROOT"]=str(area)
+    else:
+        project=Path(binding.get("project_root") or os.environ["MRH_PROJECT_ROOT"])
+        if not project.is_absolute() or project.resolve()!=project or not project.is_dir():raise ValueError()
+        os.environ["MRH_PROJECT_ROOT"]=str(project)
     if not Path(python).is_absolute() or not Path(settings).is_absolute():raise ValueError()
     # No-op input still verifies the bound runtime; no CLI or hook child is needed.
     if not isinstance(event,dict) or event.get("hook_event_name") not in ("PreToolUse","PostToolUse"):
@@ -99,13 +106,16 @@ try:
         # Unvalidated/failed children never qualify for the long provider path.
         deadline=started+1.0
         reason="hook_timeout"
-        code=("import sys;sys.path.insert(0,sys.argv[1]);from mrh.application.advisory_runtime import run;"
+        code=("import sys;sys.path.insert(0,sys.argv[1]);"
+              "from mrh.infrastructure.execution import activate_editable;"
+              "activate_editable(sys.argv[7],sys.argv[8]) if sys.argv[8] else None;"
+              "from mrh.application.advisory_runtime import run;"
               "raise SystemExit(run(sys.argv[2],sys.argv[3],sys.stdin,sys.stdout,sys.stderr,"
               "started=float(sys.argv[4]),control_fd=int(sys.argv[5]),codex_packets=sys.argv[6]=='1'))")
         reader,writer=os.pipe();os.set_blocking(reader,False)
         process=None
         try:
-            args=[python,"-I","-B","-c",code,str(runtime),platform or "codex",settings,repr(started),str(writer),"1" if packets else "0"]
+            args=[python,"-I","-B","-c",code,str(runtime),platform or "codex",settings,repr(started),str(writer),"1" if packets else "0",str(root/"editable"),dev or ""]
             process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,pass_fds=(writer,))
             os.close(writer);writer=None
             pending=data;buffer=b"";established=False
@@ -254,12 +264,11 @@ def _old_artifact(root):
         raise owned.OwnedError("owned_source_changed") from None
 
 
-def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=False, project_root=None, dev_source=None):
+def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=False, project_root=None, dev_source=None,
+            runtime_archive=None, editable_files=None, runtime_root=None):
     if not advisory:
         raise owned.OwnedError("advisory_required")
     if dev_source is not None:
-        if os.name == 'nt':
-            raise owned.OwnedError("dev_source_unsupported_platform")
         dev_source = owned.canonical_path(dev_source)
         if not (dev_source / "src/mrh").is_dir():
             raise owned.OwnedError("dev_source_invalid")
@@ -280,10 +289,25 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
         # Development callers are explicitly labeled; host proof uses installed
         # wheel metadata and records the packaged bytes independently.
         version = "0.4.0"
-    runtime = _runtime_archive()
-    from mrh.infrastructure import temporary
-    bound_project = owned.canonical_path(project_root) if project_root is not None else temporary.project_root()
-    if not bound_project.is_dir():raise owned.OwnedError('project_runtime_unavailable')
+    runtime = _runtime_archive() if runtime_archive is None else runtime_archive
+    from mrh.infrastructure import locations
+    if runtime_root is not None or project_root is None:
+        area = owned.canonical_path(runtime_root) if runtime_root is not None else locations.runtime_root()
+        location = {'runtime_root': str(area)}
+    else:
+        bound_project = owned.canonical_path(project_root)
+        if not bound_project.is_dir():raise owned.OwnedError('project_runtime_unavailable')
+        location = {'project_root': str(bound_project)}
+    editable = {}
+    if dev_source is not None:
+        from mrh.infrastructure.execution import DESCRIPTOR, PTH
+        editable = dict(editable_files or {})
+        if not {DESCRIPTOR, PTH} <= set(editable):
+            raise owned.OwnedError('editable_link_missing')
+        for name, data in editable.items():
+            if Path(name).is_absolute() or '..' in Path(name).parts or not isinstance(data, bytes):
+                raise owned.OwnedError('editable_link_invalid')
+        link_hashes = {name: _hash(editable[name]) for name in (DESCRIPTOR, PTH)}
     prefix = "plugins/" + NAME + "/"
     if os.name == 'nt':
         from mrh.adapters.platforms.windows import codex_hook_command
@@ -303,10 +327,11 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
                                          "runtime_sha256": _hash(runtime), "platform": "codex",
-                                         "project_root": str(bound_project),
-                                         **({"dev_source": str(dev_source)} if dev_source is not None else {}),
+                                         **location,
+                                         **({"dev_source": str(dev_source), "editable_sha256": link_hashes} if dev_source is not None else {}),
                                          **({"codex_packets": True} if codex_packets else {})}),
     }
+    files.update({prefix + 'editable/' + name: data for name, data in editable.items()})
     if codex_packets:
         skill = resources.files('mrh').joinpath('resources/skills/mrh-codex-packet/SKILL.md').read_bytes()
         files[prefix+'skills/mrh-codex-packet/SKILL.md'] = skill

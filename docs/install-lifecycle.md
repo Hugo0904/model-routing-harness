@@ -10,6 +10,16 @@ Windows 的入口是 `setup.ps1`／`mrh_windows_setup.py`；macOS arm64 沿用 `
 
 程式與持久設定分開保存。安裝器檢查所有權、原生註冊與讀取相容性；遇到外來入口、不同設定指標、衝突插件來源、檔案被修改或並行寫入時，保留現場並停止，不自行覆蓋。其他插件與 Hook 必須保留，Codex 信任仍由使用者在原生 `/hooks` 確認，不直接修改其私有資料庫或信任紀錄。
 
+## 一般模式與開發模式
+
+兩平台預設都從 wheel 打包成的 `app/mrh.pyz` 啟動；一般模式不綁定來源 checkout。`--dev` 另外保存標準 PEP 660 editable wheel 的來源連結，CLI 經打包入口檢查連結與來源安全性，Hook 另先核對 runtime 及連結雜湊，再載入同一份可修改的 `src/`。Windows 私有 Python 仍不載入 `site`，只明確解析這份已驗證的 plain-path 連結，不執行任意 `.pth` 程式。
+
+兩種模式都可明確選用 `--codex-packets`。一般來源修改在下一個 dev 程序生效；bootstrap、安裝程式或來源位置改變仍需重跑安裝。一般模式不帶 `--dev` 重跑即可回復，`--dev` 不與退版或移除併用。既有 profile 指標、資料庫、金鑰、工作區設定與外部白名單保留，不做遷移；外部設定原本引用的 checkout 仍是使用者資料相依。
+
+模式或 runtime 根變更時，安裝器先建立候選，再依固定順序鎖住所涉各 profile 的 packet 根，檢查所有既有宿主（包含未選宿主）的未完成 packet。未過期非終態、released（即使過期）或忙碌鎖都拒絕切換；鎖會持有至本次 state 提交或異常退出。新 prepare 在同一根鎖內建立 body 與 receipt，因此不會穿過 idle 檢查。這只保證採用新協議的程序；升級舊版本前應停止新增 packet 並完成在途工作。
+
+雙模式與 Windows packets 為本候選的新增行為，Mac 隔離測試不代替兩平台正式安裝或 Windows 原生驗收。
+
 ## Windows 原生流程
 
 ### 入口與位置
@@ -37,6 +47,9 @@ ModelRoutingHarness-<SID>\
     active-settings
     profile\settings.json
     claude-profile\settings.json
+  runtime\
+    tmp\mrh\
+    cache\mrh\
 ~~~
 
 `install` 與 `config` 為同層目錄，不能互相包含；設定也不能與程式重疊。安裝根目錄及其內容採目前使用者的私有保護，檢查 ACL 與 reparse point，避免其他本機使用者改寫之後會執行的程式。自訂根目錄同樣必須通過檢查，不能用較寬鬆位置繞過。
@@ -64,7 +77,7 @@ Windows 用受管理的狀態檔選取目前安裝代，不使用 Mac 的 `curre
 
 Windows 的 Codex 主 profile 位於 `config\profile\settings.json`，原生 Claude 插件使用獨立的 `config\claude-profile\settings.json`；CLI 預設使用安裝狀態指向的主設定。`--enable` 驗證並更新所選宿主各自的 profile；任一選定宿主的清單或政策未通過，就拒絕啟用。不能用 Codex 主 profile 的就緒值代替 Claude 的清單、政策、金鑰、範圍與開關。
 
-Windows Claude 2.1.303 已在 LPAC initialize 僅加 `registryRead` 的條件下取得模型清單，並完成明確啟用與真實委派；版本探測仍是零 capabilities。新安裝或本機條件未齊仍維持停用，不能由註冊成功推定路由就緒。Windows 訂閱分級器、Codex packets 與 Gemini 仍不可用，詳見 [相容性](compatibility.md)。
+Windows Claude 2.1.303 已在 LPAC initialize 僅加 `registryRead` 的條件下取得模型清單，並完成明確啟用與真實委派；版本探測仍是零 capabilities。新安裝或本機條件未齊仍維持停用，不能由註冊成功推定路由就緒。Windows 訂閱分級器與 Gemini 仍不可用；packets 的候選驗收狀態見 [相容性](compatibility.md)。
 
 ## macOS arm64 既有流程
 
@@ -98,6 +111,8 @@ shell 入口可使用既有 Python ≥ 3.11；否則僅在 macOS arm64 取得 `r
 
 跨宿主沒有單一原子交易，原生註冊可能先於 CLI 入口切換完成。Windows 的 `pending.json`、Mac 的 `journal.json` 保存意圖、目標安裝代與已完成步驟；同一來源及原參數重跑可核對已完成但未收到確認的操作。
 
+註冊已成功但確認遺失時，宿主可能暫用新代而 state 仍為舊代。`--check` 會顯示 `transaction_pending: true`、`status: pending` 與 `installation_recovery`；`installed` 僅表示檔案／指標仍存在，不表示交易完成或路由就緒。先以相同參數恢復，再開始新的 prepare／query／release。保留 journal，不新增持久 admission gate，也不自動補償原生註冊；程序異常退出後，根鎖不會跨程序保持關閉。恢復重入會重新鎖根並檢查 idle；已提交 state 而完成確認遺失時，沿既有 `last_operation` 回條完成恢復，不重複註冊或覆蓋前代。
+
 不同待處理意圖、外來 marketplace 來源、非預期指標、被改寫的 manifest 或 bin 入口都會保留為衝突。先處理實際原因，再重跑原指令；不要刪除狀態檔來強行繼續。Mac 的 Claude 合併只變更 MRH 自己的 Hook，保留其他設定與 Hook，不為例行安裝或移除新增備份；既有歷史備份仍保留，不拿來覆蓋後續編輯。原生插件若已停用，也不會被安裝器默默重新啟用。
 
 Mac runtime 的 bytecode 是可變快取。完整性比較只排除 runtime 內、能對應 manifest 所記錄一般 `.py` 檔案的一般 `.pyc`，包含 `__pycache__` 與舊式相鄰快取；新增、改寫、刪除這類快取不影響檢查、更新或退版。無原始碼 bytecode、符號連結、`__pycache__` 中其他檔案、Python 原始碼、binary 及宿主產物仍受檢查。新舊 manifest 都沿用此規則，不重寫已保存內容與 digest，也不需要變更權限、修復快取、刪檔或下載。bytecode 內容不屬於這項比較；`-B` 防止寫入，不會禁止讀取既有快取。Windows 私有 runtime 則依其自身 manifest 核對已複製的檔案。
@@ -127,9 +142,9 @@ MIT、Python 及實驗接頭各自的 LICENSE／NOTICE 都必須保留，不因�
 
 安裝器依平台處理使用者 PATH。Windows 沿用 HKCU 使用者 PATH，不改 System PATH；Mac 依帳號登入 shell 選 zsh／bash 啟動檔，尊重已匯出的 `ZDOTDIR`。不依賴終端品牌、不改寫整份啟動檔；可辨認的 MRH 區塊重跑不重複，保留原文與權限。Mac 只有所需持久啟動檔已有有效 MRH 區塊時才不改檔，繼承到的目前 PATH 不作為新 shell 就緒的證據；衝突、不安全檔案與未知 shell 明確拒絕。既有程序的環境不會被刷新。`command_path` 的設定判定與一般目錄實際執行命令分開，Hook 固定入口與金鑰安全儲存維持原契約。shell 啟動順序參考 [zsh Files](https://zsh.sourceforge.io/Doc/Release/Files.html) 與 [Bash startup files](https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html)。
 
-專案運作需保留的暫存紀錄、Codex brief 與可重建 Jev 快取，分別使用固定專案根下的 `runtime/tmp/mrh/`、`runtime/cache/mrh/`；安裝代與 plugin binding 記錄專案根，CLI 不隨 cwd 換根。這些根不可用就明確失敗，不回退至系統 tmp 或家目錄。開發、測試與安裝的短期檔案可使用合適位置；原子更新檔放在目標旁，安裝代 staging 放在發布目錄所在的檔案系統，避免跨磁碟更名。用完清理自己建立的中介檔，必要失敗證據與復原 journal 保留。更名失敗保留原件，不以直接覆寫代替。
+暫存明文與可重建 Jev 快取使用安裝代綁定的 `<runtime_root>/tmp/mrh/`、`<runtime_root>/cache/mrh/`。Mac 預設根為 `~/Library/Caches/model-routing-harness`，Windows 為私有 ProgramData／SID 根下的 `runtime`。CLI 不隨 cwd 換根，也不依賴來源 checkout。根不可用就明確失敗，不回退至系統 tmp。開發、測試與安裝的短期檔案可使用合適位置；原子更新檔放在目標旁，安裝代 staging 放在發布目錄所在的檔案系統，避免跨磁碟更名。用完清理自己建立的中介檔，必要失敗證據與復原 journal 保留。更名失敗保留原件，不以直接覆寫代替。
 
-Windows bootstrap 在完整性驗證後，由 CLI 目前安裝代或該宿主實際選用的安裝代取得根綁定，覆蓋呼叫端的 `MRH_PROJECT_ROOT`。移到另一份 checkout 會形成不同的來源身分；不改寫舊安裝代。退回沒有根欄位的舊代時，保留舊代自己的行為。`--check` 的 `project_root` 及各宿主同名欄位分開回報 `bound`、`legacy_unbound` 或 `not_ready`；根缺失、不安全或無法使用時，明確保留未就緒狀態。
+受管理的新安裝由 CLI 目前安裝代或該宿主選用的安裝代取得 `runtime_root`，優先於呼叫端環境。`--check` 回報 `execution_mode`、`source` 與 `runtime_root`；dev 來源無法使用時保留未就緒狀態。Windows 相容欄位 `project_root` 的新一般模式為 `not_required`，dev 為 `development`。舊代的 `project_root` 綁定及無綁定行為保留，退版不改寫舊代或搬資料；來源／wheel 的明確 `MRH_PROJECT_ROOT` 仍解析到該專案的 `runtime/`。一般模式的來源絕對路徑不參與來源指紋，dev 的來源位置則是綁定的一部分。
 
 `mrh cleanup` 預覽，`--apply` 或控制中心的明確 Reset 動作清除可丟棄資料，不建立備份／快照／垃圾桶。既有共用鎖讓正在使用的安裝快取可略過；新建或變更的項目也可略過。必要 receipt／派工身分、DB、profile、金鑰、實驗與收集器資料、正式報表、使用中的程式／rollback／journal 全部排除。舊散落資料不自動遷移或清除，細節見[日常操作](usage.md#清除可丟棄暫存)。
 

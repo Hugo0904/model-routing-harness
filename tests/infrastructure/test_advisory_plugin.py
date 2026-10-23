@@ -94,7 +94,14 @@ class DevSourceTests(unittest.TestCase):
         shutil.copytree(Path(__file__).resolve().parents[2] / "src", self.checkout / "src",
                         ignore=shutil.ignore_patterns("__pycache__"))
         self.root, self.settings = base / "artifact", base / "profile" / "settings.json"
-        plugin.prepare(self.root, self.settings, sys.executable, advisory=True, dev_source=self.checkout)
+        from mrh.infrastructure.execution import DESCRIPTOR, PTH
+        editable = {
+            PTH: (str(self.checkout / 'src') + '\n').encode(),
+            DESCRIPTOR: json.dumps({'schema_version': 1, 'source_root': str(self.checkout),
+                                    'source_path': str(self.checkout / 'src')}).encode(),
+        }
+        plugin.prepare(self.root, self.settings, sys.executable, advisory=True, dev_source=self.checkout,
+                       editable_files=editable, runtime_root=base / 'runtime')
         self.launcher = self.root / "plugins/model-routing-harness/launcher.py"
         v2.update(self.settings, enabled=True, task_export_permitted=True, allowed_workspaces=["/"])
         self.event = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "session_id": "s", "turn_id": "t",
@@ -106,13 +113,12 @@ class DevSourceTests(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         return json.loads(run.stdout)
 
-    def test_binding_records_the_checkout_and_the_launcher_uses_its_source_not_the_packaged_runtime(self):
+    def test_development_still_verifies_the_packaged_bootstrap(self):
         binding = json.loads((self.launcher.parent / "binding.json").read_text())
         self.assertEqual(binding["dev_source"], str(self.checkout))
         (self.launcher.parent / "runtime.pyz").write_bytes(b"corrupted: would fail the integrity hash")
-        self.assertEqual(self.launch(), {})
-        with sqlite3.connect(self.settings.parent / "advice.sqlite3") as db:
-            self.assertEqual(db.execute("SELECT reason FROM advice").fetchall(), [("explicit_model",)])
+        self.assertIn('runtime integrity verification failed', self.launch()['systemMessage'])
+        self.assertFalse((self.settings.parent / 'advice.sqlite3').exists())
 
     def test_edits_to_the_checkout_take_effect_without_reinstalling(self):
         module = self.checkout / "src/mrh/application/advisory_runtime.py"

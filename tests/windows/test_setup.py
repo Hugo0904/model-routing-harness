@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,7 @@ import mrh_windows_setup as setup
 from mrh.adapters.catalogs.catalog import Catalog, CatalogError, Model
 from mrh.adapters.hosts.claude_windows_install import ClaudeWindowsInstaller
 from mrh.infrastructure import owned, settings_v2, claude_hook, plugin
+import mrh_build
 from tests.windows.test_claude_native import NativeFixture
 if os.name == 'nt':
     from mrh.adapters.platforms.windows_path import UserPath, PathValue
@@ -101,6 +103,8 @@ class WindowsSetupTests(unittest.TestCase):
         self.source = self.root / "source fixture"
         setup.mkdir(self.source)
         shutil.copyfile(setup.ROOT / "LICENSE", self.source / "LICENSE")
+        self.enterContext(patch('mrh_windows_setup.locations.default_runtime_root',return_value=self.root/'managed runtime'))
+        self.enterContext(patch.dict(os.environ,MRH_RUNTIME_ROOT=str(self.root/'managed runtime')))
         self.prefix = self.root / "app space"
         self.config = self.root / "persistent data with spaces"
         self.codex = FakeCodex()
@@ -114,9 +118,14 @@ class WindowsSetupTests(unittest.TestCase):
                                          "--host", "codex", *extra])
 
     def run_setup(self, args=None, adapters=None, build=setup.build_generation):
-        source = {"head": "a" * 40, "fingerprint": hashlib.sha256(self.revision.encode()).hexdigest(),
-                  'project_root':str(self.source)}
-        with patch.object(setup, "source_identity", return_value=source), patch.object(setup, "python_metadata", return_value=self.python), patch.object(setup, "ROOT", self.source):
+        args=args or self.args()
+        source = {"head": "a" * 40, "fingerprint": hashlib.sha256((self.revision+str(args.dev)
+                  +str(args.codex_packets)+str(setup.locations.default_runtime_root())).encode()).hexdigest()}
+        if args.dev and not (self.source/'src').exists():
+            shutil.copytree(setup.ROOT/'src',self.source/'src')
+            shutil.copy2(setup.ROOT/'pyproject.toml',self.source/'pyproject.toml')
+        backend_root=self.source if args.dev else mrh_build.ROOT
+        with patch.object(setup, "source_identity", return_value=source), patch.object(setup, "python_metadata", return_value=self.python), patch.object(setup, "ROOT", self.source), patch.object(mrh_build,'ROOT',backend_root):
             return setup.install(args or self.args(), adapters=adapters or {"codex": self.codex}, build=build,
                                  path_manager=self.path_manager)
 
@@ -158,7 +167,7 @@ class WindowsSetupTests(unittest.TestCase):
 
     def bootstrap_environment(self, native=False):
         code = ("import json,os,runpy,sys;from pathlib import Path;target=sys.argv[1];"
-                "sys.argv=sys.argv[1:];runpy.run_path=lambda *a,**k:print(json.dumps({'root':os.environ.get('MRH_PROJECT_ROOT')}));"
+                "sys.argv=sys.argv[1:];runpy.run_path=lambda *a,**k:print(json.dumps({'root':os.environ.get('MRH_RUNTIME_ROOT') or os.environ.get('MRH_PROJECT_ROOT')}));"
                 "exec(compile(Path(target).read_bytes(),target,'exec'),{'__file__':target,'__name__':'__main__'})")
         return subprocess.run([self.python['executable'],'-I','-B','-X','utf8','-c',code,
             str(self.prefix/'bootstrap.py'),*(['--native-hook','codex'] if native else [])],cwd=self.root,
@@ -175,30 +184,32 @@ class WindowsSetupTests(unittest.TestCase):
         state['generations'][identifier]=setup.digest(setup.regular(generation/'manifest.json'))
         setup.write(self.prefix/'setup-state/state.json',setup.encoded(state))
 
-    def test_project_root_is_bound_and_cannot_be_overridden_by_environment_or_cwd(self):
+    def test_normal_runtime_is_bound_without_source_dependency_or_environment_override(self):
         result=self.run_setup()
         generation=self.prefix/'setup-state/generations'/self.state()['current']
-        self.assertEqual(setup.document(generation/'generation.json')['project_root'],str(self.source))
+        self.assertNotIn('project_root',setup.document(generation/'generation.json'))
         binding=setup.document(generation/'hosts/codex/plugins/model-routing-harness/binding.json')
-        self.assertEqual(binding['project_root'],str(self.source))
-        self.assertEqual(result['project_root'],{'status':'bound','ready':True})
+        self.assertNotIn('project_root',binding)
+        self.assertEqual(binding['runtime_root'],str(self.root/'managed runtime'))
+        self.assertEqual(result['project_root'],{'status':'not_required','ready':True})
         for native in (False,True):
             run=self.bootstrap_environment(native)
             self.assertEqual(run.returncode,0,run.stderr)
-            self.assertEqual(json.loads(run.stdout),{'root':str(self.source)})
+            self.assertEqual(json.loads(run.stdout),{'root':str(self.root/'managed runtime')})
 
-    def test_source_identity_changes_for_identical_bytes_in_different_clones(self):
+    def test_normal_source_identity_ignores_clone_path_but_dev_binds_it(self):
         other=self.root/'another clone';setup.mkdir(other)
         for root in (self.source,other):
             for name in ('mrh_windows_setup.py','mrh_setup.py','setup.ps1','mrh_build.py','mrh_bundle.py','pyproject.toml','LICENSE'):
                 (root/name).write_bytes(b'identical fixture content')
-        def identity(root, head='a'*40):
+        def identity(root, head='a'*40,dev=False):
             with patch.object(setup,'ROOT',root), patch.object(setup.subprocess,'run',return_value=SimpleNamespace(stdout=head)):
-                return setup.source_identity(['codex'],False,self.profile(),self.python)
+                return setup.source_identity(['codex'],False,self.profile(),self.python,dev)
         first,second=identity(self.source),identity(other)
-        self.assertEqual(first['project_root'],str(self.source))
-        self.assertEqual(second['project_root'],str(other))
-        self.assertNotEqual(first['fingerprint'],second['fingerprint'])
+        self.assertNotIn('project_root',first)
+        self.assertNotIn('project_root',second)
+        self.assertEqual(first['fingerprint'],second['fingerprint'])
+        self.assertNotEqual(identity(self.source,dev=True)['fingerprint'],identity(other,dev=True)['fingerprint'])
         (self.source/'README.md').write_text('Documentation-only change',encoding='utf-8')
         docs_only=identity(self.source,'b'*40)
         self.assertEqual(docs_only['head'],'b'*40)
@@ -208,17 +219,17 @@ class WindowsSetupTests(unittest.TestCase):
 
     def test_native_hook_uses_selected_host_generation_and_verifies_its_metadata(self):
         self.run_setup();first=self.state()
-        self.source=self.root/'second source';setup.mkdir(self.source)
-        shutil.copyfile(setup.ROOT/'LICENSE',self.source/'LICENSE')
-        self.revision='two';self.run_setup()
+        self.revision='two'
+        with patch('mrh_windows_setup.locations.default_runtime_root',return_value=self.root/'second runtime'):
+            self.run_setup()
         state=self.state();state['hosts']['codex']=first['hosts']['codex']
         setup.write(self.prefix/'setup-state/state.json',setup.encoded(state))
         run=self.bootstrap_environment()
-        self.assertEqual(json.loads(run.stdout),{'root':str(self.source)})
+        self.assertEqual(json.loads(run.stdout),{'root':str(self.root/'second runtime')})
         old_meta=setup.document(self.prefix/'setup-state/generations'/first['current']/'generation.json')
         run=self.bootstrap_environment(True)
         self.assertEqual(run.returncode,0,run.stderr)
-        self.assertEqual(json.loads(run.stdout),{'root':old_meta['project_root']})
+        self.assertEqual(json.loads(run.stdout),{'root':old_meta['runtime_root']})
         target=self.prefix/'setup-state/generations'/first['current']/'generation.json'
         target.write_bytes(target.read_bytes()+b'\n')
         run=self.bootstrap_environment(True)
@@ -228,7 +239,7 @@ class WindowsSetupTests(unittest.TestCase):
     def test_legacy_generation_without_project_root_still_rolls_back(self):
         self.run_setup();first=self.state()['current']
         metadata=setup.document(self.prefix/'setup-state/generations'/first/'generation.json')
-        metadata.pop('project_root');metadata['source'].pop('project_root')
+        metadata.pop('runtime_root');metadata['source'].pop('project_root',None)
         self.reseal_metadata(first,metadata)
         self.revision='two';self.run_setup()
         profile=self.profile().read_bytes()
@@ -242,15 +253,19 @@ class WindowsSetupTests(unittest.TestCase):
 
     def test_missing_bound_root_stops_launch_without_system_tmp_fallback(self):
         self.run_setup()
+        identifier=self.state()['current']
+        metadata=setup.document(self.prefix/'setup-state/generations'/identifier/'generation.json')
+        metadata.pop('runtime_root');metadata['project_root']=str(self.source)
+        self.reseal_metadata(identifier,metadata)
         self.assertTrue(self.source.is_relative_to(self.root))
         (self.source/'LICENSE').unlink();self.source.rmdir()
         run=self.bootstrap_environment()
         self.assertEqual(run.returncode,2)
-        self.assertIn('project root is not ready',run.stderr)
+        self.assertIn('bound runtime or development source is not ready',run.stderr)
         self.assertNotIn('root',run.stdout)
         run=self.bootstrap_environment(True)
         self.assertEqual(run.returncode,0)
-        self.assertIn('project root is not ready',run.stdout)
+        self.assertIn('bound runtime or development source is not ready',run.stdout)
         self.assertNotIn('root',json.loads(run.stdout))
         result=self.run_setup(self.args('--check'))
         self.assertFalse(result['project_root']['ready'])
@@ -445,15 +460,53 @@ class WindowsSetupTests(unittest.TestCase):
             self.run_setup(self.args("--rollback"))
         self.assertEqual(self.codex.mutations, mutations)
 
-    def test_lost_registration_ack_reruns_same_transaction_without_duplicate_registration(self):
-        self.codex.fail_after_registration = True
-        with self.assertRaisesRegex(setup.SetupError, "lost_ack"):
-            self.run_setup()
-        pending = setup.document(self.prefix / "setup-state/pending.json")
-        self.assertFalse((self.prefix / "setup-state/state.json").exists())
+    def test_rollback_without_history_refuses_before_native_mutation(self):
         self.run_setup()
-        self.assertEqual(self.state()["current"], pending["target"])
-        self.assertEqual(self.codex.mutations, 1)
+        before = (self.prefix/'setup-state/state.json').read_bytes()
+        mutations = self.codex.mutations
+        with self.assertRaisesRegex(setup.SetupError, 'rollback_history_missing'):
+            self.run_setup(self.args('--rollback'))
+        self.assertEqual((self.prefix/'setup-state/state.json').read_bytes(), before)
+        self.assertEqual(self.codex.mutations, mutations)
+
+    def test_lost_registration_ack_reruns_same_transaction_without_duplicate_registration(self):
+        from mrh.adapters.hosts import codex_packets as packets
+        self.run_setup()
+        original_state = self.state()['current']
+        settings_v2.update(self.profile(), enabled=True, task_export_permitted=True,
+                           allowed_workspaces=[str(self.root)])
+        database = self.profile().parent / 'advice.sqlite3'
+        with sqlite3.connect(database) as connection:
+            connection.execute('CREATE TABLE preserved_stat(value TEXT)')
+            connection.execute("INSERT INTO preserved_stat VALUES ('keep')")
+        saved_profile, saved_database = self.profile().read_bytes(), database.read_bytes()
+        self.revision = 'mode-and-runtime-change'
+        args = self.args('--dev', '--codex-packets')
+        self.codex.fail_after_registration = True
+        with patch('mrh_windows_setup.locations.default_runtime_root', return_value=self.root/'new-runtime'):
+            with self.assertRaisesRegex(setup.SetupError, 'lost_ack'):
+                self.run_setup(args)
+            pending = setup.document(self.prefix/'setup-state/pending.json')
+            self.assertEqual(self.state()['current'], original_state)
+            checked = self.run_setup(self.args('--check'))
+            self.assertTrue(checked['installed'])
+            self.assertTrue(checked['transaction_pending'])
+            self.assertEqual(checked['status'], 'pending')
+            self.assertIn('installation_recovery', checked['pending'])
+            self.assertNotEqual(checked['routing'], 'ready')
+            mutations = self.codex.mutations
+            packet = packets.prepare(self.profile(), 'fixture after lost ACK', self.root)
+            with self.assertRaisesRegex(ValueError, 'mode_change_packet_in_progress'):
+                self.run_setup(args)
+            packets.status(self.profile(), packet['packet_id'], finish=True)
+            restored = self.run_setup(args)
+            self.assertFalse(restored['transaction_pending'])
+            self.assertEqual(restored['execution_mode'], 'development')
+            self.assertEqual(self.state()['current'], pending['target'])
+            self.assertEqual(self.state()['previous']['current'], original_state)
+            self.assertEqual(self.codex.mutations, mutations)
+        self.assertEqual(self.profile().read_bytes(), saved_profile)
+        self.assertEqual(database.read_bytes(), saved_database)
 
     def test_pending_transaction_with_different_arguments_refuses(self):
         self.codex.fail_after_registration = True
@@ -510,14 +563,60 @@ class WindowsSetupTests(unittest.TestCase):
         self.assertEqual(claude.path.read_text(), text)
         self.assertEqual(self.codex.mutations, 0)
 
-    def test_packet_mode_and_unscoped_enable_are_refused(self):
-        for args, reason in ((self.args("--codex-packets"), "unsupported_on_windows"),
-                             (self.args("--enable"), "explicit_workspace")):
+    def test_unscoped_enable_is_refused(self):
+        for args, reason in ((self.args("--enable"), "explicit_workspace"),):
             with self.subTest(reason=reason):
                 with self.assertRaisesRegex(setup.SetupError, reason):
                     self.run_setup(args)
         self.assertFalse(self.profile().exists())
         self.assertEqual(self.codex.mutations, 0)
+
+    def test_dev_packet_mode_uses_editable_source_then_normal_survives_source_absence(self):
+        # Build the real two modes with only bounded fake native registrations.
+        self.run_setup(self.args('--dev','--codex-packets'))
+        self.assertTrue(self.state()['hosts']['codex']['packets'])
+        self.assertEqual(self.run_setup(self.args('--check'))['execution_mode'],'development')
+        site_file=next(self.runtime.glob('python*._pth'))
+        self.assertNotIn('import site',site_file.read_text())
+        cli=self.source/'src/mrh/cli.py';hook=self.source/'src/mrh/application/advisory_runtime.py'
+        cli.write_text('def main():\n    print("editable CLI changed")\n    return 0\n',encoding='utf-8')
+        hook.write_text('def run(platform,settings,stdin,stdout,stderr,**kwargs):\n    stdout.write(\'{"systemMessage":"editable Hook changed"}\\n\')\n    return 0\n',encoding='utf-8')
+        def invoke(*arguments,input=None):
+            return subprocess.run([self.python['executable'],'-I','-B','-X','utf8',str(self.prefix/'bootstrap.py'),*arguments],
+                input=input,capture_output=True,text=True,timeout=15)
+        result=invoke();self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(result.stdout.strip(),'editable CLI changed')
+        result=invoke('--native-hook','codex',input=json.dumps({'hook_event_name':'PreToolUse'}))
+        self.assertEqual(json.loads(result.stdout),{'systemMessage':'editable Hook changed'})
+        offline=self.source.with_name('source offline');self.source.rename(offline)
+        self.assertNotEqual(invoke().returncode,0)
+        offline.rename(self.source)
+        self.revision='normal'
+        self.run_setup(self.args('--codex-packets'))
+        self.source.rename(offline)
+        result=invoke('--help');self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn('usage:',result.stdout.lower())
+
+    def test_runtime_change_checks_unselected_host_profile_and_root_lock(self):
+        from mrh.adapters.hosts import codex_packets as packets
+        claude,_=self.native_claude();adapters={'codex':self.codex,'claude':claude}
+        self.run_setup(self.args('--host','claude'),adapters)
+        profile=self.claude_profile()
+        settings_v2.update(profile,enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.root)])
+        packet=packets.prepare(profile,'isolated unselected host packet',self.root)
+        old_state=(self.prefix/'setup-state/state.json').read_bytes();old_profile=profile.read_bytes()
+        self.revision='new runtime'
+        changed=self.root/'second runtime'
+        with patch('mrh_windows_setup.locations.default_runtime_root',return_value=changed):
+            with self.assertRaisesRegex(ValueError,'mode_change_packet_in_progress'):
+                self.run_setup(self.args(),adapters)
+            self.assertEqual((self.prefix/'setup-state/state.json').read_bytes(),old_state)
+            self.assertEqual(profile.read_bytes(),old_profile)
+            directory=packets.root_for(profile)/packet['packet_id']
+            row=packets.status(profile,packet['packet_id']);row['state']='completed'
+            packets._write(directory/'receipt.json',row)
+            result=self.run_setup(self.args(),adapters)
+            self.assertEqual(result['runtime_root'],str(changed))
 
     def test_native_claude_readiness_uses_its_independent_profile_and_one_query_per_host(self):
         claude, _ = self.native_claude()

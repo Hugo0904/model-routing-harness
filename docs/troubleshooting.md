@@ -1,12 +1,12 @@
 # 疑難排解
 
-Windows `project_root_not_ready` 表示綁定的原始碼根缺失或未通過既有路徑／權限檢查。先核對 `--check --json` 的 `project_root` 與各宿主欄位，恢復原本授權的目錄狀態後再重跑原安裝指令；不要刪除正式安裝代、放寬安全檢查，或把單機問題當成所有使用者都要搬移 checkout 的要求。
+舊版 Windows 的 `project_root_not_ready` 表示原始碼根缺失或未通過檢查。新一般模式不依賴來源，開發模式仍需來源與 editable 連結。先核對 `--check --json` 的 `execution_mode`、`source`、`runtime_root` 及各宿主欄位，恢復原本授權的目錄狀態後再重跑原安裝指令；不要刪除正式安裝代、放寬安全檢查，或把單機問題當成所有使用者都要搬移 checkout 的要求。
 
 先在原始碼目錄執行對應平台的 `setup.ps1 --check --json` 或 `./setup --check --json`，再從一般目錄執行 `mrh status`。安裝、命令解析、Hook 信任、金鑰、政策與外送許可分開判斷；其中一項成功不代表全部就緒。
 
 ## 已安裝，為什麼沒有分級？
 
-新 profile 預設停用且禁止外送。確認支援的平台、原生 Hook 信任、金鑰、候選政策與允許外送的範圍，再依[安裝指南](install.md)啟用。Windows Claude 已有啟用後的驗證，但每份安裝仍須通過自己的 LPAC 清單及獨立 profile 條件；Windows 訂閱分級器、Gemini 與 Codex packet 的未支援界線不能靠手動設定略過。明示模型／effort、專門角色與不符合範圍的委派可按設計保留原呼叫。
+新 profile 預設停用且禁止外送。確認支援的平台、原生 Hook 信任、金鑰、候選政策與允許外送的範圍，再依[安裝指南](install.md)啟用。Windows Claude 已有啟用後的驗證，但每份安裝仍須通過自己的 LPAC 清單及獨立 profile 條件；Windows 訂閱分級器與 Gemini 仍不可用；Codex packet 是待原生驗收的候選功能，不能靠手動開關冒充驗收。明示模型／effort、專門角色與不符合範圍的委派可按設計保留原呼叫。
 
 `mrh classify` 會真的呼叫所選分級來源，可能有費用與資料外送，不是無作用的安裝檢查。
 
@@ -40,9 +40,11 @@ Mac 若終端可用、另一個執行入口卻回報未登入，先核對各自�
 
 保留 journal、目前設定、仍被引用的安裝代及既有歷史備份，修正回報原因後用相同來源與參數重跑。退版只切換程式與 wiring，不還原舊統計或 profile；第一次安裝沒有前代可退。日常 Reset 不處理這些檔案，見[安裝生命週期](install-lifecycle.md)。
 
+交易未完成時 `transaction_pending: true`、`status: pending` 並列出 `installation_recovery`。先用原安裝參數恢復；不要刪 journal 或繼續新的 packet。這是可恢復交易的狀態提示，程序退出後沒有持久的 packet admission gate。
+
 ## 想快速清除暫存
 
-`mrh cleanup` 只預覽；`mrh cleanup --apply` 或 `mrh ctrl` 的「清除暫存／Reset」清除固定專案暫存與快取，不動設定、統計、實驗、收集器、正式報表或派工回執。略過的項目會回報原因。根不可用時不改用系統 tmp；單獨使用 wheel 可明確設定可信 `MRH_PROJECT_ROOT`。
+`mrh cleanup` 只預覽；`mrh cleanup --apply` 或 `mrh ctrl` 的「清除暫存／Reset」清除固定 runtime 根下的可丟棄暫存與快取，不動設定、統計、實驗、收集器、正式報表或派工回執。略過的項目會回報原因。根不可用時不改用系統 tmp；來源或 wheel 可明確設定可信的 `MRH_RUNTIME_ROOT`，受管理安裝則依其固定綁定。
 
 清理可讓當次分類失敗，但不是重送 Jev 或重派舊 packet 的許可；下一個新任務可正常重建。未知 release 保留原身分與 receipt。舊散落資料不自動刪除，見[日常操作](usage.md#清除可丟棄暫存)。
 

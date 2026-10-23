@@ -38,7 +38,7 @@ mrh skill remove --host claude --force --backup-dir /absolute/external/backup
 
 **Codex：** 有工程 Router 時，由既有 Router 決定工作單位、角色與 profile，不重複分配或分類。完整 brief 分類只在宿主能力已確認、插件明確選配 packet 且 profile 允許外送時，交給唯一的 `mrh-codex-packet` 協定處理。本 skill 不另做 prepare/query/release；結果未知不重送。詳見 [packet 協定](codex/full-task-packets.md)。
 
-Windows 目前不支援完整任務 packet。安裝這份社群 skill 不會開啟 packet；原生普通委派依既有宿主規則進行，不宣稱已用完整 brief 分類。Windows 普通 Hook 可能只能觀測可讀標題，詳見[平台界線](compatibility.md)。
+Windows 完整任務 packet 已接入候選，仍待原生驗收。安裝這份社群 skill 不會開啟 packet；原生普通委派依既有宿主規則進行，不宣稱已用完整 brief 分類。Windows 普通 Hook 可能只能觀測可讀標題，詳見[平台界線](compatibility.md)。
 
 **Claude Code：** 普通 `general-purpose` 且沒有使用者或既有規則指定選型時，讓 MRH Hook 提供建議；Explore、自訂角色、明示模型或 effort 仍依原規則處理。只有明確回報「未建立子代理」的建議式拒絕，才依協定替換一次；成功、未知結果或其他拒絕都不是循環重試許可。Windows Claude 路由仍停用，skill 的存在不代表 MRH 已分類或可用模型已確認。
 

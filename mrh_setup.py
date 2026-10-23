@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT), str(ROOT / 'src')]
 import mrh_bundle as bundle
 from mrh.infrastructure import owned, plugin, settings_v2, claude_hook, secrets
+from mrh.infrastructure import execution, locations
 from mrh.infrastructure import temporary as project_temporary
 from mrh.adapters.hosts.registry import REGISTRATIONS
 from mrh.application import skills
@@ -142,7 +143,9 @@ def verify_bundle(root, digest=None):
 
 def source_fingerprint(hosts, packets, settings, dev=False):
     # A developer install runs the checkout's src directly, so editing it must not make a new version.
-    files = [] if dev else list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*'))
+    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py')]
+             + list((ROOT / 'src/mrh/adapters/platforms').glob('*.py'))) if dev else (
+             list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*')))
     files += [ROOT / n for n in ('setup', 'mrh_setup.py', 'mrh_bundle.py', 'mrh_build.py', 'pyproject.toml', 'LICENSE')]
     files += [bundle.LOCK]
     files += [p for p in (ROOT/'packaging/macos-arm64/license-snapshot').rglob('*') if p.is_file()]
@@ -150,7 +153,9 @@ def source_fingerprint(hosts, packets, settings, dev=False):
     for p in sorted(set(p for p in files if p.is_file())):
         h.update(p.relative_to(ROOT).as_posix().encode() + b'\0' + p.read_bytes())
     # Only what goes into the installation counts: a commit that changes docs or tests must not make a new version.
-    h.update(encoded({'hosts': hosts, 'packets': packets, 'settings': str(settings), 'project_root': str(ROOT), **({'dev': True} if dev else {})}))
+    h.update(encoded({'hosts': hosts, 'packets': packets, 'settings': str(settings),
+                      'runtime_root': str(locations.default_runtime_root()),
+                      **({'dev_source': str(ROOT)} if dev else {})}))
     return h.hexdigest()
 
 
@@ -466,20 +471,20 @@ def compatible(generation, settings):
     return metadata
 
 
-DEV_MAIN = '''import sys
-sys.path.insert(0, {src!r})
-sys.argv[0] = 'mrh'
-from mrh.cli import main
-raise SystemExit(main())
-'''
-
-
 def finish_generation(stage, destination, settings, selected, fingerprint, prefix, dev=False):
     """Prepare inside private staging; publish only the complete final-path artifact."""
+    archive = regular(stage / 'app/mrh.pyz')
+    editable = bundle.editable_files() if dev else None
+    runtime = locations.default_runtime_root()
+    if editable is not None:
+        for name, data in editable.items():
+            write(stage / 'app/editable' / name, data)
     for h, info in selected.items():
         artifact = stage / 'hosts' / h
         artifact.parent.mkdir(parents=True, exist_ok=True)
-        plugin.prepare(artifact, settings, stage / 'runtime/bin/python3.11', advisory=True, codex_packets=info['packets'], project_root=ROOT, dev_source=ROOT if dev else None)
+        plugin.prepare(artifact, settings, stage / 'runtime/bin/python3.11', advisory=True,
+                       codex_packets=info['packets'], runtime_archive=archive, editable_files=editable,
+                       runtime_root=runtime, dev_source=ROOT if dev else None)
         meta = document(artifact/'artifact.json')
         if h == 'codex':
             # Codex 0.162.1 discovers skills from the portable manifest but silently
@@ -509,12 +514,8 @@ def finish_generation(stage, destination, settings, selected, fingerprint, prefi
         meta['files'] = {name:bundle.sha256(artifact/name) for name in meta['files']}
         write(artifact/'artifact.json',encoded(meta))
         plugin.show(artifact)
-    if dev:
-        # The mrh command follows the checkout too; the packaged archive stays in the generation but is not used.
-        write(stage/'app/dev_main.py', DEV_MAIN.format(src=str(ROOT/'src')).encode())
-        entry = (stage/'mrh').read_bytes().replace(b'"$mrh_dir/app/mrh.pyz"', b'"$mrh_dir/app/dev_main.py"')
-        write(stage/'mrh', entry); (stage/'mrh').chmod(0o755)
-    write(stage/'generation.json',encoded({'owner':OWNER,'fingerprint':fingerprint,'reader':READER,'hosts':selected,'project_root':str(ROOT),**({'dev_source':str(ROOT)} if dev else {})}))
+    write(stage/'generation.json',encoded({'owner':OWNER,'fingerprint':fingerprint,'reader':READER,
+          'hosts':selected,'runtime_root':str(runtime),**({'dev_source':str(ROOT)} if dev else {})}))
     manifest=document(stage/'manifest.json');manifest['files']=bundle.file_manifest(stage)
     write(stage/'manifest.json',encoded(manifest));verify_bundle(stage)
 
@@ -525,7 +526,12 @@ def readiness(args, state, paths, hosts=None):
     result = {'status': 'pending', 'installed': False, 'configured': False, 'settings': str(settings),
               'enabled': False, 'export_permitted': False, 'credential_present': None, 'policy_ready': False,
               'trust': 'unverified', 'last_real_dispatch': None, 'last_real_dispatch_status': 'not_probed',
-              'provider_probe_performed': False, 'hosts': {}, 'pending': []}
+              'provider_probe_performed': False, 'hosts': {}, 'pending': [],
+              'execution_mode': None, 'source': None, 'runtime_root': None}
+    journal = control / 'journal.json'
+    result['transaction_pending'] = journal.exists() and document(journal).get('phase') != 'complete'
+    if result['transaction_pending']:
+        result['pending'].append('installation_recovery')
     selected=hosts or args.host or list((state or {}).get('hosts',{}))
     claude_adapter=None
     if 'claude' in selected:
@@ -540,9 +546,18 @@ def readiness(args, state, paths, hosts=None):
         verify_bundle(root, state['generations'][state['current']])
         result['installed'] = snapshot(prefix / 'current') == {'symlink': str(root)} and snapshot(bin_dir / 'mrh') == {'symlink': str(prefix / 'current/mrh')}
         result['generation'] = state['current']
-        dev_source = document(root / 'generation.json').get('dev_source')
+        metadata = document(root / 'generation.json')
+        dev_source = metadata.get('dev_source')
+        runtime, source = execution.runtime_binding(metadata)
+        result.update(execution_mode='development' if dev_source else 'installed', source=source, runtime_root=runtime)
         if dev_source:
-            result['dev_source'] = dev_source    # hook and mrh run this checkout directly
+            try:
+                execution.editable_source(root / 'app/editable', dev_source)
+                result['source_ready'] = True
+            except (OSError, ValueError) as exc:
+                result.update(source_ready=False, source_error=str(exc))
+                result['pending'].append('development_source')
+            result['dev_source'] = dev_source
     if settings.exists():
         value = settings_v2.read(settings)
         result.update(configured=True, enabled=value['enabled'], export_permitted=value['task_export_permitted'])
@@ -594,7 +609,7 @@ def readiness(args, state, paths, hosts=None):
     trusts=[h['trust'] for h in result['hosts'].values()]
     result['trust']='trusted' if trusts and all(t in ('trusted','not_applicable_native_settings') for t in trusts) else 'untrusted' if 'untrusted'in trusts else 'unverified'
     if result['trust']!='trusted':result['pending'].append('native_trust_or_unverified')
-    result['status'] = 'installed' if result['installed'] else 'pending'
+    result['status'] = 'installed' if result['installed'] and not result['transaction_pending'] else 'pending'
     return result
 
 
@@ -614,8 +629,8 @@ def _install(args, *, build=bundle.build):
         raise SetupError('codex_packets_requires_codex')
     if args.enable and not args.workspace:
         raise SetupError('enable_requires_explicit_workspace')
-    if args.dev and (args.rollback or args.codex_packets):
-        raise SetupError('dev_cannot_combine_with_rollback_or_packets')
+    if args.dev and args.rollback:
+        raise SetupError('dev_cannot_combine_with_rollback')
     if args.rollback and (args.enable or args.workspace or args.codex_packets):
         raise SetupError('rollback_does_not_change_policy_or_packet_mode')
     value = profile_preflight(settings)
@@ -709,40 +724,52 @@ def _install(args, *, build=bundle.build):
                 if metadata.get('owner') != OWNER or metadata.get('fingerprint') != fingerprint:
                     raise SetupError('generation_unowned')
                 prepare_profile()
-        journal['target'] = identifier; journal['phase'] = 'registering'; write(journal_path,encoded(journal))
-        for h,adapter in adapters.items():
-            if h in journal['completed_hosts']: continue
-            def progress(step):
-                journal['native_step'] = {'host':h,'step':step}; write(journal_path,encoded(journal))
-            adapter.install(Path(selected[h]['artifact']), journal['before_hosts'][h], progress)
-            journal['completed_hosts'].append(h); write(journal_path,encoded(journal))
-        for h,adapter in adapters.items():
-            if not host_configured(h,adapter,Path(selected[h]['artifact'])):
-                raise SetupError('native_registration_concurrent_change')
-        journal['phase'] = 'committing'; write(journal_path,encoded(journal))
-        if snapshot(pointer) != journal['before_pointer'] and not (journal['before_pointer'] is None and pointer.is_file() and regular(pointer)==(str(settings)+'\n').encode()):
-            raise SetupError('active_pointer_concurrent_change')
-        # A fresh profile was initialized above; existing bytes are preserved unless explicitly configured.
-        if args.enable or args.workspace:
-            if snapshot(settings) != journal['before_profile']:
-                raise SetupError('profile_concurrent_change')
-            current_profile = settings_v2.read(settings)
-            changes = {'allowed_workspaces':[str(canonical(p)) for p in args.workspace],'workspace_allowlist_file':None} if args.workspace else {}
-            if args.enable: changes.update(enabled=True,task_export_permitted=True)
-            settings_v2.update(settings,expected_revision=current_profile['revision'],**changes)
-        old = {'current':state['current'],'hosts':state['hosts']} if state else None
-        history = dict((state or {}).get('generations',{})); history[identifier] = bundle.sha256(generation/'manifest.json')
-        new = {'owner':OWNER,'version':1,'last_operation':journal['operation'],'current':identifier,'hosts':{**(state or {}).get('hosts',{}),**selected},
-               'generations':history,'previous':old,'settings':str(settings)}
-        if snapshot(prefix/'current') != {'symlink':str(generation)}:
-            link(prefix/'current',str(generation),journal['before_current'])
-        if snapshot(bin_dir/'mrh') != {'symlink':str(prefix/'current/mrh')}:
-            link(bin_dir/'mrh',str(prefix/'current/mrh'),journal['before_bin'])
-        if not pointer.exists(): write(pointer,(str(settings)+'\n').encode(),None)
-        write(control/'state.json',encoded(new))
-        journal['phase']='complete'; write(journal_path,encoded(journal))
-        return {**readiness(args,new,paths,hosts),'operation':'rollback' if args.rollback else 'installed',
-                'legacy_app_preserved':(prefix/'app').exists(),'receipt':str(journal_path)}
+        changed_binding = state and any(
+            execution.runtime_binding(document(control / 'generations' / old_id / 'generation.json'))
+            != execution.runtime_binding(document(generation / 'generation.json'))
+            for old_id in {state['current'], *(item['generation'] for item in state['hosts'].values())})
+        profiles = [settings]
+        if state:
+            profiles.append(Path(state['settings']))
+            profiles.extend(Path(document(Path(item['artifact']) / 'artifact.json')['settings_path'])
+                            for item in state['hosts'].values())
+        admission = execution.packet_mode_transition(profiles) if changed_binding else nullcontext()
+        with admission:
+            journal['target'] = identifier; journal['phase'] = 'registering'; write(journal_path,encoded(journal))
+            for h,adapter in adapters.items():
+                if h in journal['completed_hosts']: continue
+                def progress(step):
+                    journal['native_step'] = {'host':h,'step':step}; write(journal_path,encoded(journal))
+                adapter.install(Path(selected[h]['artifact']), journal['before_hosts'][h], progress)
+                journal['completed_hosts'].append(h); write(journal_path,encoded(journal))
+            for h,adapter in adapters.items():
+                if not host_configured(h,adapter,Path(selected[h]['artifact'])):
+                    raise SetupError('native_registration_concurrent_change')
+            journal['phase'] = 'committing'; write(journal_path,encoded(journal))
+            if snapshot(pointer) != journal['before_pointer'] and not (journal['before_pointer'] is None and pointer.is_file() and regular(pointer)==(str(settings)+'\n').encode()):
+                raise SetupError('active_pointer_concurrent_change')
+            # A fresh profile was initialized above; existing bytes are preserved unless explicitly configured.
+            if args.enable or args.workspace:
+                if snapshot(settings) != journal['before_profile']:
+                    raise SetupError('profile_concurrent_change')
+                current_profile = settings_v2.read(settings)
+                changes = {'allowed_workspaces':[str(canonical(p)) for p in args.workspace],'workspace_allowlist_file':None} if args.workspace else {}
+                if args.enable: changes.update(enabled=True,task_export_permitted=True)
+                settings_v2.update(settings,expected_revision=current_profile['revision'],**changes)
+            old = {'current':state['current'],'hosts':state['hosts']} if state else None
+            history = dict((state or {}).get('generations',{})); history[identifier] = bundle.sha256(generation/'manifest.json')
+            new = {'owner':OWNER,'version':1,'last_operation':journal['operation'],'current':identifier,'hosts':{**(state or {}).get('hosts',{}),**selected},
+                   'generations':history,'previous':old,'settings':str(settings)}
+            if snapshot(prefix/'current') != {'symlink':str(generation)}:
+                link(prefix/'current',str(generation),journal['before_current'])
+            if snapshot(bin_dir/'mrh') != {'symlink':str(prefix/'current/mrh')}:
+                link(bin_dir/'mrh',str(prefix/'current/mrh'),journal['before_bin'])
+            if not pointer.exists(): write(pointer,(str(settings)+'\n').encode(),None)
+            write(control/'state.json',encoded(new))
+            journal['phase']='complete'; write(journal_path,encoded(journal))
+            return {**readiness(args,new,paths,hosts),'operation':'rollback' if args.rollback else 'installed',
+                    'legacy_app_preserved':(prefix/'app').exists(),'receipt':str(journal_path)}
+
 
 
 def install(args, *, build=bundle.build, path_manager=None):

@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from mrh.adapters.hosts import codex_packets as p
 from mrh.application import advisory_runtime as rt
@@ -28,6 +29,10 @@ class PacketTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name).resolve()
+        if os.name == 'nt':
+            from mrh.adapters.platforms.windows import protect
+            protect(self.root)
+        self.enterContext(patch.dict(os.environ, MRH_RUNTIME_ROOT=str(self.root/'runtime')))
         self.settings = self.root / "profile" / "settings.json"
         v2.init(self.settings)
         v2.update(self.settings, enabled=True, task_export_permitted=True, allowed_workspaces=[str(self.root)],
@@ -116,6 +121,7 @@ class PacketTests(unittest.TestCase):
         self.assertIn("classification ready",self.reason(out)); self.assertEqual(seen,[TASK])
         self.assertNotIn("synthetic-test-value",json.dumps(p.status(self.settings,packet["packet_id"],clock=lambda:1001)))
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mode/FIFO cases; Windows native packet guards have separate ACL/junction coverage')
     def test_packet_root_symlink_fifo_permissions_rejected(self):
         for kind in ("symlink", "fifo", "permission", "writable", "root"):
             with self.subTest(kind=kind):

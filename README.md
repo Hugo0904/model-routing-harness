@@ -64,6 +64,8 @@ mrh ctrl                     # 設定每個難度要用的模型
 
 **Windows（x64）**：需要 Git 與 Python 3.11 以上（原生 x64），不需要 WSL。Codex 與 Claude Code 都已有實機分級與子代理採用證據。Claude 模型清單在 LPAC 隔離下讀取，初始化只加 `registryRead` 權限；高並行的剩餘限制見[Windows 驗證紀錄](docs/windows-validation.md)。步驟見[安裝教學的 Windows 章節](docs/install.md#windows-x64)。
 
+一般安裝使用打包版本，執行時不需要原始碼目錄；更新仍回 repo 重跑安裝。開發者可用 `--dev`，讓 CLI 與 Hook 在下次啟動時讀取同一份來源修改，並可保留 `--codex-packets`。兩種模式保留既有設定與統計，不自動搬資料。雙模式及 Windows packets 目前是待原生驗收的候選功能，詳見[開發模式](docs/development.md#本機開發安裝--dev)。
+
 ## 費用與資料外送
 
 - 分級使用 TypeSafe 的 Jev API，費用記在你的 TypeSafe 帳號，和 Codex／Claude 的訂閱分開。

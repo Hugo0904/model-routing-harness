@@ -40,7 +40,7 @@ Claude 最低版本檢查位於 `src/mrh/adapters/catalogs/claude_version.py`。
 | Jev 實際分類 | Windows 驗證時已由安全儲存的金鑰完成中文合成任務分類，回應為 `jev-1.13.0`；安裝器本身不呼叫 provider。 |
 | 真宿主子代理採用 | 原生 Codex 合成任務已驗證：Jev 分為 Small，MRH 建議 `gpt-6.1-sol / high`，重新委派後子代理 session 記錄相同模型與強度，並完成任務。 |
 | Codex／Claude 訂閱分級器 | Windows 不可用。 |
-| Codex 完整任務封包 | Windows 不支援 `--codex-packets`。 |
+| Codex 完整任務封包 | 候選已接上 `--codex-packets`，可與 `--dev` 併用；Windows 原生 ACL、鎖及完整生命週期仍待本候選實機驗收，不沿用普通委派的既有結果。 |
 | Gemini | Windows 不可用，不能視為可路由宿主。 |
 
 目前 Codex 原生委派的 `message` 可能是加密內容；Hook 依既有契約退回以可讀的 `task_name` 分級。這不能當作完整任務內容已經送入分類的證據。UNC 已完成路徑規則測試，本次沒有可用的真實網路分享供實機驗證。

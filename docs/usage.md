@@ -7,13 +7,13 @@ mrh cleanup
 mrh cleanup --apply
 ```
 
-第一條只預覽，第二條清除固定 MRH 專案下的 `runtime/tmp/mrh/`、`runtime/cache/mrh/`。`mrh ctrl` 的「清除暫存／Reset」已標明同一範圍，點選即清理，沒有第二層確認；完成列出完整清除項目的檔案數、大小與略過原因；部分失敗的項目不猜測其刪除量。
+第一條只預覽，第二條清除固定 runtime 根下的 `<runtime_root>/tmp/mrh/`、`<runtime_root>/cache/mrh/`。`mrh ctrl` 的「清除暫存／Reset」已標明同一範圍，點選即清理，沒有第二層確認；完成列出完整清除項目的檔案數、大小與略過原因；部分失敗的項目不猜測其刪除量。
 
 這兩區只放新產生的臨時明文、執行暫存與可重建快取。清理不產生備份、快照或垃圾桶；正在使用的安裝快取與清理期間新建／變更的項目可略過。本次未完成的分類可以失敗，已送出的請求無法靠刪本機檔案撤回；不因此重送 Jev 或重派舊 packet。下一個新任務可重新建立暫存、正常分類，清單快取也可重建或降級使用內建清單。
 
 設定、金鑰、統計、比較實驗 dataset/spool、收集器原始樣本、正式報表、安裝版本、rollback、journal 及必要 packet receipt／派工關聯全部排除；`cleanup` 不呼叫統計重設或資料庫保留期清理。根目錄的所有權標記與共用鎖保留，不是任務正文或長期暫存帳本。
 
-根目錄由原始碼位置或安裝代的固定綁定提供，不隨目前 cwd 改變；單獨使用 wheel 時，可明確指定可信的 `MRH_PROJECT_ROOT` 專案根。暫存根不可用或不可寫時明確失敗，不回退至系統 tmp 或家目錄。持久檔案仍以原子替換發布；檔案系統拒絕更名時，原檔保留、該次寫入失敗並清除自己的中繼檔，不改成直接覆寫。這項失敗處理與各平台的實機安裝證據分開記錄。
+根目錄由安裝代的 `runtime_root` 固定綁定，不隨目前 cwd 改變。Mac 預設為 `~/Library/Caches/model-routing-harness`，Windows 為私有 ProgramData／SID 根下的 `runtime`。未經安裝器綁定的來源或 wheel 可明確指定 `MRH_RUNTIME_ROOT`；`MRH_PROJECT_ROOT` 只保留舊版／明確來源呼叫的相容語意（使用其 `runtime/`）。受管理的新安裝綁定優先，不由呼叫端改根。暫存根不可用或不可寫時明確失敗，不回退至系統 tmp 或家目錄。持久檔案仍以原子替換發布；檔案系統拒絕更名時，原檔保留、該次寫入失敗並清除自己的中繼檔，不改成直接覆寫。這項失敗處理與各平台的實機安裝證據分開記錄。
 
 舊版散落的快取、原始輸入、legacy packet 正文及收集器 spool 不會被掃描、搬移或刪除。Jev 清單的新預設位置是上述專案快取區，`MRH_STATE_DIR` 不再選擇其位置；舊檔保留。選配派工 skill 的管理見[獨立說明](delegation-skills.md)。
 
@@ -31,7 +31,7 @@ Light／Small／Mid 可配置完整 model＋effort 候選；Top 可選 Main（�
 
 檔位（進階，預設關閉）：`mrh ctrl` →「檔位（進階）」。Jev 仍然只回答四級，但它給的四個機率會換算成 0～3 的難度分數（Light 0、Small 1、Mid 2、Top 3 的加權平均），分數落在哪一檔就用哪一檔的模型。檔位數量與起點自訂（最多 8 檔，第 1 檔從 0 起），每檔可設各平台的候選模型，或「交回主模型自己做」，例如把最高兩檔設成 `opus:high`、`opus:xhigh`。信心門檻兩種模式都照常生效。最高檔就是上限：hook 拿不到主模型是哪個，請自己不要設得比主模型更強。指令版：`mrh ctrl set gears.default yes`（由目前難度表產生一組預設）、`gears.<編號>.claude 模型:強度`、`gears.<編號>.main on`、`gears.add 分數`、`gears.remove 編號`、`mode gears|tiers`。沒有開啟時不寫入任何設定，行為與以前完全相同。
 
-Jev 版本：`classifier.model` 可設 `jev-latest`（最新正式穩定版）、`jev-preview`（含非正式版）或指定版本（如 `jev-1.13.0`）。別名會在官方推出新版時自己換，答案可能跟著改變；指定版本才固定。新安裝預設 `jev-latest`，既有設定不會被改寫。`mrh ctrl` →「分級器」會列出官方版本清單（`GET /v1/models`，快取 24 小時，存在綁定專案的 `runtime/cache/mrh/jev-models.json`，不放進設定目錄；沒有網路或金鑰時只列內建項目並標明未更新）。實際回答的型號會逐次記錄；它改變後 7 天內，`mrh status`／`mrh stats` 頂部會提醒「分級器版本已變更，信心門檻建議重算」，門檻建議也只取變更之後的資料。
+Jev 版本：`classifier.model` 可設 `jev-latest`（最新正式穩定版）、`jev-preview`（含非正式版）或指定版本（如 `jev-1.13.0`）。別名會在官方推出新版時自己換，答案可能跟著改變；指定版本才固定。新安裝預設 `jev-latest`，既有設定不會被改寫。`mrh ctrl` →「分級器」會列出官方版本清單（`GET /v1/models`，快取 24 小時，存在固定的 `<runtime_root>/cache/mrh/jev-models.json`，不放進設定目錄；沒有網路或金鑰時只列內建項目並標明未更新）。實際回答的型號會逐次記錄；它改變後 7 天內，`mrh status`／`mrh stats` 頂部會提醒「分級器版本已變更，信心門檻建議重算」，門檻建議也只取變更之後的資料。
 
 
 ## 用量與費用
@@ -64,7 +64,7 @@ MRH 的做法是先攔下委派、請主模型照建議重派，這一輪本身�
 | 安裝代 | `~/.local/share/model-routing-harness/setup-state/generations/`；`current` 指向啟用的代。 |
 | 新 profile | `~/.config/model-routing-harness/profile/`。 |
 | 統計 | profile 旁的 `advice.sqlite3`，由 MRH 管理。 |
-| Jev 版本快取 | 綁定專案的 `runtime/cache/mrh/jev-models.json`；與 cwd 無關。 |
+| Jev 版本快取 | 固定的 `<runtime_root>/cache/mrh/jev-models.json`；與 cwd 無關。 |
 | 金鑰 | macOS Keychain，或由你提供的安全環境變數。 |
 
 若存在 `~/.config/model-routing-harness/active-settings`，安裝器會沿用原指向。舊安裝的 profile 可能仍在原 checkout；刪除該目錄前須先確認並遷移資料，不能假設更新已自動搬移。

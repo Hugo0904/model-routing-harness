@@ -1,4 +1,4 @@
-"""Disposable project scratch/cache only. No backup, statistics or recovery ledger."""
+"""Disposable runtime scratch/cache only. No backup, statistics or recovery ledger."""
 import json
 import os
 from pathlib import Path
@@ -7,7 +7,7 @@ import stat
 import tempfile
 import time
 
-from mrh.infrastructure import owned
+from mrh.infrastructure import locations, owned
 
 
 def project_root():
@@ -34,7 +34,7 @@ def project_root():
 def area(kind='tmp', *, create=True):
     if kind not in ('tmp', 'cache'):
         raise ValueError('invalid_disposable_area')
-    root = owned.canonical_path(project_root() / 'runtime' / kind / 'mrh')
+    root = owned.canonical_path(locations.runtime_root() / kind / 'mrh')
     if create:
         root.parent.mkdir(parents=True, exist_ok=True)
         return owned.initialize(root, 'disposable_' + kind)

@@ -63,6 +63,13 @@ def _body(directory, *, create=False):
 
 
 def _private(path, directory=False):
+    if os.name == 'nt':
+        from mrh.adapters.platforms.windows import assert_safe
+        try:
+            assert_safe(path, directory=directory, private=True)
+        except (OSError, ValueError):
+            raise PacketError("packet_unsafe_file") from None
+        return
     info = path.lstat()
     kind = stat.S_ISDIR if directory else stat.S_ISREG
     if not kind(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077 or (not directory and info.st_nlink != 1):
@@ -70,8 +77,6 @@ def _private(path, directory=False):
 
 
 def root_for(settings_path):
-    if os.name == 'nt':
-        raise PacketError('packet_windows_not_supported')
     settings = owned.canonical_path(settings_path)
     return settings.parent.with_name(settings.parent.name + "-codex-packets")
 
@@ -94,10 +99,16 @@ def _directory(settings_path, identifier, create=False):
 
 
 def _read(path):
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    _private(path)
+    if os.name == 'nt':
+        from mrh.adapters.platforms.windows import open_regular
+        fd = open_regular(path)
+    else:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         info = os.fstat(fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1 or info.st_mode & 0o077:
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                or os.name != 'nt' and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
             raise PacketError("packet_unsafe_file")
         with os.fdopen(fd, "rb", closefd=False) as stream:
             data = stream.read(65537)
@@ -117,18 +128,39 @@ def _write(path, value):
 @contextmanager
 def _lock(directory):
     path = directory / ".packet.lock"
-    fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    if os.name == 'nt':
+        from mrh.adapters.platforms.windows import open_regular, lock_fd
+        fd = open_regular(path, os.O_CREAT | os.O_RDWR)
+    else:
+        fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
     try:
+        _private(path)
         info = os.fstat(fd)
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1 or info.st_mode & 0o077:
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                or os.name != 'nt' and (info.st_uid != os.getuid() or info.st_mode & 0o077)):
             raise PacketError("packet_unsafe_lock")
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if os.name == 'nt':
+                lock_fd(fd, blocking=False)
+            else:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise PacketError("packet_classification_in_progress") from None
         yield
     finally:
         os.close(fd)
+
+
+def _remove_body(directory):
+    path = _body(directory)
+    if not path.exists() and not path.is_symlink():
+        return
+    _private(path)
+    if os.name == 'nt':
+        # Windows readonly is a file attribute, not a private ACL. Clear it only
+        # for the already-verified body at the terminal lifecycle transition.
+        os.chmod(path, 0o600)
+    path.unlink()
 
 
 def prepare(settings_path, task, workspace, *, user_model=None, user_effort=None, clock=time.time):
@@ -143,20 +175,29 @@ def prepare(settings_path, task, workspace, *, user_model=None, user_effort=None
         raise PacketError("packet_task_invalid")
     if user_model is not None and not safe_model_id(user_model) or user_effort is not None and not safe_id(user_effort):
         raise PacketError("packet_user_profile_invalid")
-    identifier, now = uuid.uuid4().hex, clock()
-    directory = _directory(settings_path, identifier, create=True)
-    scope = {"workspace": workspace, "revision": settings["revision"]}
-    packet = {"version": 2, "id": identifier, "scope": scope, "sha256": _hash(task.encode()),
-              "length": len(task.encode()), "expires": now + TTL_SECONDS, "task": task,
-              "user_profile": {"model": user_model, "effort": user_effort}}
-    _write(_body(directory, create=True), packet)
-    os.chmod(_body(directory), 0o400)
-    receipt = {k: packet[k] for k in ("version", "id", "scope", "sha256", "length", "expires", "user_profile")}
-    receipt.update(state="prepared", created=now, binding=None)
-    _write(directory / "receipt.json", receipt)
-    return {"packet_id": identifier, "sha256": packet["sha256"], "length": packet["length"],
-            "query_task_name": PREFIXES["query"] + identifier, "release_task_name": PREFIXES["release"] + identifier,
-            "body_path": str(_body(directory)), "expires": packet["expires"]}
+    root = root_for(settings_path)
+    owned.initialize(root, "codex_packets")
+    try:
+        with owned.locked(root, "codex_packets", blocking=False):
+            identifier, now = uuid.uuid4().hex, clock()
+            directory = _directory(settings_path, identifier, create=True)
+            scope = {"workspace": workspace, "revision": settings["revision"]}
+            packet = {"version": 2, "id": identifier, "scope": scope, "sha256": _hash(task.encode()),
+                      "length": len(task.encode()), "expires": now + TTL_SECONDS, "task": task,
+                      "user_profile": {"model": user_model, "effort": user_effort}}
+            _write(_body(directory, create=True), packet)
+            os.chmod(_body(directory), 0o400)
+            receipt = {k: packet[k] for k in ("version", "id", "scope", "sha256", "length", "expires", "user_profile")}
+            receipt.update(state="prepared", created=now, binding=None)
+            _write(directory / "receipt.json", receipt)
+            return {"packet_id": identifier, "sha256": packet["sha256"], "length": packet["length"],
+                    "query_task_name": PREFIXES["query"] + identifier, "release_task_name": PREFIXES["release"] + identifier,
+                    "body_path": str(_body(directory)), "expires": packet["expires"]}
+    except (BlockingIOError, owned.OwnedError) as exc:
+        if isinstance(exc, BlockingIOError) or str(exc) == 'owned_lock_busy':
+            raise PacketError('packet_mode_change_in_progress') from None
+        raise
+
 
 
 def _receipt(directory, identifier):
@@ -191,7 +232,7 @@ def _packet(directory, row, event, settings, now):
     if not now < row["expires"] <= row["created"] + TTL_SECONDS:
         row.update(state="expired")
         _write(directory / "receipt.json", row)
-        (_body(directory)).unlink()
+        _remove_body(directory)
         raise PacketError("packet_expired")
     return task
 
@@ -299,9 +340,7 @@ def handle(event, settings_path, settings, host, factory, clock=time.time):
                 _write(directory / "receipt.json", row)
                 # The message contains the entire task; this mode never requires
                 # a child to read the packet after its native spawn acknowledges.
-                if _body(directory).exists():
-                    _private(_body(directory))
-                    _body(directory).unlink()
+                _remove_body(directory)
                 store.maintain(v2.retention_days(settings), clock())
                 return {}
             if event.get("hook_event_name") != "PreToolUse":
@@ -383,10 +422,7 @@ def status(settings_path, identifier, *, finish=False, clock=time.time):
         if finish:
             if row["state"] == "released" and clock() < row["expires"]:
                 raise PacketError("packet_spawn_outcome_unknown")
-            packet = _body(directory)
-            if packet.exists() or packet.is_symlink():
-                _private(packet)
-                packet.unlink()
+            _remove_body(directory)
             if row["state"] != "completed":
                 row["state"] = "expired" if clock() >= row["expires"] else "cancelled"
                 _write(directory / "receipt.json", row)

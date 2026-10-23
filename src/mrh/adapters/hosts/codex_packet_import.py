@@ -26,10 +26,13 @@ def _snapshot(directory, row):
             # Old SQLite created WAL/SHM before chmod of the DB. A 0644
             # sidecar inside the already verified 0700 packet directory is not
             # accessible outside its owner; preserve rather than rewrite it.
-            info = sidecar.lstat()
-            if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
-                    or info.st_nlink != 1 or info.st_mode & 0o022):
-                raise p.PacketError('legacy_unsafe_sidecar')
+            if os.name == 'nt':
+                p._private(sidecar)
+            else:
+                info = sidecar.lstat()
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
+                        or info.st_nlink != 1 or info.st_mode & 0o022):
+                    raise p.PacketError('legacy_unsafe_sidecar')
     with closing(sqlite3.connect(dbpath.as_uri()+'?mode=ro',uri=True)) as db:
         db.row_factory = sqlite3.Row
         db.execute('BEGIN')

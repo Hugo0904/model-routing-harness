@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import shlex
+import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -25,10 +27,10 @@ from mrh.infrastructure import settings_v2
 
 
 class SetupTests(unittest.TestCase):
-    def test_moving_identical_checkout_changes_install_identity(self):
+    def test_identical_normal_checkouts_share_identity_but_dev_binds_the_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             settings = Path(tmp) / 'profile/settings.json'
-            fingerprints = []
+            fingerprints, editable = [], []
             for name in ('first-clone', 'second-clone'):
                 root = Path(tmp) / name; root.mkdir()
                 (root / 'src/mrh').mkdir(parents=True)
@@ -37,7 +39,9 @@ class SetupTests(unittest.TestCase):
                 result = subprocess.CompletedProcess([], 0, 'same-commit\n', '')
                 with patch.object(setup, 'ROOT', root), patch.object(bundle, 'LOCK', lock), patch.object(setup.subprocess, 'run', return_value=result):
                     fingerprints.append(setup.source_fingerprint(['codex'], False, settings))
-            self.assertNotEqual(*fingerprints)
+                    editable.append(setup.source_fingerprint(['codex'], False, settings, True))
+            self.assertEqual(*fingerprints)
+            self.assertNotEqual(*editable)
 
     def test_only_program_changes_make_a_new_version(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -74,6 +78,7 @@ class SetupTests(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory(prefix='mrh-setup-test-')
         self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name).resolve()
+        p=patch('mrh_setup.locations.default_runtime_root',return_value=self.root/'managed-runtime');p.start();self.addCleanup(p.stop)
         p=patch.dict(os.environ, MRH_PROJECT_ROOT=str(self.root));p.start();self.addCleanup(p.stop)
         from mrh.adapters.platforms.macos_path import UserPath
         p=patch('mrh_setup.UserPath', side_effect=lambda bin_dir: UserPath(bin_dir, user_home=self.root/'home',
@@ -138,13 +143,15 @@ print(json.dumps(out))
         python=output/'runtime/bin/python3.11';python.parent.mkdir(parents=True)
         python.write_text('#!/bin/sh\nexec '+json.dumps(sys.executable)+' "$@"\n');python.chmod(0o755)
         bundle.application_archive(output/'app/mrh.pyz')
-        (output/'mrh').write_text('#!/bin/sh\nexit 0\n');(output/'mrh').chmod(0o755)
+        (output/'mrh').write_bytes(bundle.ENTRY);(output/'mrh').chmod(0o755)
         manifest={'schema_version':1,'private_interpreter':'runtime/bin/python3.11','files':bundle.file_manifest(output)}
         (output/'manifest.json').write_text(json.dumps(manifest))
         Path(archive).write_bytes(b'fixture archive')
 
     def run_setup(self,args=None,build=None):
-        fp=hashlib.sha256((self.revision+str((args or self.args()).codex_packets)+str((args or self.args()).host)).encode()).hexdigest()
+        selected=args or self.args()
+        fp=hashlib.sha256((self.revision+str(selected.codex_packets)+str(selected.host)
+                          +str(selected.dev)+str(setup.locations.default_runtime_root())).encode()).hexdigest()
         with patch('mrh_setup.source_fingerprint',return_value=fp):
             return setup.install(args or self.args(),build=build or self.fake_build)
 
@@ -364,12 +371,35 @@ print(json.dumps(out))
         self.run_setup();before=self.disk();self.run_setup(self.args('--check'));self.assertEqual(self.disk(),before)
 
     def test_registration_lost_ack_resumes_same_generation_without_duplicates(self):
-        self.native_change(fail_after='marketplace-add')
-        with self.assertRaisesRegex(setup.SetupError,'native_command_failed'):self.run_setup()
-        self.assertFalse((self.prefix/'current').exists())
-        pending=setup.document(self.prefix/'setup-state/journal.json');self.assertEqual(pending['native_step']['step'],'add_marketplace_intent')
-        self.run_setup();self.assertEqual(self.state()['current'],pending['target'])
-        self.assertEqual(json.loads(self.native.read_text())['mutations'],2)
+        from mrh.adapters.hosts import codex_packets as packets
+        self.run_setup();original_state=self.state()['current']
+        settings_v2.update(self.profile(),enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.root)])
+        database=self.profile().parent/'advice.sqlite3'
+        with sqlite3.connect(database) as db:
+            db.execute('CREATE TABLE preserved_stat(value TEXT)');db.execute('INSERT INTO preserved_stat VALUES (?)',('keep',))
+        saved_profile=self.profile().read_bytes();saved_database=database.read_bytes()
+        self.revision='mode-and-runtime-change';args=self.args('--dev','--codex-packets')
+        self.native_change(fail_after='plugin-add')
+        with patch('mrh_setup.locations.default_runtime_root',return_value=self.root/'new-runtime'):
+            with self.assertRaisesRegex(setup.SetupError,'native_command_failed'):self.run_setup(args)
+            self.assertEqual(self.state()['current'],original_state)
+            pending=setup.document(self.prefix/'setup-state/journal.json')
+            self.assertEqual(pending['native_step']['step'],'add_plugin_intent')
+            checked=self.run_setup(self.args('--check'))
+            self.assertTrue(checked['installed']);self.assertTrue(checked['transaction_pending'])
+            self.assertEqual(checked['status'],'pending');self.assertIn('installation_recovery',checked['pending'])
+            mutations=json.loads(self.native.read_text())['mutations']
+            with patch.dict(os.environ,MRH_RUNTIME_ROOT=str(self.root/'packet-bodies')):
+                packet=packets.prepare(self.profile(),'fixture after lost ACK',self.root)
+                with self.assertRaisesRegex(ValueError,'mode_change_packet_in_progress'):self.run_setup(args)
+                packets.status(self.profile(),packet['packet_id'],finish=True)
+                restored=self.run_setup(args)
+            self.assertFalse(restored['transaction_pending'])
+            self.assertEqual(restored['execution_mode'],'development')
+            self.assertEqual(self.state()['current'],pending['target'])
+            self.assertEqual(self.state()['previous']['current'],original_state)
+            self.assertEqual(json.loads(self.native.read_text())['mutations'],mutations)
+        self.assertEqual(self.profile().read_bytes(),saved_profile);self.assertEqual(database.read_bytes(),saved_database)
 
     def test_foreign_bin_written_during_registration_is_preserved_and_recoverable(self):
         self.native_change(mutate_bin=str(self.bin/'mrh'))
@@ -447,15 +477,19 @@ print(json.dumps(out))
         setup.plugin.show(artifact)  # the published manifest is part of owned integrity verification
 
     def test_dev_install_binds_the_hook_and_mrh_to_the_checkout_and_normal_install_goes_back(self):
-        out = self.run_setup(self.args('--dev'))
+        out = self.run_setup(self.args('--dev', '--codex-packets'))
         generation = self.prefix / 'setup-state/generations' / self.state()['current']
         binding = json.loads((generation / 'hosts/codex/plugins/model-routing-harness/binding.json').read_text())
         self.assertEqual(binding['dev_source'], str(setup.ROOT))
         self.assertEqual(out['dev_source'], str(setup.ROOT))
-        self.assertIn(str(setup.ROOT / 'src'), (generation / 'app/dev_main.py').read_text())
-        self.assertTrue((generation / 'app/dev_main.py').exists())
+        self.assertEqual(out['execution_mode'], 'development')
+        self.assertEqual(out['runtime_root'], str(self.root/'managed-runtime'))
+        self.assertFalse((generation / 'app/dev_main.py').exists())
+        from mrh.infrastructure.execution import editable_source
+        self.assertEqual(editable_source(generation/'app/editable'), setup.ROOT/'src')
+        self.assertTrue(out['hosts']['codex']['packets'])
         self.revision = 'normal'
-        again = self.run_setup()
+        again = self.run_setup(self.args('--codex-packets'))
         self.assertNotIn('dev_source', again)
         normal = self.prefix / 'setup-state/generations' / self.state()['current']
         hooks = 'hosts/codex/plugins/model-routing-harness/hooks/hooks.json'
@@ -463,12 +497,79 @@ print(json.dumps(out))
         self.assertEqual((generation / hooks).read_bytes(), (normal / hooks).read_bytes())    # Codex trust covers this file
         self.assertNotIn('dev_source', json.loads((normal / 'hosts/codex/plugins/model-routing-harness/binding.json').read_text()))
 
-    def test_dev_cannot_be_combined_with_rollback_packets_or_uninstall(self):
-        for extra in (['--rollback'], ['--codex-packets']):
-            with self.assertRaises(setup.SetupError):
-                self.run_setup(self.args('--dev', *extra))
+    def test_dev_cannot_be_combined_with_rollback_or_uninstall(self):
+        with self.assertRaises(setup.SetupError):
+            self.run_setup(self.args('--dev', '--rollback'))
         with self.assertRaises(setup.SetupError):
             setup.uninstall(setup.parser().parse_args(['--uninstall', '--dev', '--prefix', str(self.prefix), '--config-root', str(self.config), '--bin-dir', str(self.bin)]))
+
+    def test_managed_dev_cli_and_hook_observe_edits_normal_survives_source_absence(self):
+        source = self.root/'editable-checkout';source.mkdir()
+        shutil.copytree(setup.ROOT/'src', source/'src')
+        for name in ('pyproject.toml','LICENSE'):
+            shutil.copy2(setup.ROOT/name, source/name)
+        cli = source/'src/mrh/cli.py'
+        runtime = source/'src/mrh/application/advisory_runtime.py'
+        def edit(value):
+            cli.write_text('def main():\n    print('+repr(value)+')\n    return 0\n')
+            runtime.write_text('def run(platform, settings, stdin, stdout, stderr, **kwargs):\n    stdout.write('+repr(json.dumps({'systemMessage':value})+'\n')+')\n    return 0\n')
+        def command(*args):
+            return subprocess.run([str(self.bin/'mrh'),*args],capture_output=True,text=True,timeout=5)
+        with patch.object(setup,'ROOT',source), patch.object(mrh_build,'ROOT',source):
+            edit('first')
+            self.run_setup(self.args('--dev','--codex-packets'))
+            generation=self.prefix/'setup-state/generations'/self.state()['current']
+            edit('second')
+            self.assertEqual(command().stdout,'second\n')
+            launcher=generation/'hosts/codex/plugins/model-routing-harness/launcher.py'
+            event={'hook_event_name':'PreToolUse'}
+            hook=subprocess.run([sys.executable,'-I','-B',str(launcher),'codex'],input=json.dumps(event),capture_output=True,text=True,timeout=5)
+            self.assertEqual(json.loads(hook.stdout),{'systemMessage':'second'})
+            offline=source.with_name('source-offline');source.rename(offline)
+            self.assertNotEqual(command().returncode,0)
+            offline.rename(source)
+            self.revision='normal';self.run_setup(self.args('--codex-packets'))
+            source.rename(offline)
+            result=command();self.assertEqual(result.returncode,0,result.stderr)
+            self.assertEqual(result.stdout,'second\n')
+
+    def test_mode_and_same_mode_runtime_changes_refuse_active_packets_before_registration(self):
+        from mrh.adapters.hosts import codex_packets as packets
+        self.run_setup()
+        settings_v2.update(self.profile(),enabled=True,task_export_permitted=True,allowed_workspaces=[str(self.root)])
+        with patch.dict(os.environ,MRH_RUNTIME_ROOT=str(self.root/'packet-runtime')):
+            item=packets.prepare(self.profile(),'isolated installer packet',self.root)
+        before_state=(self.prefix/'setup-state/state.json').read_bytes()
+        before_profile=self.profile().read_bytes();before_native=self.native.read_bytes()
+        self.revision='switch'
+        for dev in (False,True):
+            # Same mode with a new runtime is a binding change too.
+            with self.subTest(dev=dev), patch('mrh_setup.locations.default_runtime_root',return_value=self.root/('new-runtime-'+str(dev))):
+                args=self.args('--dev') if dev else self.args()
+                with self.assertRaisesRegex(ValueError,'mode_change_packet_in_progress'):
+                    self.run_setup(args)
+                self.assertEqual((self.prefix/'setup-state/state.json').read_bytes(),before_state)
+                self.assertEqual(self.profile().read_bytes(),before_profile)
+                self.assertEqual(self.native.read_bytes(),before_native)
+                # A rejected intent can be retried after an explicit new choice.
+                (self.prefix/'setup-state/journal.json').unlink()
+        directory=packets.root_for(self.profile())/item['packet_id']
+        receipt=json.loads((directory/'receipt.json').read_text());receipt['state']='completed'
+        packets._write(directory/'receipt.json',receipt)
+        self.assertEqual(self.run_setup(self.args('--dev'))['execution_mode'],'development')
+
+    def test_normal_real_cli_uses_default_isolated_profile_after_source_is_removed(self):
+        source=self.root/'normal-source';source.mkdir()
+        shutil.copytree(setup.ROOT/'src',source/'src')
+        for name in ('LICENSE','pyproject.toml'):shutil.copy2(setup.ROOT/name,source/name)
+        with patch.object(setup,'ROOT',source), patch.object(mrh_build,'ROOT',source):
+            self.run_setup()
+        self.assertNotIn('workspace_allowlist_file',settings_v2.read(self.profile()))
+        source.rename(self.root/'normal-source-offline')
+        result=subprocess.run([str(self.bin/'mrh'),'status','--settings',str(self.profile()),'--json'],
+                              capture_output=True,text=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIsInstance(json.loads(result.stdout),dict)
 
     def test_unsupported_platform_and_unknown_host_do_not_write(self):
         with patch('mrh_setup.platform.system',return_value='Linux'):

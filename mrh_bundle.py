@@ -296,15 +296,26 @@ def licensing(full_archive, destination, lock, runtime):
 
 
 def application_archive(path):
-    _, _, _, files = mrh_build.metadata()
-    files.update(mrh_build.package_files())
-    files['__main__.py'] = b'from mrh.cli import main\nraise SystemExit(main())\n'
-    path.parent.mkdir()
+    # Both native installers and host artifacts consume the same wheel payload.
+    with tempfile.TemporaryDirectory(prefix='mrh-wheel-') as scratch:
+        wheel = Path(scratch) / mrh_build.build_wheel(scratch)
+        with zipfile.ZipFile(wheel) as archive:
+            files = {name: archive.read(name) for name in archive.namelist()}
+    files['__main__.py'] = b'from mrh.infrastructure.execution import main\nraise SystemExit(main())\n'
+    path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         for name, data in sorted(files.items()):
             entry = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0)); entry.compress_type = zipfile.ZIP_DEFLATED
             z.writestr(entry, data)
     return {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
+
+
+def editable_files():
+    """PEP 660 link for a managed, site-free interpreter; never global pip."""
+    with tempfile.TemporaryDirectory(prefix='mrh-editable-wheel-') as scratch:
+        wheel = Path(scratch) / mrh_build.build_editable(scratch)
+        with zipfile.ZipFile(wheel) as archive:
+            return {name: archive.read(name) for name in archive.namelist()}
 
 
 def file_manifest(root):

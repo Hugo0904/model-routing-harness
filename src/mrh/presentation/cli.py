@@ -319,8 +319,6 @@ def main(
                 stderr.write("mrh: " + getattr(exc,'reason',str(exc)) + "\n")
                 return 2
         if args.command == "codex-task":
-            if os.name == 'nt':
-                stderr.write('mrh: Windows 尚未支援 Codex 完整任務 packet；沒有準備或派工。\n'); return 2
             from mrh.adapters.hosts import codex_packets as packets
             from mrh.infrastructure import owned
             try:

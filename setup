@@ -49,8 +49,19 @@ mrh_release=$(/usr/bin/plutil -extract release raw -o - "$mrh_lock")
 case "$mrh_url" in "https://github.com/astral-sh/python-build-standalone/releases/download/$mrh_release/"*) ;; *) echo 'MRH: invalid pinned runtime origin' >&2;exit 2;; esac
 case "$mrh_name" in *'/'*|*'..'*) echo 'MRH: invalid runtime name' >&2;exit 2;; esac
 umask 077
-mrh_scratch=$mrh_source/runtime/tmp/mrh
-for mrh_part in "$mrh_source/runtime" "$mrh_source/runtime/tmp" "$mrh_scratch"; do
+mrh_runtime_root=${MRH_RUNTIME_ROOT:-}
+if [ -z "$mrh_runtime_root" ]; then
+    if [ -n "${MRH_PROJECT_ROOT:-}" ]; then mrh_runtime_root=$MRH_PROJECT_ROOT/runtime
+    else mrh_runtime_root=$HOME/Library/Caches/model-routing-harness; fi
+fi
+case "$mrh_runtime_root" in /*) ;; *) echo 'MRH: runtime root must be absolute.' >&2; exit 2;; esac
+mrh_scratch=$mrh_runtime_root/tmp/mrh
+mrh_ancestor=$mrh_scratch
+while [ "$mrh_ancestor" != / ]; do
+    if [ -L "$mrh_ancestor" ]; then echo 'MRH: runtime root must not follow links.' >&2; exit 2; fi
+    mrh_ancestor=$(/usr/bin/dirname "$mrh_ancestor")
+done
+for mrh_part in "$mrh_runtime_root" "$mrh_runtime_root/tmp" "$mrh_scratch"; do
     if [ -L "$mrh_part" ]; then echo 'MRH: project scratch must not follow links.' >&2; exit 2; fi
 done
 /bin/mkdir -p "$mrh_scratch"

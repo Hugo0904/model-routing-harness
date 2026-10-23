@@ -59,6 +59,8 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 
 **Windows (x64)**: needs Git and a native x64 Python 3.11 or newer; no WSL. Both Codex and Claude Code have native evidence of classification, advice adoption and completed subagents. Claude catalog initialization runs in LPAC with only the `registryRead` capability added for Winsock initialization; network access stays denied. Remaining concurrency limits are documented in the [Windows validation record](docs/windows-validation.md). See the [Windows install guide](docs/install.md#windows-x64) (Traditional Chinese).
 
+Normal installs run the packaged application without a source checkout. Developers can select `--dev` so the next CLI or hook process reads source edits, including with `--codex-packets`. Both modes retain settings and statistics without migration. Dual-mode installation and Windows packets are candidate features awaiting native acceptance; see [development mode](docs/development.md#本機開發安裝--dev).
+
 ## Cost and data export
 
 - Classification uses the TypeSafe Jev API, billed to your TypeSafe account, separately from any Codex or Claude subscription.
