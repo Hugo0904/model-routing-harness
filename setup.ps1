@@ -1,7 +1,9 @@
 # Requires an existing native Windows x64 Python >= 3.11. No runtime or pip downloads.
 $ErrorActionPreference = 'Stop'
 $installer = Join-Path -Path $PSScriptRoot -ChildPath 'mrh_windows_setup.py'
-$probe = 'import os,platform,sys; raise SystemExit(0 if os.name == "nt" and platform.machine().lower() in ("amd64","x86_64") and sys.maxsize > 2**32 and sys.version_info >= (3,11) else 1)'
+# Windows PowerShell 5.1 strips double quotes inside native-command arguments, so the probe uses only
+# single-quoted Python strings (doubled here for PowerShell).
+$probe = 'import os,platform,sys; raise SystemExit(0 if os.name == ''nt'' and platform.machine().lower() in (''amd64'',''x86_64'') and sys.maxsize > 2**32 and sys.version_info >= (3,11) else 1)'
 $pythonCommand = $null
 $pythonPrefix = @()
 foreach ($candidate in @('python.exe', 'py.exe')) {

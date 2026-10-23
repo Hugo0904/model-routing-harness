@@ -293,6 +293,22 @@ class PlatformTests(unittest.TestCase):
         import mrh_windows_setup  # noqa: F401 (import proves the module still loads)
         source = Path(mrh_windows_setup.__file__).read_text(encoding='utf-8')
         self.assertIn("'timeout':50 if event=='PreToolUse' else 5", source)
+    def test_setup_ps1_python_probe_survives_windows_powershell_argument_quoting(self):
+        # Windows PowerShell 5.1 strips double quotes inside native-command arguments; the probe once
+        # contained them, so setup.ps1 wrongly reported that no suitable Python was installed.
+        import re
+        script = (Path(__file__).resolve().parents[2]/'setup.ps1').read_text(encoding='utf-8')
+        match = re.search(r"^\$probe = '(.*)'\s*$", script, re.M)
+        self.assertIsNotNone(match); body = match.group(1)
+        self.assertNotIn('"', body)
+        shell = Path(os.environ['SystemRoot'])/'System32/WindowsPowerShell/v1.0/powershell.exe'
+        command = f"$probe = '{body}'; & '{sys.executable}' -I -B -c $probe; exit $LASTEXITCODE"
+        result = subprocess.run([str(shell), '-NoProfile', '-NonInteractive', '-Command', command], capture_output=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        bad = f"$probe = '{body.replace(chr(39)+chr(39), chr(34))}'; & '{sys.executable}' -I -B -c $probe; exit $LASTEXITCODE"
+        # The old double-quoted form really does fail under 5.1, so the test can tell the difference.
+        self.assertNotEqual(subprocess.run([str(shell), '-NoProfile', '-NonInteractive', '-Command', bad], capture_output=True, timeout=30).returncode, 0)
+
     def test_key_status_never_prints_secret(self):
         from mrh.presentation import key_cli
         backend = type('Fake', (), {'is_set': staticmethod(lambda name: True)})

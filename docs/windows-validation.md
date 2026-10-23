@@ -172,3 +172,8 @@ Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
 - 真實委派，**全新的無頭 Claude 工作階段**（載入新的 `hooks.json`），同時 6 組：6/6 建議、6/6 重發 Pre 有記錄、6/6 Post 子代理記錄且 followed=1，無任何「時間預算用盡」，6 個子代理都完成，無重複委派，無遺留程序。
 
 限制：這只是 Light 層級的一組並行驗證；Codex 的 Post 宿主逾時仍是 2 秒（為避免要求重新信任而未動），所以 Codex 的 Post 仍受原限制。Mac 的 Hook 行為沒有改（常數依平台），但共用模組有改動，Mac 原生 Hook smoke 仍待驗。
+### Codex 共用 launcher 實測與 `setup.ps1` 修正（2026-10-23）
+
+- **Codex 真實委派**（世代 `7da51e233a0e4fb94c3bd5d2`，Codex 0.163.0-alpha.10.2，用 `codex exec` 要求並行 4 個 `spawn_agent`）：4 個子代理全部完成；5 個 Pre（4 個通過、1 個攔下建議 Light 0.57→`gpt-6-luna`／`max`）與 4 個 Post 全部完成並記錄，4 筆子代理記錄，無任何「時間預算用盡」。第一次嘗試誤用 `--ephemeral`，Codex 自己回報子代理缺少 rollout 而拒絕 spawn（與 MRH 無關），該次也已確認 Pre 逾時為 0、重發與 Post 記錄正常（followed=1）。這證明共用的 Windows launcher 與時限模組對 Codex 沒有退化；Codex 的 Post 宿主逾時仍是 2 秒（未改），本次負載較小，不代表高並行下的結果。
+- **`setup.ps1`**：Windows PowerShell 5.1 會剝掉傳給原生程式的引數中的雙引號，原本的 Python 探測字串含雙引號，導致它誤報找不到 Python。探測改成只用單引號。新測試實際透過 `powershell.exe` 執行探測，並確認舊的雙引號寫法在 5.1 確實失敗。`setup.ps1 --check --json` 在 5.1 實測回報 installed、integrity verified、routing ready。runtime 沒有變，未重裝。
+- `test_platform` 的跨程序鎖測試在文件標準的 `PYTHONPATH` 方式下通過；先前的失敗是我自己的測試啟動方式（受保護 Python `-I`）造成。
