@@ -227,7 +227,7 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 
 相同來源與參數可重複執行。更新會保留設定、金鑰與統計；有本機程式修改時先處理 Git 提示，不要直接覆蓋。第一次安裝沒有可退回的版本；退版保留目前設定、統計與金鑰，不還原舊資料。
 
-若選用 [Codex 完整任務分類](codex/packet-skill.md)，安裝、啟用與更新時都要保留 `--codex-packets`。兩平台候選均允許與 `--dev` 併用；一般使用預設為打包版本，開發模式及 Windows packets 的原生驗收狀態分開記錄。切換前先完成舊 packet，待恢復交易應先用原參數恢復，再開始新的 prepare／query／release。更多細節見 [安裝生命週期](install-lifecycle.md)。
+若選用 [Codex 完整任務分類](codex/packet-skill.md)，安裝、啟用與更新時都要保留 `--codex-packets`。兩平台候選均允許與 `--dev` 併用；一般安裝預設為打包版本。Mac 一般／開發模式已完成隔離驗證；Mac `--dev --codex-packets` 也已完成隔離驗證，正式開發安裝已驗收。Windows 雙模式與 packets 仍待原生驗證及正式採用。切換前先完成舊 packet，待恢復交易應先用原參數恢復，再開始新的 prepare／query／release。更多細節見 [安裝生命週期](install-lifecycle.md)。
 
 
 ## 移除

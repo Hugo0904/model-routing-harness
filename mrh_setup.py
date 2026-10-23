@@ -1115,7 +1115,7 @@ def parser():
     for name in ('prefix','config-root','bin-dir','cache-root','settings','codex-cli','claude-cli','claude-settings'):
         p.add_argument('--'+name,type=Path)
     p.add_argument('--workspace',action='append',type=Path,default=[]);p.add_argument('--enable',action='store_true')
-    p.add_argument('--dev',action='store_true',help='developer install: the hook and mrh run this checkout\'s src directly (no reinstall after edits; skips the runtime integrity hash). Rerun without --dev to go back')
+    p.add_argument('--dev',action='store_true',help="developer install: the CLI and Hook read this checkout's src on each new launch; ordinary src edits take effect on the next launch. The packaged bootstrap remains integrity-verified. Rerun setup after installer/bootstrap changes; omit --dev to return to packaged mode")
     p.add_argument('--yes',action='store_true',help='with --uninstall: actually remove (otherwise preview only)')
     p.add_argument('--purge-data',action='store_true',help='with --uninstall --yes: also delete settings, statistics and the Jev key')
     return p
