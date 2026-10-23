@@ -153,6 +153,17 @@ except Exception:
 '''
 
 
+def codex_hook_timeout(event, windows=None):
+    """Host-side hook limit (seconds) written into the Codex plugin's hooks.json.
+
+    Windows Post gets 5 s: the supervisor's 2.0 s deadline starts only after PowerShell and bootstrap
+    (~1-1.5 s), so a 2 s host limit kills the hook first. Any other platform keeps 2 s exactly.
+    Changing this value changes the hook definition, which Codex asks the user to trust again.
+    """
+    windows = os.name == 'nt' if windows is None else windows
+    return 50 if event == "PreToolUse" else (5 if windows else 2)
+
+
 def _windows_launcher():
     """Same protocol and deadlines; native Job and inherited-handle transport.
 
@@ -287,7 +298,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
             "description": "Default-off model routing with explicit workspace export permission",
             "extensions": {"com.openai": {"hooks": "./hooks/hooks.json"}}}),
         prefix + "hooks/hooks.json": _json({"hooks": {event: [{"matcher": "^(spawn_agent|collaborationspawn_agent)$", "hooks": [
-            {"type": "command", "command": command, "timeout": 50 if event == "PreToolUse" else 2}]}] for event in ("PreToolUse", "PostToolUse")}}),
+            {"type": "command", "command": command, "timeout": codex_hook_timeout(event)}]}] for event in ("PreToolUse", "PostToolUse")}}),
         prefix + "launcher.py": _windows_launcher() if os.name == 'nt' else LAUNCHER,
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),

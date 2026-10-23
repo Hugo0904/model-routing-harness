@@ -289,6 +289,14 @@ class PlatformTests(unittest.TestCase):
         self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))
         self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', {'classifier':{'provider':'jev'}}), 2.0)
 
+    def test_codex_post_host_timeout_is_five_seconds_on_windows_only(self):
+        self.assertEqual((plugin.codex_hook_timeout('PreToolUse'), plugin.codex_hook_timeout('PostToolUse')), (50, 5))
+        self.assertEqual((plugin.codex_hook_timeout('PreToolUse', windows=False), plugin.codex_hook_timeout('PostToolUse', windows=False)), (50, 2))
+        settings = self.root/'profile/settings.json'; artifact = self.root/'artifact-timeouts'
+        plugin.prepare(artifact, settings, advisory=True)  # the real generated Codex hooks file
+        hooks = json.loads((artifact/'plugins/model-routing-harness/hooks/hooks.json').read_bytes())['hooks']
+        self.assertEqual((hooks['PreToolUse'][0]['hooks'][0]['timeout'], hooks['PostToolUse'][0]['hooks'][0]['timeout']), (50, 5))
+
     def test_claude_post_host_timeout_leaves_room_for_the_supervisor_deadline(self):
         import mrh_windows_setup  # noqa: F401 (import proves the module still loads)
         source = Path(mrh_windows_setup.__file__).read_text(encoding='utf-8')
