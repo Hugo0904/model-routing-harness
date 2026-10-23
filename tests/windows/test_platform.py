@@ -215,6 +215,53 @@ class PlatformTests(unittest.TestCase):
                 self.assertGreater(elapsed,2.4);self.assertLess(elapsed,3.6)
                 self.assertIn('time budget exhausted',out['systemMessage'])
 
+    def delayed_startup_launcher(self, delay):
+        """Installed Windows launcher whose runtime import takes `delay` s, i.e. before it reports a policy."""
+        settings = self.root/'profile/settings.json'; artifact = self.root/'artifact'
+        plugin.prepare(artifact, settings, advisory=True)
+        v2.update(settings, enabled=True, task_export_permitted=True, allowed_workspaces=['*'],
+            policy={'tiers':{'Light':{'codex':[{'model':'gpt-6-luna','effort':'max'}]}}})
+        launcher = artifact/'plugins/model-routing-harness/launcher.py'; runtime = launcher.parent/'runtime.pyz'
+        with zipfile.ZipFile(runtime) as archive: files = {n:archive.read(n) for n in archive.namelist()}
+        import re
+        entry = files['mrh/application/advisory_runtime.py']
+        # The delay must follow the future import (any line ending) and precede every other import.
+        files['mrh/application/advisory_runtime.py'], count = re.subn(
+            rb'(from __future__ import annotations\r?\n)', lambda m: m.group(1)+('import time;time.sleep('+str(delay)+')\n').encode(), entry, count=1)
+        self.assertEqual(count, 1)
+        files['mrh/adapters/providers/registry.py'] = (b"from mrh.routing.types import Classification\ndef build(s):\n class Fake:\n"
+            b"  def classify(self,*a,**k):return Classification('Light',.99)\n return Fake()\n")
+        with zipfile.ZipFile(runtime, 'w', zipfile.ZIP_DEFLATED) as archive:
+            for name, data in files.items(): archive.writestr(name, data)
+        binding = launcher.parent/'binding.json'; value = json.loads(binding.read_bytes())
+        value['runtime_sha256'] = hashlib.sha256(runtime.read_bytes()).hexdigest(); binding.write_text(json.dumps(value), encoding='utf-8')
+        return launcher
+
+    def run_launcher(self, launcher, phase):
+        event = {'hook_event_name':phase,'tool_name':'spawn_agent','session_id':'s','turn_id':'t','tool_use_id':'c',
+                 'cwd':str(self.root),'tool_input':{'message':'synthetic'},'tool_response':{'agent_id':'a'}}
+        start = time.monotonic()
+        result = subprocess.run([sys.executable,'-I','-B',str(launcher)], input=json.dumps(event).encode(), capture_output=True, timeout=8)
+        return json.loads(result.stdout), time.monotonic()-start
+
+    def test_pre_waits_up_to_the_jev_window_for_a_slow_startup_but_post_keeps_one_second(self):
+        # Startup that reports its policy at ~1.3 s used to be killed at the 1.0 s first-stage deadline.
+        launcher = self.delayed_startup_launcher(1.3)
+        out, elapsed = self.run_launcher(launcher, 'PreToolUse')
+        self.assertGreater(elapsed, 1.3)
+        self.assertEqual(out['hookSpecificOutput']['permissionDecision'], 'deny')  # real advice, not a fault
+        out, elapsed = self.run_launcher(launcher, 'PostToolUse')
+        self.assertLess(elapsed, 1.9)  # killed at the unchanged 1.0 s Post deadline, not 2.5 s
+        self.assertIn('time budget exhausted', out['systemMessage'])
+        self.assertIn('do not repeat a successful tool', out['hookSpecificOutput']['additionalContext'])
+
+    def test_pre_startup_beyond_the_jev_window_still_times_out_without_a_decision(self):
+        launcher = self.delayed_startup_launcher(3.0)
+        out, elapsed = self.run_launcher(launcher, 'PreToolUse')
+        self.assertGreater(elapsed, 2.4); self.assertLess(elapsed, 3.6)
+        self.assertIn('time budget exhausted', out['systemMessage'])
+        self.assertNotIn('permissionDecision', out['hookSpecificOutput'])
+
     def test_key_status_never_prints_secret(self):
         from mrh.presentation import key_cli
         backend = type('Fake', (), {'is_set': staticmethod(lambda name: True)})

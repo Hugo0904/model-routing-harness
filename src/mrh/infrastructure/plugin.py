@@ -185,6 +185,14 @@ def _windows_launcher():
         startup.lpAttributeList={"handle_list":[control_handle]}''')
     source = source.replace('str(writer),"1"', 'str(control_handle),"1"')
     source = source.replace('args=[python,"-I","-B",', 'args=[python,"-I","-B","-X","utf8",')
+    # Windows process creation and runtime import routinely take 0.4-1.1 s, and the child can only
+    # report its policy after that. PreToolUse may therefore wait up to the Jev window (2.5 s) for
+    # the first policy line; PostToolUse keeps 1.0 s. The reported policy still replaces this
+    # deadline, so local-only (1.0 s) and Jev (2.5 s) policies and the 48 s verified path are unchanged.
+    first_stage = '        deadline=started+1.0\n'
+    if source.count(first_stage) != 1:
+        raise owned.OwnedError('windows_launcher_first_stage_template_mismatch')
+    source = source.replace(first_stage, '        deadline=started+(2.5 if event.get("hook_event_name")=="PreToolUse" else 1.0)\n', 1)
     source = source.replace('process=subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,pass_fds=(writer,))',
                             'process=popen_python(python,code,args[7:],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,startupinfo=startup,close_fds=True)')
     control_read = 'try:chunk=os.read(reader,1025)\n                except BlockingIOError:chunk=b""'
