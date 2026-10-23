@@ -22,6 +22,7 @@
 | [開發指南](development.md) | 原始碼位置、離線測試、fixture 與驗證工具的使用界線。 |
 | [產品設計](design.md) | 任務分級、明示選型保護、回退與統計原則。 |
 | [新增宿主](host-extension.md) | adapter、安裝流程與原生事件契約。 |
+| [Mac 驗收交接](mac-handoff.md) | Windows 修復後留給 Mac 的驗收項目、提交對照與未決事項。 |
 | [Codex 完整任務 packet](codex/full-task-packets.md) | 明確選配的完整 brief 分類協定。 |
 | [Packet skill](codex/packet-skill.md) | 單一協定 owner、打包與啟用範圍。 |
 | [本機樣本收集器](codex/daily-collection.md) | 獨立、明確選配的收集工具。 |
