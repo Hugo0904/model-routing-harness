@@ -194,8 +194,18 @@ Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
 
 程式 `670272f` 另以唯一一次未插樁、完整合法普通事件取得精確開發 Hook 標記，耗時 0.438 秒；開發來源移走後 CLI exit 2 並明確回報來源不可用，切到一般模式且來源仍移走時 help exit 0。原啟動鏈、Job 與 2.5 秒期限保留，fixture 清理成功。這三項按正常輸入及模式邊界各自補證，不覆寫原歷史失敗。
 
-正式更新已完成 development＋codex-packets。兩宿主原生註冊及路由讀回就緒，Codex trusted／packets=true，pending 為空、沒有待恢復交易；從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均成功。CLI 與兩 Hook 的 manifest、binding、PEP 660 descriptor／PTH、開發來源及獨立 runtime 一致。安裝器耗時 107.61 秒；本輪沒有 provider、真實宿主派工或產品測試重跑。
+前一階段的正式更新已完成 development＋codex-packets。兩宿主原生註冊及路由讀回就緒，Codex trusted／packets=true，pending 為空、沒有待恢復交易；從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均成功。CLI 與兩 Hook 的 manifest、binding、PEP 660 descriptor／PTH、開發來源及獨立 runtime 一致。安裝器耗時 107.61 秒；本輪沒有 provider、真實宿主派工或產品測試重跑。
 
-開發來源採用符合安全條件的既有受保護 Git checkout。共用可寫 workspace 不符合目前使用者控制且不可由其他帳號改寫的條件；未放寬來源檢查、修改整個 workspace ACL、變更 PowerShell 政策或另建 clone。只有實際 `dev_source` 中的修改在下次呼叫生效，其他保留副本不會自動同步。
+該開發模式的來源採用符合安全條件的既有受保護 Git checkout。共用可寫 workspace 不符合目前使用者控制且不可由其他帳號改寫的條件；未放寬來源檢查、修改整個 workspace ACL、變更 PowerShell 政策或另建 clone。只有實際 `dev_source` 中的修改在下次呼叫生效，其他保留副本不會自動同步。
 
 兩份 profile、active pointer、外部白名單、非 MRH 宿主設定語意、PATH 及憑證存在狀態均保留；兩份 SQLite 的 schema 與全部原資料列 multiset 完整保存。既有統計完整保留，不宣稱 DB bytes 或總列數相同。獨立 runtime 沿既定設計建立，原 runtime、舊安裝代、私有備份與 Git 歷史完整保留；自有暫存已清，無 stage 異常。Mac 程式 `670272f` 的正式採用與資料保全另見[驗證摘要](validation.md)。
+
+### 既定發布模式：packaged＋packets（正式切換已完成）
+
+原始範圍僅使用者本機 Mac 開發環境使用 dev；其他所有環境（包括 Windows 與其他 Mac）使用發布／packaged 並保留 packets。前次 Windows dev 僅保留為技術歷史，不作符合最終模式的驗收。
+
+Windows 已從乾淨、已發布來源 `8d74957` 沿原安裝參數省略 `--dev`，完成一次 packaged＋packets 正式安裝。`execution_mode` 為 `installed`、`source` 為空，CLI 的 `app/mrh.pyz` 與兩 Hook runtime 匹配，metadata／binding 不含 `dev_source` 或 editable；manifest 與獨立 runtime 一致，checkout 保留供後續更新，其修改不再即時生效。Codex 註冊／信任／routing／packets 及 Claude 註冊／routing 就緒，Hook bytes 保留，pending 為空且沒有待恢復交易。
+
+從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均 exit 0；安裝耗時 139.906 秒，check 31.328 秒、status 0.797 秒、ctrl 0.672 秒，各執行一次。兩份 profile、指標、外部白名單、非 MRH 設定語意、PATH、憑證存在狀態、兩份 SQLite 的 schema 與全部原資料列重數均保留；舊安裝代、manifest、runtime、私有備份及來源保留，無 stage 殘留。沒有重跑產品測試、provider 或真實宿主派工，原不完整事件 FAIL 原因仍未定、不改判。
+
+若明確測試開發模式，使用合格來源並沿原宿主、路徑與 profile 參數加 `--dev`；回發布前先完成在途 packet，選乾淨已發布來源，以相同參數省略 `--dev` 重跑。來源與權限要求不放寬。

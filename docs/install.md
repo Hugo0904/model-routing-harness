@@ -123,7 +123,7 @@ mrh ctrl --settings $claudeProfile
 
 Windows 的全部專案設定不使用 Mac 的 `/`，也不增加宿主原有的檔案系統權限。上述指令只啟用選定的 Codex profile。Claude 自己的清單、政策與金鑰都通過時，可使用 `--host claude --all-workspaces --enable`；兩個宿主都驗證完成才一起指定。安裝器會分別驗證及更新選定 profile，不會因 Codex 已就緒就啟用 Claude。Windows 10 LTSC 19044／Claude 2.1.303 已用上述方式取得 LPAC 清單，完成啟用與 Light／Small／Mid 真實子代理驗證（見 [Windows 驗證紀錄](windows-validation.md) 與 [交接摘要](mac-handoff.md)）；啟用 Claude 同樣需要你明確同意任務內容送往 Jev。
 
-更新指定專案的範圍時，需列出所有要保留的專案。Windows 目前不提供訂閱分級器或 Gemini 整合。Codex 完整任務封包（`--codex-packets`）可與 `--dev` 併用，程式 `670272f` 的既有 Windows 個人安裝已完成正式採用與資料保全讀回；範圍見[相容性](compatibility.md)。
+更新指定專案的範圍時，需列出所有要保留的專案。Windows 目前不提供訂閱分級器或 Gemini 整合。Codex 完整任務封包（`--codex-packets`）可與 `--dev` 併用，既有 Windows 個人安裝已完成 packaged＋packets 正式採用與資料保全讀回；範圍見[相容性](compatibility.md)。
 
 ### 5. 檢查狀態
 
@@ -227,7 +227,7 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 
 相同來源與參數可重複執行。更新會保留設定、金鑰與統計；有本機程式修改時先處理 Git 提示，不要直接覆蓋。第一次安裝沒有可退回的版本；退版保留目前設定、統計與金鑰，不還原舊資料。
 
-若選用 [Codex 完整任務分類](codex/packet-skill.md)，安裝、啟用與更新時都要保留 `--codex-packets`。兩平台均可與 `--dev` 併用；一般安裝預設為打包版本。程式 `670272f` 已完成 Mac 與 Windows 的個人正式開發安裝及既有資料保全。Windows 開發來源須使用合格、由目前使用者控制的既有 checkout；其他副本的修改不會同步至實際 `dev_source`，詳見[開發指南](development.md#本機開發安裝--dev)。切換前先完成舊 packet，待恢復交易應先用原參數恢復，再開始新的 prepare／query／release。更多細節見 [安裝生命週期](install-lifecycle.md)，本輪證據與限制見[驗證摘要](validation.md)。
+若選用 [Codex 完整任務分類](codex/packet-skill.md)，安裝、啟用與更新時都要保留 `--codex-packets`。本次只有使用者本機 Mac 開發環境使用 dev；其他所有環境（包括 Windows 與其他 Mac）使用發布／packaged。Windows 已完成打包模式與資料保全讀回，checkout 修改不即時生效。更新應從乾淨、已發布來源重跑安裝，保留原宿主、路徑及 profile 參數；若明確測試 `--dev`，完成在途 packet 後以相同參數省略 `--dev` 回到發布模式。來源權限與詳細步驟見[開發指南](development.md#本機開發安裝--dev)，待恢復交易先用原參數恢復，見[安裝生命週期](install-lifecycle.md)。
 
 
 ## 移除

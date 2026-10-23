@@ -37,10 +37,10 @@ Windows 在 PowerShell 使用 `.\setup.ps1 --host codex --host claude --dev --co
 - Windows 的開發來源須由目前使用者控制且不能讓其他帳號改寫。共用可寫 workspace 應選用合格的既有正式 checkout，不放寬來源安全檢查，也不為安裝大範圍修改 workspace ACL。以 `--check --json` 的實際 `dev_source`／`source` 為準：只有該 checkout 的修改會在下次呼叫生效，其他副本不會自動同步。
 - 安裝程式、建置後端、`execution.py`、`owned.py`、`plugin.py` 或平台 bootstrap 相依改變，仍需重跑同一安裝命令；換 checkout 也需重跑。來源指紋區分這些 bootstrap 與日常 mutable 來源。
 - `--check --json` 的 `execution_mode`、`source`、`runtime_root` 顯示綁定。一般模式不含 dev 來源，刪除來源不影響打包程式；舊 profile／外部白名單原本引用的檔案仍須保留。
-- 要回到一般安裝，不帶 `--dev` 重跑。兩種模式都可保留 `--codex-packets`，不與 `--rollback`／`--uninstall` 同時指定 dev。設定、金鑰、統計及原指標不遷移、不重設。
+- 若明確測試 Windows 開發模式，沿原安裝的宿主、自訂路徑與 profile 參數加上 `--dev`，並保留 `--codex-packets`。回到發布模式前先完成在途 packet，選用乾淨、已發布的來源，沿原參數省略 `--dev` 重跑，避免把測試改動打包。兩種模式都可保留 `--codex-packets`，不與 `--rollback`／`--uninstall` 同時指定 dev。設定、金鑰、統計及原指標不遷移、不重設。
 - 切換前完成舊 packet。新協議以根鎖互斥 prepare 與切換；不保證舊版在途程序或程序退出後的 admission。遇到 `installation_recovery` 先用原參數恢復，再做新 packet，詳見[失敗與復原](install-lifecycle.md#失敗與復原)。
 
-Mac 一般／開發模式及 dev+packets 已有隔離驗證。程式 `670272f` 已在 macOS Apple Silicon 與 Windows x64 的既有個人安裝正式採用 `--dev --codex-packets`，完成兩宿主的安裝、來源／runtime 綁定與資料保全讀回。Windows 合法事件與模式尾段的直接證據、保留的歷史失敗限制見[Windows 驗證紀錄](windows-validation.md)。
+本次配置只有使用者本機 Mac 開發環境使用 `--dev --codex-packets`；其他所有環境（包括 Windows 與其他 Mac）使用發布／packaged＋packets。Windows 已完成打包模式切換、資料保全與就緒讀回；修改 checkout 不會即時影響程式，更新打包程式需重跑安裝。先前兩平台 dev 的技術歷史、合法事件與原失敗限制保留於[Windows 驗證紀錄](windows-validation.md)。
 
 標準 Python frontend 可使用離線 `pip install -e . --no-deps --no-build-isolation`（需已有支援 PEP 660 的 pip）；這只安裝套件，不替代宿主安裝器或修改 Hook。
 

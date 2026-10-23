@@ -61,7 +61,7 @@ Once you agree to send task text to TypeSafe, enable and check from the repo fol
 
 Normal installs use the packaged application without a source checkout. Developers can select `--dev` so each new CLI or Hook process reads the checkout source while retaining a verified packaged bootstrap. Ordinary source edits take effect on the next invocation; installer, build backend or bootstrap security changes require rerunning the installer. Both modes keep settings, statistics and credentials in place; explicit external allowlist references still need their original files. See [development mode](docs/development.md#本機開發安裝--dev).
 
-Mac normal/development modes and dev+packets have isolated validation. The existing personal installations on macOS Apple Silicon and Windows x64 have been updated to code `670272f` with `--dev --codex-packets`, with installation readback and preservation of existing data verified. The Windows development source must be a qualified checkout controlled by the current user; edits in other copies do not synchronize. See [development mode](docs/development.md#本機開發安裝--dev) and the [validation summary](docs/validation.md) for evidence and historical limits.
+In the current deployment, only the user’s local Mac development environment uses `--dev --codex-packets`. All other environments, including Windows and other Macs, use release/packaged installs with packets. Windows has completed the packaged-mode switch with existing data preserved; its CLI and Hooks run installed artifacts. Checkout edits do not take effect immediately; code updates require rerunning the installer. See [development mode](docs/development.md#本機開發安裝--dev) and the [validation summary](docs/validation.md).
 
 
 ## Cost and data export

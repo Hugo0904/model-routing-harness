@@ -66,7 +66,7 @@ mrh ctrl                     # 設定每個難度要用的模型
 
 一般安裝預設使用打包版本，執行時不需要原始碼目錄；更新仍在 repo 重跑安裝。開發者可用 `--dev`，讓 CLI 與 Hook 在下次啟動時讀取 checkout 的 `src/`，入口仍保留經驗證的打包 bootstrap。一般來源修改於下次啟動生效，安裝器、建置後端或 bootstrap 安全相依修改後須重跑安裝。兩種模式保留既有設定、統計與憑證，不自動搬移；既有外部白名單引用仍須保留。詳見[開發模式](docs/development.md#本機開發安裝--dev)。
 
-Mac 一般／開發模式及 dev+packets 已有隔離驗證；macOS Apple Silicon 與 Windows x64 的既有個人安裝均已更新至程式 `670272f`，採用 `--dev --codex-packets`，並完成安裝讀回與既有資料保全。Windows 開發來源須為合格、由目前使用者控制的 checkout，只有該來源下的修改會生效；詳見[開發模式](docs/development.md#本機開發安裝--dev)。本輪證據與歷史限制見[驗證摘要](docs/validation.md)。
+目前安裝配置只有使用者本機的 Mac 開發環境使用 `--dev --codex-packets`；其他環境（包括 Windows 與其他 Mac）均使用發布／packaged 安裝，保留 `--codex-packets`。Windows 已完成打包模式切換與資料保全，CLI 與 Hook 從安裝產物執行；修改 checkout 不會即時生效，程式更新須重跑安裝。詳見[開發模式](docs/development.md#本機開發安裝--dev)與[驗證摘要](docs/validation.md)。
 
 
 ## 費用與資料外送

@@ -17,13 +17,17 @@
 
 ## 2026-10-24 雙模式與 packets 正式採用（程式 `670272f`）
 
-Mac 與 Windows 的既有個人安裝均已完成 `--dev --codex-packets` 更新及讀回。兩宿主的 CLI／Hook、manifest、PEP 660 descriptor／純路徑 PTH、開發來源與獨立 `runtime_root` 綁定一致；Codex 信任與 packets 保留，沒有待恢復交易。設定、外部白名單、非 MRH 宿主設定語意、PATH、憑證存在狀態與舊安裝歷史保留；SQLite schema 及全部原資料列與重數完整保存。這是既有資料保全，不宣稱資料庫 bytes 或總列數完全相同。本次未重跑 provider、真實委派或既有通過測試。
+前一階段，Mac 與 Windows 的既有個人安裝均已完成 `--dev --codex-packets` 更新及讀回。兩宿主的 CLI／Hook、manifest、PEP 660 descriptor／純路徑 PTH、開發來源與獨立 `runtime_root` 綁定一致；Codex 信任與 packets 保留，沒有待恢復交易。設定、外部白名單、非 MRH 宿主設定語意、PATH、憑證存在狀態與舊安裝歷史保留；SQLite schema 及全部原資料列與重數完整保存。這是既有資料保全，不宣稱資料庫 bytes 或總列數完全相同。本次未重跑 provider、真實委派或既有通過測試。
 
 Windows 另有一次未插樁、完整合法普通事件的開發 Hook 標記精確成功（0.438 秒）；開發來源移走後 CLI exit 2 並明確回報來源不可用，切到一般模式且來源仍移走時 help exit 0。原 bootstrap／Job／2.5 秒期限未變。正式採用使用符合來源安全檢查的既有 checkout；共用可寫副本不是開發來源，其修改不會自動同步。
 
 歷史分批 77 個唯一 ID 保留為 75 PASS、1 FAIL、1 預期 SKIP，並非同一輪套件全過。原不完整事件案例的 FAIL 原因未定；插樁觀測成功及五次失敗限定捕捉未重現都只作診斷，不增加原生 PASS，也不證明 fixture 錯誤、產品存在已確認缺陷或已修好。正常使用的合法事件、模式尾段及實際正式採用依各自直接證據驗收；完整限制見 [Windows 驗證紀錄](windows-validation.md)。
 
 一般安裝預設打包版本；開發模式、獨立 runtime、來源安全與切換復原見[開發指南](development.md#本機開發安裝--dev)。後續純文件 commit 不改程式指紋；文件 HEAD 與已安裝程式 `670272f` 以相同程式／產物 bytes 對應，無須為顯示 HEAD 不同重新安裝或測試。
+
+### 既定環境模式範圍
+
+原始安裝範圍只有使用者本機的 Mac 開發環境使用 dev；其他所有環境（包括 Windows 與其他 Mac）使用發布／packaged，packets 保留。Windows 已以已發布來源 `8d74957` 完成一次 packaged 安裝與模式／資料／就緒讀回：CLI 與兩 Hook 使用匹配的打包產物，沒有 `dev_source` 或 editable 連結，獨立 runtime 與舊安裝歷史保留，沒有待恢復交易。兩份 profile、指標、白名單、非 MRH 宿主語意、PATH、憑證存在狀態及兩份 SQLite 的 schema／全部原列重數保留。前一階段 Windows dev 只屬技術歷史，不代表符合最終模式要求；原 75 PASS／1 FAIL／1 預期 SKIP 的有限歷史結果不改判。Mac 仍使用程式 `670272f`；Windows 的 `8d74957` 來源有相同程式 bytes，不為後續純文件 commit 重裝或重測。
 
 ## 2026-10-23 Mac 本輪收尾（6b0ebd8）
 
