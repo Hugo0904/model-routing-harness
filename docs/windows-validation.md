@@ -163,3 +163,12 @@ Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
 - 真實委派，同時 6 組（12 個 Pre、6 個 Post 並行，負載遠高於一般使用）：第一階段 Pre 6/6 成功分級，0 逾時。但仍維持 1.0 秒的兩處在負載下失敗：明示模型的重發 Pre（本機政策 1.0 秒）6 個中 3 個回報「hook time budget exhausted」，Post 6 個只記到 2 個。逾時時原呼叫皆保留、子代理照常完成、沒有重複委派或孤兒程序，但這些事件缺少記錄或關聯。
 
 結論：第一階段放寬解決了原本最常見、也最影響使用者的失敗（分級前被殺、整個建議流程消失），一般循序使用已不再出現逾時；並行負載下，每個被採納的建議之後的明示重發 Pre（本機 1.0 秒政策）與 Post（1.0 秒）仍會逾時。進一步放寬這兩處屬於另一項時限變更，未經使用者同意，沒有做。
+### 本機 Pre 重發 2.5 秒、Post 2.0 秒（2026-10-23，提交 `8a2fcee`，世代 `7da51e233a0e4fb94c3bd5d2`）
+
+使用者同意再放寬兩處（只限 Windows）：本機政策（明示模型／強度、具名角色、範圍外等）的 PreToolUse 由 1.0 秒改為 2.5 秒，PostToolUse 由 1.0 秒改為 2.0 秒；安全檢查不變。實作：`hook_budget.LOCAL_SECONDS`／`POST_SECONDS` 依 `sys.platform` 取值（非 Windows 仍為 1.0 秒），`launch_seconds` 與 `HookBudget.local()` 使用它們；Windows launcher 轉換接受政策值 2.0、把 Post 的政策上限與第一階段期限由 1.0 改為 2.0；Windows Claude 外掛 `hooks.json` 的 Post 宿主逾時由 2 秒改為 5 秒（supervisor 的期限從 PowerShell 與 bootstrap 之後才起算，約再加 1～1.5 秒，宿主若仍是 2 秒會先把 Hook 殺掉）。Jev（2.5 秒）與已驗證非 Jev（48 秒）政策、完整性／設定二次驗證／Job 綁定與程序清理、SQLite 等待額度、Codex 的 `hooks.json`（變動會要求重新信任）、所有非 Windows 數值都沒變。
+
+- 測試：`test_platform` 新增 3 項並改寫 1 項（Pre 1.3 秒啟動得到建議；Pre 3.0 秒仍在約 2.5 秒截止；本機政策 Pre 與 Post 在 1.3 秒啟動下成功、3.5 秒啟動下分別在約 2.5／2.0 秒截止；非 Windows 常數仍為 1.0；Claude Post 宿主逾時為 5）。新測試在舊程式碼上失敗。共用的 `test_hook_budget` 一項固定 1.0 的斷言改為依平台。受影響範圍除前述既有的跨程序鎖測試與 13 項原本就無法在 Windows 執行的 POSIX 假設測試外全數通過；這些在 HEAD 也以相同方式失敗。
+- 真實委派，同一個既有工作階段（宿主 `hooks.json` 啟動時載入，Post 宿主逾時仍是舊的 2 秒），同時 6 組：6/6 建議、重發 Pre 6/6 有記錄（先前 3/6）、Post 子代理記錄 2/6（與先前相同，符合宿主 2 秒仍會先殺）。
+- 真實委派，**全新的無頭 Claude 工作階段**（載入新的 `hooks.json`），同時 6 組：6/6 建議、6/6 重發 Pre 有記錄、6/6 Post 子代理記錄且 followed=1，無任何「時間預算用盡」，6 個子代理都完成，無重複委派，無遺留程序。
+
+限制：這只是 Light 層級的一組並行驗證；Codex 的 Post 宿主逾時仍是 2 秒（為避免要求重新信任而未動），所以 Codex 的 Post 仍受原限制。Mac 的 Hook 行為沒有改（常數依平台），但共用模組有改動，Mac 原生 Hook smoke 仍待驗。
