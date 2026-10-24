@@ -793,9 +793,7 @@ def install(args, *, build=bundle.build, path_manager=None):
     if result.get('installed'):
         if not args.check and not args.dry_run:
             from mrh.infrastructure import hook_diagnostics
-            state = read_state(paths[0] / 'setup-state')
-            generation = paths[0] / 'setup-state/generations' / state['current']
-            result['diagnostics'] = hook_diagnostics.after_install(generation / 'app/mrh.pyz', generation / 'runtime/bin/python3.11')
+            result['diagnostics'] = hook_diagnostics.after_install()
         from mrh.adapters.hosts.skill_registry import install_suggestions
         result['optional_skills'] = install_suggestions(result.get('hosts', {}))
     return result
@@ -1074,7 +1072,7 @@ def uninstall(args):
         from mrh.infrastructure import hook_diagnostics
         if hook_diagnostics.config_root().exists():
             plan['steps'].append(_step('diagnostics', 'hook_diagnostics', hook_diagnostics.config_root(),
-                                       '關閉自有診斷收集與登入啟動（保留日誌）',
+                                       '關閉診斷並移除舊登入項（保留紀錄）',
                                        lambda: hook_diagnostics.control('off')))
         _plan_skills(args.host or ['claude', 'codex'], plan)
         _plan_path(bin_dir, plan)

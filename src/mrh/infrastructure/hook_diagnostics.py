@@ -1,113 +1,18 @@
-"""Hook diagnostics: bounded producers, private per-user collection and control.
-
-Stage/serializer/privacy/cleanup observation originates from accepted DIAG22 r2;
-UDP delivery is best effort and does not participate in Hook policy or output.
-"""
-
+"""Best-effort direct Hook records; no receiver, network or login startup."""
 import ast
-
-import builtins
-
-import hashlib
-
 import json
-
 import os
-
 from pathlib import Path
-
-import secrets
-
-import socket
-
 import stat
-
 import sys
-
 import time
-
 from mrh.infrastructure import owned, locations
 
 CONFIG_KIND = 'hook-diagnostics'
 LOG_KIND = 'hook-observation'
-MAX_LOG_BYTES = 1024 * 1024
-LOG_NAMES = ('events-0.jsonl', 'events-1.jsonl', 'events-2.jsonl')
-RECEIVER_CODE = ('import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);'
-                 'from mrh.infrastructure.hook_diagnostics import receive;'
-                 'raise SystemExit(receive(Path(sys.argv[2]),Path(sys.argv[3])))')
+RECORD_BYTES = 512
+RECORD_FILES = {'codex': 'latest-codex.json', 'claude': 'latest-claude.json'}
 
-
-def _windows_reader():
-    # Embed the existing native ownership/no-follow reader, not an MRH import.
-    # It is loaded lazily only when an endpoint actually exists on Windows.
-    from importlib import resources
-    text = resources.files('mrh').joinpath('adapters/platforms/windows.py').read_text()
-    tree = ast.parse(text)
-    definitions = {'api', 'checked', 'sid_text', 'current_sid', 'ACL', 'assert_safe', 'open_regular'}
-    imports = 'import ctypes as c\nfrom ctypes import wintypes as w\nimport msvcrt,os,stat\nfrom pathlib import Path\n'
-    nodes = []
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in definitions:
-            nodes.append(ast.get_source_segment(text, node))
-        elif isinstance(node, ast.Assign) and node.lineno < next(n.lineno for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'checked'):
-            nodes.append(ast.get_source_segment(text, node))
-    return imports + '\n\n'.join(nodes)
-
-
-def producer(endpoint, *, child=False, windows=False):
-    """Bound stdlib-only UDP producer, no Hook retry/ACK/process/file writes."""
-    endpoint = owned.canonical_path(endpoint)
-    support = '''
-def _diag_read_endpoint():
-    try:
-        from pathlib import Path
-        import stat
-        path=Path(DIAG_ENDPOINT)
-        if not path.exists():return None
-        parent=path.parent
-        if parent.resolve()!=parent or path.is_symlink():return None
-        if os.name=='nt':
-            native={}
-            exec(DIAG_WINDOWS_READER,native)
-            native['assert_safe'](parent,directory=True,private=True)
-            native['assert_safe'](path,private=True)
-            fd=native['open_regular'](path)
-        else:
-            info=parent.stat()
-            if info.st_uid!=os.getuid() or info.st_mode&0o077:return None
-            fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
-        try:
-            info=os.fstat(fd)
-            if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1:return None
-            if os.name!='nt' and (info.st_uid!=os.getuid() or info.st_mode&0o077):return None
-            data=os.read(fd,2049)
-        finally:os.close(fd)
-        if len(data)>2048:return None
-        value=json.loads(data)
-        if type(value) is not dict or set(value)!={'version','host','port','capability'}:return None
-        if value['version']!=1 or type(value['version']) is not int or value['host']!='127.0.0.1':return None
-        if type(value['port']) is not int or not 1<=value['port']<=65535:return None
-        token=value['capability']
-        if not isinstance(token,str) or len(token)!=64 or any(c not in '0123456789abcdef' for c in token):return None
-        return value
-    except BaseException:return None
-_diag_endpoint=_diag_read_endpoint()
-_diag_platform=(sys.argv[DIAG_PLATFORM_INDEX] if len(sys.argv)>DIAG_PLATFORM_INDEX else 'codex')
-def _diag_send(frame):
-    try:
-        endpoint=_diag_endpoint
-        if endpoint is None or _diag_platform not in ('codex','claude'):return
-        payload=json.dumps({'version':1,'platform':_diag_platform,'capability':endpoint['capability'],'frame':frame},separators=(',',':')).encode('ascii')
-        if len(payload)>512:return
-        import socket
-        channel=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        try:
-            channel.setblocking(False)
-            channel.sendto(payload,('127.0.0.1',endpoint['port']))
-        finally:channel.close()
-    except BaseException:pass
-'''.replace('DIAG_ENDPOINT', repr(str(endpoint))).replace('DIAG_WINDOWS_READER', repr(_windows_reader() if windows else '')).replace('DIAG_PLATFORM_INDEX', '2' if child else '1')
-    return COMMON + support
 
 MAX_FRAME = 192
 
@@ -171,6 +76,22 @@ except BaseException as _diag_error:
     _diag_emit(_diag_stage,_diag_error)
     raise
 '''
+
+def _windows_reader():
+    # Embed the existing native ownership/no-follow reader, not an MRH import.
+    # It is loaded lazily only for a direct-file attempt on Windows.
+    from importlib import resources
+    text = resources.files('mrh').joinpath('adapters/platforms/windows.py').read_text()
+    tree = ast.parse(text)
+    definitions = {'api', 'checked', 'sid_text', 'current_sid', 'ACL', 'assert_safe', 'open_regular'}
+    imports = 'import ctypes as c\nfrom ctypes import wintypes as w\nimport msvcrt,os,stat\nfrom pathlib import Path\n'
+    nodes = []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in definitions:
+            nodes.append(ast.get_source_segment(text, node))
+        elif isinstance(node, ast.Assign) and node.lineno < next(n.lineno for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'checked'):
+            nodes.append(ast.get_source_segment(text, node))
+    return imports + '\n\n'.join(nodes)
 
 def _once(source, old, new):
     if source.count(old) != 1:
@@ -287,23 +208,104 @@ def parse_frames(raw):
         raise ValueError('diagnostic_emitter_count')
     return records
 
-
 def config_root():
     return locations.default_config_root() / 'hook-diagnostics'
-
 
 def log_root(runtime=None):
     return owned.canonical_path(runtime or locations.runtime_root()) / 'diagnostics/hook-observation'
 
-
 def _json(value):
     return (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode()
-
 
 def _initialize(path, kind):
     path = owned.canonical_path(path)
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     return owned.initialize(path, kind)
+
+def _service(root):
+    if sys.platform == 'darwin':
+        from mrh.adapters.platforms.macos_diagnostics import Service
+    elif sys.platform == 'win32':
+        from mrh.adapters.platforms.windows_diagnostics import Service
+    else:
+        raise owned.OwnedError('diagnostics_login_platform_unsupported')
+    return Service(root)
+
+def _remove_endpoint(root):
+    path = root / 'endpoint.json'
+    if path.exists() or path.is_symlink():
+        owned.read_regular(path, 2048)
+        path.unlink()
+
+
+def _sink(config_path, *, child=False, windows=False):
+    """At most one regular-file overwrite attempt; no create/lock/retry."""
+    config_path = owned.canonical_path(config_path)
+    source = '''
+_diag_native=None
+_diag_platform=sys.argv[DIAG_INDEX] if len(sys.argv)>DIAG_INDEX else 'codex'
+def _diag_open(path,writing=False):
+    global _diag_native
+    import stat
+    parent=path.parent
+    if parent.resolve()!=parent or path.is_symlink():raise ValueError()
+    if os.name=='nt':
+        if _diag_native is None:
+            _diag_native={}
+            exec(DIAG_NATIVE,_diag_native)
+        _diag_native['assert_safe'](parent,directory=True,private=True)
+        _diag_native['assert_safe'](path,private=True)
+        fd=_diag_native['open_regular'](path,os.O_WRONLY if writing else os.O_RDONLY)
+    else:
+        info=parent.stat()
+        if info.st_uid!=os.getuid() or info.st_mode&0o077:raise ValueError()
+        fd=os.open(path,(os.O_WRONLY if writing else os.O_RDONLY)|os.O_NOFOLLOW|os.O_NONBLOCK)
+    try:
+        info=os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1:raise ValueError()
+        if os.name!='nt' and (info.st_uid!=os.getuid() or info.st_mode&0o077 or (writing and not info.st_mode&0o200)):raise ValueError()
+        if writing and info.st_size!=512:raise ValueError()
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+def _diag_read(path,limit):
+    fd=_diag_open(path)
+    try:data=os.read(fd,limit+1)
+    finally:os.close(fd)
+    if len(data)>limit:raise ValueError()
+    return json.loads(data)
+def _diag_send(frame):
+    try:
+        from pathlib import Path
+        if _diag_platform not in ('codex','claude'):return
+        if type(frame) is not dict or set(frame)!={'stage','exception','winerror','child_rc','elapsed_ms'}:return
+        if frame['stage'] not in DIAG_STAGES or frame['exception'] not in DIAG_EXCEPTIONS:return
+        if type(frame['elapsed_ms']) is not int or not 0<=frame['elapsed_ms']<=99999999:return
+        if any(frame[k] is not None and (type(frame[k]) is not int or not -2147483648<=frame[k]<=2147483647) for k in ('winerror','child_rc')):return
+        if len((json.dumps(frame,separators=(',',':'))+'\\n').encode('ascii'))>192:return
+        config=_diag_read(Path(DIAG_CONFIG),2048)
+        if type(config) is not dict or set(config)!={'version','enabled','runtime_root'}:return
+        if type(config['version']) is not int or config['version']!=2 or config['enabled'] is not True:return
+        area=Path(config['runtime_root'])
+        if not area.is_absolute() or area.resolve()!=area:return
+        area=area/'diagnostics/hook-observation'
+        if _diag_read(area/'.mrh-owner.json',256)!={'schema_version':1,'owner':'org.model-routing-harness','kind':'hook-observation'}:return
+        path=area/('latest-'+_diag_platform+'.json')
+        value={'recorded_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'version':2,'platform':_diag_platform,**frame}
+        data=json.dumps(value,separators=(',',':'),ensure_ascii=True).encode('ascii')
+        if len(data)>511:return
+        fd=_diag_open(path,True)
+        try:written=os.write(fd,data.ljust(511,b' ')+b'\\n')
+        finally:os.close(fd)
+        if written==512:return str(path)
+    except BaseException:pass
+'''
+    return source.replace('DIAG_INDEX', '2' if child else '1').replace('DIAG_NATIVE', repr(_windows_reader() if windows else '')).replace('DIAG_STAGES', repr(tuple(sorted(STAGES)))).replace('DIAG_EXCEPTIONS', repr(tuple(sorted(EXCEPTIONS)))).replace('DIAG_CONFIG', repr(str(config_path)))
+
+
+def producer(config_path, *, child=False, windows=False):
+    return COMMON + _sink(config_path, child=child, windows=windows)
 
 
 def _state(root):
@@ -315,99 +317,60 @@ def _state(root):
     path = root / 'state.json'
     if not path.exists():
         return None
-    value = json.loads(owned.read_regular(path, 65536), object_pairs_hook=owned._unique)
-    if (type(value) is not dict or set(value) != {'version', 'enabled', 'runtime_root', 'command'}
-            or value['version'] != 1 or type(value['enabled']) is not bool
-            or type(value['command']) is not list or not value['command']
-            or not all(isinstance(v, str) and '\x00' not in v for v in value['command'])):
+    value = json.loads(owned.read_regular(path), object_pairs_hook=owned._unique)
+    version = value.get('version') if type(value) is dict else None
+    keys = {'version', 'enabled', 'runtime_root'} | ({'command'} if version == 1 else set())
+    if (type(version) is not int or version not in (1, 2) or set(value) != keys
+            or type(value['enabled']) is not bool):
         raise owned.OwnedError('diagnostics_state_invalid')
     owned.canonical_path(value['runtime_root'])
+    if version == 1 and (not isinstance(value['command'], list) or not value['command']
+                         or not all(isinstance(v, str) and '\x00' not in v for v in value['command'])):
+        raise owned.OwnedError('diagnostics_state_invalid')
     return value
 
 
-def _endpoint(root):
-    path = root / 'endpoint.json'
+def _record_file(path):
+    data = owned.read_regular(path, RECORD_BYTES)
+    if len(data) != RECORD_BYTES or not path.stat().st_mode & 0o200 or os.name != 'nt' and path.stat().st_mode & 0o077:
+        raise owned.OwnedError('diagnostics_record_unsafe')
     if os.name == 'nt':
         from mrh.adapters.platforms.windows import assert_safe
         assert_safe(path, private=True)
-    elif path.lstat().st_mode & 0o077:
-        raise owned.OwnedError('diagnostics_endpoint_not_private')
-    value = json.loads(owned.read_regular(root / 'endpoint.json', 2048), object_pairs_hook=owned._unique)
-    if (type(value) is not dict or set(value) != {'version', 'host', 'port', 'capability'}
-            or type(value['version']) is not int or value['version'] != 1 or value['host'] != '127.0.0.1'
-            or type(value['port']) is not int or not 1 <= value['port'] <= 65535
-            or not isinstance(value['capability'], str) or len(value['capability']) != 64
-            or any(c not in '0123456789abcdef' for c in value['capability'])):
-        raise owned.OwnedError('diagnostics_endpoint_invalid')
-    return value
-
-
-def _service(root):
-    if sys.platform == 'darwin':
-        from mrh.adapters.platforms.macos_diagnostics import Service
-    elif sys.platform == 'win32':
-        from mrh.adapters.platforms.windows_diagnostics import Service
-    else:
-        raise owned.OwnedError('diagnostics_login_platform_unsupported')
-    return Service(root)
-
-
-def _request(root, operation='status', timeout=.3):
-    endpoint = _endpoint(root)
-    nonce = secrets.token_hex(16)
-    payload = _json({'version': 1, 'capability': endpoint['capability'], 'operation': operation, 'nonce': nonce})
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as channel:
-        channel.settimeout(timeout)
-        channel.sendto(payload, ('127.0.0.1', endpoint['port']))
-        raw, address = channel.recvfrom(513)
-    result = json.loads(raw)
-    if len(raw) > 512 or address != ('127.0.0.1', endpoint['port']) or result.get('nonce') != nonce or result.get('version') != 1:
-        raise owned.OwnedError('diagnostics_readiness_invalid')
-    return result
+    return data
 
 
 def status(*, root=None, runtime=None, service=None):
     root = owned.canonical_path(root or config_root())
     state = _state(root)
-    enabled = bool(state and state['enabled'])
     runtime = Path(state['runtime_root']) if state else runtime
-    result = {'enabled': enabled, 'collector': 'off' if not enabled else 'degraded',
-              'ready': False, 'login': {'registered': False, 'running': False},
-              'log_path': str(log_root(runtime)), 'config_path': str(root)}
-    if root.exists():
+    area = log_root(runtime)
+    migration = bool(state and state['version'] == 1 or (root / 'service.json').exists())
+    result = {'mode': 'direct', 'enabled': bool(state and state['enabled']),
+              'resident': False, 'login': {'registered': False, 'running': False},
+              'ready': False, 'log_path': str(area),
+              'record_paths': {p: str(area / name) for p, name in RECORD_FILES.items()},
+              'config_path': str(root), 'migration_required': migration}
+    if migration:
+        result['reason'] = 'diagnostics_legacy_removal_required'
+        result['resident'] = None
+        result['login'] = {'registered': None, 'running': None}
+        return result
+    if result['enabled']:
         try:
-            result['login'] = (service or _service(root)).inspect()
-            if enabled:
-                answer = _request(root)
-                result['ready'] = answer.get('ready') is True and result['login']['registered']
-                result['collector'] = 'ready' if result['ready'] else 'degraded'
-                if answer.get('degraded'):
-                    result['reason'] = 'diagnostics_log_unavailable'
-        except (OSError, ValueError, KeyError):
-            if enabled:
-                result['reason'] = 'diagnostics_receiver_unavailable'
+            owned.verify(area, LOG_KIND)
+            for name in RECORD_FILES.values():
+                _record_file(area / name)
+            result['ready'] = True
+        except (OSError, ValueError):
+            result['reason'] = 'diagnostics_record_configuration_unavailable'
     return result
 
 
-def receiver_command(root, runtime, *, archive=None, python=None):
-    archive = owned.canonical_path(Path(archive or sys.argv[0]).resolve())
-    if archive.name != 'mrh.pyz' or not archive.is_file():
-        raise owned.OwnedError('diagnostics_installed_entry_required')
-    owned.read_regular(archive, 16_000_000)
-    python = owned.canonical_path(Path(python or sys.executable).resolve())
-    return [str(python), '-I', '-B', '-c', RECEIVER_CODE, str(archive), str(root), str(runtime)]
-
-
-def _remove_endpoint(root):
-    path = root / 'endpoint.json'
-    if path.exists() or path.is_symlink():
-        owned.read_regular(path, 2048)
-        path.unlink()
-
-
-def control(action, *, root=None, runtime=None, service=None, command=None):
+def control(action, *, root=None, runtime=None, service=None):
     root = owned.canonical_path(root or config_root())
-    runtime = owned.canonical_path(runtime or locations.runtime_root())
+    state = _state(root)
+    runtime = owned.canonical_path(runtime or (state['runtime_root'] if state else locations.runtime_root()))
     if action == 'status':
         return status(root=root, runtime=runtime, service=service)
     if action not in ('on', 'off', 'clear'):
@@ -415,244 +378,71 @@ def control(action, *, root=None, runtime=None, service=None, command=None):
     if not root.exists() and action != 'on':
         return status(root=root, runtime=runtime, service=service)
     _initialize(root, CONFIG_KIND)
-    service = service or _service(root)
-    with owned.locked(root, CONFIG_KIND):
-        previous = _state(root)
-        # Native identity must be verified BEFORE desired state or endpoint edits.
-        service.inspect()
-        if action == 'clear':
-            if previous and previous['enabled']:
-                raise owned.OwnedError('diagnostics_clear_requires_off')
-            area = log_root(Path(previous['runtime_root']) if previous else runtime)
-            removed = []
-            if area.exists():
-                with owned.locked(area, LOG_KIND, blocking=False):
-                    for name in LOG_NAMES:
-                        path = area / name
-                        if path.exists() or path.is_symlink():
-                            owned.read_regular(path, MAX_LOG_BYTES)
-                            path.unlink()
-                            removed.append(name)
-            return {**status(root=root, runtime=runtime, service=service), 'removed_logs': removed}
-        if action == 'off':
-            if previous:
-                owned.replace_owned(root / 'state.json', _json({**previous, 'enabled': False}))
-            _remove_endpoint(root)
-        else:
-            current = status(root=root, runtime=runtime, service=service)
-            command = command or receiver_command(root, runtime)
-            if current['ready'] and previous['command'] == command and previous['runtime_root'] == str(runtime):
-                return current
-            _remove_endpoint(root)
-            proposed = {'version': 1, 'enabled': True, 'runtime_root': str(runtime), 'command': command}
-            try:
-                service.install(command)
-                owned.replace_owned(root / 'state.json', _json(proposed))
-            except (OSError, ValueError):
-                # Installation has not started a receiver yet. Restore only
-                # this diagnostic state; routing profiles are never opened.
-                if previous:
-                    owned.replace_owned(root / 'state.json', _json(previous))
-                    service.install(previous['command'])
-                    if previous['enabled']:
-                        service.start()
-                else:
-                    service.remove()
-                raise
-    if action == 'off':
-        service.remove()
-        return status(root=root, runtime=runtime, service=service)
-    try:
-        service.start()
-        deadline = time.monotonic() + 8
-        while time.monotonic() < deadline:
-            current = status(root=root, runtime=runtime, service=service)
-            if current['ready']:
-                return current
-            time.sleep(.1)
-        raise owned.OwnedError('diagnostics_readiness_failed')
-    except (OSError, ValueError):
-        with owned.locked(root, CONFIG_KIND):
-            owned.replace_owned(root / 'state.json', _json({**proposed, 'enabled': False}))
-            _remove_endpoint(root)
-        service.remove()
-        if previous:
-            with owned.locked(root, CONFIG_KIND):
-                owned.replace_owned(root / 'state.json', _json(previous))
-                service.install(previous['command'])
-            if previous['enabled']:
-                service.start()
-        raise
-
-
-def after_install(archive, python):
-    """Post-pointer-switch best effort; a diagnostic failure cannot undo routing."""
-    root = config_root()
-    try:
+    # Existing configuration lock is nonblocking; Hook records never take it.
+    with owned.locked(root, CONFIG_KIND, blocking=False):
         state = _state(root)
-        if state and state['enabled']:
-            command = receiver_command(root, Path(state['runtime_root']), archive=archive, python=python)
-            return control('on', root=root, runtime=Path(state['runtime_root']), command=command)
-        return {'enabled': False, 'collector': 'off', 'ready': False}
-    except (OSError, ValueError):
-        return {'enabled': True, 'collector': 'degraded', 'ready': False, 'reason': 'diagnostics_restart_failed'}
+        if state and state['version'] == 1 or (root / 'service.json').exists():
+            (service or _service(root)).remove()
+        _remove_endpoint(root)
+        enabled = action == 'on' or action == 'clear' and bool(state and state['enabled'])
+        if action == 'clear' and enabled:
+            raise owned.OwnedError('diagnostics_clear_requires_off')
+        area = log_root(runtime)
+        if action == 'on':
+            _initialize(area, LOG_KIND)
+            for name in RECORD_FILES.values():
+                path = area / name
+                if path.exists() or path.is_symlink():
+                    _record_file(path)
+                else:
+                    owned.replace_owned(path, b' ' * 511 + b'\n', limit=RECORD_BYTES)
+        elif action == 'clear' and area.exists():
+            owned.verify(area, LOG_KIND)
+            for name in RECORD_FILES.values():
+                path = area / name
+                if path.exists() or path.is_symlink():
+                    _record_file(path)
+                    owned.replace_owned(path, b' ' * 511 + b'\n', limit=RECORD_BYTES)
+        owned.replace_owned(root / 'state.json', _json({'version': 2, 'enabled': enabled,
+                                                       'runtime_root': str(runtime)}), limit=2048)
+    return status(root=root, runtime=runtime)
 
 
-def _prune(area, now):
-    for name in LOG_NAMES:
-        path = area / name
-        if path.exists() or path.is_symlink():
-            owned.read_regular(path, MAX_LOG_BYTES)
-            if now - path.stat().st_mtime > 7 * 86400:
-                path.unlink()
-
-
-def _append(area, frame, platform):
-    from datetime import datetime, timezone
-    now = time.time()
-    _prune(area, now)
-    row = {'received_at': datetime.fromtimestamp(now, timezone.utc).isoformat(),
-           'version': 1, 'platform': platform, **frame}
-    data = _json(row)
-    current = area / LOG_NAMES[0]
-    prior = owned.read_regular(current, MAX_LOG_BYTES) if current.exists() else b''
-    if len(prior) + len(data) > MAX_LOG_BYTES:
-        last = area / LOG_NAMES[-1]
-        if last.exists():
-            owned.read_regular(last, MAX_LOG_BYTES)
-            last.unlink()
-        for source, target in ((LOG_NAMES[1], LOG_NAMES[2]), (LOG_NAMES[0], LOG_NAMES[1])):
-            source, target = area / source, area / target
-            if source.exists():
-                owned.read_regular(source, MAX_LOG_BYTES)
-                os.replace(source, target)
-        prior = b''
-    # Only the receiver holding the exclusive writer lock reaches this write.
-    owned.replace_owned(current, prior + data, limit=MAX_LOG_BYTES)
-
-
-def _remove_self_checks(area):
-    removed = 0
-    for name in LOG_NAMES:
-        path = area / name
-        if not path.exists():
-            continue
-        original = owned.read_regular(path, MAX_LOG_BYTES)
-        kept = []
-        for line in original.splitlines(keepends=True):
-            if json.loads(line).get('stage') == 'self_check':
-                removed += 1
-            else:
-                kept.append(line)
-        if len(kept) != len(original.splitlines()):
-            if kept:
-                owned.replace_owned(path, b''.join(kept), limit=MAX_LOG_BYTES)
-            else:
-                path.unlink()
-    return removed
-
-
-def receive(root, runtime):
-    """Long-lived receiver only. All waiting/filesystem work stays off Hook."""
-    root, runtime = owned.canonical_path(root), owned.canonical_path(runtime)
-    state = _state(root)
-    if not state or not state['enabled'] or state['runtime_root'] != str(runtime):
-        return 0
-    area = _initialize(log_root(runtime), LOG_KIND)
-    token = secrets.token_hex(32)
+def after_install(archive=None, python=None):
+    """Migrate old owned startup even when off; never create a receiver."""
     try:
-        with owned.locked(area, LOG_KIND, blocking=False), socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as channel:
-            _prune(area, time.time())
-            channel.bind(('127.0.0.1', 0))
-            channel.settimeout(.3)
-            endpoint = {'version': 1, 'host': '127.0.0.1', 'port': channel.getsockname()[1], 'capability': token}
-            with owned.locked(root, CONFIG_KIND):
-                state = _state(root)
-                if not state or not state['enabled']:
-                    return 0
-                owned.replace_owned(root / 'endpoint.json', _json(endpoint), limit=2048)
-            degraded = False
-            while True:
-                state = _state(root)
-                if not state or not state['enabled'] or state['runtime_root'] != str(runtime):
-                    break
-                try:
-                    raw, address = channel.recvfrom(513)
-                except socket.timeout:
-                    continue
-                try:
-                    if address[0] != '127.0.0.1' or len(raw) > 512:
-                        continue
-                    value = json.loads(raw, object_pairs_hook=owned._unique)
-                    if (type(value) is not dict or value.get('version') != 1
-                            or type(value.get('version')) is not int
-                            or not isinstance(value.get('capability'), str)
-                            or not secrets.compare_digest(value['capability'], token)):
-                        continue
-                    if set(value) == {'version', 'capability', 'operation', 'nonce'}:
-                        nonce = value['nonce']
-                        if not isinstance(nonce, str) or len(nonce) != 32 or any(c not in '0123456789abcdef' for c in nonce):
-                            continue
-                        if value['operation'] == 'remove_self_check':
-                            removed = _remove_self_checks(area)
-                        elif value['operation'] == 'status':
-                            removed = 0
-                        else:
-                            continue
-                        channel.sendto(_json({'version': 1, 'nonce': nonce, 'ready': not degraded,
-                                              'degraded': degraded, 'removed_self_checks': removed}), address)
-                    elif set(value) == {'version', 'capability', 'platform', 'frame'}:
-                        if value['platform'] not in ('codex', 'claude'):
-                            continue
-                        frames = parse_frames(_json(value['frame']))
-                        if len(frames) != 1:
-                            continue
-                        try:
-                            _append(area, frames[0], value['platform'])
-                            degraded = False
-                        except (OSError, ValueError):
-                            degraded = True
-                except (OSError, ValueError, TypeError, KeyError):
-                    # Invalid payloads are never logged, printed or echoed.
-                    continue
+        state = _state(config_root())
+        if state or (config_root() / 'service.json').exists():
+            return control('on' if state and state['enabled'] else 'off',
+                           runtime=Path(state['runtime_root']) if state else None)
+        return status()
     except (OSError, ValueError):
-        return 2
-    finally:
-        # A retiring receiver must never delete its successor's endpoint.
-        try:
-            with owned.locked(root, CONFIG_KIND):
-                if _endpoint(root)['capability'] == token:
-                    _remove_endpoint(root)
-        except (OSError, ValueError):
-            pass
-    return 0
+        return {'mode': 'direct', 'ready': False, 'resident': None,
+                'reason': 'diagnostics_migration_or_configuration_unavailable'}
 
 
 def self_check(*, root=None, runtime=None, platform='codex'):
-    """Explicit adoption proof, safely labelled, then removed by its writer."""
-    import subprocess
+    """One same-process direct attempt; no retry or guaranteed delivery."""
     root = owned.canonical_path(root or config_root())
-    state = _state(root)
-    runtime = Path(state['runtime_root']) if state else runtime
-    if not state or not state['enabled'] or platform not in ('codex', 'claude'):
-        raise owned.OwnedError('diagnostics_self_check_requires_on')
-    code = producer(root / 'endpoint.json', windows=os.name == 'nt') + '\n_diag_emit("self_check")\n'
-    result = subprocess.run([sys.executable, '-I', '-B', '-c', code, platform], capture_output=True, timeout=5)
-    if result.returncode or result.stdout or result.stderr:
-        raise owned.OwnedError('diagnostics_self_check_producer_failed')
-    area = log_root(runtime)
-    deadline = time.monotonic() + 5
-    found = []
-    while time.monotonic() < deadline:
-        found = [json.loads(line) for name in LOG_NAMES if (area / name).exists()
-                 for line in owned.read_regular(area / name, MAX_LOG_BYTES).splitlines()
-                 if json.loads(line).get('stage') == 'self_check' and json.loads(line).get('platform') == platform]
-        if found:
-            break
-        time.sleep(.05)
-    if not found:
-        raise owned.OwnedError('diagnostics_self_check_not_received')
-    answer = _request(root, 'remove_self_check', timeout=2)
-    if answer.get('removed_self_checks', 0) < 1:
-        raise owned.OwnedError('diagnostics_self_check_cleanup_failed')
-    return {'received': True, 'sample': found[-1], 'marker_removed': True, 'natural_failure': False}
+    if platform not in RECORD_FILES:
+        raise owned.OwnedError('diagnostics_platform_invalid')
+    namespace = {'os': os, 'json': json, 'time': time, 'sys': sys}
+    exec(_sink(root / 'state.json', windows=os.name == 'nt'), namespace)
+    namespace['_diag_platform'] = platform
+    path = namespace['_diag_send']({'stage': 'self_check', 'exception': '', 'winerror': None,
+                                    'child_rc': None, 'elapsed_ms': 0})
+    if not path:
+        return {'received': False, 'marker_removed': False, 'mode': 'direct', 'natural_failure': False}
+    path = Path(path)
+    try:
+        sample = json.loads(_record_file(path))
+        if sample.get('stage') != 'self_check':
+            return {'received': False, 'marker_removed': False, 'mode': 'direct', 'natural_failure': False}
+        # Concurrent overwrites/loss are explicitly permitted, including here.
+        fd = namespace['_diag_open'](path, True)
+        try:os.write(fd, b' ' * 511 + b'\n')
+        finally:os.close(fd)
+        return {'received': True, 'sample': sample, 'marker_removed': True,
+                'mode': 'direct', 'natural_failure': False}
+    except (OSError, ValueError):
+        return {'received': False, 'marker_removed': False, 'mode': 'direct', 'natural_failure': False}

@@ -1,4 +1,4 @@
-"""One current-user LaunchAgent; never controls a process by an arbitrary PID."""
+"""Removal-only migration for the old owned LaunchAgent; never creates one."""
 import hashlib
 import os
 from pathlib import Path
@@ -27,7 +27,12 @@ class Service:
 
     def _record(self):
         path = self.root / 'service.json'
-        return __import__('json').loads(owned.read_regular(path)) if path.exists() else None
+        value = __import__('json').loads(owned.read_regular(path)) if path.exists() else None
+        if value is not None and (not isinstance(value, dict) or value.get('platform') != 'darwin'
+                or value.get('name') != LABEL or not isinstance(value.get('command'), list)
+                or not value['command'] or not isinstance(value.get('sha256'), str)):
+            raise owned.OwnedError('diagnostics_service_unowned')
+        return value
 
     def inspect(self):
         record = self._record()
@@ -56,38 +61,7 @@ class Service:
         return {'registered': registered, 'running': result.returncode == 0,
                 'name': LABEL, 'platform': 'darwin'}
 
-    def install(self, command):
-        state = self.inspect()
-        previous = self._record()
-        before = owned.read_regular(self.path) if state['registered'] else None
-        if previous and previous['command'] == command and state['registered']:
-            return
-        if state['running']:
-            self._run('bootout', self.identity)
-        parent = owned.canonical_path(self.path.parent)
-        parent.mkdir(parents=True, exist_ok=True)
-        info = parent.stat()
-        if info.st_uid != os.getuid() or info.st_mode & 0o022:
-            raise owned.OwnedError('diagnostics_login_directory_unsafe')
-        raw = plistlib.dumps({'Label': LABEL, 'ProgramArguments': command, 'RunAtLoad': True,
-                             'KeepAlive': {'SuccessfulExit': False}, 'ProcessType': 'Background',
-                             'StandardOutPath': os.devnull, 'StandardErrorPath': os.devnull}, sort_keys=True)
-        record = {'platform': 'darwin', 'name': LABEL, 'command': command,
-                  'sha256': hashlib.sha256(raw).hexdigest()}
-        try:
-            owned.replace_owned(self.root / 'service.json', __import__('json').dumps(record).encode())
-            owned.replace_owned(self.path, raw)
-        except (OSError, ValueError):
-            if previous:
-                owned.replace_owned(self.root / 'service.json', __import__('json').dumps(previous).encode())
-                owned.replace_owned(self.path, before)
-            elif not self.path.exists():
-                (self.root / 'service.json').unlink(missing_ok=True)
-            raise
 
-    def start(self):
-        if not self.inspect()['running']:
-            self._run('bootstrap', 'gui/' + str(os.getuid()), str(self.path))
 
     def remove(self):
         state = self.inspect()

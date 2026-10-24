@@ -614,7 +614,7 @@ def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secret
                 stdout.write(json.dumps(result, indent=2, sort_keys=True) + '\n')
             else:
                 stdout.write('Hook 診斷：' + ('開啟' if result['enabled'] else '關閉') +
-                             '；收集器 ' + result['collector'] + '\n登入啟動：' +
+                             '；模式 direct（Hook 直接記錄）' + '\n登入啟動：' +
                              ('已註冊' if result['login']['registered'] else '未註冊') +
                              '\n日誌：' + result['log_path'] + '\n')
             return 0

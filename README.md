@@ -153,4 +153,4 @@ mrh skill install --host claude   # Codex 用 --host codex
 
 [MIT License](LICENSE)：可自由使用、修改、散布與商用，請保留授權與著作權聲明。第三方 runtime 的授權見 [LICENSES](packaging/macos-arm64/LICENSES.md)。
 
-Hook 失敗診斷可用 `mrh ctrl diagnostics on|off|status|clear` 管理，預設關閉；開啟時自動管理本機收集器與登入啟動，詳見 [Hook 診斷收集](docs/hook-diagnostics.md)。
+Hook 失敗診斷可用 `mrh ctrl diagnostics on|off|status|clear` 管理，預設關閉；開啟時由 Hook 直接覆寫每平台一個最新錯誤檔，不建立常駐或登入啟動，詳見 [Hook 診斷收集](docs/hook-diagnostics.md)。

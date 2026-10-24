@@ -310,7 +310,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
         link_hashes = {name: _hash(editable[name]) for name in (DESCRIPTOR, PTH)}
     prefix = "plugins/" + NAME + "/"
     from mrh.infrastructure import hook_diagnostics
-    endpoint = owned.canonical_path(diagnostics_root or hook_diagnostics.config_root()) / 'endpoint.json'
+    endpoint = owned.canonical_path(diagnostics_root or hook_diagnostics.config_root()) / 'state.json'
     launcher = hook_diagnostics.launcher(_windows_launcher() if os.name == 'nt' else LAUNCHER,
                                          endpoint, windows=os.name == 'nt')
     if os.name == 'nt':

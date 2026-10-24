@@ -999,11 +999,7 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
     result = _install(args, adapters=adapters, build=build, path_manager=path_manager)
     if result.get('installed') and not args.check and not args.dry_run:
         from mrh.infrastructure import hook_diagnostics
-        prefix = resolve_paths(args)[0]
-        state = document(prefix / 'setup-state/state.json')
-        generation = prefix / 'setup-state/generations' / state['current']
-        meta = document(generation / 'generation.json')
-        result['diagnostics'] = hook_diagnostics.after_install(generation / 'app/mrh.pyz', meta['python']['executable'])
+        result['diagnostics'] = hook_diagnostics.after_install()
     return result
 
 
