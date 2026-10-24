@@ -54,6 +54,7 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh usage overhead     攔下重派的開銷（等待時間、主模型多一輪的 token）與省下的錢並列（只讀本機紀錄，不花錢）
   mrh classify "任務"    顧問分級：問分級器這件事算哪一級（不派工；--stdin／--json／--platform／--title／--role）
   mrh ctrl show          目前設定一覽
+  mrh ctrl diagnostics  Hook 診斷收集（on／off／status／clear，預設關閉）
   mrh ctrl set 項目 值   修改單一設定（mrh ctrl keys 列出所有項目）
   mrh key status jev     金鑰狀態（set 存入、delete 刪除）
 
@@ -130,6 +131,9 @@ def build_parser() -> argparse.ArgumentParser:
     ctrl_actions = ctrl.add_subparsers(dest="ctrl_action")
     ctrl_show = ctrl_actions.add_parser("show", help="print the current configuration")
     ctrl_show.add_argument("--json", action="store_true")
+    diagnostics = ctrl_actions.add_parser("diagnostics", help="private local Hook diagnostics; default off")
+    diagnostics.add_argument("diagnostics_action", choices=("on", "off", "status", "clear"))
+    diagnostics.add_argument("--json", action="store_true")
     ctrl_set = ctrl_actions.add_parser("set", help="change one setting (see `mrh ctrl keys`)")
     ctrl_set.add_argument("key"); ctrl_set.add_argument("value")
     ctrl_actions.add_parser("keys", help="list the settable keys")

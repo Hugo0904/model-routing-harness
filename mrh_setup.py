@@ -143,7 +143,7 @@ def verify_bundle(root, digest=None):
 
 def source_fingerprint(hosts, packets, settings, dev=False):
     # A developer install runs the checkout's src directly, so editing it must not make a new version.
-    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py')]
+    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py', 'hook_diagnostics.py')]
              + list((ROOT / 'src/mrh/adapters/platforms').glob('*.py'))) if dev else (
              list((ROOT / 'src/mrh').rglob('*.py')) + list((ROOT / 'src/mrh/resources').rglob('*')))
     files += [ROOT / n for n in ('setup', 'mrh_setup.py', 'mrh_bundle.py', 'mrh_build.py', 'pyproject.toml', 'LICENSE')]
@@ -791,6 +791,11 @@ def install(args, *, build=bundle.build, path_manager=None):
     if not result['command_path']['future_terminal_ready']:
         result.setdefault('pending', []).append('command_path')
     if result.get('installed'):
+        if not args.check and not args.dry_run:
+            from mrh.infrastructure import hook_diagnostics
+            state = read_state(paths[0] / 'setup-state')
+            generation = paths[0] / 'setup-state/generations' / state['current']
+            result['diagnostics'] = hook_diagnostics.after_install(generation / 'app/mrh.pyz', generation / 'runtime/bin/python3.11')
         from mrh.adapters.hosts.skill_registry import install_suggestions
         result['optional_skills'] = install_suggestions(result.get('hosts', {}))
     return result
@@ -1066,6 +1071,11 @@ def uninstall(args):
         # A host registration that cannot be removed still points at the installation: change nothing else until it is fixed.
         plan['keep'].append(_note('everything_else', control, 'skipped_host_registrations_remain', hint='Hook 仍指向安裝代；先解決阻擋項目，再重跑同一個指令'))
     else:
+        from mrh.infrastructure import hook_diagnostics
+        if hook_diagnostics.config_root().exists():
+            plan['steps'].append(_step('diagnostics', 'hook_diagnostics', hook_diagnostics.config_root(),
+                                       '關閉自有診斷收集與登入啟動（保留日誌）',
+                                       lambda: hook_diagnostics.control('off')))
         _plan_skills(args.host or ['claude', 'codex'], plan)
         _plan_path(bin_dir, plan)
         _plan_installation(prefix, bin_dir, control, plan)
@@ -1086,7 +1096,7 @@ def _finish_uninstall(args, plan, hosts, control):
     removed, blocked, keep = [], list(plan['blocked']), list(plan['keep'])
     halted = set()
     with (locked(control) if control.exists() else nullcontext()):
-        for phase in ('hosts', 'skills', 'path', 'links', 'state', 'purge'):
+        for phase in ('diagnostics', 'hosts', 'skills', 'path', 'links', 'state', 'purge'):
             for step in [s for s in steps if s['phase'] == phase]:
                 if phase in halted or (phase == 'purge' and blocked):
                     keep.append(_note(step['id'], step['target'], 'skipped_uninstall_incomplete'))
@@ -1099,6 +1109,8 @@ def _finish_uninstall(args, plan, hosts, control):
                     blocked.append(_note(step['id'], step['target'], _reason(exc)))
                     if phase == 'hosts':
                         halted.update(('skills', 'path', 'links', 'state'))
+                    if phase == 'diagnostics':
+                        halted.update(('hosts', 'skills', 'path', 'links', 'state', 'purge'))
                     result['writes'] = True
     result.update(mode='apply', removed=removed, keep=keep, blocked=blocked)
     result['status'] = 'incomplete' if blocked else 'uninstalled' if removed else 'not_installed'

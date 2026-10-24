@@ -606,6 +606,20 @@ def _fail(stderr, message):
 
 
 def main(args, *, stdin, stdout, stderr, color=False, models=list_models, secrets_module=secrets):
+    if getattr(args, 'ctrl_action', None) == 'diagnostics':
+        from mrh.infrastructure import hook_diagnostics
+        try:
+            result = hook_diagnostics.control(args.diagnostics_action)
+            if getattr(args, 'json', False):
+                stdout.write(json.dumps(result, indent=2, sort_keys=True) + '\n')
+            else:
+                stdout.write('Hook 診斷：' + ('開啟' if result['enabled'] else '關閉') +
+                             '；收集器 ' + result['collector'] + '\n登入啟動：' +
+                             ('已註冊' if result['login']['registered'] else '未註冊') +
+                             '\n日誌：' + result['log_path'] + '\n')
+            return 0
+        except (OSError, ValueError) as error:
+            return _fail(stderr, '診斷操作失敗：' + getattr(error, 'reason', type(error).__name__))
     try:
         path = v2.resolve_settings_path(getattr(args, "settings", None))
     except SettingsError:

@@ -265,7 +265,7 @@ def _old_artifact(root):
 
 
 def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=False, project_root=None, dev_source=None,
-            runtime_archive=None, editable_files=None, runtime_root=None):
+            runtime_archive=None, editable_files=None, runtime_root=None, diagnostics_root=None):
     if not advisory:
         raise owned.OwnedError("advisory_required")
     if dev_source is not None:
@@ -309,6 +309,10 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
                 raise owned.OwnedError('editable_link_invalid')
         link_hashes = {name: _hash(editable[name]) for name in (DESCRIPTOR, PTH)}
     prefix = "plugins/" + NAME + "/"
+    from mrh.infrastructure import hook_diagnostics
+    endpoint = owned.canonical_path(diagnostics_root or hook_diagnostics.config_root()) / 'endpoint.json'
+    launcher = hook_diagnostics.launcher(_windows_launcher() if os.name == 'nt' else LAUNCHER,
+                                         endpoint, windows=os.name == 'nt')
     if os.name == 'nt':
         from mrh.adapters.platforms.windows import codex_hook_command
         command = codex_hook_command(python)
@@ -323,7 +327,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
             "extensions": {"com.openai": {"hooks": "./hooks/hooks.json"}}}),
         prefix + "hooks/hooks.json": _json({"hooks": {event: [{"matcher": "^(spawn_agent|collaborationspawn_agent)$", "hooks": [
             {"type": "command", "command": command, "timeout": codex_hook_timeout(event)}]}] for event in ("PreToolUse", "PostToolUse")}}),
-        prefix + "launcher.py": _windows_launcher() if os.name == 'nt' else LAUNCHER,
+        prefix + "launcher.py": launcher,
         prefix + "runtime.pyz": runtime,
         prefix + "binding.json": _json({"schema_version": 1, "python": python, "settings_path": str(settings_path),
                                          "runtime_sha256": _hash(runtime), "platform": "codex",

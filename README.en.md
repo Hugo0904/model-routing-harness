@@ -129,3 +129,5 @@ The 2026-10-23 Mac acceptance covered the installed `6b0ebd8` update and native 
 ## License
 
 [MIT](LICENSE). Third-party runtime licenses: [packaging/macos-arm64/LICENSES.md](packaging/macos-arm64/LICENSES.md).
+
+Local Hook failure diagnostics are off by default. `mrh ctrl diagnostics on|off|status|clear` manages the collector and current-user login startup; see [Hook diagnostics](docs/hook-diagnostics.md).

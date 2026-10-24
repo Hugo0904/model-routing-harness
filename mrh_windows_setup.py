@@ -137,7 +137,7 @@ def source_identity(hosts, packets, settings, python, dev=False):
     head = result.stdout.strip()
     if len(head) != 40 or any(c not in "0123456789abcdef" for c in head):
         raise SetupError("source_commit_unavailable")
-    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py')]
+    files = ([ROOT / 'src/mrh/infrastructure' / name for name in ('execution.py', 'owned.py', 'plugin.py', 'hook_diagnostics.py')]
              + list((ROOT / 'src/mrh/adapters/platforms').glob('*.py'))) if dev else [
              p for p in (ROOT / "src/mrh").rglob("*")
              if p.is_file() and "__pycache__" not in p.parts and (p.suffix == ".py" or "resources" in p.parts)]
@@ -742,7 +742,7 @@ def readiness(args, state, paths, adapters=None, operation=None, path_manager=No
     return result
 
 
-def install(args, *, adapters=None, build=build_generation, path_manager=None):
+def _install(args, *, adapters=None, build=build_generation, path_manager=None):
     if os.name != 'nt' or platform.machine().lower() not in ('amd64', 'x86_64') or sys.maxsize <= 2**32:
         raise SetupError('unsupported_platform:Windows_x64_required')
     paths = resolve_paths(args)
@@ -991,7 +991,20 @@ def install(args, *, adapters=None, build=build_generation, path_manager=None):
             path_change = path_manager.apply(path_plan)
             pending["phase"] = "complete"
             write(pending_path, encoded(pending))
-            return readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change, catalogs=catalogs)
+            result = readiness(args, new, paths, adapters, "rollback" if args.rollback else "installed", path_manager, path_change, catalogs=catalogs)
+            return result
+
+
+def install(args, *, adapters=None, build=build_generation, path_manager=None):
+    result = _install(args, adapters=adapters, build=build, path_manager=path_manager)
+    if result.get('installed') and not args.check and not args.dry_run:
+        from mrh.infrastructure import hook_diagnostics
+        prefix = resolve_paths(args)[0]
+        state = document(prefix / 'setup-state/state.json')
+        generation = prefix / 'setup-state/generations' / state['current']
+        meta = document(generation / 'generation.json')
+        result['diagnostics'] = hook_diagnostics.after_install(generation / 'app/mrh.pyz', meta['python']['executable'])
+    return result
 
 
 
