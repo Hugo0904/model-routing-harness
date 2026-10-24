@@ -1,6 +1,6 @@
 # Windows 驗證紀錄
 
-2026-10-21，以 Windows 原生 x64 環境驗證；未使用 WSL。原始宿主紀錄、個人路徑與金鑰不納入 repository。
+本頁按日期保存 Windows 原生 x64 的驗證，未使用 WSL；各批版本、樣本及失敗分開，不合併為全平台通過。最初環境為 2026-10-21，後文的停用／缺證據只描述當時狀態。後續直寫診斷採用見[驗證摘要](validation.md#2026-10-25-直寫診斷採用程式-13b651f)。原始宿主輸出、個人路徑與金鑰不納入 repository。
 
 | 項目 | 結果 |
 | --- | --- |
@@ -15,12 +15,7 @@
 | 實際子代理採用 | 原生 Codex 合成任務經真實 Jev 分為 Small，記錄 `advice_given` 及 `advice_reissue`；MRH 與子代理 session 均確認 `gpt-6.1-sol / high`，結果為 `MRH_NATIVE_OK`。MRH PostToolUse 自身未回報 resolved model，實際模型由該子代理 session 另行核對。 |
 | Mac | 這份紀錄不含 Mac 實機結果。POSIX launcher 與原版逐位元組相同，runtime lock、既有授權與版本檢查保留。 |
 
-下列為最初 Windows 批次的 91 個測試，涵蓋安裝與衝突保護、ACL／reparse／hardlink、跨程序鎖、逾時與後代清理、含空白路徑、實際 PowerShell／cmd Hook、原生 Claude 註冊接頭、範圍規則、金鑰契約、設定、分級與統計、Jev transport／protocol。它不是後續每個 commit 都重跑的證據。另核對文件連結與 `git diff --check`。
-
-```powershell
-$env:PYTHONPATH = 'src'
-python -B -m unittest tests.windows.test_setup tests.windows.test_platform tests.windows.test_claude_native tests.windows.test_workspace tests.windows.test_bundle tests.infrastructure.test_secrets tests.infrastructure.test_settings_v2 tests.infrastructure.test_claude_hook tests.advisory.test_engine tests.advisory.test_gears tests.adapters.test_typesafe tests.adapters.test_typesafe_protocol -q
-```
+最初 Windows 批次有 91 個測試，涵蓋安裝與衝突保護、ACL／reparse／hardlink、跨程序鎖、逾時與後代清理、含空白路徑、實際 PowerShell／cmd Hook、原生 Claude 註冊接頭、範圍規則、金鑰契約、設定、分級與統計、Jev transport／protocol。它不是後續每個 commit 都重跑的證據。另核對文件連結與 `git diff --check`。
 
 UNC 完成路徑規則測試，沒有真實網路分享的實機結果。當時 Windows Claude catalog、訂閱分級器、Codex packets 與 Gemini 保持不可用；Claude 後續進度見下節，其他邊界見 [相容性](compatibility.md)。目前 Codex 原生加密的 `message` 不能直接供分類，依既有契約使用可讀的 `task_name`。
 
@@ -63,7 +58,7 @@ SKIP 對應 `SkillCompletionTests.test_force_never_accepts_foreign_extra_or_link
 
 ## 2026-10-22 Claude Windows LPAC 與獨立 profile
 
-來源由 `6d10f9f` 接續，Windows 10 Enterprise LTSC 19044 x64、Claude Code 2.1.303。本批沒有重跑狀態卡或整套測試，沒有呼叫 Jev 或模型。
+來源由 `6d10f9f` 接續（`6a90435` 的 LPAC／每宿主就緒判斷），Windows 10 Enterprise LTSC 19044 x64、Claude Code 2.1.303。本批沒有重跑狀態卡或整套測試，沒有呼叫 Jev 或模型。
 
 | 邊界 | 結果 |
 | --- | --- |
@@ -78,134 +73,125 @@ SKIP 對應 `SkillCompletionTests.test_force_never_accepts_foreign_extra_or_link
 | Hook／路由契約 | Windows 合成 profile **1 PASS**：停用時不分類、啟用 fixture 的 Claude 建議與明示選型保護。既有 POSIX runtime 3 項因 `/` 範圍 fixture 不適用 Windows 而未通過，沒有刪除平台檢查；改用獨立 Windows fixture 證明該邊界。 |
 | Claude 實際子代理 | 未執行，未證明採用。 |
 
-零 capabilities 下的 Winsock 失敗仍未解決。增加 `registryRead` 會改變權限範圍，沒有在本批自行加入；Claude profile 保持停用。這是未完成的路由功能，不是完整 Windows Claude 支援。
+本批的零 capabilities Winsock 失敗未解決，Claude profile 當時保持停用，不能稱完整支援。後續由使用者批准的 registryRead 修正及實際採用另列於下節，不回寫為本批通過。
 
-Mac 的 sandbox-exec 分支保留，共用 initialize 參數與解析的相關檢查在 Windows 執行。Mac 仍需實機驗證版本探測、隔離 initialize、逾時／後代清理及實際 Hook 採用；本批不宣稱 Mac 已重驗。
+本批僅在 Windows 檢查共用 initialize；sandbox-exec 分支保留，未提供 Mac 實機重驗證據。後續 Mac 結果見[Mac 紀錄](mac-handoff.md)，兩者不互相替代。
 
 ## 2026-10-23 Hook 啟動預算修正
 
-完整階段觀測確認，PowerShell 與 bootstrap 驗證在 supervisor 的 1 秒起點之前；原 Windows 接頭在起點後先啟動 Python gate，再啟動第二個 Python。一次觀測中 gate 到約 0.63 秒才準備好，第二個 Python 尚未進入 runtime，supervisor 就已逾時。移除第二次啟動後，另一次觀測顯示 runtime 匯入約 0.67 秒、兩次設定驗證約 0.13 秒，仍略超過原預算。
+觀測顯示 PowerShell／bootstrap 在 supervisor 起點之前；起點後的 Python gate 約 0.63 秒才就緒，第二個 Python 尚未進 runtime 就被原 1 秒期限截止。`27edf8f` 改成同程序 gate：先加入 kill-on-close Job，再由私有管線放行；外部 CLI 與 LPAC 保留原路徑。engine 延至需要分級才匯入，packet 模組只在保留事件匯入，`marked`／`PREFIXES` 契約不變。另次匯入約 0.67 秒、兩次設定驗證約 0.13 秒，仍可能超原預算；此修正沒有改 1／2.5／48 秒期限或移除任何安全／記錄檢查。
 
-Windows Hook 現在於同一個 Python gate 執行 runtime：先加入 kill-on-close Job，才透過原本的私有管線放行。普通外部 CLI 仍沿用既有 gate；LPAC 不變。runtime 僅在需要分級時載入 engine，只有保留的 Codex 封包事件才載入 packet 處理器；辨識條件與公開 `marked`／`PREFIXES` 契約保留。兩次設定驗證、範圍、明示選型、DB 記錄、故障告警及原有 1／2.5／48 秒期限均未移除或延長。
+| 證據 | 結果與範圍 |
+| --- | --- |
+| gate／程序樹 | 4 PASS：Job 綁定拒絕不執行、同程序、UTF-8 stdin、逾時清後代。 |
+| supervisor／路由 | 7 PASS、0 FAIL／ERROR／SKIP；完整性、含空白 PowerShell 路徑、控制管線、政策期限、停用／建議／明示保護、DB 故障、競態及保留封包。合成事件與替身，不是 Jev／子代理採用。 |
+| 正式停用路徑 | 世代 `e601b55c557ae31b8be4cbc9` 的 Claude 原生 Pre／Post exit 0、`{}`。外層 1.50／1.41 秒含 PowerShell／bootstrap，不能當 supervisor 1 秒耗時；設定／統計／舊髒檔／其他插件保全，enabled=false、export=false。成功 Post 另補同案例，不與 7 項重複加總。 |
 
-- 新 gate 與既有程序樹清理共 **4 PASS**，包含 Job 綁定拒絕時不執行目標、同程序執行、UTF-8 stdin 及逾時清除後代。
-- 受影響的 supervisor 與路由檢查 **7 PASS、0 FAIL／ERROR／SKIP**：完整性拒絕、PowerShell 含空白路徑、UTF-8 控制管線與期限、Claude 停用／建議／明示選型、DB 故障、設定競態及保留封包拒絕。均使用本機合成事件／分類替身，不代表實際 Jev 或 Claude 子代理採用。
-- `27edf8f` 正式安裝世代 `e601b55c557ae31b8be4cbc9` 的 Claude 原生 Pre／Post 均 exit 0、輸出 `{}`，停用 profile 的啟動路徑通過。外層總時間約 1.50／1.41 秒，含 PowerShell 與 bootstrap，不能當成 supervisor 的 1 秒耗時。設定／統計、舊髒檔及其他插件保全已核對；Claude 仍為 enabled=false、export=false。成功 Post 記錄另追加同一案例驗證，不與前述 7 項重複相加。
-
-Mac supervisor 與 sandbox-exec 啟動方式未改。共用 runtime 的匯入時機及 Codex 封包辨識已改；若要宣稱 Mac 實機相容，最小追加驗證是停用 profile 的 Pre／Post、啟用後一般建議與明示選型／Post 記錄，以及保留封包的拒絕或原有處理。Windows 的上述結果不能代替這些 Mac 宿主觀測。
+Mac supervisor／sandbox-exec 啟動未改；共用匯入與 packet 辨識已改，這批 Windows 結果不代替後續 Mac 原生觀測。
 
 ## 2026-10-23 Winsock 原因定位
 
-自行編譯的 x64 Win32 helper 在隔離外呼叫 WSAStartup／WSACleanup 均回傳 0；相同映像經既有零 capabilities LPAC 接頭執行，WSAStartup 回傳 10107。helper 只初始化 Winsock，沒有呼叫 socket、connect、模型或任務。
+x64 Win32 helper 在隔離外 WSAStartup／WSACleanup 均為 0；同映像在零 capabilities LPAC 內為 10107，未呼叫 socket／connect／模型／任務。只在 helper 內觀測 System32 ws2_32.dll 的 IAT，直接看到 `RegOpenKeyExA(HKLM, System\CurrentControlSet\Services\WinSock2\Parameters, ...)` 回 5；隔離外相同資源可開。追加欄位的 LPAC 觀測為 `samDesired=0x00020019 (KEY_READ)`、options=0，未要求寫入；隔離外原次未記 mask／options，未重跑補對照。
 
-僅在該 helper 程序內觀測 System32 `ws2_32.dll` 的 IAT，直接記錄到 `RegOpenKeyExA(HKLM, System\CurrentControlSet\Services\WinSock2\Parameters, ...)` 回傳 `ERROR_ACCESS_DENIED (5)`；隔離外相同 API／資源開啟成功。只追加權限欄位的一次 LPAC 觀測取得 `samDesired=0x00020019 (KEY_READ)`、options=0，並未要求 registry 寫入。隔離外原次沒有記錄 mask／options，未重跑，也不宣稱這兩個參數已完成跨環境對照。
-
-觀測沿用 token、零 capabilities、映像、Job 與清理檢查，沒有加 capability 或修改登錄檔 ACL。這將問題定位到此環境的 LPAC Winsock 資源存取，排除了必須先有 Claude 任務、模型解析或 Hook 逾時才出錯；不是 Claude 程序內部的逐呼叫 trace。IAT 僅作診斷，未加入產品。現有安全契約內沒有可直接採用的修法，Claude 清單與實際子代理仍未通過，路由保持停用。
+token、零 capabilities、映像、Job／清理維持，未加權限或改 ACL。這定位了此環境的 Winsock 資源存取，不依賴先有 Claude 任務、模型解析或 Hook 逾時；不是 Claude 內部 trace。IAT 僅作診斷，未加入產品，當時清單與實際採用仍未通過。
 
 ## 2026-10-23 零 capabilities 契約邊界
 
-- 唯讀讀回 `WinSock2\Parameters` 的 ACL：讀取權限只給 BU、AC（ALL APPLICATION PACKAGES）與 `registryRead` capability SID；沒有個別 package SID，也沒有 ALL RESTRICTED APPLICATION PACKAGES。AppContainer token 除一般檢查外還須通過 package／capability 檢查，零 capabilities 的 LPAC 因此必然被拒。
-- Claude 2.1.303 為 Bun v1.4.4 Windows 編譯，內含 libuv。libuv 的 `uv_loop_init` 先跑 `uv__once_init` → `uv__winsock_init`，`WSAStartup` 失敗即 `uv_fatal_error` 中止；先前 LPAC stderr `WSAStartup: (10107) ...` 與此格式一致。stream-json initialize 需要事件迴圈，沒有旗標、環境變數或 stdin 型態能略過 Winsock。Node 版同樣使用 libuv。
-- 正式入口 `mrh models --host claude` 本日重跑仍為 `claude_catalog_initialize_failed`、exit 2。
+Winsock 鍵 ACL 只授讀給 BU、AC（ALL APPLICATION PACKAGES）及 registryRead SID，沒有個別 package SID 或 ALL RESTRICTED APPLICATION PACKAGES；零 capabilities LPAC 無法通過 package／capability 檢查。Claude 2.1.303 為 Bun 1.4.4 Windows 編譯，libuv 的 `uv_loop_init → uv__once_init → uv__winsock_init` 會初始化 Winsock，失敗即 uv_fatal_error，與 stderr 10107 一致。initialize 需要事件迴圈，無旗標／環境／stdin 型態可略過，Node 版也用 libuv。當日正式 models 入口仍 exit 2、claude_catalog_initialize_failed。
 
-結論：在零 capabilities LPAC 契約下，原 initialize 無法成功，除非放寬隔離（`registryRead`、一般 AppContainer 或系統 ACL）或改用另一個清單來源（隔離外 broker、其他 sandbox、版本鎖定的離線快照）。這些都會改變安全邊界或資料語意，須由使用者決定；未做任何一項，Claude profile 維持停用。
+當時未採取 registryRead、一般 AppContainer、系統 ACL 修改或隔離外 broker／其他 sandbox／版本鎖定快照：它們都改變安全或資料契約。這是舊零 capabilities 契約的限制，後續批准如下，不能把原次失敗改判。
 
 ## 2026-10-23 registryRead：Claude 清單通過
 
-使用者決定（2026-10-23）以 LPAC 加單一 `registryRead` 取得 Claude 清單，取代先前「零 capabilities」限制。依據：`WinSock2\Parameters` 的 ACL 只對 BU、ALL APPLICATION PACKAGES 與 `registryRead` SID 授讀；Chromium 的 LPAC 沙箱也一律附 `registryRead`。
+使用者批准 LPAC initialize 加單一 registryRead（`0983c1f`），取代舊零 capabilities 限制；--version 仍零。依據是 Winsock ACL 的授權 SID，Chromium LPAC 也附該 capability。名稱白名單只允許 registryRead，SID 由 DeriveCapabilitySidsFromName 推導；懸停 token 必須恰好等於所求 SID，多／少／不同均不解除懸停，讀回亦吻合。
 
-- 實作：`windows_lpac.isolated(..., capabilities=)` 名稱白名單（僅 `registryRead`），SID 由 `DeriveCapabilitySidsFromName` 推導；懸停 token 必須恰好列出要求的 SID，多、少或不同均不解除懸停。只有 initialize 帶 `registryRead`，`--version` 維持零。
-- 讀回：推導的 SID 等於 Winsock 鍵 ACL 的授權 SID；真實 token 零要求時為空清單，要求時恰好該 SID。
-- 邊界（原生 payload，`tests.windows.test_lpac` 加 catalog **19 PASS、0 FAIL**）：Winsock 鍵可讀、寫入回 5；`HKLM\SECURITY` 與使用者自建 canary 鍵回 5；Winsock 啟動為 0，但第一個 socket 回 10013（WFP 拒絕）；隔離外檔案讀寫與映像寫入仍 5；環境不繼承。注意 Windows 自己在部分系統／使用者鍵（例如 `HKCU\Software`、`HKLM\SAM` 容器本身）的 ACL 已列 `registryRead`，這些鍵可被開啟，所以 canary 用全新的預設 ACL 子鍵。
-- 真實 initialize（鎖定雜湊的 Claude 2.1.303，約 22 秒）取得 default、opus、fable、sonnet、haiku 共 5 個模型，每個支援 low 至 max 五級 effort，無模型請求。
-- 其他 Windows 測試：`test_claude_native`、`test_claude_routing`、`test_platform` 共 29 項中 28 PASS；`test_platform` 的跨程序鎖測試在 `-I` 受保護 Python 下子程序找不到 `mrh`，屬測試啟動方式，與本改動無關。
+| 證據 | 結果與界線 |
+| --- | --- |
+| 原生拒絕 | LPAC＋catalog 19 PASS、0 FAIL。Winsock 鍵可讀、寫回 5；HKLM\SECURITY、自建預設 ACL canary 鍵及隔離外檔案讀寫／映像寫入回 5，環境不繼承。Winsock 啟動 0，第一個 socket 回 10013（WFP）。Windows 部分既有鍵如 HKCU\Software／HKLM\SAM 容器本已授 registryRead，不能拿它們當私有 canary。 |
+| 真清單 | 鎖定 hash 的 Claude 2.1.303，約 22 秒取得 default／opus／fable／sonnet／haiku，各 low～max 五級 effort；沒有模型請求。 |
+| 其他 Windows 測試 | claude_native、claude_routing、platform 共 29 項中 28 PASS；跨程序鎖在受保護 Python -I 下子程序找不到 mrh，屬 runner 邊界，後續標準 PYTHONPATH 通過另記。 |
 
-Mac 的 sandbox-exec 分支與此檔無關，不受影響，也未重驗。
+本批未重驗 Mac sandbox-exec。catalog 的 LPAC 不代表子代理本身在 LPAC 執行。
+
 ### 啟用與真實子代理驗證（2026-10-23）
 
-使用者明確同意所有本機磁碟及 UNC 路徑下的 Claude 專案任務內容可送往 Jev 分類後，執行 `--host claude --all-workspaces --enable`；安裝器回報 Claude routing ready、enabled、export 已允許，Codex profile（revision 6）未被更動。Claude 政策取自驗證清單：Light `haiku:max`、Small `sonnet:high`、Mid `opus:xhigh`、Top 交回主 AI。
+使用者允許所有本機磁碟與 UNC 的 Claude 專案任務送 Jev 後啟用；routing ready、enabled、export 允許，Codex revision 6 未變。Claude 政策為 Light haiku:max、Small sonnet:high、Mid opus:xhigh、Top Main。
 
-在已載入該外掛的 Claude Code 工作階段，用原生 Agent 工具派一個最小、無敏感資料的任務（只回覆 OK）：
+首次原生最小任務：Jev Light/0.87，Pre 攔截原委派並建議 haiku/max → 重發後 child completed/OK。advice_given 與 advice_reissue 關聯，children requested haiku/max、resolved claude-haiku-5-5、followed=1；attempts 只有一次 classification_requested→requested→started→returned。沒有重複分類、派工、Hook 逾時或 cli.exe／host-tools 孤兒。這一份證據只涵蓋 Light；catalog 隔離與子代理宿主權限、requested effort 與獨立實際 effort 分開。
 
-- Pre Hook 攔截原委派，Jev 分級為 Light、信心 0.87，建議 `haiku` / `max`，原委派未啟動。
-- 依建議重發同一委派後，子代理完成並回報 OK。
-- `advice`：一筆 `advise`／`advice_given`，一筆 `preserve`／`advice_reissue`，後者關聯到前者並記錄 haiku／max。
-- `children`：一筆，requested `haiku`／`max`，resolved `claude-haiku-5-5`，followed=1。
-- `attempts`：Jev 僅一次 `classification_requested`→`requested`→`started`→`returned`；重發沒有再次呼叫分級器，也沒有重複委派。
-- 無 Hook 逾時，無 `cli.exe`／host-tools 孤兒程序。
-
-證據分開：子代理本身由宿主以既有權限執行；catalog 探測程序才是 LPAC＋`registryRead`，兩者不互相證明。這只是一次 Light 層級的最小驗證，未涵蓋 Small／Mid／Top、使用者明示指定模型、Post 失敗或 Mac。
 ### 其餘情境的真實驗證與觀察到的 Hook 逾時（2026-10-23）
 
-同一個工作階段、同一份已啟用的 Claude profile（門檻 0.5，下限由設計限定為 0.5），共 13 個不同任務的原生 Agent 委派，任務內容皆為無敏感資料的合成任務：
+同一 Claude 工作階段／profile，門檻 0.5（設計下限），13 個不同合成任務的結果：
 
 | 情境 | 結果 |
 | --- | --- |
-| Light | `advise`（0.87）→ 依 `haiku`／`max` 重發 → 子代理 followed=1，resolved `claude-haiku-5-5`。 |
-| Small | 先有 2 次 `preserve`／`low_confidence`（Small 0.47、0.45，低於門檻，原委派照常執行）；第 4 次任務更明確，`advise`（Small 0.68）→ `sonnet`／`high` 重發 → followed=1，resolved `claude-sonnet-5-5`。 |
-| Mid | 先有 2 次 `preserve`／`low_confidence`（Mid 0.50 對 Small 0.38～0.47，信心 0.33）；第 3 次 `advise`（Mid 0.87）→ `opus`／`xhigh` 重發 → followed=1，resolved `claude-opus-5-5`。 |
-| Top | 判為 Top（1.00），`continue_main`／`top_main_requested`，委派被攔下並指示主模型自己做，沒有建立替代子代理。 |
-| 明示模型 | `model=sonnet`、`effort=high`：`preserve`／`explicit_model`，不呼叫 Jev，原呼叫保留。 |
-| 具名角色 | `Explore`：`preserve`／`named_role`，原呼叫保留，子代理記錄 followed=0。 |
-| Post 失敗（受控注入） | 背景程序在 Pre 寫入後 30 毫秒對 MRH 自己的 Claude `advice.sqlite3` 取得 `BEGIN EXCLUSIVE` 並持有 12 秒後 `ROLLBACK`。原子代理照常完成、沒有重複委派；該次 `children` 沒有新增列；`PRAGMA integrity_check` 為 ok，advice 9、children 5 與預期一致。 |
+| Light | 0.87 → haiku/max 重發，resolved claude-haiku-5-5、followed=1。 |
+| Small | 先有低信心 0.47／0.45 保留原呼叫；第 4 次任務更明確，0.68 → sonnet/high，resolved claude-sonnet-5-5、followed=1。 |
+| Mid | 先兩次 Mid 0.50 對 Small 0.38～0.47，信心 0.33，保留原呼叫；第 3 次 Mid 0.87 → opus/xhigh，resolved claude-opus-5-5、followed=1。 |
+| Top | 1.00、continue_main／top_main_requested，攔下委派並交主模型，沒有替代 child。 |
+| 明示／具名 | sonnet/high 為 preserve／explicit_model，無 Jev；Explore 為 preserve／named_role、followed=0。 |
+| Post 失敗注入 | Pre 寫入後 30ms 對自有 DB BEGIN EXCLUSIVE 12 秒後 ROLLBACK。原 child 完成、無重複派工，該次 children 未新增；integrity_check ok，advice／children＝9／5，符合預期。 |
 
-**Hook 逾時（未解決）**：兩次 Pre 回報 `hook time budget exhausted`（原呼叫保留，依提示未重試），這兩次沒有任何 `advice`／`attempts` 記錄，也沒有 Post 子代理記錄。另有一次明示模型委派的 Pre 正常但 Post 沒有子代理記錄（單次，原因未能分辨是逾時還是其他）。Post 在非同步 Agent 流程下沒有出現使用者可見的訊息，所以這類遺失不易察覺。
+原 1 秒期限下兩次 Pre 回報 time budget exhausted，未重試，沒有 advice／attempts／Post 記錄；另一次明示模型 Pre 正常但 Post 無列，原因無法區分逾時或其他。非同步 Post 沒有可見訊息，不能由無警告推論沒有遺失。
 
-原因觀測：launcher 的第一階段期限是 1.0 秒（自 supervisor 啟動起算），要等 runtime 匯入與兩次設定驗證後回報政策，才延長到 Jev 路徑的 2.5 秒；`launch_seconds` 的 1.0 秒也是 Post 的上限。以無副作用的方式量測 Hook 子程序到回報政策為止的啟動時間（受保護 Python、已安裝 runtime 與設定，不處理事件）：第一批 25 次中位數 0.56 秒、p90 1.09 秒、最大 2.02 秒、4 次超過 1.0 秒；其後兩批各 25 次中位數 0.34～0.36 秒，超過 1.0 秒為 0 與 3 次。匯入約佔 0.22～0.40 秒，其餘是行程啟動，離群值來自行程啟動的環境波動。把預編譯 `.pyc` 放進 pyz 只讓中位數快約 30 毫秒，不能消除離群，已還原，未留在程式中。
+啟動觀測不處理事件：首批 25 次 中位數 0.56 秒、第 90 百分位 1.09、最大 2.02，4 次超 1 秒；另兩批各 25 次 中位數 0.34～0.36，超時各 0／3 次。匯入 0.22～0.40 秒，其餘程序啟動波動；pyz 加 pyc 僅快約 30ms，未消除離群，已還原。當時未提高期限，原呼叫保留且未重複派工；後續授權分兩階段如下。
 
-沒有提高任何時限。要降低發生率只能放寬第一階段期限或再減少行程數，兩者都會改變既有 Hook 契約，須使用者決定；在那之前，失敗的行為是設計的「保留原呼叫並提示」，且在本次觀察中從未造成重複委派。
 ### Pre 第一階段期限放寬到 2.5 秒（2026-10-23，提交 `dc71528`，世代 `19f901e64351045cfba74f4f`）
 
-使用者同意只放寬 Windows PreToolUse 的第一階段期限（child 回報第一行政策之前）：由 1.0 秒改為 2.5 秒，與 Jev 路徑視窗相同。實作在 `plugin._windows_launcher` 的轉換，POSIX launcher 文字不變。PostToolUse 仍是 1.0 秒；child 回報的政策仍會取代期限（本機政策 1.0 秒、Jev 2.5 秒、已驗證非 Jev 48 秒皆不變）；完整性、設定二次驗證、Job 綁定與程序清理都沒動。
+僅 Windows Pre 等待首行政策由 1.0 改 2.5 秒；當時本機政策及 Post 仍 1 秒，Jev 2.5 秒／已驗證非 Jev 48 秒與完整性、設定二次驗證、Job／清理不變，POSIX launcher 文字未改。
 
-- 測試：新增 2 項（啟動延遲 1.3 秒時 Pre 取得真實建議、Post 仍約 1 秒被截止；啟動延遲 3.0 秒時 Pre 仍在約 2.5 秒截止且無決策）。舊 launcher 下第一項失敗（1.17 秒即被殺），新 launcher 通過。受影響的 `test_platform`、`test_claude_routing`、`test_claude_native`、`test_claude_catalog`、`test_setup` 共 75 項中 74 PASS；失敗的是前述跨程序鎖測試（受保護 Python `-I` 下子程序找不到 `mrh`，與本改動無關）。
-- 真實委派，循序 4 組：Pre 建議（Light 0.83～0.87）→ 重發 → 子代理完成，4 組全部有 `advice_reissue` 關聯與 Post 子代理記錄（followed=1），0 逾時。
-- 真實委派，同時 6 組（12 個 Pre、6 個 Post 並行，負載遠高於一般使用）：第一階段 Pre 6/6 成功分級，0 逾時。但仍維持 1.0 秒的兩處在負載下失敗：明示模型的重發 Pre（本機政策 1.0 秒）6 個中 3 個回報「hook time budget exhausted」，Post 6 個只記到 2 個。逾時時原呼叫皆保留、子代理照常完成、沒有重複委派或孤兒程序，但這些事件缺少記錄或關聯。
+| 證據 | 結果 |
+| --- | --- |
+| 回歸 | 新增 2 項：1.3 秒啟動時 Pre 得建議、Post 仍約 1 秒截止；3 秒啟動時 Pre 約 2.5 秒截止且無決策。首項舊版 1.17 秒被殺、新版通過。platform／claude_routing／claude_native／claude_catalog／setup 五模組 75 項中 74 PASS，另一項為上述 -I 跨程序鎖 runner 問題。 |
+| 循序 4 組 | Light 0.83～0.87，建議→重發→child 完成，4/4 關聯及 Post followed=1，0 逾時。 |
+| 並行 6 組 | 12 Pre／6 Post：首階段 6/6 分類、0 逾時；本機 1 秒重發 Pre 僅 3/6 成功，Post 僅 2/6 記錄。原呼叫／child 仍完成，無重複或孤兒，部分關聯缺失。 |
 
-結論：第一階段放寬解決了原本最常見、也最影響使用者的失敗（分級前被殺、整個建議流程消失），一般循序使用已不再出現逾時；並行負載下，每個被採納的建議之後的明示重發 Pre（本機 1.0 秒政策）與 Post（1.0 秒）仍會逾時。進一步放寬這兩處屬於另一項時限變更，未經使用者同意，沒有做。
+這只解決原第一階段，不代表當時並行重發／Post 已修好。
+
 ### 本機 Pre 重發 2.5 秒、Post 2.0 秒（2026-10-23，提交 `8a2fcee`，世代 `7da51e233a0e4fb94c3bd5d2`）
 
-使用者同意再放寬兩處（只限 Windows）：本機政策（明示模型／強度、具名角色、範圍外等）的 PreToolUse 由 1.0 秒改為 2.5 秒，PostToolUse 由 1.0 秒改為 2.0 秒；安全檢查不變。實作：`hook_budget.LOCAL_SECONDS`／`POST_SECONDS` 依 `sys.platform` 取值（非 Windows 仍為 1.0 秒），`launch_seconds` 與 `HookBudget.local()` 使用它們；Windows launcher 轉換接受政策值 2.0、把 Post 的政策上限與第一階段期限由 1.0 改為 2.0；Windows Claude 外掛 `hooks.json` 的 Post 宿主逾時由 2 秒改為 5 秒（supervisor 的期限從 PowerShell 與 bootstrap 之後才起算，約再加 1～1.5 秒，宿主若仍是 2 秒會先把 Hook 殺掉）。Jev（2.5 秒）與已驗證非 Jev（48 秒）政策、完整性／設定二次驗證／Job 綁定與程序清理、SQLite 等待額度、Codex 的 `hooks.json`（變動會要求重新信任）、所有非 Windows 數值都沒變。
+第二次批准僅 Windows：本機政策 Pre 1→2.5 秒、Post 1→2 秒，launcher 接受政策 2.0；Claude Post 宿主 2→5 秒，因 PowerShell／bootstrap 另耗約 1～1.5 秒。Jev 2.5 秒／非 Jev 48 秒、SQLite 等待、安全／Job、當時 Codex 宿主 2 秒及所有非 Windows 值不變。
 
-- 測試：`test_platform` 新增 3 項並改寫 1 項（Pre 1.3 秒啟動得到建議；Pre 3.0 秒仍在約 2.5 秒截止；本機政策 Pre 與 Post 在 1.3 秒啟動下成功、3.5 秒啟動下分別在約 2.5／2.0 秒截止；非 Windows 常數仍為 1.0；Claude Post 宿主逾時為 5）。新測試在舊程式碼上失敗。共用的 `test_hook_budget` 一項固定 1.0 的斷言改為依平台。受影響範圍除前述既有的跨程序鎖測試與 13 項原本就無法在 Windows 執行的 POSIX 假設測試外全數通過；這些在 HEAD 也以相同方式失敗。
-- 真實委派，同一個既有工作階段（宿主 `hooks.json` 啟動時載入，Post 宿主逾時仍是舊的 2 秒），同時 6 組：6/6 建議、重發 Pre 6/6 有記錄（先前 3/6）、Post 子代理記錄 2/6（與先前相同，符合宿主 2 秒仍會先殺）。
-- 真實委派，**全新的無頭 Claude 工作階段**（載入新的 `hooks.json`），同時 6 組：6/6 建議、6/6 重發 Pre 有記錄、6/6 Post 子代理記錄且 followed=1，無任何「時間預算用盡」，6 個子代理都完成，無重複委派，無遺留程序。
+- 回歸新增 3 項、改 1 項：1.3 秒啟動成功、3 秒 Pre 截止、本機 Pre／Post 在 3.5 秒啟動時各 2.5／2 秒截止，非 Windows 仍 1 秒、Claude 宿主 5 秒；新案例舊版失敗，共用 hook_budget 斷言改依平台。受影響項目除 -I runner 鎖案例與 13 項原有 POSIX 假設失敗外通過，這些原 HEAD 也同樣失敗。
+- 既有 Claude 工作階段仍載舊宿主 2 秒：並行 6 組建議 6/6、重發 Pre6/6、Post2/6。**全新工作階段**載入 5 秒後，同負載建議／重發／Post 皆 6/6、followed=1，6 child 完成，無逾時／重複／遺留程序。
 
-限制：這只是 Light 層級的一組並行驗證；Codex 的 Post 宿主逾時仍是 2 秒（為避免要求重新信任而未動），所以 Codex 的 Post 仍受原限制。Mac 的 Hook 行為沒有改（常數依平台），但共用模組有改動，Mac 原生 Hook smoke 仍待驗。
+此樣本只涵蓋 Light；當時 Codex 宿主仍 2 秒，不能推論 Codex 高並行。Mac 行為值未改，共用模組的 Mac 驗收另記。
+
 ### Codex 共用 launcher 實測與 `setup.ps1` 修正（2026-10-23）
 
-- **Codex 真實委派**（世代 `7da51e233a0e4fb94c3bd5d2`，Codex 0.163.0-alpha.10.2，用 `codex exec` 要求並行 4 個 `spawn_agent`）：4 個子代理全部完成；5 個 Pre（4 個通過、1 個攔下建議 Light 0.57→`gpt-6-luna`／`max`）與 4 個 Post 全部完成並記錄，4 筆子代理記錄，無任何「時間預算用盡」。第一次嘗試誤用 `--ephemeral`，Codex 自己回報子代理缺少 rollout 而拒絕 spawn（與 MRH 無關），該次也已確認 Pre 逾時為 0、重發與 Post 記錄正常（followed=1）。這證明共用的 Windows launcher 與時限模組對 Codex 沒有退化；Codex 的 Post 宿主逾時仍是 2 秒（未改），本次負載較小，不代表高並行下的結果。
-- **`setup.ps1`**：Windows PowerShell 5.1 會剝掉傳給原生程式的引數中的雙引號，原本的 Python 探測字串含雙引號，導致它誤報找不到 Python。探測改成只用單引號。新測試實際透過 `powershell.exe` 執行探測，並確認舊的雙引號寫法在 5.1 確實失敗。`setup.ps1 --check --json` 在 5.1 實測回報 installed、integrity verified、routing ready。runtime 沒有變，未重裝。
-- `test_platform` 的跨程序鎖測試在文件標準的 `PYTHONPATH` 方式下通過；先前的失敗是我自己的測試啟動方式（受保護 Python `-I`）造成。
+| 項目 | 結果與界線 |
+| --- | --- |
+| Codex 0.163.0-alpha.10.2 | 世代 7da51e233a0e4fb94c3bd5d2，並行 4 child 全部完成；5 Pre（4 通過、1 攔下 Light0.57→gpt-6-luna/max）及 4 Post 均記錄，0 逾時。首次誤用 ephemeral，宿主因缺 rollout 拒絕 spawn，非 MRH；該次 Pre 無逾時、重發／Post followed=1。當時 Codex 宿主仍 2 秒，較小樣本不證明高並行。 |
+| PowerShell 5.1 | `9d50280` 將 Python 探測字串改單引號，避免 5.1 剝原生引數雙引號而誤報無 Python；真 powershell.exe 測試證明舊寫法失敗。setup --check 實讀 installed／integrity verified／routing ready，runtime 未變、未重裝。 |
+| 跨程序鎖 | 文件標準 PYTHONPATH 方式通過；前述 -I 子程序無 mrh 是 runner 啟動問題，保留原批失敗，不改成同輪全過。 |
+
 ### Codex Post 5 秒、設定讀取競態與 Small／Mid 並行（2026-10-23，提交 `212b002`、`0aac0c0`，世代 `0bf5fa9d0ab28976ad98cc98`）
 
-- **Codex Post 宿主逾時**：`plugin.codex_hook_timeout()` 在 Windows 回傳 5 秒、其他平台維持 2 秒；新的測試檢查函式本身與實際產生的 `hooks.json`。安裝後 Codex 回報 `trust: unverified`、`pending: native_hook_trust`（Post 定義雜湊改變），使用者在原生 `/hooks` 審閱並信任後變為 `trusted`、路由 ready；`config.toml` 自安裝前快照只有 Post `trusted_hash` 與 marketplace 指標兩個鍵不同。信任後真實 `codex exec` 並行 4 個 `spawn_agent`：4 個子代理完成，4 Pre、4 Post 全部完成並有記錄（Post 4/4），無「時間預算用盡」。這次 Jev 判斷皆低於 0.5 門檻（Small 0.32～0.47），全部保留原呼叫。
-- **Small／Mid 並行**（全新無頭 Claude 工作階段，載入新的 `hooks.json`）：3 Small ＋ 3 Mid 同時送出；5 個建議（Small 0.68、0.69，Mid 0.75×3）→ 重發 5/5 有記錄 → Post 5/5、followed=1，模型為 `sonnet/high`×2、`opus/xhigh`×3。Mid 子代理因我給的 Bash 許可範圍太窄無法執行 Python，與 MRH 無關。
-- **新發現的缺陷與修正**：同一批中第 6 個 Pre 回報「settings unavailable」，沒有任何記錄，原呼叫照常執行。根因是 `owned.verify` 走訪設定資料夾後逐一 `lstat`，並行 Hook 讓 SQLite 刪除 `-wal`／`-shm`，列舉與檢查之間檔案消失（`FileNotFoundError`）被當成 `settings_unowned`。180 次單純並行讀取全部成功（不是讀檔衝突）；在私有複本上以 3 個讀取程序加 3 個不斷開關 SQLite 的程序重現，修正前約 4100 次檢查有 10 次（約 0.24%），修正後 3776 次為 0。修正只在 Windows 略過消失的 `-wal`／`-shm`；未知檔名仍拒絕、其他消失的檔案仍失敗、非 Windows 不變。新測試在舊程式碼上失敗。
-- **範圍與限制**：這次修的是低機率的並行競態，無法用少量實測證明「不再發生」，證據是確定性測試加修正前後的壓力對照。Windows 受影響測試 98 項中 97 通過，失敗的是跨程序鎖測試（在受保護 Python `-I` 的執行方式下子程序找不到 `mrh`，標準 `PYTHONPATH` 方式通過）。
+| 變更／觸發 | 直接證據與限制 |
+| --- | --- |
+| Codex 宿主 Post 5 秒 | 212b002 的 codex_hook_timeout Windows5／其他平台 2，函式與生成 JSON 均有測試。安裝因定義 hash 改變呈 unverified／native_hook_trust，使用者原生審閱後 trusted、routing ready；config 差異僅 Post trusted_hash 與 marketplace 指標。信任後 4 child／4 Pre／4 Post 全記錄、無逾時；Jev Small0.32～0.47 皆低於 0.5 而保留原呼叫，不能當成採用建議的並行證據。 |
+| Claude Small／Mid | 新工作階段 3 Small＋3 Mid：5 建議（Small0.68／0.69、Mid0.75×3）→重發 5/5→Post5/5、followed=1，sonnet/high×2、opus/xhigh×3。Mid child 因 runner 給的 Bash 權限太窄無法執行 Python，與 MRH 無關。 |
+| 第 6 個 Pre settings unavailable | 無記錄、原呼叫繼續。owned.verify 列目錄後 lstat 時 SQLite 側檔消失，FileNotFoundError 被當 settings_unowned。180 次單純並行讀全成功；私有副本 3 讀取＋3 SQLite 開關程序重現，修前約 4100 次中 10 次（約 0.24%），修後 3776 次為 0。0aac0c0 只在 Windows 略過消失的-wal／-shm，未知檔名／其他消失檔仍拒絕，非 Windows 不變；新測試舊版失敗。 |
+| 受影響測試 | 98 項中 97 通過，另一項為-I runner 跨程序鎖，標準 PYTHONPATH 通過。確定性回歸與壓力對照支持該修正，少量實測不能證明不再發生或估日常故障率。 |
+
+Windows 非 MRH 的 model、model_reasoning_effort、service_tier 與 10 月 22 日備份不同；安裝器不寫這些鍵，寫入者／時間未證實。舊 Claude 工作階段重載才採用新宿主期限；Mac 結果見[Mac 紀錄](mac-handoff.md#5-未決項目與已解決項目)，不互相替代。
 
 ## 2026-10-24 雙模式與 packets 正式採用（程式 `670272f`）
 
-本輪一般打包模式與 `--dev --codex-packets` 的保證分開驗證。來源保留經驗證的 bootstrap、獨立 `runtime_root`、PEP 660 純路徑連結與 site-free runtime；一般模式不依賴 checkout，設定、統計、憑證及外部資料引用不自動搬移。原 LPAC capabilities、Job、完整性檢查與時限維持，詳見[開發指南](development.md#本機開發安裝--dev)。
+一般打包與 dev＋packets 分開驗證：經驗證 bootstrap、獨立 runtime、PEP 660 純路徑連結及 site-free Python 保留；一般模式不依賴 checkout，外部設定／統計／憑證／資料引用不自動搬移。LPAC capabilities、Job、完整性與時限不變，設計見[開發指南](development.md#本機開發安裝--dev)。
 
-分批保留原有 70 PASS／1 預期 SKIP，後續 workspace gate、兩個 legacy 情境與不靠 GC 的真 SQLite 關閉案例四項 PASS，以及 staging 重複 UUID 修正後的 lost-ACK PASS。修正後的兩項補驗未再出現先前 staging 深層檔案建立錯誤；這不宣稱支援任意長路徑。
+分批保留 70 PASS／1 預期 SKIP；後續 workspace gate、兩個 legacy 與不靠 GC 的真 SQLite 關閉四項 PASS，再加 staging 重複 UUID 修正後 lost-ACK PASS。補驗未再有 staging 深層建檔錯誤，不表示任意長路徑都支援。
 
-原 77 個唯一 ID 的歷史仍為 75 PASS、1 FAIL、1 預期 SKIP，不是同一輪全套通過。原不完整事件的 dev Hook FAIL 原樣保留，原因未定。插樁的 marker 成功與五次失敗限定捕捉未重現都只是診斷，不能增加原生 PASS、改判原 ID，或據此宣稱 fixture 錯誤、產品已確認有缺陷或已修復。
+**77 個唯一 ID＝75 PASS、1 FAIL、1 預期 SKIP**，不是同一輪全過。原不完整事件的 dev Hook FAIL 原因未定；插樁 marker 成功與五次失敗限定捕捉未重現只屬診斷，不增加原生 PASS、不改判原 ID、不證明 fixture 錯誤或產品已有確認缺陷／修復。
 
-程式 `670272f` 另以唯一一次未插樁、完整合法普通事件取得精確開發 Hook 標記，耗時 0.438 秒；開發來源移走後 CLI exit 2 並明確回報來源不可用，切到一般模式且來源仍移走時 help exit 0。原啟動鏈、Job 與 2.5 秒期限保留，fixture 清理成功。這三項按正常輸入及模式邊界各自補證，不覆寫原歷史失敗。
+另一次未插樁、完整合法普通事件精確取得 dev Hook 標記（0.438 秒）；來源移走後 CLI exit2 並明確回報來源不可用，切一般模式且來源仍移走時 help exit0。啟動鏈／Job／2.5 秒期限保留，fixture 清理成功；這是正常輸入及模式邊界的補證，不覆寫原 FAIL。
 
-前一階段的正式更新已完成 development＋codex-packets。兩宿主原生註冊及路由讀回就緒，Codex trusted／packets=true，pending 為空、沒有待恢復交易；從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均成功。CLI 與兩 Hook 的 manifest、binding、PEP 660 descriptor／PTH、開發來源及獨立 runtime 一致。安裝器耗時 107.61 秒；本輪沒有 provider、真實宿主派工或產品測試重跑。
+當次 development＋packets 正式採用：兩宿主註冊／routing、Codex trusted／packets、CLI／Hook 的 manifest／binding／descriptor／PTH／來源／runtime 讀回一致，pending 空、無待恢復交易。repo 外真安裝入口 check／status／ctrl 成功，安裝 107.61 秒，未重跑 provider、真派工或產品測試。來源為合格受保護 checkout；未放寬來源條件、改 workspace ACL／PowerShell 政策或另建 clone，只有實際 dev_source 修改會生效。
 
-該開發模式的來源採用符合安全條件的既有受保護 Git checkout。共用可寫 workspace 不符合目前使用者控制且不可由其他帳號改寫的條件；未放寬來源檢查、修改整個 workspace ACL、變更 PowerShell 政策或另建 clone。只有實際 `dev_source` 中的修改在下次呼叫生效，其他保留副本不會自動同步。
-
-兩份 profile、active pointer、外部白名單、非 MRH 宿主設定語意、PATH 及憑證存在狀態均保留；兩份 SQLite 的 schema 與全部原資料列 multiset 完整保存。既有統計完整保留，不宣稱 DB bytes 或總列數相同。獨立 runtime 沿既定設計建立，原 runtime、舊安裝代、私有備份與 Git 歷史完整保留；自有暫存已清，無 stage 異常。Mac 程式 `670272f` 的正式採用與資料保全另見[驗證摘要](validation.md)。
+兩 profile、指標、白名單、非 MRH 設定語意、PATH／憑證存在狀態及兩 SQLite schema／全部原列重數保全，不宣稱 DB bytes 或總列數相同；舊 runtime／安裝代／Git 保留、自有暫存清理，無 stage 異常。Mac 同批保全見[驗證摘要](validation.md)。
 
 ### 既定發布模式：packaged＋packets（正式切換已完成）
 
-原始範圍僅使用者本機 Mac 開發環境使用 dev；其他所有環境（包括 Windows 與其他 Mac）使用發布／packaged 並保留 packets。前次 Windows dev 僅保留為技術歷史，不作符合最終模式的驗收。
+安裝範圍僅使用者本機 Mac 開發環境用 dev，Windows 及其他環境用 packaged＋packets；前次 Windows dev 屬技術歷史。`8d74957` 從乾淨已發布來源沿原參數省略 dev，完成一次正式切換：execution_mode=installed、source 空，app/mrh.pyz 與兩 Hook runtime 匹配，無 dev_source／editable；manifest／獨立 runtime 一致。兩宿主註冊／routing、Codex 信任／packets 就緒，Hook bytes 保留，pending 空、無待恢復交易。當時保留的 checkout 供更新，不是執行依賴，修改不再即時生效。
 
-Windows 已從乾淨、已發布來源 `8d74957` 沿原安裝參數省略 `--dev`，完成一次 packaged＋packets 正式安裝。`execution_mode` 為 `installed`、`source` 為空，CLI 的 `app/mrh.pyz` 與兩 Hook runtime 匹配，metadata／binding 不含 `dev_source` 或 editable；manifest 與獨立 runtime 一致，checkout 保留供後續更新，其修改不再即時生效。Codex 註冊／信任／routing／packets 及 Claude 註冊／routing 就緒，Hook bytes 保留，pending 為空且沒有待恢復交易。
-
-從 repo 外的一般目錄使用真正已安裝入口執行 check／status／ctrl 均 exit 0；安裝耗時 139.906 秒，check 31.328 秒、status 0.797 秒、ctrl 0.672 秒，各執行一次。兩份 profile、指標、外部白名單、非 MRH 設定語意、PATH、憑證存在狀態、兩份 SQLite 的 schema 與全部原資料列重數均保留；舊安裝代、manifest、runtime、私有備份及來源保留，無 stage 殘留。沒有重跑產品測試、provider 或真實宿主派工，原不完整事件 FAIL 原因仍未定、不改判。
-
-若明確測試開發模式，使用合格來源並沿原宿主、路徑與 profile 參數加 `--dev`；回發布前先完成在途 packet，選乾淨已發布來源，以相同參數省略 `--dev` 重跑。來源與權限要求不放寬。
+repo 外真入口 check／status／ctrl 各 exit0；安裝 139.906 秒、check31.328、status0.797、ctrl0.672，各一次。原設定、兩 SQLite schema／原列重數與其他宿主語意均保全、無 stage 殘留；未重跑測試／provider／真派工，原不完整事件 FAIL 原因仍未定、不改判。以上來源／備份保留描述當次結果，之後依明確授權清除用完副本不影響原證據；模式操作見[開發指南](development.md#本機開發安裝--dev)。
