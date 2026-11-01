@@ -25,6 +25,17 @@ EMPTY = {"decisions": {}, "per_platform": {}, "kept_unchanged": {}, "tiers": {},
 
 
 class DashboardTests(unittest.TestCase):
+    def test_jev_balance_explains_the_public_api_gap_without_a_fake_amount(self):
+        configured = settings()
+        for width in (80, 100, 120):
+            for color in (False, True):
+                text = ANSI.sub("", dashboard.render(configured, EMPTY, "過去 7 天", width, color))
+                self.assertIn("Jev 餘額：目前無法透過公開 API 查詢", text)
+                self.assertIn("Console → Settings → Billing", text)
+                self.assertTrue(all(cell_width(line) <= width for line in text.splitlines()))
+        configured["classifier"]["provider"] = "codex_subscription"
+        self.assertNotIn("Jev 餘額", dashboard.render(configured, EMPTY, "過去 7 天"))
+
     def test_overhead_without_comparable_samples_wraps_within_card(self):
         data = {**DATA, "overhead": {"reissues": 1, "compared": 0}}
         for width in (80, 100, 120):

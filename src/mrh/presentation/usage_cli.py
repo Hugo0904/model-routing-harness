@@ -10,6 +10,7 @@ from mrh.infrastructure import settings_v2 as v2
 from mrh.presentation import stats_view
 
 REASON = {
+    "stale_snapshot": "已有較新的用量快照，保留現值",
     "claude_transcript_not_found": "找不到 Claude 的子代理紀錄檔",
     "codex_rollout_not_found": "找不到 Codex 的子代理紀錄檔",
     "transcript_changed_within_10_minutes": "紀錄檔 10 分鐘內還有變動（可能還在執行）",

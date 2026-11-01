@@ -347,10 +347,10 @@ def codex_parent_models(root, parent_id, call_ids):
 
 # ---- orchestration -----------------------------------------------------------------------------------------------------
 def collect(store, now, *, days=30, claude_root=None, codex_root=None):
-    """Explicitly refresh settled snapshots. Failures preserve the previous row and its as-of time."""
+    """Refresh settled snapshots (days=None means all history). Failures preserve the previous row and its as-of time."""
     default_claude, default_codex = roots()
     claude_root, codex_root = Path(claude_root or default_claude), Path(codex_root or default_codex)
-    candidates = store.usage_candidates(now - days * 86400)
+    candidates = store.usage_candidates(0 if days is None else now - days * 86400)
     summary = {"candidates": len(candidates), "collected": 0, "updated": 0, "unchanged": 0,
                "running": 0, "not_found": 0, "unreadable": 0, "other": 0, "details": []}
 
@@ -421,9 +421,11 @@ def collect(store, now, *, days=30, claude_root=None, codex_root=None):
             metadata = {"version": 1, "semantics": "settled_snapshot", "sources": before, "collected_at": now}
             for entry in entries.values():
                 entry["observation"] = metadata
-            store.save_usage({"platform": platform, "session_id": child["session_id"], "call_id": child["call_id"], "ts": child["ts"],
+            adopted = store.save_usage({"platform": platform, "session_id": child["session_id"], "call_id": child["call_id"], "ts": child["ts"],
                               "source_file": transcript.name, "models": models, "usage": entries,
                               "parent_model": parent_models[parent_key].get(child["call_id"]), "collected_at": now})
+            if not adopted:
+                note("other", child, "stale_snapshot"); continue
             summary["collected"] += 1
             summary["updated"] += int(child.get("previous_usage") is not None)
         except (OSError, ValueError) as exc:

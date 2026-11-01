@@ -448,12 +448,20 @@ class AdviceStore:
                 "WHERE c.agent_id IS NOT NULL AND c.ts>=? ORDER BY c.ts", (since,))]
 
     def save_usage(self, row):
-        """Replace one settled snapshot atomically. Numbers and identifiers only."""
+        """Adopt only a newer snapshot, atomically; never regress its as-of time."""
+        stamp = row["collected_at"]
+        if type(stamp) not in (int, float) or not math.isfinite(stamp) or stamp < 0:
+            raise ValueError("invalid_usage_collected_at")
         with closing(self.connect()) as db, db:
-            db.execute("INSERT OR REPLACE INTO child_usage VALUES(?,?,?,?,?,?,?,?,?)",
+            changed = db.execute("INSERT INTO child_usage VALUES(?,?,?,?,?,?,?,?,?) "
+                       "ON CONFLICT(platform,session_id,call_id) DO UPDATE SET "
+                       "ts=excluded.ts, source_file=excluded.source_file, models=excluded.models, "
+                       "usage=excluded.usage, parent_model=excluded.parent_model, collected_at=excluded.collected_at "
+                       "WHERE excluded.collected_at > child_usage.collected_at",
                        (row["platform"], row["session_id"], row["call_id"], row["ts"], row["source_file"],
                         json.dumps(row["models"], sort_keys=True), json.dumps(row["usage"], sort_keys=True),
                         row.get("parent_model"), row["collected_at"]))
+            return changed.rowcount == 1
 
     @classmethod
     def read_usage(cls, path, since):

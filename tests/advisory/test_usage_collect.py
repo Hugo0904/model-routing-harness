@@ -10,10 +10,10 @@ from argparse import Namespace
 from pathlib import Path
 
 from mrh.advisory import usage_collect as uc
-from mrh.advisory.request import Child
-from mrh.advisory.store import AdviceStore
+from mrh.advisory.request import Child, AdvisoryRequest
+from mrh.advisory.store import AdviceStore, request_id, task_hash
 from mrh.infrastructure import settings_v2 as v2
-from mrh.presentation import cli, usage_cli
+from mrh.presentation import cli, usage_cli, ctrl
 
 NOW = 1_800_000_000
 SECRET = "SECRET-TASK-TEXT-DO-NOT-STORE"
@@ -34,6 +34,7 @@ class Env(unittest.TestCase):
         self.root = Path(tmp.name).resolve()
         self.claude, self.codex = self.root / "claude", self.root / "codex"
         self.store = AdviceStore(self.root / "advice.sqlite3")
+        self.collect_now = NOW
 
     def child(self, platform, call, agent, session="s1", ts=NOW - 3600, model="haiku", effort="high"):
         self.store.record_child(Child(platform, session, call, model, effort, None, agent), ts)
@@ -70,7 +71,9 @@ class Env(unittest.TestCase):
         return file
 
     def collect(self, **kw):
-        return uc.collect(self.store, NOW, claude_root=self.claude, codex_root=self.codex, **kw)
+        now = self.collect_now
+        self.collect_now += 1
+        return uc.collect(self.store, now, claude_root=self.claude, codex_root=self.codex, **kw)
 
     def rows(self):
         with sqlite3.connect(self.store.path) as db:
@@ -461,6 +464,137 @@ class ParentReaderTests(Env):
         self.assertEqual([r["parent_model"] for r in after], ["gpt-6.1-sol"] * 2)
         with patch.object(uc, "codex_parent_models", side_effect=AssertionError("unchanged parent reread")):
             self.assertEqual(self.collect()["unchanged"], 2)
+
+
+class SnapshotOrderTests(Env):
+    def seeded_row(self):
+        self.child("claude", "order", "order")
+        self.path = self.claude_agent("order", "order", [claude_line("m", "claude-haiku-5-5", inp=5)])
+        self.collect()
+        raw = self.rows()[0]
+        return {**raw, "models": json.loads(raw["models"]), "usage": json.loads(raw["usage"])}
+
+    def timestamped(self, row, stamp):
+        result = json.loads(json.dumps(row))
+        result["collected_at"] = stamp
+        for entry in result["usage"].values():
+            entry["observation"]["collected_at"] = stamp
+        return result
+
+    def test_older_and_equal_keep_current_newer_is_adopted_and_invalid_is_rejected(self):
+        row = self.seeded_row()
+        self.assertTrue(self.store.save_usage(self.timestamped(row, NOW + 2)))
+        before = self.rows()
+        for stamp in (NOW + 1, NOW + 2):
+            self.assertFalse(self.store.save_usage(self.timestamped(row, stamp)))
+            self.assertEqual(self.rows(), before)
+        self.assertTrue(self.store.save_usage(self.timestamped(row, NOW + 3)))
+        self.assertEqual(self.rows()[0]["collected_at"], NOW + 3)
+        before = self.rows()
+        for stamp in (-1, True, float("nan"), float("inf"), None, "5"):
+            with self.assertRaisesRegex(ValueError, "invalid_usage_collected_at"):
+                self.store.save_usage({**row, "collected_at": stamp})
+            self.assertEqual(self.rows(), before)
+
+    def test_collector_stale_write_is_other_not_unchanged_or_saved(self):
+        row = self.seeded_row()
+        self.store.save_usage(self.timestamped(row, NOW + 20))
+        before = self.rows()
+        self.path.write_text(self.path.read_text() + claude_line("m2", "claude-haiku-5-5") + "\n")
+        os.utime(self.path, (NOW - 1800, NOW - 1800))
+        result = self.collect()
+        self.assertEqual((result["collected"], result["updated"], result["unchanged"], result["other"]), (0, 0, 0, 1))
+        self.assertEqual(result["details"][0]["reason"], "stale_snapshot")
+        self.assertEqual(self.rows(), before)
+        self.assertIn("已有較新的用量快照，保留現值", usage_cli.render(result, 30))
+
+
+class HumanViewRefreshTests(Env):
+    def child(self, platform, call, agent, session="s1", ts=NOW - 3600, model="haiku", effort="high"):
+        request = AdvisoryRequest(platform, session, "fixture-turn", call, "synthetic view fixture", model, effort)
+        self.store.preserve_explicit(request_id(platform, session, "fixture-turn", call), request,
+                                    task_hash(platform, session, "synthetic view fixture"), "jev", ts)
+        super().child(platform, call, agent, session, ts, model, effort)
+
+    def profile(self):
+        path = self.root / "profile" / "settings.json"
+        v2.init(path)
+        self.store = AdviceStore(path.parent / "advice.sqlite3")
+        return path
+
+    def text(self, path, command, *options):
+        out, err = io.StringIO(), io.StringIO()
+        code = cli.main([command, "--settings", str(path), "--no-color", *options], stdout=out, stderr=err)
+        self.assertEqual(code, 0, err.getvalue())
+        return out.getvalue()
+
+    def test_text_status_and_stats_each_collect_once_and_render_new_snapshot(self):
+        path = self.profile()
+        self.child("claude", "view", "view")
+        transcript = self.claude_agent("view", "view", [claude_line("m1", "claude-haiku-5-5", inp=5)])
+        with patch.object(uc, "roots", return_value=(self.claude, self.codex)), patch.object(ctrl.time, "time", return_value=NOW), patch.object(uc, "collect", wraps=uc.collect) as collect:
+            text = self.text(path, "status", "--days", "7")
+            self.assertEqual(collect.call_count, 1)
+            self.assertEqual(collect.call_args.kwargs["days"], 7)
+            self.assertIn("1 / 1 個子代理", text)
+        transcript.write_text(transcript.read_text() + claude_line("m2", "claude-haiku-5-5", inp=13) + "\n")
+        os.utime(transcript, (NOW - 1800, NOW - 1800))
+        with patch.object(uc, "roots", return_value=(self.claude, self.codex)), patch.object(ctrl.time, "time", return_value=NOW + 1), patch.object(uc, "collect", wraps=uc.collect) as collect:
+            text = self.text(path, "stats", "--days", "7")
+            self.assertEqual(collect.call_count, 1)
+            self.assertIn("更新 1", text)
+        self.assertEqual(len(self.rows()), 1)
+        self.assertEqual(json.loads(self.rows()[0]["usage"])["claude-haiku-5-5"]["small"]["input"], 18)
+
+    def test_json_html_and_shared_readers_never_collect(self):
+        path = self.profile()
+        with patch.object(uc, "collect", side_effect=AssertionError("read-only view collected")) as collect:
+            for command in ("status", "stats"):
+                json.loads(self.text(path, command, "--json"))
+            ctrl.report_html_page(path, 7)
+            ctrl.status_data(path, 7)
+            ctrl.statistics(path, 7)
+            collect.assert_not_called()
+
+    def test_days_zero_collects_beyond_thirty_days(self):
+        path = self.profile()
+        self.child("claude", "old", "old", ts=NOW - 40 * 86400)
+        self.claude_agent("old", "old", [claude_line("m1", "claude-haiku-5-5")])
+        with patch.object(uc, "roots", return_value=(self.claude, self.codex)), patch.object(ctrl.time, "time", return_value=NOW):
+            text = self.text(path, "status", "--days", "0")
+        self.assertIn("全部紀錄", text)
+        self.assertEqual(len(self.rows()), 1)
+
+    def test_missing_database_does_not_create_one_and_exception_preserves_display(self):
+        path = self.root / "empty" / "settings.json"
+        v2.init(path)
+        with patch.object(uc, "collect") as collect:
+            self.text(path, "status")
+            collect.assert_not_called()
+        self.assertFalse((path.parent / "advice.sqlite3").exists())
+        path = self.profile()
+        self.child("claude", "saved", "saved")
+        self.claude_agent("saved", "saved", [claude_line("m1", "claude-haiku-5-5")])
+        self.collect()
+        before = self.rows()
+        with patch.object(uc, "collect", side_effect=RuntimeError(SECRET)):
+            for command in ("status", "stats"):
+                text = self.text(path, command)
+                self.assertIn("用量未能更新，以下顯示已保存資料", text)
+                self.assertNotIn(SECRET, text)
+        self.assertEqual(self.rows(), before)
+
+    def test_recent_and_missing_sources_remain_uncollected(self):
+        path = self.profile()
+        self.child("claude", "recent", "recent")
+        self.child("claude", "missing", "missing")
+        self.claude_agent("recent", "recent", [claude_line("m1", "claude-haiku-5-5")], age=599)
+        with patch.object(uc, "roots", return_value=(self.claude, self.codex)), patch.object(ctrl.time, "time", return_value=NOW):
+            text = self.text(path, "status")
+        self.assertIn("0 / 2 個子代理", text)
+        self.assertIn("仍變動 1", text)
+        self.assertIn("找不到 1", text)
+        self.assertEqual(self.rows(), [])
 
 
 if __name__ == "__main__":

@@ -136,12 +136,30 @@ def statistics(path, days, *, include_events=False):
     return data, label
 
 
+def _refresh_usage_text(path, days):
+    """Human views refresh local snapshots; machine/HTML readers never call this."""
+    try:
+        db = path.parent / "advice.sqlite3"
+        if not db.exists():
+            return ""
+        from mrh.advisory import usage_collect
+        from mrh.advisory.store import AdviceStore
+        result = usage_collect.collect(AdviceStore(db), time.time(), days=days)
+        n = {key: max(0, int(result.get(key, 0))) for key in
+             ("collected", "updated", "unchanged", "running", "not_found", "unreadable", "other")}
+        return (f"用量快照：新增 {n['collected'] - n['updated']}，更新 {n['updated']}，來源未變 {n['unchanged']}。\n"
+                f"仍變動 {n['running']}，找不到 {n['not_found']}，不可讀 {n['unreadable']}，其他 {n['other']}；詳情：mrh usage collect。")
+    except Exception:
+        return "用量未能更新，以下顯示已保存資料。"
+
+
 def stats_text(path, days, as_json=False, color=False):
+    refresh = _refresh_usage_text(path, days) if not as_json else ""
     data, label = statistics(path, days)
     if as_json:
         return json.dumps(data, indent=2, sort_keys=True)
     policy = v2.read(path)["policy"]
-    return stats_view.render(data, label, policy["threshold"], color, policy)
+    return (refresh + "\n\n" if refresh else "") + stats_view.render(data, label, policy["threshold"], color, policy)
 
 
 def report_html_page(path, days):
@@ -154,9 +172,11 @@ def report_html_page(path, days):
 def dashboard_text(path, days, width, color):
     """The card layout: routing flow + tier table + proportion bars."""
     from mrh.presentation import dashboard
+    refresh = _refresh_usage_text(path, days)
     data = status_data(path, days)
     data["overhead"] = _overhead(path, days)      # card only: the JSON export keeps its published shape
-    return dashboard.render(data["status"], data, data["status"]["period_label"], width, color)
+    prefix = "\n".join(line for note in refresh.splitlines() for line in dashboard.wrap(note, max(80, min(120, width))))
+    return (prefix + "\n\n" if prefix else "") + dashboard.render(data["status"], data, data["status"]["period_label"], width, color)
 
 
 def _overhead(path, days):

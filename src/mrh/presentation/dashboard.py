@@ -220,7 +220,7 @@ def _where(data, policy, inner, p, color, period_label):
     if usage.get("recorded"):                                      # one bar: how much real usage is collected, and the converted saving
         saved = [sv for sv in (usage.get("saving") or {}).values() if sv["children"]]
         right += bar("子代理用量已收集", usage["collected"], usage["recorded"],
-                     f"{usage['collected']} / {usage['recorded']} 個子代理" + ("（mrh usage collect）" if usage["uncollected"] else ""),
+                     f"{usage['collected']} / {usage['recorded']} 個子代理" + ("（部分尚無快照）" if usage["uncollected"] else ""),
                      (f"節省（換算）{stats_view._usd(sum(sv.get('known_usd', sv['usd']) for sv in saved))}" +
                       ("（已知部分）" if any(sv['unknown'] for sv in usage['saving'].values()) else "")) if saved else
                      ("舊版未驗證" if usage.get("legacy") else "換算未知"),
@@ -233,7 +233,7 @@ def _where(data, policy, inner, p, color, period_label):
                          f"改用便宜模型省 {stats_view._usd(saving)}",
                          f"重派多花 {stats_view._usd(cost)}（{ov['compared']} 次重派）")
         else:
-            right += [p(line, "faint") for note in ("攔截回本率：還沒有可比樣本", "（先 mrh usage collect）")
+            right += [p(line, "faint") for note in ("攔截回本率：還沒有可比樣本", "（略過詳情：mrh usage collect）")
                       for line in wrap(note, right_w)] + [""]
     conf = data.get("confidence") or {}
     for key, label in (("last_24h", "24 小時內"), ("total", "總平均")):
@@ -265,6 +265,9 @@ def render(settings, data, period_label, width=100, color=False, today=None):
     sub = f"派子代理時，hook 先請 {registry.LABELS[c['provider']]} 判斷這份任務需要哪一級，再從你設定的表格選模型。主模型保留最難的判斷。（路由：{status}）"
     notice = stats_view.version_change_note(data)
     out = [*chip, "", p("Route the task, not the session.", "text", True), *[p(l, "dim") for l in wrap(sub, width - 2)], ""]
+    if c["provider"] == "jev":
+        out += [p("Jev 餘額：目前無法透過公開 API 查詢", "dim"),
+                p("請至 TypeSafe Console → Settings → Billing 查看。", "faint"), ""]
     if notice:
         out += [p("！" + clip(notice, width - 4), "lav", True), ""]
     policy = settings["policy"]

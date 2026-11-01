@@ -54,4 +54,8 @@ Mac 若終端可用、另一個執行入口卻回報未登入，先核對各自�
 
 ## 統計用量或金額未知
 
-明確執行 `mrh usage collect` 才收集本機用量；`status`／`stats` 不自動掃描逐字稿。來源缺欄位、仍在變動或無法拆分模型時保留未知，不補零，也不把已知小計當成完整帳單。
+文字 `mrh status`／`mrh stats` 會先補收同一顯示期間的本機快照，`--days 0` 包含全部歷史；JSON／HTML 仍純讀、不自動收集。來源未變不重讀正文；略過詳情用手動 `mrh usage collect` 查看。補收例外仍顯示已保存資料，不新增排程或背景服務，也不承諾硬延遲上限。來源缺欄位、仍在變動或無法拆分模型時保留未知，不補零，也不把已知小計當成完整帳單。
+
+## Jev 餘額無法查詢
+
+`mrh status` 使用 Jev 時會顯示公開 API 的查詢缺口，不會顯示推算金額。[官方 OpenAPI](https://api.typesafe.ai/openapi.json) 與 [SDK 回應契約](https://docs.typesafe.ai/sdk/python/api/types/responses) 尚未定義可用的餘額端點或餘額欄位；請依[官方說明](https://help.typesafe.ai/articles/5505198974-what-s-a-402-error-and-how-can-i-add-more-credits)，在 TypeSafe Console 選對組織，再至 Settings → Billing 查看 Available credits。速率限制的 remaining 不代表帳戶可用餘額。
