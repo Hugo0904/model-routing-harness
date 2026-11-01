@@ -166,24 +166,23 @@ def _gear_table(settings, inner, p):
     return lines[:-1]
 
 
-def _pct_row(parts, width):
+def _legend_lines(parts, width, color):
     total = sum(n for _, n in parts) or 1
-    cells, used = [], 0
-    for i, (_, n) in enumerate(parts):
-        size = width - used if i == len(parts) - 1 else max(1 if n else 0, round(n * width / total))
-        size = max(0, min(size, width - used)); used += size
-        cells.append(size)
-    row, pos = [" "] * width, 0
-    for (tier, n), size in zip(parts, cells):
-        label = f"{round(n * 100 / total)}%"
-        if size >= len(label):
-            for k, ch in enumerate(label):
-                row[pos + k] = ch
-        pos += size
-    return "".join(row)
+    rows, row = [], ""
+    for tier, count in parts:
+        item = f"{stats_view._swatch(tier, color)} {tier.lower()} {count} ({round(count * 100 / total)}%)"
+        candidate = f"{row}  {item}" if row else item
+        if row and vis(candidate) > width:
+            rows.append(row)
+            row = item
+        else:
+            row = candidate
+    if row:
+        rows.append(row)
+    return rows
 
 
-def _where(data, policy, inner, p, color):
+def _where(data, policy, inner, p, color, period_label):
     d = data["decisions"]
     advised, main, kept = d.get("advise", 0), d.get("continue_main", 0), d.get("preserve", 0)
     total = advised + main + kept
@@ -197,9 +196,8 @@ def _where(data, policy, inner, p, color):
     left_w = (inner * 11) // 20 if wide else inner
     right_w = inner - left_w - 4 if wide else inner
     bw = left_w
-    left = [p(_pct_row(parts, bw), "text"), stats_view.stacked_bar(parts, bw, color)]
-    legend = "  ".join(f"{stats_view._swatch(t, color)} {t.lower()} {n}" for t, n in parts)
-    left += ["", legend, "", p(f"路由器處理  {advised + main} 次", "text"),
+    left = [stats_view.stacked_bar(parts, bw, color), "", *_legend_lines(parts, left_w, color), "",
+            p(f"路由器處理  {advised + main} 次", "text"),
              *([p(f"skill 自選  {skill_total} 次", "text")] if skill_total else []),
              p(f"原樣放行    {kept - skill_total} 次", "dim")]
     # The breakdowns and evidence caveats live in `mrh stats`; the card only says that there are some.
@@ -225,7 +223,8 @@ def _where(data, policy, inner, p, color):
                      f"{usage['collected']} / {usage['recorded']} 個子代理" + ("（mrh usage collect）" if usage["uncollected"] else ""),
                      (f"節省（換算）{stats_view._usd(sum(sv.get('known_usd', sv['usd']) for sv in saved))}" +
                       ("（已知部分）" if any(sv['unknown'] for sv in usage['saving'].values()) else "")) if saved else
-                     ("舊版未驗證" if usage.get("legacy") else "換算未知"))
+                     ("舊版未驗證" if usage.get("legacy") else "換算未知"),
+                     f"統計期間：{period_label}")
     ov = data.get("overhead") or {}
     if ov.get("reissues"):               # one bar, like the others: how much of the re-issue cost the saving paid back
         if ov["compared"]:
@@ -285,7 +284,7 @@ def render(settings, data, period_label, width=100, color=False, today=None):
     body = [*_flow(settings, per_call, inner, p, actual, bool(gears_on)), "", *(_gear_table(settings, inner, p) if gears_on else _table(settings, inner, p)),
             "", *[p("• ", "lav") + clip(b, inner - 2) for b in bullets]]
     out += card("HOW A DELEGATION IS ROUTED", body, width, p) + [""]
-    where, total = _where(data, policy, inner, p, color)
+    where, total = _where(data, policy, inner, p, color, period_label)
     out += card(f"WHERE {total} DELEGATIONS WENT · {period_label}", where, width, p) + [""]
     out.append(p(f"NUMBERS FROM THE ROUTER'S DECISION LOG · {today or time.strftime('%Y-%m-%d')}", "faint"))
     return "\n".join(out) + "\n"
