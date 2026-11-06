@@ -274,16 +274,17 @@ class PlatformTests(unittest.TestCase):
         self.assertGreater(elapsed, 1.9); self.assertLess(elapsed, 2.9)  # 2.0 s, not 1.0 s and not 2.5 s
         self.assertIn('do not repeat a successful tool', out['hookSpecificOutput']['additionalContext'])
 
-    def test_budget_constants_are_windows_only_and_other_platforms_keep_one_second(self):
+    def test_budget_constants_keep_posix_post_inside_its_two_second_host_limit(self):
         import importlib
         from mrh.advisory import hook_budget
         self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))
         try:
             with patch.object(sys, 'platform', 'darwin'):
                 importlib.reload(hook_budget)
-                self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (1.0, 1.0))
+                self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 1.75))
                 settings = {'classifier':{'provider':'jev'},'enabled':True,'task_export_permitted':True}
-                self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', settings), 1.0)
+                self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'claude', settings), 3.0)
+                self.assertEqual(hook_budget.launch_seconds({'hook_event_name':'PostToolUse'}, 'codex', settings), 1.75)
         finally:
             importlib.reload(hook_budget)
         self.assertEqual((hook_budget.LOCAL_SECONDS, hook_budget.POST_SECONDS), (2.5, 2.0))

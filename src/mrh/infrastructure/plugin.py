@@ -104,7 +104,7 @@ try:
         # The verified child uses the existing validator and reports only its
         # policy over a private pipe. The supervisor imports no runtime code.
         # Unvalidated/failed children never qualify for the long provider path.
-        deadline=started+1.0
+        deadline=started+(2.5 if event.get("hook_event_name")=="PreToolUse" else 3.0 if platform=="claude" else 1.75)
         reason="hook_timeout"
         code=("import sys;sys.path.insert(0,sys.argv[1]);"
               "from mrh.infrastructure.execution import activate_editable;"
@@ -134,8 +134,8 @@ try:
                 while b"\n" in buffer:
                     line,buffer=buffer.split(b"\n",1);policy=json.loads(line)
                     seconds=policy.get("seconds") if isinstance(policy,dict) else None
-                    if type(seconds) not in (int,float) or seconds not in (1.0,2.5,48.0):raise ValueError()
-                    if event.get("hook_event_name")=="PostToolUse":seconds=min(seconds,1.0)
+                    if type(seconds) not in (int,float) or seconds not in (1.0,1.75,2.5,3.0,48.0):raise ValueError()
+                    if event.get("hook_event_name")=="PostToolUse":seconds=min(seconds,3.0 if platform=="claude" else 1.75)
                     proposed=started+seconds
                     deadline=min(deadline,proposed) if established else proposed
                     established=True
@@ -206,17 +206,14 @@ def _windows_launcher():
         startup.lpAttributeList={"handle_list":[control_handle]}''')
     source = source.replace('str(writer),"1"', 'str(control_handle),"1"')
     source = source.replace('args=[python,"-I","-B",', 'args=[python,"-I","-B","-X","utf8",')
-    # Windows process creation and runtime import routinely take 0.4-1.1 s, and the child can only
-    # report its policy after that. The first policy line may therefore take up to 2.5 s for
-    # PreToolUse and 2.0 s for PostToolUse, and a reported local-only Pre policy is 2.5 s (see
-    # hook_budget.LOCAL_SECONDS/POST_SECONDS). The reported policy still replaces the first-stage
-    # deadline; the Jev (2.5 s) and verified (48 s) policies, the integrity, settings and Job
-    # checks, and the policy-value validation itself are unchanged.
+    # Windows keeps its validated 2.0 s PostToolUse budget for both hosts instead of the POSIX
+    # per-host values (see hook_budget.post_seconds). The reported policy still replaces the first-stage deadline; the
+    # Jev (2.5 s) and verified (48 s) policies, the integrity, settings and Job checks, and the
+    # policy-value validation itself are unchanged.
     for old, new in (
-        ('        deadline=started+1.0\n',
-         '        deadline=started+(2.5 if event.get("hook_event_name")=="PreToolUse" else 2.0)\n'),
-        ('seconds not in (1.0,2.5,48.0)', 'seconds not in (1.0,2.0,2.5,48.0)'),
-        ('seconds=min(seconds,1.0)', 'seconds=min(seconds,2.0)'),
+        ('else 3.0 if platform=="claude" else 1.75)\n        reason=', 'else 2.0)\n        reason='),
+        ('seconds not in (1.0,1.75,2.5,3.0,48.0)', 'seconds not in (1.0,2.0,2.5,48.0)'),
+        ('seconds=min(seconds,3.0 if platform=="claude" else 1.75)', 'seconds=min(seconds,2.0)'),
     ):
         if source.count(old) != 1:
             raise owned.OwnedError('windows_launcher_deadline_template_mismatch')

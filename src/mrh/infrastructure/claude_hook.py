@@ -60,7 +60,7 @@ def plan(text, command, remove=False):
     for event in EVENTS:
         entries = [e for e in hooks.get(event, []) if not _ours(e)]
         if not remove:
-            entries.append({"matcher": MATCHER, "hooks": [{"type": "command", "command": command, "timeout": 50 if event == "PreToolUse" else 2}]})
+            entries.append({"matcher": MATCHER, "hooks": [{"type": "command", "command": command, "timeout": 50 if event == "PreToolUse" else 5}]})
         if entries:
             hooks[event] = entries
         else:

@@ -10,7 +10,7 @@ from mrh.adapters.providers.typesafe_protocol import serialize_request
 from mrh.advisory import engine
 from mrh.advisory.store import AdviceStore
 from mrh.application import classify as manual
-from mrh.advisory.hook_budget import HookBudget
+from mrh.advisory.hook_budget import HookBudget, LOCAL_SECONDS
 from mrh.routing.types import Classification, ContextSummary
 from tests.advisory import test_engine as fixtures
 from tests.presentation import test_classify as wire_fixtures
@@ -152,7 +152,7 @@ class ContextContractTests(unittest.TestCase):
 
     def test_outer_hook_remaining_time_also_bounds_manual_context_lookup(self):
         release=threading.Event();self.addCleanup(release.set);limits=[]
-        budget=HookBudget(started=time.monotonic()-.93);budget.local();self.store.hook_budget=budget
+        budget=HookBudget(started=time.monotonic()-LOCAL_SECONDS+.07);budget.local();self.store.hook_budget=budget
         def slow(task, seconds):limits.append(seconds);release.wait(.2);return ContextSummary('late','ref',True)
         fake=WireClassifier()
         with self.assertRaises(manual.ClassifyError):

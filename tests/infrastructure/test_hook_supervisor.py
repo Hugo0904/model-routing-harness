@@ -44,6 +44,20 @@ class SupervisorTests(unittest.TestCase):
                 self.assertNotIn('corrupt secret',json.dumps(out))
                 if phase=='PostToolUse':self.assertIn('do not repeat a successful tool',context['additionalContext'])
 
+    def test_slow_cold_start_under_load_still_reaches_both_claude_phases(self):
+        # A burst of delegations on a busy machine used to hit the 1.0 s startup limit before the
+        # child could report its policy, which skipped classification and lost the child record.
+        self.replace_runner("def run(platform,settings,stdin,stdout,stderr,**k):\n import time\n time.sleep(1.3)\n stdin.read()\n stdout.write('{}\\n')\n return 0\n")
+        for phase in ('PreToolUse','PostToolUse'):
+            self.assertEqual(self.env.launch(self.event(phase,'claude'),'claude'),{})
+
+    def test_posix_post_budget_stays_inside_each_host_limit(self):
+        from mrh.advisory import hook_budget
+        from mrh.infrastructure import plugin
+        self.assertLess(hook_budget.post_seconds('codex'),plugin.codex_hook_timeout('PostToolUse',windows=False))
+        self.assertLess(hook_budget.post_seconds('claude'),5)
+        self.assertIn('else 3.0 if platform=="claude" else 1.75)',plugin.LAUNCHER.decode())
+
     def test_child_failure_discards_private_stderr_and_does_not_override_permissions(self):
         self.replace_runner("def run(*a,**k):\n import sys\n sys.stderr.write('SECRET-private-fixture')\n raise RuntimeError('SECRET-private-fixture')\n")
         out=self.env.launch(self.event());self.assertNotIn('SECRET-private-fixture',json.dumps(out));self.assertNotIn('permissionDecision',out['hookSpecificOutput'])
@@ -53,11 +67,11 @@ class SupervisorTests(unittest.TestCase):
         child="import fcntl,time;from pathlib import Path;f=open("+repr(str(lease))+",'w');fcntl.flock(f,fcntl.LOCK_EX);Path("+repr(str(ready))+").write_text('ready');time.sleep(30)"
         code="def run(*a,**k):\n import subprocess,sys,time,os,json\n from pathlib import Path\n from mrh.infrastructure.settings_v2 import read\n from mrh.advisory.hook_budget import launch_seconds\n event=json.load(a[2]);seconds=launch_seconds(event,a[0],read(a[1]));os.write(k['control_fd'],(json.dumps({'seconds':seconds})+chr(10)).encode())\n p=subprocess.Popen([sys.executable,'-I','-B','-c',"+repr(child)+"])\n Path("+repr(str(pidfile))+").write_text(str(p.pid))\n time.sleep(30)\n"
         self.replace_runner(code)
-        for phase,limit in (('PreToolUse',2.9),('PostToolUse',1.35)):
+        for phase,limit in (('PreToolUse',2.9),('PostToolUse',2.15)):
             for marker in (pidfile,ready):
                 if marker.exists():marker.unlink()
             started=time.monotonic();out=self.env.launch(self.event(phase));elapsed=time.monotonic()-started
-            self.assertGreater(elapsed,2.4 if phase=='PreToolUse' else .9)
+            self.assertGreater(elapsed,2.4 if phase=='PreToolUse' else 1.65)
             self.assertLess(elapsed,limit);self.assertIn('time budget exhausted',out['hookSpecificOutput']['additionalContext'])
             self.assertTrue(pidfile.exists() and ready.exists())
             # The owned descendant acquired this lease before hanging. Kernel
@@ -87,7 +101,7 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(hooks['PostToolUse'][0]['hooks'][0]['timeout'],2)
         doc=json.loads(claude_hook.plan('{}','/private/mock/model-routing-harness launcher claude'))
         self.assertEqual(doc['hooks']['PreToolUse'][0]['hooks'][0]['timeout'],50)
-        self.assertEqual(doc['hooks']['PostToolUse'][0]['hooks'][0]['timeout'],2)
+        self.assertEqual(doc['hooks']['PostToolUse'][0]['hooks'][0]['timeout'],5)
 
     def test_verified_nonjev_can_exceed_jev_deadline_without_binding_provider_cache(self):
         body="from mrh.routing.types import Classification\ndef build(settings):\n class Fake:\n  def classify(self,*args,**kwargs):\n   import time;time.sleep(2.65);return Classification('Top',.9)\n return Fake()\n"

@@ -87,3 +87,11 @@ Mac `sandbox-exec`、1／1 秒時限及原有安全拒絕維持；Windows 的放
 本包 Jev 真實 transport **3 次**（Codex 2，含初次低信心；Claude 1），12 筆 lifecycle 不是 12 次請求。初次 Codex 一般委派因 runner 的 ephemeral parent 缺 rollout 而失敗，保留原失敗，只修 runner 並補該案例一次；未重跑已過的明示／packet。未觀測 MRH Hook 逾時或重複成功委派，四個 CLI 程序群組已退出。
 
 整份 Codex config.toml 不相同：除預期 marketplace 來源，service_tier 由 default 變 priority，寫入者及確切時間未知；未歸因、回寫或當成已證明分級故障。這項前輪觀測與後輪 Claude 非 MRH Hook 差異分開，不能泛稱全部宿主設定完全保全。
+
+## 2026-11-07 Mac Hook 時限調整
+
+本節取代上文「Mac 1／1 秒時限維持」的敘述。上文仍是當時的驗收紀錄。
+
+實際紀錄有 12 次 Pre、15 次 Post 超時，幾乎都發生在連續派工；其中 5 次派工未分級。隔離 profile 重現：Hook 本體 0.02～0.04 秒，時間主要花在兩個 Python 冷啟動與匯入；負載 9～13 時同時 6 個就超過 1 秒。SQLite 不是瓶頸。
+
+調整為 Local 2.5 秒，Post 在 Claude 3 秒（宿主 5 秒）、Codex 1.75 秒（宿主仍 2 秒，Hook 定義不變，不需重新信任）。Windows 不變。同時 6 個、三輪各 36 次、負載 19～31 的合成比較：舊版 Pre 30、Post 24 次超時；新版 Pre 6、Post 0 次。極端負載仍可能超時，依然放行。實機同時派 4 個未指定模型的 Claude 子代理：Pre 0.60～0.76 秒、Post 約 0.3 秒，4 筆分級與 4 筆子代理紀錄齊全，無超時；這次分級信心都低於門檻，所以未實測併發下的改派路徑。

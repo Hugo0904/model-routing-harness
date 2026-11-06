@@ -54,7 +54,7 @@ class BudgetTests(unittest.TestCase):
     def test_maintenance_skip_or_failure_does_not_mark_day_completed(self):
         with tempfile.TemporaryDirectory() as tmp:
             store=AdviceStore(Path(tmp)/'db.sqlite3')
-            budget=HookBudget(started=time.monotonic()-.8);budget.local();store.hook_budget=budget
+            budget=HookBudget(started=time.monotonic()-LOCAL_SECONDS+.2);budget.local();store.hook_budget=budget
             with store.connect() as db:before=db.execute('PRAGMA user_version').fetchone()[0]
             self.assertEqual(store.maintain(30,time.time()),0)
             with store.connect() as db:self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],before)
