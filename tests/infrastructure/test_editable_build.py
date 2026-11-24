@@ -131,7 +131,7 @@ class EditableBuildTests(unittest.TestCase):
         wheel_path = wheel_directory / filename
         files, record_path = self._assert_valid_record(wheel_path)
 
-        self.assertEqual(filename, "model_routing_harness-0.4.0-py3-none-any.whl")
+        self.assertEqual(filename, "model_routing_harness-0.5.0-py3-none-any.whl")
         wheel_metadata = {
             name: data for name, data in files.items()
             if name.startswith(f"{dist}/") and name != record_path

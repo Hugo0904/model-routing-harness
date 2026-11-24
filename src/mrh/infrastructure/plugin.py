@@ -285,7 +285,7 @@ def prepare(root, settings_path, python=None, *, advisory=False, codex_packets=F
     except metadata.PackageNotFoundError:
         # Development callers are explicitly labeled; host proof uses installed
         # wheel metadata and records the packaged bytes independently.
-        version = "0.4.0"
+        version = "0.5.0"
     runtime = _runtime_archive() if runtime_archive is None else runtime_archive
     from mrh.infrastructure import locations
     if runtime_root is not None or project_root is None:

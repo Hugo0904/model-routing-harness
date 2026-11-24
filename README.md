@@ -4,7 +4,7 @@
 
 **依子任務難度，建議合適的模型與推理強度。**
 
-[![Version](https://img.shields.io/badge/version-0.4.0-2563eb)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-0.5.0-2563eb)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-macOS_Apple_Silicon_%7C_Windows_x64-111827)](docs/compatibility.md)
 [![Hosts](https://img.shields.io/badge/hosts-Codex_%7C_Claude_Code-0f766e)](docs/compatibility.md)

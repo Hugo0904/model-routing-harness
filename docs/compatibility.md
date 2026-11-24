@@ -22,7 +22,7 @@
 
 | 元件 | Windows | Mac 已驗範圍 |
 | --- | --- | --- |
-| MRH | 0.4.0；版本以 [`pyproject.toml`](../pyproject.toml) 為準。 | 同左。 |
+| MRH | 0.5.0；版本以 [`pyproject.toml`](../pyproject.toml) 為準。 | 同左。 |
 | Python | 已安裝的原生 x64 CPython ≥ 3.11；安裝時保存來源版本與檔案雜湊。 | 3.11.17，build 20261009；來源、大小與 SHA-256 固定於 [runtime lock](../packaging/macos-arm64/runtime-lock.json)。 |
 | Codex CLI／原生後端 | 已觀測安裝並登入 0.163.0-alpha.10.2。 | 2026-10-23 原生委派使用 0.163.0；較早接頭紀錄包含 0.162.1。 |
 | Claude Code CLI | 2.1.303；已取得 LPAC 隔離清單並驗證啟用後的委派。 | 最低 2.1.296；2026-10-23 初期清單為 2.1.296，兩次原生委派的 init 均回報 2.1.309。版本嚴格解析 `X.Y.Z (Claude Code)`；清單未知時手動設定仍不能當作帳號可用證據。 |
