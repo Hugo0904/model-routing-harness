@@ -210,9 +210,54 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 
 若 `pending` 有內容，依項目補齊：`credential_present` 是金鑰；`policy_ready` 是模型政策；`workspace_ready`、`enabled`、`export_permitted` 是範圍與啟用；`native_trust_or_unverified` 需回到 Codex `/hooks`。安裝或宿主設定問題見 [疑難排解](troubleshooting.md)。這項檢查不呼叫 Jev 或派工，不能驗證餘額或模型實際使用權。2026-10-23 已完成修復後的 Mac 安裝與限定原生驗收，個別 SKIP、版本及證據界線見 [驗證摘要](validation.md)；不需為閱讀或整理文件再跑一輪。
 
+### 另一條路：市集外掛加「只裝引擎」
+
+Hook 可以改由 repo 裡的靜態外掛 `plugins/mrh/` 提供，安裝器只裝引擎（自備的 Python、程式、`mrh` 指令），不在宿主裡註冊任何東西。最省事的做法見 [README](../README.md#從外掛市集安裝mac)：裝外掛後請 AI「完成 MRH 設定」。自己動手的話：
+
+~~~sh
+claude plugin install mrh --marketplace Hugo0904/model-routing-harness      # Claude Code
+codex plugin marketplace add Hugo0904/model-routing-harness                 # Codex
+codex plugin add mrh@model-routing-harness
+
+./setup --engine-only --host claude --dry-run --json   # 預覽；Codex 用 --host codex
+./setup --engine-only --host claude
+~~~
+
+預覽的 `apply_downloads` 列出執行時會下載的檔案（固定版本、核對雜湊的 Python 3.11，兩個檔共約 68 MB；已有快取就是空的），`hook_entry` 是要寫的入口檔，`legacy_registration` 是會被移除的舊註冊。之後的金鑰與模型設定同上面第 2 步，啟用與檢查不必回 repo 資料夾：
+
+~~~sh
+mrh setup --enable --workspace "/"
+mrh setup --check --json
+~~~
+
+- 外掛的 Hook 讀 `~/.config/model-routing-harness/hook-entry/<宿主>` 這個入口檔找到引擎；檔案不存在就直接放行。`--check` 裡這種宿主的 `registration` 是 `hook_entry`。入口檔固定在這個位置，不跟著 `--config-root` 走。
+- `--check` 的 `next_steps` 列出還要你自己做的事。Codex 的 `plugin` 與 `trust` 要讀得到 Codex CLI 才查得出來；查不到時會寫明，不會當成已安裝。Claude Code 這邊不檢查外掛裝了沒。
+- Codex 在 `/hooks` 信任 MRH 的兩個 Hook 一次即可；更新引擎不改外掛資料夾，信任會保留。
+- 要用 `--codex-packets` 的 Codex 不能走這條路（會回報 `engine_only_codex_packets_unsupported`），因為完整任務分類的 skill 在本機產生的外掛裡。同一台的 Claude Code 可以單獨用 `--engine-only --host claude`。
+- 只支援 Mac。Windows 仍用 `setup.ps1` 在本機產生外掛。
+
+### 從 setup 安裝改用市集外掛
+
+設定、統計、金鑰都不動，只換 Hook 的註冊方式。
+
+1. 先裝市集外掛（指令同上）。還沒轉換前它的 Hook 直接放行，不會和舊註冊重複。
+2. 在原本 clone 的資料夾 `git pull --ff-only`，然後預覽：`./setup --engine-only --host claude --dry-run --json`（依你的宿主調整 `--host`）。`legacy_registration` 會列出要移除的舊註冊：Claude 是 `settings.json` 裡 MRH 的 Hook，Codex 是本機產生的外掛與它的 marketplace。
+3. 去掉 `--dry-run` 執行。安裝器先移除舊註冊、確認後才寫入口檔，所以 Hook 不會同時跑兩份。中途失敗就用同一個指令重跑。
+4. Codex：到 `/hooks` 信任新外掛的兩個 Hook。舊外掛的信任不沿用，這是最後一次。
+5. `mrh setup --check --json` 確認 `registration` 是 `hook_entry`、`configured` 是 `true`。
+
+注意：
+
+- 轉換之後，宿主會記住自己用的是外掛：之後不加 `--engine-only` 重跑 `./setup`、或用 `mrh update` 更新，都維持外掛註冊，不會把舊註冊加回來。
+- 要改回原本的註冊：轉換後還沒再更新過的話，`mrh setup --rollback` 可以退回轉換前那一代（會把舊註冊接回來並移除入口檔）；或先 `mrh setup --uninstall --yes`（保留設定與統計）再重新 `./setup --host …`。
+- 退回去的那一代若是加入這些指令之前建立的，裡面沒有 `mrh setup` 與 `mrh update`，那時改用 clone 裡的 `./setup`。
+- 轉換後不要再用還沒更新的舊 clone 執行 `./setup`：舊安裝程式不認得入口檔，會把舊註冊加回來，Hook 就會跑兩次、Jev 也會重複計費。先 `git pull --ff-only`。
+
 ## 更新、退版與停用
 
-先確認原本 clone 的資料夾沒有需要保留的未提交修改或來源衝突，再執行 `git pull --ff-only`，重跑同一條安裝指令；`--host` 與自訂路徑沿用原選擇：
+Mac 上不留 repo 資料夾也能做這些事：`mrh update` 取得最新發行版（`https://github.com/Hugo0904/model-routing-harness` 上版本號最高的 `vX.Y.Z` 標籤），用那一版自己的 `./setup` 沿用你原本的宿主與選項更新；`mrh update --check` 只比對版本。原本安裝時有指定 `--codex-cli`、`--claude-cli` 或 `--claude-settings` 的，更新時同樣要帶。`mrh setup` 接受和 `./setup` 一樣的檢查、啟用、退版與移除參數，但不建置也不下載，所以不接受 `--dev`、`--codex-packets`、`--engine-only` 與 `--cache-root`。開發模式（`--dev`）的安裝不能用 `mrh update`，仍在 checkout 更新。
+
+用 repo 資料夾更新的做法不變：先確認原本 clone 的資料夾沒有需要保留的未提交修改或來源衝突，再執行 `git pull --ff-only`，重跑同一條安裝指令；`--host` 與自訂路徑沿用原選擇：
 
 | 操作 | Windows PowerShell | Mac 終端機 |
 | --- | --- | --- |
@@ -234,7 +279,7 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 
 ### Mac：`./setup --uninstall`
 
-在原本 clone 的資料夾執行。不加 `--yes` 只預覽：列出會移除、會保留與無法處理的項目，不變更任何東西。
+在原本 clone 的資料夾執行；沒有資料夾時把 `./setup` 換成 `mrh setup`，參數相同。不加 `--yes` 只預覽：列出會移除、會保留與無法處理的項目，不變更任何東西。
 
 ~~~sh
 ./setup --uninstall                    # 預覽
@@ -250,6 +295,7 @@ Mac 的 `--workspace "/"` 代表全部專案。確認同意全部專案的任務
 | --- | --- |
 | Claude Code Hook | 只拿掉 `~/.claude/settings.json` 裡 MRH 的 PreToolUse／PostToolUse 項目；其他 Hook 與設定保留。 |
 | Codex 外掛 | 用 Codex 原生 `plugin remove` 與 `plugin marketplace remove`；Codex 自己的 `config.toml` 與信任紀錄不由 MRH 直接修改。 |
+| Hook 入口檔 | 走市集外掛的宿主：刪掉 `~/.config/model-routing-harness/hook-entry/` 裡它的入口檔，外掛的 Hook 之後直接放行。市集外掛本身由宿主管理，不會被移除；結果的 `keep` 會印出移除它的指令。 |
 | 選配派工 skill | 內容與發行版相同的才移除；自己改過的保留，並印出帶備份的移除指令。 |
 | shell 的 PATH 區塊 | 拿掉 `~/.zprofile`、`~/.zshrc`（及 bash 對應檔）裡 MRH 標記的區塊；區塊被改過就保留並回報 `mrh_shell_block_modified`。只剩該區塊的檔案會一併刪除。 |
 | 命令入口與安裝代 | `~/.local/bin/mrh` 符號連結、`current` 連結，以及 `~/.local/share/model-routing-harness/setup-state`（安裝代、狀態、紀錄）。 |
@@ -267,9 +313,10 @@ Claude 的 settings.json 若原本不是 2 空白縮排的格式，移除時會�
 1. 需要 `mrh` 才能做的先做：`mrh skill remove --host claude`、`mrh skill remove --host codex`、`mrh key delete jev`（刪金鑰）。
 2. Claude：編輯 `~/.claude/settings.json`，刪掉 `hooks.PreToolUse` 與 `hooks.PostToolUse` 裡 command 含 `model-routing-harness`、以 ` claude` 結尾的項目，其他內容不動。
 3. Codex：`codex plugin remove model-routing-harness@model-routing-harness-local`，再 `codex plugin marketplace remove model-routing-harness-local`。
-4. 刪掉 `~/.zprofile`、`~/.zshrc`（或 bash 的對應檔）中 `# >>> model-routing-harness PATH >>>` 到 `# <<< model-routing-harness PATH <<<` 之間的內容。
-5. 刪掉 `~/.local/bin/mrh`（確認是指向 `model-routing-harness/current/mrh` 的符號連結）與 `~/.local/share/model-routing-harness/current`、`~/.local/share/model-routing-harness/setup-state`。
-6. 不再需要設定與統計時才刪 `~/.config/model-routing-harness/`。
+4. 走市集外掛的：刪掉 `~/.config/model-routing-harness/hook-entry/` 整個資料夾，再 `claude plugin uninstall mrh@model-routing-harness`、`codex plugin remove mrh@model-routing-harness`。
+5. 刪掉 `~/.zprofile`、`~/.zshrc`（或 bash 的對應檔）中 `# >>> model-routing-harness PATH >>>` 到 `# <<< model-routing-harness PATH <<<` 之間的內容。
+6. 刪掉 `~/.local/bin/mrh`（確認是指向 `model-routing-harness/current/mrh` 的符號連結）與 `~/.local/share/model-routing-harness/current`、`~/.local/share/model-routing-harness/setup-state`。
+7. 不再需要設定與統計時才刪 `~/.config/model-routing-harness/`。
 
 ### Windows：手動移除（尚未經 Windows 實機驗證）
 

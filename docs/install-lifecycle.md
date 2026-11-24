@@ -95,11 +95,28 @@ Windows Claude 2.1.303 已在 LPAC initialize 僅加 `registryRead` 的條件下
 
 Codex Hook 使用 `<prefix>/current/runtime/bin/python3.11` 與不變的 `${PLUGIN_ROOT}/launcher.py`。只有 Codex `hooks.json` 採用穩定 interpreter 路徑；launcher 的 binding 仍保存自身安裝代的 interpreter 與 runtime。更新或退版時，一併切換原生註冊與 `current`。
 
-相同 prefix 與 Hook 定義產生相同 Hook 指令，單純更換安裝代不會改變信任指令。從早期絕對安裝代指令遷移時，需在 `/hooks` 審閱 PreToolUse 與 PostToolUse。後續修改指令、matcher、timeout 或 prefix，或退回舊方案的安裝代，仍可能需要重審；不改寫保留的舊代來略過審閱。
+相同 prefix 與 Hook 定義產生相同 Hook 指令，單純更換安裝代不會改變信任指令。但 Codex 0.167.0 實測的信任還涵蓋外掛資料夾的內容，本機產生的外掛換代後內容不同，仍可能要重審；要免除這一步見下面的市集外掛。從早期絕對安裝代指令遷移時，需在 `/hooks` 審閱 PreToolUse 與 PostToolUse。後續修改指令、matcher、timeout 或 prefix，或退回舊方案的安裝代，仍可能需要重審；不改寫保留的舊代來略過審閱。
 
 原生註冊先於 `current` 原子切換。短暫過渡期間，新 launcher 可由相容的前代 Python 啟動，再依不可變 binding 執行自己的 runtime；完成後，interpreter 入口與已註冊 launcher 都選到預期安裝代。
 
 Codex 專用產物發布 `.codex-plugin/plugin.json`，以頂層 `hooks` 宣告 Hook。既有 Codex CLI 0.162.1 會由 portable 根目錄 `plugin.json` 讀 skill，卻不讀其 OpenAI extension 的 Hook；預設檔案探索也有相同限制。相容 manifest 才會讓 `plugin/read` 與 `/hooks` 看見兩個 Hook。不要同時發布兩份 manifest，portable 版本優先時會遮住相容 Hook。轉換由 setup 的 Codex adapter 負責，portable plugin 產生流程與未選的 Claude 產物不變。
+
+### 市集外掛與 Hook 入口檔
+
+`./setup --engine-only` 讓選到的宿主改由 repo 裡的靜態外掛 `plugins/mrh/` 提供 Hook，安裝器只裝引擎：
+
+- 外掛的轉接程式 `scripts/mrh-hook` 不含任何本機路徑，只讀 `~/.config/model-routing-harness/hook-entry/<宿主>`。入口檔三行：格式 `mrh-hook-entry 1`、該安裝代私有 Python 的絕對路徑、該安裝代 Hook 啟動程式的絕對路徑。檔案不存在就放行；存在但不能用（不是自己的一般檔、格式不對、路徑失效）時回報一則訊息，Codex 的 reserved packet 派工則拒絕。位置與格式是外掛和安裝器之間的契約，改格式要換格式行。
+- 註冊方式記在 `state.json` 每個宿主的 `registration`（`entry` 代表入口檔，沒有這一欄是原生註冊）。不加 `--engine-only` 時宿主沿用紀錄的方式，所以同一個宿主不會同時有兩種註冊，兩個宿主各用一種也能在同一次交易裡更新。
+- 從原生註冊轉換時，先用原本的方式移除舊註冊並讀回確認，才寫入口檔；安裝、更新與退版都改寫入口檔指向該代。退版依上一代的紀錄決定方式：上一代是原生註冊就接回原生註冊並移除入口檔。原生安裝也會清掉同宿主殘留的入口檔。
+- Codex 帶 packets 時不能用入口檔：完整任務分類的 skill 要讀本機產生外掛裡的 `binding.json`。
+- 信任：Codex（0.167.0 實測）的信任同時綁 Hook 定義與整個外掛資料夾的內容。本機產生的外掛每一代內容不同；市集外掛的資料夾不隨引擎更新而變，信任一次後更新與退版都保留。`plugins/mrh/` 因此視為凍結，內容登記在 `packaging/plugin-lock.json`，由發佈檢查把關。
+- Windows 維持 `setup.ps1` 在本機產生外掛，不支援 `--engine-only`。
+
+### 不需要原始碼的 `mrh setup` 與 `mrh update`
+
+每個安裝代在 `installer/` 保留一份安裝程式（`mrh_setup.py`、`mrh_bundle.py`、`mrh_build.py`，受安裝代 manifest 保護）。`mrh setup …` 由目前這一代的副本執行檢查、啟用、退版與移除；它只處理已安裝的宿主、沿用紀錄的註冊方式，不建置、不下載，因此拒絕 `--dev`、`--codex-packets`、`--engine-only` 與 `--cache-root`。加入這個功能之前建立的安裝代沒有副本，退到那一代之後要用 checkout 的 `./setup`。
+
+`mrh update` 用 `git ls-remote` 讀發行來源的 `vX.Y.Z` 標籤，取版本最高的一個（或 `--release` 指定的），淺層 clone 到 MRH 自己的暫存區，再用紀錄的宿主與 packets 選項執行那一版的 `./setup`，完成後刪掉 clone。新版本一律由它自己的安裝程式安裝。開發模式的安裝會拒絕（`development_install`）；沒有任何發行標籤時回報 `no_published_release`。
 
 ### Bootstrap 與授權
 
@@ -127,6 +144,8 @@ Mac 的 `./setup --uninstall` 沿用安裝時的所有權檢查，只移除能�
 - 啟動檔只移除與安裝程式寫入內容完全相同的區塊；被改過、重複或指向別的 bin 目錄的區塊保留並回報。登入 shell 以外的啟動檔若無法安全讀取（例如符號連結）會略過。
 - 只刪除預期的名稱：安裝代必須有 MRH 擁有者記錄，`setup-state` 內有未知檔案就整個保留；不跟隨連結。設定資料夾必須是 MRH 建立且內容全在已知清單內才會刪除。舊版 `app`、他人建立的 `mrh`、專案內 `runtime/` 不動。
 - 每步以讀回確認，失敗保留現場並回報原因；不建立備份、快照或垃圾桶。移除可重跑，已完成的項目不會再動。
+- 走市集外掛的宿主只刪 MRH 自己寫的入口檔，不需要宿主的 CLI；外掛本身留給宿主管理，並在結果裡提示移除指令。
+- `mrh setup --uninstall` 由安裝代裡的副本執行，可以移除自己所在的安裝代。
 - Windows 沒有對應的 `--uninstall`；文件只提供手動步驟，且未經 Windows 實機驗證。
 
 ## 檢查與驗證界線

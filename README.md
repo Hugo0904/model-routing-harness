@@ -9,7 +9,7 @@
 [![Platforms](https://img.shields.io/badge/platforms-macOS_Apple_Silicon_%7C_Windows_x64-111827)](docs/compatibility.md)
 [![Hosts](https://img.shields.io/badge/hosts-Codex_%7C_Claude_Code-0f766e)](docs/compatibility.md)
 
-[交給 AI 安裝](#交給-ai-安裝) · [自己安裝](#自己安裝) · [常用指令](#常用指令) · [移除](#移除) · [English](README.en.md)
+[交給 AI 安裝](#交給-ai-安裝) · [從外掛市集安裝](#從外掛市集安裝mac) · [自己安裝](#自己安裝) · [常用指令](#常用指令) · [移除](#移除) · [English](README.en.md)
 
 </div>
 
@@ -37,6 +37,31 @@
 6. 分開回報：安裝結果、mrh 指令能不能用、Hook 信任狀態、還沒做的測試。不要為了測試呼叫 Jev 或派子代理（會花錢）。
 7. 最後問我要不要安裝選配派工 skill，我說要才裝。
 ```
+
+## 從外掛市集安裝（Mac）
+
+Mac（Apple Silicon）可以先裝外掛，再請 AI 把其餘的裝好。需要 Git。
+
+Claude Code：
+
+```sh
+claude plugin install mrh --marketplace Hugo0904/model-routing-harness
+```
+
+Codex：
+
+```sh
+codex plugin marketplace add Hugo0904/model-routing-harness
+codex plugin add mrh@model-routing-harness
+```
+
+裝好後開一個新對話，對 AI 說「完成 MRH 設定」。它會先給你看預覽（要下載什麼、寫到哪裡），你同意才動手；Jev 金鑰、選模型與啟用仍由你自己做。
+
+- 外掛只負責把派工事件接到裝在家目錄的 MRH。還沒完成設定時，派工照原樣進行。
+- Codex 要在 `/hooks` 審閱並信任 MRH 的兩個 Hook，信任之前 MRH 不會運作。這只要做一次：之後用 `mrh update` 更新不必重按，只有外掛本身改版時才要再審一次（變更說明會寫）。
+- 目前只支援 Mac。Windows 請照下面「自己安裝」用 `setup.ps1`，不要裝這個市集外掛：它的 Hook 還沒在 Windows 驗證。
+- 要用 [Codex 完整任務分類](docs/codex/packet-skill.md)（`--codex-packets`）的 Codex 仍用下面的 `./setup`；同一台的 Claude Code 可以單獨改用外掛。
+- 已經用 `./setup` 裝過、想換過來的人，見[安裝教學](docs/install.md#從-setup-安裝改用市集外掛)。
 
 ## 自己安裝
 
@@ -82,6 +107,8 @@ mrh ctrl                     # 設定每個難度要用的模型
 | --- | --- |
 | `mrh ctrl` | 開啟設定選單（模型、信心門檻、適用專案）。 |
 | `mrh status` | 查看目前狀態。 |
+| `mrh setup --check` | 檢查安裝與各宿主的接線狀態；啟用、退版、移除也走 `mrh setup`，不需要 repo 資料夾。 |
+| `mrh update` | 更新到最新發行版；加 `--check` 只比對版本。 |
 | `mrh stats` | 查看分級與派工統計。 |
 | `mrh usage collect` | 收集子代理用量（只讀本機紀錄，不呼叫模型；換算金額只是估計，不是帳單）。 |
 | `mrh usage overhead` | 攔下重派的開銷（等待時間、主模型多跑的一輪）和省下的錢並列（只讀本機紀錄，不花錢）。 |
@@ -116,6 +143,8 @@ mrh skill install --host claude   # Codex 用 --host codex
 
 自己更新：在 repo 資料夾執行 `git pull --ff-only`，再用原本的指令重跑一次 `./setup`（例如 `./setup --host claude`）。出問題可以用 `./setup --rollback` 退回上一版。新版本只在程式內容有變時才會產生；只改了文件的更新，重跑 `./setup` 會回報沒有變更。
 
+沒有留 repo 資料夾也能更新（Mac）：`mrh update` 會取得最新發行版，由那一版自己的安裝程式沿用你原本的選項更新；`mrh update --check` 只比對版本，`mrh setup --rollback` 退回上一版。這兩個指令是後來才加的：出現 `invalid choice: 'setup'` 表示你的安裝還沒有，先照上面的方式更新一次；開發模式（`--dev`）仍在 checkout 更新。
+
 ## 移除
 
 **Mac**：在 repo 資料夾執行：
@@ -126,7 +155,7 @@ mrh skill install --host claude   # Codex 用 --host codex
 ./setup --uninstall --yes --purge-data   # 連設定、統計和鑰匙圈裡的 Jev 金鑰一起刪除
 ```
 
-只會移除 MRH 自己建立的東西；其他 Hook、設定，以及 shell 設定檔裡的其他內容都會保留。
+只會移除 MRH 自己建立的東西；其他 Hook、設定，以及 shell 設定檔裡的其他內容都會保留。沒有 repo 資料夾時把 `./setup` 換成 `mrh setup`（例如 `mrh setup --uninstall`）。從外掛市集安裝的，外掛本身另外移除：`claude plugin uninstall mrh@model-routing-harness`、`codex plugin remove mrh@model-routing-harness`。
 
 **Windows**：目前只有手動步驟（還沒在 Windows 實機驗證），見[移除說明](docs/install.md#移除)。
 

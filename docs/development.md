@@ -19,6 +19,20 @@
 
 Windows 使用本機既有 x64 CPython 建立私有 runtime，保留標準函式庫、DLL 與授權，排除 `site-packages`；不加入 Python 下載或 pip 安裝。Mac 的 3.11.17 runtime lock、第三方聲明與 Claude catalog metadata 驗證保留；Claude CLI 最低版本與 catalog 清單是否已確認分開處理，各平台接頭不能互相代替驗證。
 
+## 外掛資料夾與發佈檢查
+
+`plugins/mrh/` 是給 Claude Code 與 Codex 市集用的靜態外掛，連同 `.claude-plugin/marketplace.json`、`.agents/plugins/marketplace.json`。它是凍結的：改任何一個檔都會讓 Codex 使用者要重新信任 Hook，規則見 [AGENTS.md](../AGENTS.md)。推送前執行 `python3 -B scripts/release_check.py`，結果要是 0 項。
+
+在本機試外掛時把 checkout 當成市集來源，再用只裝引擎模式安裝：
+
+~~~sh
+claude plugin marketplace add /path/to/model-routing-harness && claude plugin install mrh@model-routing-harness
+codex plugin marketplace add /path/to/model-routing-harness && codex plugin add mrh@model-routing-harness
+./setup --engine-only --host claude --host codex
+~~~
+
+要在不動自己環境的情況下試，把 `HOME` 指到暫存資料夾再執行上面的指令。`--engine-only` 搭配 `--dev` 還沒驗證過。
+
 ## 本機開發安裝（`--dev`）
 
 只改文件不會產生新版本：安裝版本只由會裝進去的程式內容決定，與 git commit 無關，重跑 `./setup` 會回報沒有變更。程式有改時，一般安裝仍要重跑 `./setup` 才會生效。

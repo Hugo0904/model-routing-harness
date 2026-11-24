@@ -33,6 +33,31 @@ Follow docs/install.md in the repo (it is in Traditional Chinese) and:
 7. Finally ask whether I want the optional delegation skill; install it only if I say yes.
 ```
 
+## Install from the plugin marketplace (Mac)
+
+On a Mac with Apple Silicon you can install the plugin first and let the AI finish the rest. Git is required.
+
+Claude Code:
+
+```sh
+claude plugin install mrh --marketplace Hugo0904/model-routing-harness
+```
+
+Codex:
+
+```sh
+codex plugin marketplace add Hugo0904/model-routing-harness
+codex plugin add mrh@model-routing-harness
+```
+
+Then open a new conversation and say "finish MRH setup". The AI shows a preview first (what it downloads, where it writes) and acts only after you agree; the Jev key, model choices and enabling stay with you.
+
+- The plugin only connects delegation events to the MRH engine in your home directory. Until setup is finished, delegations pass through unchanged.
+- Codex: review and trust the two MRH hooks in `/hooks`; MRH does not run before that. You do this once. Updating with `mrh update` does not ask again; only a new version of the plugin itself does, and its release notes will say so.
+- Mac only for now. On Windows use `setup.ps1` as described below and do not install this marketplace plugin: its hook is not verified on Windows.
+- A Codex that needs `--codex-packets` keeps using `./setup`; Claude Code on the same machine can move to the plugin on its own.
+- To move an existing `./setup` installation over, see [docs/install.md](docs/install.md#從-setup-安裝改用市集外掛) (Traditional Chinese).
+
 ## Install yourself
 
 **macOS (Apple Silicon)**: needs Git and a logged-in Codex or Claude Code. The installer brings its own Python.
@@ -99,6 +124,8 @@ Status and removal: [delegation skills](docs/delegation-skills.md).
 ## Update
 
 From the repo folder run `git pull --ff-only`, then rerun `./setup` with the same options as before (for example `./setup --host claude`). `./setup --rollback` returns to the previous version if something goes wrong. A new version exists only when program content changed; after a docs-only update, rerunning `./setup` reports no change.
+
+Without a repo folder (Mac): `mrh update` fetches the latest release and lets that release's own installer update with your original options; `mrh update --check` only compares versions, and `mrh setup --rollback` returns to the previous version. These commands were added later: `invalid choice: 'setup'` means your installation predates them, so update it once from the repo folder first. Development installs (`--dev`) keep updating from the checkout.
 
 ## Uninstall
 
