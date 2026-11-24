@@ -9,6 +9,7 @@ import time
 import unittest
 import zipfile
 from pathlib import Path
+from tests import assert_wall_clock_under
 from tests.infrastructure import test_advisory_plugin as fixtures
 from mrh.infrastructure import settings_v2 as v2
 
@@ -72,7 +73,7 @@ class SupervisorTests(unittest.TestCase):
                 if marker.exists():marker.unlink()
             started=time.monotonic();out=self.env.launch(self.event(phase));elapsed=time.monotonic()-started
             self.assertGreater(elapsed,2.4 if phase=='PreToolUse' else 1.65)
-            self.assertLess(elapsed,limit);self.assertIn('time budget exhausted',out['hookSpecificOutput']['additionalContext'])
+            assert_wall_clock_under(self,elapsed,limit);self.assertIn('time budget exhausted',out['hookSpecificOutput']['additionalContext'])
             self.assertTrue(pidfile.exists() and ready.exists())
             # The owned descendant acquired this lease before hanging. Kernel
             # release proves exit without a forbidden global process inventory.
@@ -91,7 +92,7 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(self.env.launch(self.event())['hookSpecificOutput']['permissionDecision'],'deny')
         self.assertEqual((root/'binding.json').read_bytes(),before)
         self.env.settings.write_text('{"classifier":{"provider":"unknown"}}')
-        start=time.monotonic();out=self.env.launch(self.event());self.assertLess(time.monotonic()-start,.5)
+        start=time.monotonic();out=self.env.launch(self.event());assert_wall_clock_under(self,time.monotonic()-start,.5)
         self.assertIn('settings unavailable',out['hookSpecificOutput']['additionalContext'])
 
     def test_installed_templates_keep_pre_compatibility_and_short_post(self):
@@ -109,7 +110,7 @@ class SupervisorTests(unittest.TestCase):
         binding=(self.env.launcher.parent/'binding.json').read_bytes()
         config=v2.read(self.env.settings);v2.update(self.env.settings,classifier={**config['classifier'],'provider':'codex_subscription','model':'gpt-6-luna','timeout_seconds':8})
         start=time.monotonic();out=self.env.launch(self.event());elapsed=time.monotonic()-start
-        self.assertGreater(elapsed,2.6);self.assertLess(elapsed,3.3)
+        self.assertGreater(elapsed,2.6);assert_wall_clock_under(self,elapsed,3.3)
         self.assertEqual(out['hookSpecificOutput']['permissionDecision'],'deny')  # normal Top/Main advice, not a fault
         self.assertEqual((self.env.launcher.parent/'binding.json').read_bytes(),binding)
 

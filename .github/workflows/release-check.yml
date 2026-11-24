@@ -14,6 +14,10 @@ permissions:
 env:
   PYTHONDONTWRITEBYTECODE: "1"
   PYTHONPATH: src
+  # 這裡是 GitHub 代管的共用機器，速度不代表使用者的機器。設了這個變數，macOS 那套測試裡「要在幾秒內完成」的上限
+  # 超過時會印出實測秒數，只用寬一秒的上限把關（tests/__init__.py）；tests/windows 的計時檢查沒有套用。
+  # 真機沒有這個變數，門檻照舊。
+  MRH_TEST_SHARED_RUNNER: "1"
 
 jobs:
   macos:

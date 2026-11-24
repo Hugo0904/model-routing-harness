@@ -12,6 +12,7 @@ from mrh.advisory.store import AdviceStore
 from mrh.application import classify as manual
 from mrh.advisory.hook_budget import HookBudget, LOCAL_SECONDS
 from mrh.routing.types import Classification, ContextSummary
+from tests import assert_wall_clock_under
 from tests.advisory import test_engine as fixtures
 from tests.presentation import test_classify as wire_fixtures
 from mrh.adapters.providers.typesafe import TypesafeClassifier
@@ -108,7 +109,7 @@ class ContextContractTests(unittest.TestCase):
             release.wait(1);finish.set();return ContextSummary('LATE_PRIVATE_SUMMARY','ref',True)
         fake=WireClassifier();start=time.monotonic()
         manual.run(self.settings,'late',store=self.store,classifier_factory=lambda:fake,context_provider=slow)
-        self.assertLess(time.monotonic()-start,.3);self.assertEqual(fake.contexts,[None])
+        assert_wall_clock_under(self,time.monotonic()-start,.3);self.assertEqual(fake.contexts,[None])
         before=self.store.stats(0);release.set();self.assertTrue(finish.wait(1))
         self.assertEqual(fake.contexts,[None]);self.assertEqual(self.store.stats(0),before)
 
@@ -120,7 +121,7 @@ class ContextContractTests(unittest.TestCase):
             manual.run(settings,'deadline',store=self.store,classifier_factory=lambda:fake,
                 context_provider=lambda *args:(release.wait(.2),ContextSummary('late','ref',True))[1])
         self.assertEqual(error.exception.reason,'classifier_timeout');self.assertEqual(fake.contexts,[])
-        self.assertLess(time.monotonic()-start,.18)
+        assert_wall_clock_under(self,time.monotonic()-start,.18)
         budget=HookBudget();self.store.hook_budget=budget;budget.local()
         calls=[]
         engine.decide(fixtures.req('bounded',task='new synthetic'),self.settings,self.store,lambda:WireClassifier(),

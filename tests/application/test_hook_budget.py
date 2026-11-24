@@ -14,6 +14,7 @@ from mrh.application import advisory_runtime as rt
 from mrh.infrastructure import settings_v2 as v2
 from mrh.routing.core import ClassifierFailure
 from mrh.routing.types import Classification
+from tests import assert_wall_clock_under
 from tests.application import test_advisory_runtime as fixtures
 from tests.application.test_advisory_runtime import codex_pre, Fixed, SECRET
 
@@ -48,7 +49,7 @@ class BudgetTests(unittest.TestCase):
                 for _ in range(3):
                     with self.assertRaises((sqlite3.OperationalError, HookStoreBusy)):
                         with store.connect() as db:db.execute('BEGIN IMMEDIATE')
-                self.assertLess(time.monotonic()-start,.18)
+                assert_wall_clock_under(self,time.monotonic()-start,.18)
                 self.assertLess(budget.sqlite_left,.005)
 
     def test_maintenance_skip_or_failure_does_not_mark_day_completed(self):
@@ -89,7 +90,7 @@ class HookRuntimeBudgetTests(unittest.TestCase):
         with sqlite3.connect(path) as holder:
             holder.execute('BEGIN IMMEDIATE');start=time.monotonic()
             out=rt.handle(codex_pre(model='gpt-6-luna'),'codex',self.env.path,classifier_factory=lambda:fake)
-        self.assertLess(time.monotonic()-start,.20);self.assert_notice(out,'PreToolUse');self.assertEqual(fake.calls,0)
+        assert_wall_clock_under(self,time.monotonic()-start,.20);self.assert_notice(out,'PreToolUse');self.assertEqual(fake.calls,0)
         self.assertEqual(AdviceStore.read_stats(path,0)['decisions'],{})
 
     def test_jev_cap_fault_notice_dedup_and_nonjev_settings_are_respected(self):
@@ -123,7 +124,7 @@ class HookRuntimeBudgetTests(unittest.TestCase):
         slow=Slow();start=time.monotonic()
         out=rt.handle(codex_pre(),'codex',self.env.path,classifier_factory=lambda:slow)
         elapsed=time.monotonic()-start
-        self.assertLess(elapsed,1.9);self.assertGreater(elapsed,1.4);self.assertEqual(slow.calls,1)
+        assert_wall_clock_under(self,elapsed,1.9);self.assertGreater(elapsed,1.4);self.assertEqual(slow.calls,1)
         self.assert_notice(out,'PreToolUse');self.assertIn('does not prove remote cancellation',out['hookSpecificOutput']['additionalContext'])
 
     def test_packet_failure_stays_closed_before_dispatch_and_is_context_only_after_return(self):

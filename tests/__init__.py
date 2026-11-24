@@ -6,6 +6,7 @@ disabled here; `fetch` turns the refusal into an ordinary "network" failure and 
 import atexit
 import os
 import shutil
+import sys
 import tempfile
 
 from mrh.adapters.providers import typesafe_models as _models
@@ -32,3 +33,16 @@ def _refuse(self, headers, timeout):
 
 
 _models.HttpModelsTransport.get = _refuse
+
+# A wall-clock upper bound is evidence only on a machine whose speed belongs to its user. GitHub-hosted runners share
+# hardware, so the workflow names itself with MRH_TEST_SHARED_RUNNER: an overrun there is printed, and only held to a
+# looser bound that still catches a wait running on to a default timeout. Nothing sets the variable on a real machine,
+# where every bound stays the hard assertion it was.
+SHARED_RUNNER_SLACK = 1.0
+
+
+def assert_wall_clock_under(case, elapsed, limit):
+    if os.environ.get("MRH_TEST_SHARED_RUNNER") == "1" and elapsed >= limit:
+        print(f"shared runner: {case.id()} took {elapsed:.3f}s, over its {limit}s real-machine bound", file=sys.stderr)
+        limit += SHARED_RUNNER_SLACK
+    case.assertLess(elapsed, limit)

@@ -98,6 +98,8 @@ payload 不連結 CRT，只匯入 kernel32，按測試模式觀察合成檔案�
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -B -m unittest discover -s tests -t .
 ```
 
+GitHub Actions 用代管的共用機器跑同一套測試。那裡的速度不代表使用者的機器，所以工作流程會設 `MRH_TEST_SHARED_RUNNER=1`：macOS 那套測試裡「要在幾秒內完成」的上限超過時印出實測秒數，只用寬一秒的上限把關（`tests/__init__.py` 的 `assert_wall_clock_under`）；`tests/windows` 的計時檢查沒有套用，照原門檻。自己的機器不要設這個變數，門檻才是原本的硬性檢查。Windows 那一組在代管機器上略過的案例與原因，以該次檢查紀錄為準，不能當成真機驗證。
+
 部分測試使用 macOS／POSIX 的程序、PTY 或 sandbox 能力。文件修改檢查語意、連結與相容性說明即可；fixture 修改則驗證資料形狀及直接讀取它的 consumer。
 
 Windows 範圍設定另需保留兩種語意：`--all-workspaces` 保存 `allowed_workspaces: ["*"]`，涵蓋所有本機磁碟與支援的 UNC 專案路徑；一個或多個 `--workspace` 只涵蓋有效的絕對路徑，兩者互斥。使用隔離 fixture 驗證路徑判斷，不為測試改動真帳號的外送範圍；Mac `/` 的既有語意保持不變。

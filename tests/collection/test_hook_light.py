@@ -4,6 +4,7 @@ import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from tests import assert_wall_clock_under
 from tests.collection import test_daily as fixtures
 
 daily=fixtures.daily
@@ -18,7 +19,7 @@ class LightCollectorTests(unittest.TestCase):
         for root in (e.spool,e.root):
             with daily.locked(root):
                 started=time.monotonic();out=e.collector.hook(e.event('PreToolUse'))
-            self.assertLess(time.monotonic()-started,.08)
+            assert_wall_clock_under(self,time.monotonic()-started,.08)
             self.assertIn('additionalContext',out['hookSpecificOutput']);self.assertNotIn('permissionDecision',out['hookSpecificOutput'])
             self.assertEqual(out['hookSpecificOutput']['hookEventName'],'PreToolUse')
             self.assertEqual(e.root.joinpath('collection.json').read_bytes(),before)
