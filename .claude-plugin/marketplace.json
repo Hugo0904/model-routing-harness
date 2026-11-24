@@ -1,0 +1,17 @@
+{
+  "name": "model-routing-harness",
+  "owner": {
+    "name": "Hugo0904"
+  },
+  "metadata": {
+    "description": "Model Routing Harness (MRH): default-off model routing advice for sub-agent delegation in Claude Code and Codex."
+  },
+  "plugins": [
+    {
+      "name": "mrh",
+      "description": "Model routing advice for sub-agent delegation. Connects the host delegation hooks to the locally installed MRH engine; does nothing until the engine is set up and enabled.",
+      "version": "1.0.0",
+      "source": "./plugins/mrh"
+    }
+  ]
+}

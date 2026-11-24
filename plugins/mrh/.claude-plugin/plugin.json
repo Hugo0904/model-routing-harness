@@ -1,0 +1,11 @@
+{
+  "name": "mrh",
+  "version": "1.0.0",
+  "description": "Model routing advice for sub-agent delegation. Connects the host delegation hooks to the locally installed MRH engine; does nothing until the engine is set up and enabled.",
+  "author": {
+    "name": "Hugo0904"
+  },
+  "homepage": "https://github.com/Hugo0904/model-routing-harness",
+  "repository": "https://github.com/Hugo0904/model-routing-harness",
+  "license": "MIT"
+}

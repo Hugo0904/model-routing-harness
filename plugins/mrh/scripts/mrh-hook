@@ -1,0 +1,46 @@
+#!/bin/sh
+# MRH hook adapter. Static: it holds no machine path and writes nothing.
+#
+# The host runs this for a delegation tool call. It hands the event to the MRH engine installed in the
+# user's home directory, which `setup --engine-only` records in a hook entry file:
+#     line 1  mrh-hook-entry 1
+#     line 2  absolute path of the engine's private Python
+#     line 3  absolute path of the engine's hook launcher
+#
+# No entry: the engine is not set up yet, so the tool call passes through unchanged.
+# Entry present but unusable: say so instead of passing silently, and refuse a reserved Codex packet
+# dispatch, whose contract is to stop when the runtime is unavailable.
+#
+# Any change to this folder makes Codex ask every user to review the hooks again. Keep it stable.
+
+host=${1:-}
+case "$host" in
+    claude|codex) ;;
+    *) printf '{}\n'; exit 0;;
+esac
+if [ -z "${HOME:-}" ]; then printf '{}\n'; exit 0; fi
+entry=$HOME/.config/model-routing-harness/hook-entry/$host
+if [ ! -e "$entry" ] && [ ! -L "$entry" ]; then printf '{}\n'; exit 0; fi
+
+version=; python=; launcher=
+if [ -f "$entry" ] && [ ! -L "$entry" ] && [ -O "$entry" ]; then
+    { IFS= read -r version && IFS= read -r python && IFS= read -r launcher; } < "$entry" || version=
+fi
+usable=false
+if [ "$version" = 'mrh-hook-entry 1' ]; then
+    case "$python" in /*) case "$launcher" in /*)
+        if [ -x "$python" ] && [ -f "$launcher" ]; then usable=true; fi;;
+    esac;; esac
+fi
+if [ "$usable" = true ]; then exec "$python" -I -B "$launcher" "$host"; fi
+
+event=$(/bin/cat)
+if [ "$host" = codex ]; then
+    case "$event" in *'"PreToolUse"'*)
+        case "$event" in *'"mrh_packet_'*|*'"mrh_release_'*)
+            printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"MRH Codex packet: runtime unavailable; dispatch stopped, outcome unknown. Do not retry or fall back to title classification. Continue independent work and briefly inform the user."}}'
+            exit 0;;
+        esac;;
+    esac
+fi
+printf '%s\n' '{"systemMessage":"MRH: the hook entry is unusable, so this delegation was not routed or recorded; the original tool call is preserved. Do not retry it. Briefly inform the user and suggest running: mrh setup --check"}'
