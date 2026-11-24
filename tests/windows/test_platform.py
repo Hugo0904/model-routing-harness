@@ -166,15 +166,17 @@ class PlatformTests(unittest.TestCase):
             self.assertEqual(result.returncode,0,result.stderr)
             self.assertEqual(json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'],'deny')
 
-    def test_windows_subscription_provider_and_packets_fail_closed(self):
+    def test_windows_subscription_providers_fail_closed_and_packets_are_offered(self):
         from mrh.adapters.providers.registry import build
-        from mrh.adapters.hosts.codex_packets import root_for, PacketError
+        from mrh.adapters.hosts.codex_packets import root_for
         from mrh.routing.core import ClassifierFailure
         for name in ('codex_subscription', 'claude_subscription'):
             with self.assertRaises(ClassifierFailure): build({'classifier':{'provider':name},'enabled':True,'task_export_permitted':True})
-        with self.assertRaises(PacketError): root_for(self.root/'profile/settings.json')
+        # Packets stopped being refused on Windows when the packaged and editable modes arrived; their native
+        # guards are in tests.windows.test_codex_packets. Here: the packet root resolves and the host offers them.
+        self.assertEqual(root_for(self.root/'profile/settings.json'), self.root/'profile-codex-packets')
         from mrh.adapters.hosts.registry import REGISTRATIONS
-        self.assertFalse(REGISTRATIONS['codex'].public()['codex_packet'])
+        self.assertTrue(REGISTRATIONS['codex'].public()['codex_packet'])
         self.assertEqual(REGISTRATIONS['claude'].public()['installation'],'official-plugin')
 
     def test_active_supervisor_utf8_policy_pipe_and_timeout(self):
