@@ -50,8 +50,10 @@ below. Until then the hooks pass every delegation through unchanged.
 
    Add a second `--host` only when the user says they also use the other host and have this plugin there.
    Show the user the result in plain words, including:
-   - it downloads a pinned, hash-checked Python 3.11 runtime of about 27 MB from the
-     `astral-sh/python-build-standalone` releases on GitHub, unless one is already cached;
+   - every file under `apply_downloads`, with its size and address: the pinned, hash-checked Python 3.11
+     runtime files that applying fetches. An empty list means nothing is downloaded. When the reason is
+     `python_3_11_or_pinned_bootstrap_required`, this machine has no Python that can run the full preview;
+     the list is still what applying fetches, and the items below still hold;
    - it writes under `~/.local/share/model-routing-harness`, `~/.config/model-routing-harness` and
      `~/Library/Caches/model-routing-harness`, links `~/.local/bin/mrh`, and adds a marked PATH block to the
      shell profile;
