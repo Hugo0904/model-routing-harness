@@ -35,9 +35,9 @@ class NativeFixture:
         return {"name": plugin.MARKETPLACE, "source": "directory", "path": self.root, "installLocation": self.root}
 
     def installed_row(self):
-        return {"id": plugin.PLUGIN_ID, "version": "0.4.0", "scope": "user", "enabled": True,
-            "installPath": str(self.fixture / "native cache" / plugin.NAME / "0.4.0"),
-            "readFromFolder": str(Path(self.root) / "plugins" / plugin.NAME), "folderVersion": "0.4.0",
+        return {"id": plugin.PLUGIN_ID, "version": "0.5.0", "scope": "user", "enabled": True,
+            "installPath": str(self.fixture / "native cache" / plugin.NAME / "0.5.0"),
+            "readFromFolder": str(Path(self.root) / "plugins" / plugin.NAME), "folderVersion": "0.5.0",
             "installedAt": "2026-10-21T04:46:37.381Z", "lastUpdated": "2026-10-21T04:46:37.381Z",
             "projectEnabled": False}
 
@@ -113,8 +113,8 @@ class ClaudeNativeInstallTests(unittest.TestCase):
         root = owned.initialize(self.root / name, "bundle")
         files = {
             ".claude-plugin/marketplace.json": {"name": plugin.MARKETPLACE, "owner": {"name": "MRH"},
-                "plugins": [{"name": plugin.NAME, "source": "./plugins/" + plugin.NAME, "version": "0.4.0"}]},
-            "plugins/" + plugin.NAME + "/.claude-plugin/plugin.json": {"name": plugin.NAME, "version": "0.4.0"},
+                "plugins": [{"name": plugin.NAME, "source": "./plugins/" + plugin.NAME, "version": "0.5.0"}]},
+            "plugins/" + plugin.NAME + "/.claude-plugin/plugin.json": {"name": plugin.NAME, "version": "0.5.0"},
         }
         hashes = {}
         for relative, value in files.items():
@@ -123,7 +123,7 @@ class ClaudeNativeInstallTests(unittest.TestCase):
             data = (json.dumps(value) + "\n").encode()
             owned.replace_owned(path, data)
             hashes[relative] = hashlib.sha256(data).hexdigest()
-        meta = {"schema_version": 1, "owner": owned.OWNER, "version": "0.4.0", "python": "fixture",
+        meta = {"schema_version": 1, "owner": owned.OWNER, "version": "0.5.0", "python": "fixture",
                 "settings_path": str(settings or self.settings), "files": hashes}
         owned.replace_owned(root / "artifact.json", (json.dumps(meta) + "\n").encode())
         return root
