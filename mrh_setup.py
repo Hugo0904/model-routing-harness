@@ -454,6 +454,17 @@ def drop_entry(host):
             pass
 
 
+def claude_marketplace_plugin(executable):
+    """Whether Claude Code has the static plugin installed. Read only; unknown when its CLI cannot be asked."""
+    try:
+        if not executable:
+            raise SetupError('claude_cli_unavailable')
+        rows = [r for r in command([executable, 'plugin', 'list', '--json']) if r.get('id') == hook_entry.PLUGIN_ID]
+    except (ValueError, AttributeError, TypeError) as exc:
+        return {'installed': None, 'reason': 'claude_plugin_list_unavailable:' + str(exc)}
+    return {'installed': bool(rows), 'enabled': any(r.get('enabled') for r in rows) if rows else None}
+
+
 class EntryInstaller:
     """Registration for a host served by the marketplace plugin.
 
@@ -758,6 +769,9 @@ def readiness(args, state, paths, hosts=None):
                 elif h == 'codex':
                     # The entry file needs no CLI, but whether the plugin is installed and trusted cannot be read without one.
                     row['plugin'] = {'installed': None, 'reason': 'codex_cli_unavailable:' + str(adapter.unavailable)}
+                else:
+                    # Without the plugin nothing calls the entry file, and the native hooks are gone: say so.
+                    row['plugin'] = claude_marketplace_plugin(row.get('cli', {}).get('executable'))
             except (ValueError, OSError, subprocess.SubprocessError):
                 row.update(configured=False, reason='hook_entry_or_native_readback_unavailable')
             result['hosts'][h] = row
@@ -1014,6 +1028,11 @@ def next_steps(result):
     if not hosts:
         return []
     steps = []
+    claude = hosts.get('claude')
+    if claude and claude.get('plugin', {}).get('installed') is not True:
+        known = claude.get('plugin', {}).get('installed') is False
+        steps.append(('Claude Code 尚未安裝 mrh 外掛' if known else '無法確認 Claude Code 裝了 mrh 外掛沒；還沒裝的話')
+                     + '：claude plugin install mrh --marketplace Hugo0904/model-routing-harness。沒有外掛時 MRH 在 Claude Code 不會運作')
     codex = hosts.get('codex')
     if codex and codex.get('plugin', {}).get('installed') is not True:
         known = codex.get('plugin', {}).get('installed') is False

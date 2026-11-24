@@ -65,6 +65,10 @@ class EngineOnlyTests(unittest.TestCase):
             self.assertEqual(self.entry(host).read_bytes(), hook_entry.content(state['hosts'][host]['artifact']))
             self.assertEqual((result['hosts'][host]['registration'], result['hosts'][host]['configured']), ('hook_entry', True))
         self.assertIn('/hooks', ' '.join(result['next_steps']))
+        # The fixture CLIs have no mrh plugin: both hosts say so instead of looking ready.
+        self.assertEqual(result['hosts']['codex']['plugin']['installed'], False)
+        self.assertIsNot(result['hosts']['claude']['plugin']['installed'], True)
+        self.assertEqual(sum('mrh 外掛' in step for step in result['next_steps']), 2)
         generation = self.prefix / 'setup-state/generations' / state['current']
         self.assertEqual({p.name for p in (generation / 'installer').iterdir()}, set(setup.INSTALLER_FILES))
         # The static adapter from the plugin folder finds the entry and runs the generation's own launcher.
@@ -186,6 +190,16 @@ class UpdateCommandTests(unittest.TestCase):
         report = json.loads(out.getvalue())
         self.assertEqual((code, report['release'], report['status']), (0, 'v9.9.9', 'update_available'))
         self.assertEqual(report['setup_arguments'], ['--host', 'codex', '--codex-cli', '/opt/codex'])
+
+    def test_other_platforms_are_told_to_use_their_checkout_and_nothing_runs(self):
+        import io
+        def forbidden(*args, **kwargs):
+            raise AssertionError('nothing may run on an unsupported platform')
+        for call in (lambda err: setup_cli.setup(['--check'], err), lambda err: setup_cli.update(None, io.StringIO(), err, forbidden)):
+            err = io.StringIO()
+            with patch.object(setup_cli.sys, 'platform', 'win32'), patch.object(setup_cli, 'generation', forbidden):
+                self.assertEqual(call(err), 2)
+            self.assertIn('macos_only', err.getvalue())
 
     def test_recorded_arguments_reproduce_the_registration_and_refuse_a_development_install(self):
         import tempfile

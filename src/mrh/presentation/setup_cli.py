@@ -53,7 +53,17 @@ def installer(root):
     return module
 
 
+def unsupported(stderr):
+    """Only the macOS installer keeps a copy of itself; the Windows one is rerun from its checkout."""
+    if sys.platform == 'darwin':
+        return False
+    stderr.write('mrh: macos_only:rerun_the_installer_from_a_checkout\n')
+    return True
+
+
 def setup(arguments, stderr):
+    if unsupported(stderr):
+        return 2
     try:
         root = generation()
         module = installer(root)
@@ -101,6 +111,8 @@ def recorded_arguments(root):
 
 
 def update(args, stdout, stderr, run=subprocess.run):
+    if unsupported(stderr):
+        return 2
     try:
         root = generation()
         arguments = recorded_arguments(root)
