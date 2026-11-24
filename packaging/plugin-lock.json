@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "plugin": "mrh",
+  "path": "plugins/mrh",
+  "version": "1.0.0",
+  "tree_sha256": "04d900678e6f4cd493c96e18d50e800debc27013c55074b6aee798d88a95978a",
+  "entries": [
+    {
+      "path": ".claude-plugin",
+      "type": "dir"
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "type": "file",
+      "executable": false,
+      "sha256": "ee98a290229c14c9ab08bed86482ffd0b71b78fe675f0da4e956a9bc4fbcab73"
+    },
+    {
+      "path": ".codex-plugin",
+      "type": "dir"
+    },
+    {
+      "path": ".codex-plugin/plugin.json",
+      "type": "file",
+      "executable": false,
+      "sha256": "67cc40b350bca71f5225b021ad5268139af34acecd0a691243f474210f0c8b71"
+    },
+    {
+      "path": "hooks",
+      "type": "dir"
+    },
+    {
+      "path": "hooks/codex.json",
+      "type": "file",
+      "executable": false,
+      "sha256": "f6e604f3c3603f1c9b599bc9f3e27a7aa58ee446aa9a01e0b567cb1409a263ae"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "type": "file",
+      "executable": false,
+      "sha256": "510940551afcb6302ecf07dd0e8013c1aa2df9c271a792508cdc3435300af568"
+    },
+    {
+      "path": "scripts",
+      "type": "dir"
+    },
+    {
+      "path": "scripts/mrh-hook",
+      "type": "file",
+      "executable": true,
+      "sha256": "e1f94854e12e711434edca72a08264af8ab9831904971ee4bcd7ea504e502913"
+    },
+    {
+      "path": "skills",
+      "type": "dir"
+    },
+    {
+      "path": "skills/mrh-setup",
+      "type": "dir"
+    },
+    {
+      "path": "skills/mrh-setup/SKILL.md",
+      "type": "file",
+      "executable": false,
+      "sha256": "e85f704ce3401c61b9151eba0da8adf1dc986cc42f05d2d2aae028e818aa8f0b"
+    }
+  ]
+}

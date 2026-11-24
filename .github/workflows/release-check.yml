@@ -1,0 +1,70 @@
+# 發佈檢查：每次 push 與 pull request 都跑。只回報、不擋（要擋得另外開分支保護）。
+# macOS 跑發佈檢查（和本機同一支 scripts/release_check.py）、腳本語法與整套離線測試；Windows 跑 tests.windows 與 setup.ps1 的語法。
+# 發佈檢查不放在 Windows：那裡的 checkout 可能把換行轉成 CRLF，檔案系統也沒有可執行位元，外掛資料夾的雜湊會假性不符。
+# 每一步都只讀這份 checkout，不安裝東西、不執行 setup、不碰家目錄。
+name: release-check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTHONPATH: src
+
+jobs:
+  macos:
+    name: 發佈檢查與離線測試（macos-latest）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # 要抓得到 v* 標籤，版本比對才比得出來
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11" # 原始碼要求的最低版本
+
+      - name: 發佈檢查（scripts/release_check.py）
+        run: python -B scripts/release_check.py
+
+      - name: 腳本語法（sh -n）
+        if: ${{ !cancelled() }}
+        run: |
+          sh -n setup
+          sh -n plugins/mrh/scripts/mrh-hook
+
+      - name: Python 檔能編譯（bytecode 寫到 checkout 之外）
+        if: ${{ !cancelled() }}
+        run: PYTHONPYCACHEPREFIX="$RUNNER_TEMP/pycache" python -m compileall -q .
+
+      - name: 整套離線測試
+        if: ${{ !cancelled() }}
+        run: python -B -m unittest discover -s tests -t .
+
+  windows:
+    name: Windows 測試與 setup.ps1 語法（windows-latest）
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: setup.ps1 的語法（Windows PowerShell 5.1）
+        shell: powershell
+        run: |
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path setup.ps1).Path, [ref]$null, [ref]$parseErrors) | Out-Null
+          foreach ($item in $parseErrors) {
+            Write-Host ('setup.ps1:{0}: {1}' -f $item.Extent.StartLineNumber, $item.Message)
+          }
+          if ($parseErrors.Count -gt 0) { exit 1 }
+
+      - name: Windows 測試（tests.windows）
+        if: ${{ !cancelled() }}
+        run: python -B -m unittest discover -s tests/windows -t .

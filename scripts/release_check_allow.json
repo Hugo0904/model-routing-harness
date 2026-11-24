@@ -1,0 +1,112 @@
+{
+  "entries": [
+    {
+      "file": "packaging/macos-arm64/license-snapshot/PYTHON.json",
+      "kind": "home-path",
+      "sha256": "9a09ac3910170055d9de7a25ac97f23402295686d31cd3e6f70765fe40872b4d",
+      "reason": "第三方 Python runtime 的建置資訊原件，記的是上游建置機器（GitHub Actions）的帳號資料夾，不指向任何人；內容受 snapshot.json 的雜湊約束，不能改寫。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.bdb.txt",
+      "kind": "email",
+      "sha256": "9d5e386ca2a8bab3936c9c49ecf475a3c37376f089c9d93aab045d6c514e34d4",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.bzip2.txt",
+      "kind": "email",
+      "sha256": "b0353afbdc5754815674e148b9be711fff9d3ca2433926248ce8e5704e2af13f",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.cpython.txt",
+      "kind": "email",
+      "sha256": "67837a138ef05085bd4f88497c100e14b2ef560508e41d0ef2ee0f0932824c46",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.cpython.txt",
+      "kind": "email",
+      "sha256": "0ea5e84a8d854b468580f3a1a44472eaf26fe278dae0bb82d72085904bbd6662",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.cpython.txt",
+      "kind": "email",
+      "sha256": "ea649ffcda351fa4cb849ae7e105d650704a932a44c6f1c58fb2e61d03395a5f",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.libX11.txt",
+      "kind": "email",
+      "sha256": "ede261bec35069dce0ce1c4e82a2a59105c865271d10e89b0bbaa6af0d73ad9c",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.libX11.txt",
+      "kind": "email",
+      "sha256": "6897e72f63028f920d006fc3f8d43afa2022d51b570eb8b8d74df7de67b87176",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.libX11.txt",
+      "kind": "email",
+      "sha256": "ce2205e775f244cb514cc4222a5e804f1e6e4f1295f2d6f3931caad2fb309c10",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.openssl-1.1.txt",
+      "kind": "email",
+      "sha256": "91ebb2ac58111485e0254e6c67083d4d29d18b85f9c9a0be679e3fcf891c8a40",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.openssl-1.1.txt",
+      "kind": "email",
+      "sha256": "8dc7a4227947aa4e9146df93bcb2461a4baff1b189797ecad21d44d425fe142b",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.openssl-1.1.txt",
+      "kind": "email",
+      "sha256": "bd85be195d290e3f9c5c9c1d154106df130594cd44b513bc64e838162df61537",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.zlib.txt",
+      "kind": "email",
+      "sha256": "59190f05e806055fb80ba57d062baab64c23be17986e0706de9b4b65638e6b23",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "packaging/macos-arm64/license-snapshot/licenses/LICENSE.zlib.txt",
+      "kind": "email",
+      "sha256": "3c51116159b668a48b0d2fefd4e6e8ccad2d59450069253d7ff7b5424617f867",
+      "reason": "第三方授權條款原文裡的著作權人聯絡方式；依授權須原樣保留，內容受 snapshot.json 的雜湊約束。"
+    },
+    {
+      "file": "tests/fixtures/e17r-parser-forms.json",
+      "kind": "home-path",
+      "sha256": "539fd0ef858da229acf3b12cc482de7bf3edd4f62fba0139e6fc59e06ed465f0",
+      "reason": "去識別化 fixture 的佔位家目錄（見 tests/fixtures/README.md），不指向任何人。"
+    },
+    {
+      "file": "tests/fixtures/e5-bundled-plugin.json",
+      "kind": "home-path",
+      "sha256": "539fd0ef858da229acf3b12cc482de7bf3edd4f62fba0139e6fc59e06ed465f0",
+      "reason": "去識別化 fixture 的佔位家目錄（見 tests/fixtures/README.md），不指向任何人。"
+    },
+    {
+      "file": "tests/fixtures/e5-shell-plugin.json",
+      "kind": "home-path",
+      "sha256": "539fd0ef858da229acf3b12cc482de7bf3edd4f62fba0139e6fc59e06ed465f0",
+      "reason": "去識別化 fixture 的佔位家目錄（見 tests/fixtures/README.md），不指向任何人。"
+    },
+    {
+      "file": "tests/infrastructure/test_claude_hook.py",
+      "kind": "home-path",
+      "sha256": "f9e409c5c16ecfdd5883da4f3ad045b4af5677740c9e703ad2d47ba231718350",
+      "reason": "測試輸入用的虛構家目錄（單一字母的假帳號），用來驗證安裝代路徑的改寫，不指向任何人。"
+    }
+  ]
+}
