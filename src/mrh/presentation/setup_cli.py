@@ -20,6 +20,7 @@ from mrh.infrastructure import owned, temporary
 from mrh.infrastructure.execution import GENERATION_ENV
 
 REPOSITORY = 'https://github.com/Hugo0904/model-routing-harness.git'
+HOST_OPTIONS = ('--codex-cli', '--claude-cli', '--claude-settings')    # where the hosts are, when not in the default place
 RELEASE = re.compile(r'^refs/tags/(v(\d+)\.(\d+)\.(\d+))$')
 
 
@@ -103,6 +104,10 @@ def update(args, stdout, stderr, run=subprocess.run):
     try:
         root = generation()
         arguments = recorded_arguments(root)
+        for option in HOST_OPTIONS:
+            value = getattr(args, option[2:].replace('-', '_'), None)
+            if value:
+                arguments += [option, value]
         source = args.source or REPOSITORY
         tags = release_tags(source, run)
         if args.release:

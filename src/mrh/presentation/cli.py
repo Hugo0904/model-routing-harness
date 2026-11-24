@@ -91,6 +91,9 @@ def build_parser() -> argparse.ArgumentParser:
     update.add_argument('--release', help='a specific release tag, for example v0.5.0')
     update.add_argument('--source', help='release repository to fetch from (default: the public repository)')
     update.add_argument('--json', action='store_true')
+    from mrh.presentation import setup_cli
+    for option in setup_cli.HOST_OPTIONS:
+        update.add_argument(option, help='passed to the release installer, as in the original ./setup command')
     cleanup = commands.add_parser('cleanup', help='preview disposable project scratch/cache; never reset statistics')
     cleanup.add_argument('--apply', action='store_true')
     models = commands.add_parser('models', help='current host-advertised model declarations; no paid account probe')

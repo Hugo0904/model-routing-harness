@@ -170,6 +170,23 @@ class UpdateCommandTests(unittest.TestCase):
         with self.assertRaisesRegex(setup_cli.SetupCommandError, 'release_list_unavailable'):
             setup_cli.release_tags('fixture', lambda *a, **k: subprocess.CompletedProcess(a, 128, '', 'fatal'))
 
+    def test_update_passes_host_locations_to_the_release_installer_and_reports_without_installing(self):
+        import io, tempfile
+        from mrh.presentation import cli
+        args = cli.build_parser().parse_args(['update', '--check', '--source', 'fixture', '--codex-cli', '/opt/codex'])
+        listing = '0' * 40 + '\trefs/tags/v9.9.9\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve() / 'prefix/setup-state/generations' / ('a' * 24)
+            root.mkdir(parents=True)
+            (root.parents[1] / 'state.json').write_text(json.dumps({'hosts': {'codex': {}}}))
+            (root / 'generation.json').write_text('{}')
+            out = io.StringIO()
+            with patch.dict(os.environ, {setup_cli.GENERATION_ENV: str(root)}):
+                code = setup_cli.update(args, out, io.StringIO(), lambda *a, **k: subprocess.CompletedProcess(a, 0, listing, ''))
+        report = json.loads(out.getvalue())
+        self.assertEqual((code, report['release'], report['status']), (0, 'v9.9.9', 'update_available'))
+        self.assertEqual(report['setup_arguments'], ['--host', 'codex', '--codex-cli', '/opt/codex'])
+
     def test_recorded_arguments_reproduce_the_registration_and_refuse_a_development_install(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
