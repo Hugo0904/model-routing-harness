@@ -64,6 +64,8 @@ COMMAND_LIST = """MRH 指令（用法：mrh <指令>）
   mrh models --host codex --json    CLI 宣告的模型／effort／來源；不代表帳號可用性
   mrh skill status --host codex    查看選配派工 skill（install 安裝／remove 移除；必須指定平台）
   mrh cleanup                     預覽專案暫存與快取；加 --apply 清除，不動設定與統計
+  mrh setup --check               檢查安裝與宿主接線；--enable --workspace PATH 啟用；--rollback 退版；--uninstall 移除
+  mrh update                      取得最新發行版並由它自己的安裝程式更新（--check 只比對版本）
 
 說明
   mrh <指令> --help      該指令的參數說明
@@ -84,6 +86,11 @@ def build_parser() -> argparse.ArgumentParser:
     skill.add_argument('--skills-dir', type=Path, help='explicit standalone skill directory; --root remains an alias')
     skill.add_argument('--force', action='store_true', help='explicitly change a modified MRH-owned skill; requires backup destination')
     skill.add_argument('--backup-dir', type=Path, help='explicit backup destination outside the MRH project')
+    update = commands.add_parser('update', help='fetch a published release and let its own installer update this installation')
+    update.add_argument('--check', action='store_true', help='only compare the installed version with the latest release')
+    update.add_argument('--release', help='a specific release tag, for example v0.5.0')
+    update.add_argument('--source', help='release repository to fetch from (default: the public repository)')
+    update.add_argument('--json', action='store_true')
     cleanup = commands.add_parser('cleanup', help='preview disposable project scratch/cache; never reset statistics')
     cleanup.add_argument('--apply', action='store_true')
     models = commands.add_parser('models', help='current host-advertised model declarations; no paid account probe')
@@ -213,6 +220,12 @@ def main(
     if not arguments or arguments[0] in ("-h", "--help", "help"):
         (stdout or sys.stdout).write(COMMAND_LIST)
         return 0
+    if arguments[0] == "setup":
+        # Everything after `setup` belongs to the installer's own parser.
+        from contextlib import redirect_stdout
+        from mrh.presentation import setup_cli
+        with redirect_stdout(stdout or sys.stdout):
+            return setup_cli.setup(arguments[1:], stderr or sys.stderr)
     parser = build_parser()
     args = parser.parse_args(arguments)
     if stdin is None:
@@ -256,6 +269,9 @@ def main(
                 return 0
             except (ValueError, OSError) as exc:
                 stderr.write('mrh: ' + str(exc) + '\n'); return 2
+        if args.command == 'update':
+            from mrh.presentation import setup_cli
+            return setup_cli.update(args, stdout, stderr)
         if args.command == 'cleanup':
             from mrh.infrastructure import temporary
             try:

@@ -537,7 +537,7 @@ print(json.dumps(out))
     def test_managed_dev_cli_and_hook_observe_edits_normal_survives_source_absence(self):
         source = self.root/'editable-checkout';source.mkdir()
         shutil.copytree(setup.ROOT/'src', source/'src')
-        for name in ('pyproject.toml','LICENSE'):
+        for name in ('pyproject.toml','LICENSE',*setup.INSTALLER_FILES):
             shutil.copy2(setup.ROOT/name, source/name)
         cli = source/'src/mrh/cli.py'
         runtime = source/'src/mrh/application/advisory_runtime.py'
@@ -592,7 +592,7 @@ print(json.dumps(out))
     def test_normal_real_cli_uses_default_isolated_profile_after_source_is_removed(self):
         source=self.root/'normal-source';source.mkdir()
         shutil.copytree(setup.ROOT/'src',source/'src')
-        for name in ('LICENSE','pyproject.toml'):shutil.copy2(setup.ROOT/name,source/name)
+        for name in ('LICENSE','pyproject.toml',*setup.INSTALLER_FILES):shutil.copy2(setup.ROOT/name,source/name)
         with patch.object(setup,'ROOT',source), patch.object(mrh_build,'ROOT',source):
             self.run_setup()
         self.assertNotIn('workspace_allowlist_file',settings_v2.read(self.profile()))

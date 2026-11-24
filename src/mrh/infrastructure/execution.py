@@ -13,6 +13,7 @@ from contextlib import contextmanager, ExitStack
 from mrh.infrastructure import owned
 
 DESCRIPTOR = 'model_routing_harness-editable.json'
+GENERATION_ENV = 'MRH_GENERATION_ROOT'
 PTH = 'model_routing_harness-editable.pth'
 
 
@@ -68,7 +69,10 @@ def activate_editable(directory, expected):
 
 def main():
     root = generation_root()
+    # A development install swaps in the checkout's modules below; commands that act on the installation itself still need its location.
+    os.environ.pop(GENERATION_ENV, None)
     if root is not None:
+        os.environ[GENERATION_ENV] = str(root)
         meta = json.loads(owned.read_regular(root / 'generation.json'))
         if 'runtime_root' in meta:
             os.environ.pop('MRH_PROJECT_ROOT', None)

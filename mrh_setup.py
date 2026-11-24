@@ -25,7 +25,7 @@ import uuid
 ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT), str(ROOT / 'src')]
 import mrh_bundle as bundle
-from mrh.infrastructure import owned, plugin, settings_v2, claude_hook, secrets
+from mrh.infrastructure import owned, plugin, settings_v2, claude_hook, secrets, hook_entry
 from mrh.infrastructure import execution, locations
 from mrh.infrastructure import temporary as project_temporary
 from mrh.adapters.hosts.registry import REGISTRATIONS
@@ -34,6 +34,8 @@ from mrh.adapters.platforms.macos_path import UserPath, PathError, plan_removal 
 
 OWNER = 'org.model-routing-harness.setup.v1'
 READER = {'settings': [1, 2], 'packet_statistics': 1}
+# Copied into every generation so the installed `mrh setup` can check, enable, roll back and remove without a checkout.
+INSTALLER_FILES = ('mrh_setup.py', 'mrh_bundle.py', 'mrh_build.py')
 
 
 class SetupError(ValueError):
@@ -229,7 +231,12 @@ class CodexInstaller:
                 raise SetupError('codex_packet_mode_conflict:use_explicit_matching_mode')
         return before
 
-    def trust(self, workspace):
+    def marketplace_plugin(self):
+        """Whether the user has added the static plugin from the marketplace. Read only."""
+        rows = [r for r in self.call('list').get('installed', []) if r.get('pluginId') == hook_entry.PLUGIN_ID]
+        return {'installed': bool(rows), 'enabled': rows[0].get('enabled') if rows else None}
+
+    def trust(self, workspace, plugin_id=plugin.PLUGIN_ID):
         """Read the public hook definitions. Never write a private trust store."""
         process=None
         try:
@@ -261,7 +268,7 @@ class CodexInstaller:
             request(1,'initialize',{'clientInfo':{'name':'mrh_setup_readiness','version':'1'},'capabilities':{'experimentalApi':True}})
             process.stdin.write('{"method":"initialized"}\n');process.stdin.flush()
             reply=request(2,'hooks/list',{'cwd':str(workspace)})
-            hooks=[h for row in reply['data'] for h in row['hooks'] if h.get('pluginId')==plugin.PLUGIN_ID]
+            hooks=[h for row in reply['data'] for h in row['hooks'] if h.get('pluginId')==plugin_id]
             if len(hooks)<2:return 'unverified'
             if all(h.get('trustStatus')=='trusted' for h in hooks):return 'trusted'
             return 'untrusted' if any(h.get('trustStatus')=='untrusted' for h in hooks) else 'unverified'
@@ -379,7 +386,147 @@ class ClaudeInstaller:
         return {'configured': True, 'backup': None}
 
 
+def claude_registration(path, settings):
+    """MRH's own hooks in a Claude settings.json, verified as ours. None when there are none."""
+    if not path.exists():
+        return None
+    text = regular(path).decode()
+    document = json.loads(text)
+    hooks = document.get('hooks', {}) if isinstance(document, dict) else None
+    if not isinstance(hooks, dict):
+        raise SetupError('claude_settings_shape_unexpected')
+    if not any(claude_hook._ours(e) for rows in hooks.values() if isinstance(rows, list) for e in rows):
+        return None
+    verify_hook_owner(text, settings)
+    return {'before': snapshot(path), 'text': text}
+
+
+def remove_claude_registration(path, found):
+    if snapshot(path) != found['before']:
+        raise SetupError('claude_native_concurrent_change')
+    after = claude_hook.plan(found['text'], '', remove=True).encode()
+    write(path, after, found['before'])
+    if regular(path) != after:
+        raise SetupError('claude_native_readback_failed')
+
+
+def codex_registration(observed, settings):
+    """The locally generated MRH plugin as Codex reports it, verified as ours. None when there is none."""
+    if observed['root'] is None and not observed['installed']:
+        return None
+    try:
+        if observed['root'] is None or plugin.show(Path(observed['root']))['artifact']['settings_path'] != str(settings):
+            raise SetupError('codex_registration_unowned')
+    except (ValueError, OSError):
+        raise SetupError('codex_registration_unowned') from None
+    return observed
+
+
+def remove_codex_plugin(adapter, observed):
+    now = adapter.observe()
+    if now['root'] != observed['root']:
+        raise SetupError('codex_native_concurrent_change')
+    if now['installed']:
+        adapter.call('remove', plugin.PLUGIN_ID)
+    if adapter.observe()['installed']:
+        raise SetupError('codex_native_readback_failed')
+
+
+def remove_codex_marketplace(adapter, observed):
+    now = adapter.observe()
+    if now['root'] is None:
+        return
+    if now['root'] != observed['root'] or now['installed']:
+        raise SetupError('codex_native_concurrent_change')
+    adapter.call('marketplace', 'remove', plugin.MARKETPLACE)
+    if adapter.observe()['root'] is not None:
+        raise SetupError('codex_native_readback_failed')
+
+
+def drop_entry(host):
+    """A host is registered one way only: natively, or through the hook entry."""
+    path = hook_entry.path(host)
+    if path.is_symlink() or path.exists():
+        path.unlink()
+        try:
+            path.parent.rmdir()    # only when no other host's entry is left
+        except OSError:
+            pass
+
+
+class EntryInstaller:
+    """Registration for a host served by the marketplace plugin.
+
+    The plugin's static adapter reads a hook entry file; writing that file is the whole registration. An older
+    native registration of the same host is removed first, so the hook is never registered twice.
+    """
+    def __init__(self, host, args, state, settings):
+        self.host, self.settings = host, settings
+        self.path = canonical(hook_entry.path(host))
+        recorded = (state or {}).get('hosts', {}).get(host, {})
+        if host == 'claude':
+            self.legacy = canonical(args.claude_settings or recorded.get('config') or Path.home() / '.claude/settings.json')
+        else:
+            try:
+                self.legacy = CodexInstaller(args.codex_cli)
+            except SetupError:
+                # Without its CLI a recorded Codex registration cannot be removed; with none recorded there is no Codex to register in.
+                if recorded and recorded.get('registration') != 'entry':
+                    raise
+                self.legacy = None
+
+    def found(self):
+        if self.host == 'claude':
+            return claude_registration(self.legacy, self.settings)
+        return codex_registration(self.legacy.observe(), self.settings) if self.legacy else None
+
+    def preflight(self, settings, packets=False):
+        found = self.found()
+        legacy = found and (found['before'] if self.host == 'claude' else found)
+        return {'entry': snapshot(self.path), 'legacy': legacy}
+
+    def legacy_plan(self, before):
+        if not before['legacy']:
+            return []
+        if self.host == 'claude':
+            return [{'host': 'claude', 'target': str(self.legacy), 'detail': '移除 settings.json 裡 MRH 的 PreToolUse／PostToolUse Hook；其他 Hook 與設定保留'}]
+        return [{'host': 'codex', 'target': before['legacy']['root'] or plugin.PLUGIN_ID, 'detail': '以 Codex 原生指令移除本機產生的 MRH 外掛與它的 marketplace'}]
+
+    def install(self, artifact, before, progress):
+        found = self.found()
+        if found and self.host == 'claude':
+            if found['before'] != before['legacy']:
+                raise SetupError('claude_native_concurrent_change')
+            progress('legacy_claude_remove_intent')
+            remove_claude_registration(self.legacy, found)
+            progress('legacy_claude_remove_done')
+        elif found:
+            if not before['legacy'] or found['root'] != before['legacy']['root']:
+                raise SetupError('codex_native_concurrent_change')
+            progress('legacy_codex_remove_intent')
+            remove_codex_plugin(self.legacy, found)
+            remove_codex_marketplace(self.legacy, found)
+            progress('legacy_codex_remove_done')
+        wanted = hook_entry.content(artifact)
+        if snapshot(self.path) != {'sha256': hashlib.sha256(wanted).hexdigest(), 'mode': 0o600}:
+            progress('hook_entry_write_intent')
+            # A resumed operation may already have replaced the entry it recorded; anything else is someone else's change.
+            write(self.path, wanted, before['entry'] if snapshot(self.path) == before['entry'] else None)
+            if regular(self.path) != wanted:
+                raise SetupError('hook_entry_readback_failed')
+            progress('hook_entry_write_done')
+        return {'configured': True, 'backup': None}
+
+    def configured(self, artifact):
+        return (self.path.is_file() and not self.path.is_symlink() and regular(self.path) == hook_entry.content(artifact)
+                and self.found() is None)
+
+
 def host_configured(host, adapter, artifact):
+    if isinstance(adapter, EntryInstaller):
+        return adapter.configured(artifact)
+    if snapshot(hook_entry.path(host)) is not None:
+        return False
     if host=='codex':
         value=adapter.observe()
         return value['root']==str(artifact) and value['installed'] and value['enabled'] is not False
@@ -479,6 +626,8 @@ def finish_generation(stage, destination, settings, selected, fingerprint, prefi
     if editable is not None:
         for name, data in editable.items():
             write(stage / 'app/editable' / name, data)
+    for name in INSTALLER_FILES:
+        write(stage / 'installer' / name, regular(ROOT / name))
     for h, info in selected.items():
         artifact = stage / 'hosts' / h
         artifact.parent.mkdir(parents=True, exist_ok=True)
@@ -596,6 +745,19 @@ def readiness(args, state, paths, hosts=None):
         result['workspace_ready'] = False
     for h, info in (state or {}).get('hosts', {}).items():
         if h not in selected:continue
+        if info.get('registration') == 'entry':
+            adapter = EntryInstaller(h, args, None, settings)
+            row = {**result['hosts'].get(h, {}), 'registration': 'hook_entry', 'entry': str(adapter.path), 'packets': False,
+                   'trust': 'not_applicable_native_settings' if h == 'claude' else 'unverified'}
+            try:
+                row['configured'] = adapter.configured(Path(info['artifact']))
+                if h == 'codex' and adapter.legacy:
+                    row['plugin'] = adapter.legacy.marketplace_plugin()
+                    row['trust'] = adapter.legacy.trust(Path.cwd(), hook_entry.PLUGIN_ID)
+            except (ValueError, OSError, subprocess.SubprocessError):
+                row.update(configured=False, reason='hook_entry_or_native_readback_unavailable')
+            result['hosts'][h] = row
+            continue
         if h == 'codex':
             try:
                 adapter=CodexInstaller(args.codex_cli);observed=adapter.observe()
@@ -618,6 +780,18 @@ def readiness(args, state, paths, hosts=None):
     return result
 
 
+def apply_downloads(args, control, fingerprint):
+    """What applying would fetch: the pinned runtime files not yet cached, unless this version is already built."""
+    if (control / 'generations' / fingerprint[:24]).exists():
+        return []
+    assets = bundle.read_lock()
+    cache = Path(args.cache_root) if args.cache_root else project_temporary.area('cache', create=False) / 'installer-assets'
+    supplied = os.environ.get('MRH_SETUP_BOOTSTRAP_ASSET')
+    return [{'name': assets[key]['name'], 'size': assets[key]['size'], 'url': assets[key]['url']}
+            for key in ('runtime', 'licensing_source')
+            if not (cache / assets[key]['name']).is_file() and not (key == 'runtime' and supplied)]
+
+
 def _install(args, *, build=bundle.build):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SetupError('unsupported_platform:macOS_arm64_only')
@@ -636,8 +810,26 @@ def _install(args, *, build=bundle.build):
         raise SetupError('enable_requires_explicit_workspace')
     if args.dev and args.rollback:
         raise SetupError('dev_cannot_combine_with_rollback')
-    if args.rollback and (args.enable or args.workspace or args.codex_packets):
+    if args.rollback and (args.enable or args.workspace or args.codex_packets or args.engine_only):
         raise SetupError('rollback_does_not_change_policy_or_packet_mode')
+    recorded = (state or {}).get('hosts', {})
+    if args.installed:
+        if not state:
+            raise SetupError('not_installed')
+        if any(h not in recorded for h in hosts):
+            raise SetupError('host_not_installed:use_a_checkout_or_mrh_update')
+    if args.rollback:
+        previous = (state or {}).get('previous') or {}
+        kinds = {h: previous.get('hosts', {}).get(h, {}).get('registration', 'native') for h in hosts}
+    elif args.installed:
+        kinds = {h: recorded[h].get('registration', 'native') for h in hosts}
+    else:
+        kinds = {h: 'entry' if args.engine_only else 'native' for h in hosts}
+        if not args.engine_only and any(recorded.get(h, {}).get('registration') == 'entry' for h in hosts):
+            raise SetupError('registration_conflict:host_uses_the_marketplace_plugin:rerun_with_--engine-only')
+        if args.engine_only and 'codex' in hosts and (args.codex_packets or recorded.get('codex', {}).get('packets')):
+            # The packet skill reads binding.json beside itself in the locally generated plugin; the static plugin has none.
+            raise SetupError('engine_only_codex_packets_unsupported:packet_skill_needs_the_locally_generated_plugin')
     value = profile_preflight(settings)
     before_bin = snapshot(bin_dir / 'mrh')
     allowed_links = {str(prefix / 'current/mrh'), str(prefix / 'app/mrh')}
@@ -648,10 +840,17 @@ def _install(args, *, build=bundle.build):
     pending_current = {'symlink':str(control/'generations'/pending['target'])} if pending and pending.get('phase')=='committing' and pending.get('target') else None
     if before_current and before_current != pending_current and (not state or before_current != {'symlink': str(control / 'generations' / state['current'])}):
         raise SetupError('current_generation_conflict')
-    adapters = {h: CodexInstaller(args.codex_cli) if REGISTRATIONS[h].installation == 'official-plugin' else ClaudeInstaller(args.claude_settings or Path.home() / '.claude/settings.json',args.claude_cli) for h in hosts}
+    adapters = {h: EntryInstaller(h, args, state, settings) if kinds[h] == 'entry' else CodexInstaller(args.codex_cli) if REGISTRATIONS[h].installation == 'official-plugin' else ClaudeInstaller(args.claude_settings or Path.home() / '.claude/settings.json',args.claude_cli) for h in hosts}
     if args.dry_run:
-        for h, adapter in adapters.items(): adapter.preflight(settings, (state or {}).get('hosts',{}).get(h,{}).get('packets',False) if args.rollback else args.codex_packets if h == 'codex' else False)
-        return {'status': 'planned', 'writes': False, 'downloads': False, 'hosts': hosts, 'settings': str(settings), 'packet_opt_in': args.codex_packets, 'rollback': args.rollback}
+        before = {h: adapter.preflight(settings, (state or {}).get('hosts',{}).get(h,{}).get('packets',False) if args.rollback else args.codex_packets if h == 'codex' else False) for h, adapter in adapters.items()}
+        result = {'status': 'planned', 'writes': False, 'downloads': False, 'hosts': hosts, 'settings': str(settings), 'packet_opt_in': args.codex_packets, 'rollback': args.rollback}
+        entries = {h: a for h, a in adapters.items() if isinstance(a, EntryInstaller)}
+        if entries:
+            result.update(registration='hook_entry', hook_entry={h: str(a.path) for h, a in entries.items()},
+                          legacy_registration=[row for h, a in entries.items() for row in a.legacy_plan(before[h])])
+            if not args.installed and not args.rollback:
+                result['apply_downloads'] = apply_downloads(args, control, source_fingerprint(hosts, args.codex_packets, settings, args.dev))
+        return result
     with locked(control):
         state = read_state(control)
         if snapshot(bin_dir / 'mrh') != before_bin or snapshot(prefix / 'current') != before_current:
@@ -662,7 +861,8 @@ def _install(args, *, build=bundle.build):
         before_profile = snapshot(settings)
         journal_path = control / 'journal.json'
         journal = document(journal_path) if journal_path.exists() else None
-        fingerprint = source_fingerprint(hosts, args.codex_packets, settings, args.dev)
+        fingerprint = (document(control / 'generations' / state['current'] / 'generation.json')['fingerprint'] if args.installed
+                       else source_fingerprint(hosts, args.codex_packets, settings, args.dev))
         intent={'enable':args.enable,'workspaces':[str(canonical(p)) for p in args.workspace]}
         if journal and journal.get('phase') != 'complete':
             if journal['fingerprint'] != fingerprint or journal['hosts'] != hosts or journal['rollback'] != args.rollback or journal.get('intent') != intent:
@@ -688,11 +888,13 @@ def _install(args, *, build=bundle.build):
             verify_bundle(generation, state['generations'][identifier]); compatible(generation, settings)
             selected = {h: previous['hosts'][h] for h in hosts}
         else:
-            identifier = fingerprint[:24]
+            identifier = state['current'] if args.installed else fingerprint[:24]
             generation = control / 'generations' / identifier
-            selected = {h: {'artifact': str(generation / 'hosts' / h), 'generation': identifier,
-                            'packets': args.codex_packets if h == 'codex' else False,
-                            **({'config': str(adapters[h].path)} if h == 'claude' else {})} for h in hosts}
+            # The installed command never builds: it keeps each host on the artifact already recorded for it.
+            selected = {h: recorded[h] for h in hosts} if args.installed else {
+                h: {'artifact': str(generation / 'hosts' / h), 'generation': identifier,
+                    'packets': args.codex_packets if h == 'codex' else False,
+                    **({'registration': 'entry'} if kinds[h] == 'entry' else {'config': str(adapters[h].path)} if h == 'claude' else {})} for h in hosts}
             if state and state['current'] == identifier and all(state['hosts'].get(h) == selected[h] for h in hosts) and journal.get('phase') in ('preflight','complete') and not args.enable and not args.workspace:
                 for h,a in adapters.items():
                     if not host_configured(h,a,Path(selected[h]['artifact'])):raise SetupError('native_registration_changed')
@@ -746,6 +948,7 @@ def _install(args, *, build=bundle.build):
                 def progress(step):
                     journal['native_step'] = {'host':h,'step':step}; write(journal_path,encoded(journal))
                 adapter.install(Path(selected[h]['artifact']), journal['before_hosts'][h], progress)
+                if not isinstance(adapter, EntryInstaller): drop_entry(h)
                 journal['completed_hosts'].append(h); write(journal_path,encoded(journal))
             for h,adapter in adapters.items():
                 if not host_configured(h,adapter,Path(selected[h]['artifact'])):
@@ -796,7 +999,29 @@ def install(args, *, build=bundle.build, path_manager=None):
             result['diagnostics'] = hook_diagnostics.after_install()
         from mrh.adapters.hosts.skill_registry import install_suggestions
         result['optional_skills'] = install_suggestions(result.get('hosts', {}))
+        steps = next_steps(result)
+        if steps: result['next_steps'] = steps
     return result
+
+
+def next_steps(result):
+    """What only the user can do after a hook-entry installation, in the order to do it."""
+    hosts = {h: row for h, row in result.get('hosts', {}).items() if row.get('registration') == 'hook_entry'}
+    if not hosts:
+        return []
+    steps = []
+    codex = hosts.get('codex')
+    if codex and codex.get('plugin', {}).get('installed') is False:
+        steps.append('Codex 尚未安裝 mrh 外掛：codex plugin marketplace add Hugo0904/model-routing-harness，再 codex plugin add ' + hook_entry.PLUGIN_ID)
+    if codex and codex.get('trust') != 'trusted':
+        steps.append('Codex：輸入 /hooks，審閱並信任 MRH 的兩個 Hook；信任之前 MRH 在 Codex 不會運作')
+    if result.get('credential_present') is False:
+        steps.append('開一個新的終端機視窗執行 mrh key set jev；金鑰由系統視窗輸入，不要貼給 AI 或寫進檔案')
+    if not result.get('policy_ready'):
+        steps.append('執行 mrh ctrl 選擇各級模型')
+    if not result.get('enabled') or not result.get('workspace_ready'):
+        steps.append('同意任務文字送到分級服務之後才執行：mrh setup --enable --workspace "/"（/ 代表全部專案，也可以換成某個專案的路徑）')
+    return steps
 
 
 # ---- uninstall -------------------------------------------------------------------------------------------------
@@ -824,29 +1049,13 @@ def _plan_claude(args, state, settings, plan):
     wanted = args.claude_settings or configured or Path.home() / '.claude/settings.json'
     try:
         path = canonical(wanted)
-        if not path.exists():
-            return
-        text = regular(path).decode()
-        document = json.loads(text)
-        hooks = document.get('hooks', {}) if isinstance(document, dict) else None
-        if not isinstance(hooks, dict):
-            raise SetupError('claude_settings_shape_unexpected')
-        if not any(claude_hook._ours(e) for rows in hooks.values() if isinstance(rows, list) for e in rows):
-            return
-        verify_hook_owner(text, settings)
+        found = claude_registration(path, settings)
     except (ValueError, OSError) as exc:
         plan['blocked'].append(_note('claude_hook', wanted, _reason(exc) if not isinstance(exc, json.JSONDecodeError) else 'claude_settings_not_json'))
         return
-    before = snapshot(path)
-
-    def run():
-        if snapshot(path) != before:
-            raise SetupError('claude_native_concurrent_change')
-        after = claude_hook.plan(text, '', remove=True).encode()
-        write(path, after, before)
-        if regular(path) != after:
-            raise SetupError('claude_native_readback_failed')
-    plan['steps'].append(_step('hosts', 'claude_hook', path, '移除 MRH 的 PreToolUse／PostToolUse Hook；其他 Hook 與設定保留', run))
+    if found:
+        plan['steps'].append(_step('hosts', 'claude_hook', path, '移除 MRH 的 PreToolUse／PostToolUse Hook；其他 Hook 與設定保留',
+                                   lambda: remove_claude_registration(path, found)))
 
 
 def _plan_codex(args, settings, plan, required):
@@ -858,36 +1067,30 @@ def _plan_codex(args, settings, plan, required):
             plan['blocked'].append(_note('codex_plugin', args.codex_cli or 'codex', _reason(exc),
                                          hint='找不到可用的 Codex CLI；可用 --codex-cli 指定，或自行執行 codex plugin remove ' + plugin.PLUGIN_ID))
         return
-    if observed['root'] is None and not observed['installed']:
-        return
     try:
-        if observed['root'] is None or plugin.show(Path(observed['root']))['artifact']['settings_path'] != str(settings):
-            raise SetupError('codex_registration_unowned')
-    except (ValueError, OSError) as exc:
-        plan['blocked'].append(_note('codex_plugin', observed['root'] or 'codex', 'codex_registration_unowned' if not isinstance(exc, SetupError) else str(exc)))
-        return
-
-    def remove_plugin():
-        now = adapter.observe()
-        if now['root'] != observed['root']:
-            raise SetupError('codex_native_concurrent_change')
-        if now['installed']:
-            adapter.call('remove', plugin.PLUGIN_ID)
-        if adapter.observe()['installed']:
-            raise SetupError('codex_native_readback_failed')
-
-    def remove_marketplace():
-        now = adapter.observe()
-        if now['root'] is None:
+        if codex_registration(observed, settings) is None:
             return
-        if now['root'] != observed['root'] or now['installed']:
-            raise SetupError('codex_native_concurrent_change')
-        adapter.call('marketplace', 'remove', plugin.MARKETPLACE)
-        if adapter.observe()['root'] is not None:
-            raise SetupError('codex_native_readback_failed')
+    except SetupError as exc:
+        plan['blocked'].append(_note('codex_plugin', observed['root'] or 'codex', str(exc)))
+        return
     if observed['installed']:
-        plan['steps'].append(_step('hosts', 'codex_plugin', plugin.PLUGIN_ID, '以 Codex 原生指令移除 MRH 外掛（其 Hook 隨外掛移除；Codex 自己的信任紀錄與 config.toml 不由 MRH 直接修改）', remove_plugin))
-    plan['steps'].append(_step('hosts', 'codex_marketplace', observed['root'], '以 Codex 原生指令移除 MRH 的本機 marketplace', remove_marketplace))
+        plan['steps'].append(_step('hosts', 'codex_plugin', plugin.PLUGIN_ID, '以 Codex 原生指令移除 MRH 外掛（其 Hook 隨外掛移除；Codex 自己的信任紀錄與 config.toml 不由 MRH 直接修改）',
+                                   lambda: remove_codex_plugin(adapter, observed)))
+    plan['steps'].append(_step('hosts', 'codex_marketplace', observed['root'], '以 Codex 原生指令移除 MRH 的本機 marketplace',
+                               lambda: remove_codex_marketplace(adapter, observed)))
+
+
+def _plan_entries(plan):
+    """Every hook entry goes with the engine it points to. The static plugin itself belongs to the host and stays."""
+    for host in REGISTRATIONS:
+        path = hook_entry.path(host)
+        if not (path.exists() or path.is_symlink()):
+            continue
+        plan['steps'].append(_step('hosts', 'hook_entry', path, '移除 Hook 入口檔；mrh 外掛之後會直接放行派工',
+                                   lambda host=host: drop_entry(host)))
+        plan['keep'].append(_note('marketplace_plugin', hook_entry.PLUGIN_ID, 'host_managed_plugin_kept',
+                                  hint='mrh 外掛由宿主管理；要一併移除請自行執行 '
+                                       + ('claude plugin uninstall ' if host == 'claude' else 'codex plugin remove ') + hook_entry.PLUGIN_ID))
 
 
 def _plan_skills(hosts, plan):
@@ -1048,7 +1251,7 @@ def _plan_data(paths, plan, purge):
 def uninstall(args):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SetupError('unsupported_platform:macOS_arm64_only')
-    if args.enable or args.workspace or args.codex_packets or args.dev:
+    if args.enable or args.workspace or args.codex_packets or args.dev or args.engine_only:
         raise SetupError('uninstall_does_not_change_policy_or_packet_mode')
     paths = resolve_paths(args)
     prefix, config, bin_dir, pointer, settings = paths
@@ -1064,7 +1267,9 @@ def uninstall(args):
     if 'claude' in hosts:
         _plan_claude(args, state, settings, plan)
     if 'codex' in hosts:
-        _plan_codex(args, settings, plan, required)
+        # A host served by the static plugin has no native registration left; its CLI is not needed to remove MRH.
+        _plan_codex(args, settings, plan, required and (state or {}).get('hosts', {}).get('codex', {}).get('registration') != 'entry')
+    _plan_entries(plan)
     if plan['blocked']:
         # A host registration that cannot be removed still points at the installation: change nothing else until it is fixed.
         plan['keep'].append(_note('everything_else', control, 'skipped_host_registrations_remain', hint='Hook 仍指向安裝代；先解決阻擋項目，再重跑同一個指令'))
@@ -1119,6 +1324,8 @@ def _finish_uninstall(args, plan, hosts, control):
 
 def parser():
     p=argparse.ArgumentParser(description='Install/update this checkout; never git pull or call a classifier.')
+    p.set_defaults(installed=False)
+    p.add_argument('--engine-only',action='store_true',help='install the engine and write the hook entry for each --host; the host itself is served by the mrh marketplace plugin. An older native registration of that host is removed')
     p.add_argument('--host',action='append',choices=tuple(REGISTRATIONS),default=[])
     mode=p.add_mutually_exclusive_group();mode.add_argument('--check',action='store_true');mode.add_argument('--dry-run',action='store_true');mode.add_argument('--rollback',action='store_true');mode.add_argument('--uninstall',action='store_true',help='preview (default) or, with --yes, remove MRH; user data is kept unless --purge-data')
     p.add_argument('--json',action='store_true');p.add_argument('--codex-packets',action='store_true',help='explicit optional full-task packet artifact/skill; not default')
@@ -1154,9 +1361,13 @@ def print_uninstall(result):
     print('No classifier/model request was made.')
 
 
-def main(argv=None):
+def main(argv=None, *, installed=False):
+    """`installed` is set only by the `mrh setup` command of an installed generation, which has no source to build from."""
     args=parser().parse_args(argv)
+    args.installed=installed
     try:
+        if installed and (args.dev or args.codex_packets or args.engine_only or args.cache_root):
+            raise SetupError('installed_setup_does_not_build:use_mrh_update_or_a_checkout')
         if (args.yes or args.purge_data) and not args.uninstall:
             raise SetupError('yes_and_purge_data_require_uninstall')
         result=uninstall(args) if args.uninstall else install(args)
@@ -1174,6 +1385,9 @@ def main(argv=None):
         if result.get('command_path'):
             print('PATH: '+('new login/interactive shell ready' if result['command_path']['future_terminal_ready'] else 'not ready'))
             print('Existing parent processes were not refreshed; open a new shell and run: mrh status')
+        if result.get('next_steps'):
+            print('接下來要你自己做：')
+            for line in result['next_steps']:print('  - '+line)
         if result.get('optional_skills'):
             print('選配派工 skill（不會自動安裝；由你選擇）：')
             for command in result['optional_skills']['commands']:print('  '+command)

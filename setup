@@ -36,11 +36,16 @@ if [ "$mrh_uninstall" = true ]; then
     printf '%s\n' '{"status":"unknown","reason":"no_python_3_11_found_for_uninstall","writes":false,"downloads":false,"message":"No installed MRH runtime and no Python 3.11 or newer was found. If MRH was already uninstalled there is nothing left to do. Otherwise follow the manual removal list in docs/install.md, or install Python 3.11 or newer and rerun. Uninstall never downloads Python."}'
     exit 2
 fi
+mrh_lock=$mrh_source/packaging/macos-arm64/runtime-lock.json
 if [ "$mrh_readonly" = true ]; then
-    printf '%s\n' '{"status":"pending","reason":"python_3_11_or_pinned_bootstrap_required","writes":false,"downloads":false}'
+    # No Python can run the full preview here. Still say what applying would fetch, so consent is informed.
+    mrh_fetch=
+    for mrh_key in runtime licensing_source; do
+        mrh_fetch=$mrh_fetch${mrh_fetch:+,}$(printf '{"name":"%s","size":%s,"url":"%s"}' "$(/usr/bin/plutil -extract "$mrh_key.name" raw -o - "$mrh_lock")" "$(/usr/bin/plutil -extract "$mrh_key.size" raw -o - "$mrh_lock")" "$(/usr/bin/plutil -extract "$mrh_key.url" raw -o - "$mrh_lock")")
+    done
+    printf '%s\n' '{"status":"pending","reason":"python_3_11_or_pinned_bootstrap_required","writes":false,"downloads":false,"apply_downloads":['"$mrh_fetch"'],"message":"No Python 3.11 or newer was found, so the full preview cannot run. Applying first fetches the hash-pinned files in apply_downloads, unless they are already cached, then installs."}'
     exit 0
 fi
-mrh_lock=$mrh_source/packaging/macos-arm64/runtime-lock.json
 mrh_name=$(/usr/bin/plutil -extract runtime.name raw -o - "$mrh_lock")
 mrh_url=$(/usr/bin/plutil -extract runtime.url raw -o - "$mrh_lock")
 mrh_sha=$(/usr/bin/plutil -extract runtime.sha256 raw -o - "$mrh_lock")
