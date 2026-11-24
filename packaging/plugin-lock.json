@@ -3,7 +3,7 @@
   "plugin": "mrh",
   "path": "plugins/mrh",
   "version": "1.0.0",
-  "tree_sha256": "04d900678e6f4cd493c96e18d50e800debc27013c55074b6aee798d88a95978a",
+  "tree_sha256": "a7cab2e4c0fbfeac8ea679a74f254cab4af6011def1fc417c948fc3f07e25b71",
   "entries": [
     {
       "path": ".claude-plugin",
@@ -63,7 +63,7 @@
       "path": "skills/mrh-setup/SKILL.md",
       "type": "file",
       "executable": false,
-      "sha256": "e85f704ce3401c61b9151eba0da8adf1dc986cc42f05d2d2aae028e818aa8f0b"
+      "sha256": "b059239d11bc8bff904b909e7bd8d4c11da0695ad789f8d9e757ad2512ce01af"
     }
   ]
 }

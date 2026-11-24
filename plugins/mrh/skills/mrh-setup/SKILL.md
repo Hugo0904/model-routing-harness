@@ -25,27 +25,37 @@ below. Until then the hooks pass every delegation through unchanged.
 `<host>` is `claude` when you are Claude Code and `codex` when you are Codex.
 
 1. Look at what is there. Run `command -v mrh`. When it prints a path, run `mrh setup --check --json`.
-   If `hosts.<host>.configured` is true, the engine is already connected: skip to step 5. If `mrh` exists
-   but does not know `setup`, it is an older installation; continue, and the same steps move it over
-   while keeping its settings, statistics and key.
+   - `hosts.<host>.registration` is `hook_entry` and `hosts.<host>.configured` is true: the engine is
+     already connected to this plugin. Skip to step 5.
+   - `<host>` is listed without `registration`, or `mrh` does not know `setup`: this is an older
+     installation that registered its own hooks. Continue; the same steps move it to this plugin and keep
+     its settings, statistics and key.
+   - No `mrh`, or `<host>` is not listed: continue.
 
-2. Fetch the latest release into a private temporary directory.
+2. Fetch the latest release into a new temporary directory.
 
    ```sh
    git ls-remote --tags --refs https://github.com/Hugo0904/model-routing-harness.git 'v*'
    ```
 
    Choose the highest `vMAJOR.MINOR.PATCH` tag from that list. If there is none, stop and tell the user no
-   release has been published yet. Then:
+   release has been published yet. Then create the directory:
 
    ```sh
-   mrh_tmp=$(mktemp -d) && git clone --quiet --depth 1 --branch <tag> https://github.com/Hugo0904/model-routing-harness.git "$mrh_tmp/model-routing-harness"
+   mktemp -d
    ```
 
-3. Preview. From `$mrh_tmp/model-routing-harness`:
+   It prints a path. Shell variables do not survive between your commands, so write that path out in full
+   wherever `<dir>` appears below.
 
    ```sh
-   ./setup --engine-only --host <host> --dry-run --json
+   git clone --quiet --depth 1 --branch <tag> https://github.com/Hugo0904/model-routing-harness.git "<dir>/model-routing-harness"
+   ```
+
+3. Preview:
+
+   ```sh
+   cd "<dir>/model-routing-harness" && ./setup --engine-only --host <host> --dry-run --json
    ```
 
    Add a second `--host` only when the user says they also use the other host and have this plugin there.
@@ -61,14 +71,17 @@ below. Until then the hooks pass every delegation through unchanged.
      because this plugin replaces it;
    - MRH stays disabled afterwards.
 
+   When `status` is `incomplete`, report `reason`, remove the directory as in step 4 and stop.
+
 4. Only after the user agrees, apply with the same arguments minus `--dry-run`:
 
    ```sh
-   ./setup --engine-only --host <host> --json
+   cd "<dir>/model-routing-harness" && ./setup --engine-only --host <host> --json
    ```
 
-   When `status` is not `installed`, report `reason` and stop; rerunning the same command resumes it.
-   Then remove the temporary directory: `rm -rf "$mrh_tmp"`.
+   When `status` is `installed`, remove the temporary directory: `rm -rf "<dir>"`. Otherwise report
+   `reason` and stop. Leave the directory in place so the same command can be rerun to resume, and remove
+   it once the user decides not to continue.
 
 5. Tell the user what is left for them, using `next_steps` from the output when present. Do not do these
    for them:
