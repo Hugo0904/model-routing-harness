@@ -463,17 +463,18 @@ class EntryInstaller:
     def __init__(self, host, args, state, settings):
         self.host, self.settings = host, settings
         self.path = canonical(hook_entry.path(host))
+        self.unavailable = None
         recorded = (state or {}).get('hosts', {}).get(host, {})
         if host == 'claude':
             self.legacy = canonical(args.claude_settings or recorded.get('config') or Path.home() / '.claude/settings.json')
         else:
             try:
                 self.legacy = CodexInstaller(args.codex_cli)
-            except SetupError:
+            except SetupError as exc:
                 # Without its CLI a recorded Codex registration cannot be removed; with none recorded there is no Codex to register in.
                 if recorded and recorded.get('registration') != 'entry':
                     raise
-                self.legacy = None
+                self.legacy, self.unavailable = None, str(exc)
 
     def found(self):
         if self.host == 'claude':
@@ -748,12 +749,15 @@ def readiness(args, state, paths, hosts=None):
         if info.get('registration') == 'entry':
             adapter = EntryInstaller(h, args, None, settings)
             row = {**result['hosts'].get(h, {}), 'registration': 'hook_entry', 'entry': str(adapter.path), 'packets': False,
-                   'trust': 'not_applicable_native_settings' if h == 'claude' else 'unverified'}
+                   'trust': 'not_required' if h == 'claude' else 'unverified'}
             try:
                 row['configured'] = adapter.configured(Path(info['artifact']))
                 if h == 'codex' and adapter.legacy:
                     row['plugin'] = adapter.legacy.marketplace_plugin()
                     row['trust'] = adapter.legacy.trust(Path.cwd(), hook_entry.PLUGIN_ID)
+                elif h == 'codex':
+                    # The entry file needs no CLI, but whether the plugin is installed and trusted cannot be read without one.
+                    row['plugin'] = {'installed': None, 'reason': 'codex_cli_unavailable:' + str(adapter.unavailable)}
             except (ValueError, OSError, subprocess.SubprocessError):
                 row.update(configured=False, reason='hook_entry_or_native_readback_unavailable')
             result['hosts'][h] = row
@@ -774,7 +778,7 @@ def readiness(args, state, paths, hosts=None):
         if not result[key]: result['pending'].append(key)
     if any(not x['configured'] for x in result['hosts'].values()): result['pending'].append('host_configuration')
     trusts=[h['trust'] for h in result['hosts'].values()]
-    result['trust']='trusted' if trusts and all(t in ('trusted','not_applicable_native_settings') for t in trusts) else 'untrusted' if 'untrusted'in trusts else 'unverified'
+    result['trust']='trusted' if trusts and all(t in ('trusted','not_applicable_native_settings','not_required') for t in trusts) else 'untrusted' if 'untrusted'in trusts else 'unverified'
     if result['trust']!='trusted':result['pending'].append('native_trust_or_unverified')
     result['status'] = 'installed' if result['installed'] and not result['transaction_pending'] else 'pending'
     return result
@@ -1011,8 +1015,10 @@ def next_steps(result):
         return []
     steps = []
     codex = hosts.get('codex')
-    if codex and codex.get('plugin', {}).get('installed') is False:
-        steps.append('Codex 尚未安裝 mrh 外掛：codex plugin marketplace add Hugo0904/model-routing-harness，再 codex plugin add ' + hook_entry.PLUGIN_ID)
+    if codex and codex.get('plugin', {}).get('installed') is not True:
+        known = codex.get('plugin', {}).get('installed') is False
+        steps.append(('Codex 尚未安裝 mrh 外掛' if known else '查不到可用的 Codex CLI，無法確認 mrh 外掛裝了沒；還沒裝的話')
+                     + '：codex plugin marketplace add Hugo0904/model-routing-harness，再 codex plugin add ' + hook_entry.PLUGIN_ID)
     if codex and codex.get('trust') != 'trusted':
         steps.append('Codex：輸入 /hooks，審閱並信任 MRH 的兩個 Hook；信任之前 MRH 在 Codex 不會運作')
     if result.get('credential_present') is False:
