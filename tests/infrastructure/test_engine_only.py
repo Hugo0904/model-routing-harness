@@ -95,13 +95,20 @@ class EngineOnlyTests(unittest.TestCase):
             self.assertEqual(self.entry(host).read_bytes(), hook_entry.content(self.state()['hosts'][host]['artifact']))
             self.assertTrue(result['hosts'][host]['configured'])
 
-    def test_a_host_on_the_plugin_refuses_native_setup(self):
+    def test_a_host_on_the_plugin_stays_on_it_when_setup_runs_without_the_flag(self):
         self.install('codex', extra=['--engine-only'])
-        before = self.disk()
-        with self.assertRaisesRegex(setup.SetupError, 'registration_conflict'):
-            self.install('codex')
-        self.assertEqual(self.disk(), before)
+        self.install('claude')
+        self.revision = 'two'
+        result = self.install('codex', 'claude')
+        self.assertEqual(result['status'], 'installed', result)
+        state = self.state()
+        self.assertEqual((state['hosts']['codex'].get('registration'), state['hosts']['claude'].get('registration')), ('entry', None))
         self.assertEqual(self.codex_native()['mutations'], 0)
+        self.assertEqual(self.entry('codex').read_bytes(), hook_entry.content(state['hosts']['codex']['artifact']))
+        self.assertFalse(self.entry('claude').exists())
+        self.assertIn(state['current'], state['hosts']['claude']['artifact'])
+        with self.assertRaisesRegex(setup.SetupError, 'engine_only_codex_packets_unsupported'):
+            self.install('codex', extra=['--codex-packets'])
 
     def test_rollback_to_a_native_generation_restores_it_and_drops_the_entry(self):
         self.install('codex')
@@ -170,7 +177,7 @@ class UpdateCommandTests(unittest.TestCase):
             root.mkdir(parents=True)
             (root.parents[1] / 'state.json').write_text(json.dumps({'hosts': {'codex': {'registration': 'entry'}, 'claude': {'registration': 'entry'}}}))
             (root / 'generation.json').write_text('{}')
-            self.assertEqual(setup_cli.recorded_arguments(root), ['--prefix', str(root.parents[2]), '--host', 'codex', '--host', 'claude', '--engine-only'])
+            self.assertEqual(setup_cli.recorded_arguments(root), ['--prefix', str(root.parents[2]), '--host', 'codex', '--host', 'claude'])
             (root.parents[1] / 'state.json').write_text(json.dumps({'hosts': {'codex': {'packets': True}}}))
             self.assertEqual(setup_cli.recorded_arguments(root)[2:], ['--host', 'codex', '--codex-packets'])
             (root / 'generation.json').write_text(json.dumps({'dev_source': '/somewhere'}))

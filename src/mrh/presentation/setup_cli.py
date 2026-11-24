@@ -91,10 +91,7 @@ def recorded_arguments(root):
     arguments = ['--prefix', str(root.parents[2])]
     for host in hosts:
         arguments += ['--host', host]
-    if hosts and all(info.get('registration') == 'entry' for info in hosts.values()):
-        arguments.append('--engine-only')
-    elif any(info.get('registration') == 'entry' for info in hosts.values()):
-        raise SetupCommandError('mixed_registration:update_each_host_from_a_checkout')
+    # Each host keeps its recorded registration (marketplace plugin or native) without a flag.
     if hosts.get('codex', {}).get('packets'):
         arguments.append('--codex-packets')
     if metadata.get('dev_source'):
@@ -137,9 +134,9 @@ def update(args, stdout, stderr, run=subprocess.run):
         if cloned.returncode:
             stderr.write('mrh: release_fetch_failed\n')
             return 2
-        stdout.write('MRH update: ' + (installed or 'unknown') + ' -> ' + tag + '\n')
-        stdout.flush()
-        # The new release installs itself; its output is the result.
+        # Progress goes to stderr: with --json, stdout carries only the new release's own result.
+        stderr.write('MRH update: ' + (installed or 'unknown') + ' -> ' + tag + '\n')
+        stderr.flush()
         return run([str(checkout / 'setup'), *arguments, *(['--json'] if args.json else [])]).returncode
     finally:
         shutil.rmtree(scratch, ignore_errors=True)

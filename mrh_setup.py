@@ -828,10 +828,10 @@ def _install(args, *, build=bundle.build):
     elif args.installed:
         kinds = {h: recorded[h].get('registration', 'native') for h in hosts}
     else:
-        kinds = {h: 'entry' if args.engine_only else 'native' for h in hosts}
-        if not args.engine_only and any(recorded.get(h, {}).get('registration') == 'entry' for h in hosts):
-            raise SetupError('registration_conflict:host_uses_the_marketplace_plugin:rerun_with_--engine-only')
-        if args.engine_only and 'codex' in hosts and (args.codex_packets or recorded.get('codex', {}).get('packets')):
+        # --engine-only moves the selected hosts to the marketplace plugin. Without it a host keeps the registration
+        # it has, so an update is one ordinary run and a host is never registered both ways.
+        kinds = {h: 'entry' if args.engine_only or recorded.get(h, {}).get('registration') == 'entry' else 'native' for h in hosts}
+        if kinds.get('codex') == 'entry' and (args.codex_packets or recorded.get('codex', {}).get('packets')):
             # The packet skill reads binding.json beside itself in the locally generated plugin; the static plugin has none.
             raise SetupError('engine_only_codex_packets_unsupported:packet_skill_needs_the_locally_generated_plugin')
     value = profile_preflight(settings)
