@@ -3,6 +3,8 @@
 No host credentials, provider requests, or persistent AppContainer profiles.
 Compile lpac_payload.c and set MRH_LPAC_TEST_HELPER_EXE to that private image.
 The payload imports only kernel32 and observes synthetic canaries.
+A case whose precondition is missing (no payload, or an interpreter the adapter
+refuses) is skipped with its reason; a skip is not native isolation evidence.
 """
 from contextlib import contextmanager
 import ctypes as c
@@ -33,6 +35,16 @@ class LpacTests(unittest.TestCase):
             with lpac.isolated(target, capabilities=capabilities) as sandbox:
                 sandbox.env['MRH_LPAC_TEST_CASE'] = mode
                 yield sandbox
+
+    def protected_python(self):
+        """This interpreter as the sandbox image, which the adapter accepts only if other users cannot change it."""
+        from mrh.adapters.catalogs.catalog import CatalogError, executable_hash
+        try: executable_hash(sys.executable)
+        except CatalogError as refused:
+            try: win.assert_safe(sys.executable); cause = refused
+            except (ValueError, OSError) as unsafe: cause = unsafe
+            self.skipTest(f'run with the protected MRH Python runtime; the adapter refuses {sys.executable}: {cause}')
+        return sys.executable
 
     def dead(self, pid):
         open_process = win.api(win.k, 'OpenProcess', [w.DWORD, w.BOOL, w.DWORD], w.HANDLE)
@@ -78,8 +90,9 @@ class LpacTests(unittest.TestCase):
                 self.assertEqual(out,'create_error=5')
 
     def test_failed_job_assignment_and_token_verification_never_resume(self):
+        python = self.protected_python()
         for owner, name in ((lpac.Job, 'assign'), (lpac, '_verify')):
-            with self.subTest(failure=name), lpac.isolated(sys.executable) as sandbox:
+            with self.subTest(failure=name), lpac.isolated(python) as sandbox:
                 children = []
                 original = lpac.create
                 def created(*args):
@@ -95,7 +108,7 @@ class LpacTests(unittest.TestCase):
                 self.dead(children[0])
 
     def test_image_change_refused_before_process_creation_and_profile_removed(self):
-        with lpac.isolated(sys.executable) as sandbox:
+        with lpac.isolated(self.protected_python()) as sandbox:
             root = sandbox.root
             folder = w.LPWSTR()
             get_folder = win.api(lpac.u, 'GetAppContainerFolderPath', [w.LPCWSTR,c.POINTER(w.LPWSTR)], c.c_long)
@@ -126,9 +139,13 @@ class LpacTests(unittest.TestCase):
 
     def test_registry_read_capability_is_exactly_the_system_key_grant_and_closed(self):
         key = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\WinSock2\\Parameters'
-        sddl = subprocess.run(['powershell','-NoProfile','-Command',f'(Get-Acl "{key}").Sddl'],
-                              capture_output=True,text=True,timeout=30,check=True).stdout
-        self.assertIn(lpac.capability_sid('registryRead'), sddl)
+        # Started under PowerShell 7, this process carries that shell's module path, and Windows PowerShell 5.1
+        # then cannot load the module that owns Get-Acl. Without the variable it builds its own default path.
+        env = {name: value for name, value in os.environ.items() if name.upper() != 'PSMODULEPATH'}
+        result = subprocess.run(['powershell','-NoProfile','-Command',f'(Get-Acl "{key}").Sddl'],
+                                capture_output=True,text=True,timeout=30,env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(lpac.capability_sid('registryRead'), result.stdout)
         for name in ('internetClient','privateNetworkClientServer','registryWrite','','REGISTRYREAD'):
             with self.subTest(name=name), self.assertRaisesRegex(ValueError,'capability_not_allowed'):
                 lpac.capability_sid(name)
@@ -172,21 +189,21 @@ class LpacTests(unittest.TestCase):
     def test_token_with_wrong_capabilities_is_never_resumed(self):
         # The suspended token must list exactly the requested capability SIDs: an extra
         # SID, a missing one, or a different one is refused before ResumeThread.
-        registry_read = lpac.capability_sid('registryRead')
+        registry_read = lpac.capability_sid('registryRead'); python = self.protected_python()
         for requested, observed in (((),[registry_read]),(('registryRead',),[]),
                                     (('registryRead',),[registry_read,'S-1-15-3-1']),
                                     (('registryRead',),['S-1-15-3-1'])):
             with self.subTest(requested=requested,observed=observed), \
-                 lpac.isolated(sys.executable, capabilities=requested) as sandbox:
+                 lpac.isolated(python, capabilities=requested) as sandbox:
                 with patch.object(lpac,'_token_capabilities',return_value=sorted(observed)), \
                      patch.object(lpac,'resume') as resume, self.assertRaisesRegex(OSError,'token_invalid'):
                     sandbox.capture([],timeout=1)
                 resume.assert_not_called()
 
     def test_real_token_lists_exactly_the_requested_capabilities(self):
-        registry_read = lpac.capability_sid('registryRead')
+        registry_read = lpac.capability_sid('registryRead'); python = self.protected_python()
         for requested, expected in (((),[]),(('registryRead',),[registry_read])):
-            with self.subTest(requested=requested), lpac.isolated(sys.executable, capabilities=requested) as sandbox:
+            with self.subTest(requested=requested), lpac.isolated(python, capabilities=requested) as sandbox:
                 seen = []
                 original = lpac._token_capabilities
                 def record(token):

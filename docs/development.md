@@ -80,7 +80,7 @@ python -B -m unittest tests.windows.test_setup
 
 `-I` 會忽略 `PYTHONPATH`，因此上述原始碼測試不使用 `-I`；已安裝入口與安裝器依自己的隔離契約使用 `-I -B`。驗證命令與各 Python 子程序都需帶 `-B`，不要把 bytecode 寫入受完整性檢查的產物。
 
-Claude Windows catalog 的直接測試是 `tests.windows.test_claude_catalog`、`tests.windows.test_claude_routing` 及 `tests.adapters.test_claude_catalog.ClaudeInitializeParserTests`。原生隔離案例另用 `tests.windows.test_lpac`，需要先把 `lpac_payload.c` 編成私有的 x64 測試 exe；未提供 payload 的案例會明確略過，不能算原生隔離通過。
+Claude Windows catalog 的直接測試是 `tests.windows.test_claude_catalog`、`tests.windows.test_claude_routing` 及 `tests.adapters.test_claude_catalog.ClaudeInitializeParserTests`。原生隔離案例另用 `tests.windows.test_lpac`，需要先把 `lpac_payload.c` 編成私有的 x64 測試 exe；未提供 payload 的案例會明確略過，不能算原生隔離通過。直接拿目前這支 Python 當隔離映像的案例，要用 MRH 受保護的 Python 跑；這支 Python 若過不了 MRH 自己的可信檢查（例如別的帳號可以改寫它），這些案例同樣會略過並寫出原因。
 
 可使用已核對來源及雜湊的 TinyCC 0.9.27 x64；不安裝到系統或加入 PATH，保留工具原有授權。`$scratch` 請指向私有、可刪除的測試目錄：
 

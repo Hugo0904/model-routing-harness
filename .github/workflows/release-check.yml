@@ -65,6 +65,7 @@ jobs:
           }
           if ($parseErrors.Count -gt 0) { exit 1 }
 
+      # -v：前提不成立而略過的案例（沒有編好的 LPAC 測試程式、代管機器的 Python 過不了 MRH 的可信檢查）會連原因一起列在紀錄裡。
       - name: Windows 測試（tests.windows）
         if: ${{ !cancelled() }}
-        run: python -B -m unittest discover -s tests/windows -t .
+        run: python -B -m unittest discover -v -s tests/windows -t .
