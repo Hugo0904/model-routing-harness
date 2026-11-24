@@ -146,6 +146,16 @@ class EngineOnlyTests(unittest.TestCase):
         self.assertEqual(self.codex_native()['mutations'], 0)
         self.assertIn('marketplace_plugin', self.ids(result['keep']))
 
+    def test_purge_with_the_default_config_root_leaves_no_entry_directory_behind(self):
+        # By default the entry directory sits inside the configuration root that --purge-data removes.
+        self.config = self.home / '.config/model-routing-harness'
+        self.install('codex', 'claude', extra=['--engine-only'])
+        self.assertEqual(self.entry('codex').parent.parent, self.config)
+        result = self.uninstall('--yes', '--purge-data')
+        self.assertEqual((result['status'], result['blocked']), ('uninstalled', []), result)
+        self.assertFalse(self.config.exists())
+        self.assertEqual(self.key_deleted, ['jev'] if self.key_present else [])
+
     def test_the_installed_command_enables_and_checks_without_a_source_or_a_build(self):
         self.install('codex', extra=['--engine-only'])
         common = ['--prefix', str(self.prefix), '--config-root', str(self.config), '--bin-dir', str(self.bin), '--codex-cli', str(self.cli)]

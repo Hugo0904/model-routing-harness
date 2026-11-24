@@ -20,7 +20,8 @@ from mrh.infrastructure import owned, temporary
 from mrh.infrastructure.execution import GENERATION_ENV
 
 REPOSITORY = 'https://github.com/Hugo0904/model-routing-harness.git'
-HOST_OPTIONS = ('--codex-cli', '--claude-cli', '--claude-settings')    # where the hosts are, when not in the default place
+# Locations the original ./setup command named explicitly; an update has to name them again.
+HOST_OPTIONS = ('--codex-cli', '--claude-cli', '--claude-settings', '--config-root', '--bin-dir', '--settings')
 RELEASE = re.compile(r'^refs/tags/(v(\d+)\.(\d+)\.(\d+))$')
 
 

@@ -255,7 +255,7 @@ mrh setup --check --json
 
 ## 更新、退版與停用
 
-Mac 上不留 repo 資料夾也能做這些事：`mrh update` 取得最新發行版（`https://github.com/Hugo0904/model-routing-harness` 上版本號最高的 `vX.Y.Z` 標籤），用那一版自己的 `./setup` 沿用你原本的宿主與選項更新；`mrh update --check` 只比對版本。原本安裝時有指定 `--codex-cli`、`--claude-cli` 或 `--claude-settings` 的，更新時同樣要帶。`mrh setup` 接受和 `./setup` 一樣的檢查、啟用、退版與移除參數，但不建置也不下載，所以不接受 `--dev`、`--codex-packets`、`--engine-only` 與 `--cache-root`。開發模式（`--dev`）的安裝不能用 `mrh update`，仍在 checkout 更新。
+Mac 上不留 repo 資料夾也能做這些事：`mrh update` 取得最新發行版（`https://github.com/Hugo0904/model-routing-harness` 上版本號最高的 `vX.Y.Z` 標籤），用那一版自己的 `./setup` 沿用你原本的宿主與選項更新；`mrh update --check` 只比對版本。原本安裝時有指定 `--codex-cli`、`--claude-cli`、`--claude-settings`、`--config-root`、`--bin-dir` 或 `--settings` 的，`mrh update` 與 `mrh setup` 都要帶同樣的值。`mrh setup` 接受和 `./setup` 一樣的檢查、啟用、退版與移除參數，但不建置也不下載，所以不接受 `--dev`、`--codex-packets`、`--engine-only` 與 `--cache-root`。開發模式（`--dev`）的安裝不能用 `mrh update`，仍在 checkout 更新。
 
 用 repo 資料夾更新的做法不變：先確認原本 clone 的資料夾沒有需要保留的未提交修改或來源衝突，再執行 `git pull --ff-only`，重跑同一條安裝指令；`--host` 與自訂路徑沿用原選擇：
 
