@@ -31,7 +31,7 @@ codex plugin marketplace add /path/to/model-routing-harness && codex plugin add 
 ./setup --engine-only --host claude --host codex
 ~~~
 
-要在不動自己環境的情況下試，把 `HOME` 指到暫存資料夾再執行上面的指令。`--engine-only` 搭配 `--dev` 還沒驗證過。
+要在不動自己環境的情況下試，把 `HOME` 指到暫存資料夾再執行上面的指令。`--engine-only` 可以和 `--dev` 併用；帶 `--codex-packets` 的 Codex 留在原生註冊，只把 Claude Code 轉過去（`./setup --engine-only --dev --host claude`），之後照平常的指令重跑 `./setup` 會各自維持。
 
 ## 本機開發安裝（`--dev`）
 
