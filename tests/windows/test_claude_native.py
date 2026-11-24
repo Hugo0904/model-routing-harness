@@ -35,9 +35,13 @@ class NativeFixture:
         return {"name": plugin.MARKETPLACE, "source": "directory", "path": self.root, "installLocation": self.root}
 
     def installed_row(self):
-        return {"id": plugin.PLUGIN_ID, "version": "0.5.0", "scope": "user", "enabled": True,
-            "installPath": str(self.fixture / "native cache" / plugin.NAME / "0.5.0"),
-            "readFromFolder": str(Path(self.root) / "plugins" / plugin.NAME), "folderVersion": "0.5.0",
+        # The native CLI reports the version written in the folder it registered, so this row follows whatever
+        # artifact the test handed over (a fixture literal or a real build) instead of repeating the program version.
+        folder = Path(self.root) / "plugins" / plugin.NAME
+        version = json.loads((folder / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+        return {"id": plugin.PLUGIN_ID, "version": version, "scope": "user", "enabled": True,
+            "installPath": str(self.fixture / "native cache" / plugin.NAME / version),
+            "readFromFolder": str(folder), "folderVersion": version,
             "installedAt": "2026-10-21T04:46:37.381Z", "lastUpdated": "2026-10-21T04:46:37.381Z",
             "projectEnabled": False}
 
