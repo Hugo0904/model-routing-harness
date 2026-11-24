@@ -231,7 +231,7 @@ mrh setup --check --json
 ~~~
 
 - 外掛的 Hook 讀 `~/.config/model-routing-harness/hook-entry/<宿主>` 這個入口檔找到引擎；檔案不存在就直接放行。`--check` 裡這種宿主的 `registration` 是 `hook_entry`。入口檔固定在這個位置，不跟著 `--config-root` 走。
-- `--check` 的 `next_steps` 列出還要你自己做的事。Codex 的 `plugin` 與 `trust` 要讀得到 Codex CLI 才查得出來；查不到時會寫明，不會當成已安裝。Claude Code 這邊不檢查外掛裝了沒。
+- `--check` 的 `next_steps` 列出還要你自己做的事。Codex 的 `plugin` 與 `trust` 要讀得到 Codex CLI 才查得出來；查不到時會寫明，不會當成已安裝。Claude Code 的 `plugin` 用 `claude plugin list` 查；讀不到 Claude CLI 時同樣寫明無法確認。
 - Codex 在 `/hooks` 信任 MRH 的兩個 Hook 一次即可；更新引擎不改外掛資料夾，信任會保留。
 - 要用 `--codex-packets` 的 Codex 不能走這條路（會回報 `engine_only_codex_packets_unsupported`），因為完整任務分類的 skill 在本機產生的外掛裡。同一台的 Claude Code 可以單獨用 `--engine-only --host claude`。
 - 只支援 Mac。Windows 仍用 `setup.ps1` 在本機產生外掛。
