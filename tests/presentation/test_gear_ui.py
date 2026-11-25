@@ -118,6 +118,19 @@ class GearScreens(unittest.TestCase):
                         self.assertIn(expected, text)
                     self.assertNotIn("light 14", text)
 
+    def test_eight_gears_still_fit_and_each_has_its_own_mark(self):
+        ladder = [{"from": round(0.35 * i, 2), "candidates": {"claude": [{"model": "sonnet", "effort": "high"}]}} for i in range(8)]
+        data = {**DATA, "gears": {i: 5 for i in range(1, 9)}}                # 40 advised + 3 main: 3 left ungeared
+        for width in (80, 100, 120):
+            for color in (False, True):
+                with self.subTest(width=width, color=color):
+                    text = ANSI.sub("", dashboard.render(gear_settings(ladder), data, "過去 7 天", width, color, today="x"))
+                    card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
+                    self.assertEqual({cell_width(l) for l in card}, {width}, text)
+                    for n in range(1, 9):
+                        self.assertIn(f"g{n} 5 (8%)", text)
+                    self.assertIn("未記檔位 3 (5%)", text)
+
     def test_tiers_mode_still_draws_the_original_table(self):
         from tests.presentation.test_dashboard import settings
         text = ANSI.sub("", dashboard.render(settings(), DATA, "過去 7 天", 100, False, today="x"))
