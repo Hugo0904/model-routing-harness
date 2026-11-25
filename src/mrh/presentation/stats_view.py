@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 
 from mrh.application import ctrl_logic as logic
+from mrh.infrastructure import settings_v2 as v2
 from mrh.presentation.terminal import cell_width
 
 PLATFORM = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
@@ -53,10 +54,12 @@ def gears_on(policy):
     return bool(policy) and policy.get("mode") == "gears" and bool(policy.get("gears"))
 
 
-def gear_palette(count):
-    """g1 (easiest) to gN take the tier colours' dark-to-light ramp, so the bar reads in the same order as the gear table."""
+def gear_palette(count, gears=()):
+    """g1 (easiest) to gN take the tier colours' dark-to-light ramp, so the bar reads in the same order as the gear table.
+    Each entry is (colour, glyph, label); the label is the gear's nickname when it has one."""
     lo, hi, steps = TIER_RGB["Light"], TIER_RGB["Top"], max(count - 1, 1)
-    return {f"g{i}": (tuple(round(a + (b - a) * (i - 1) / steps) for a, b in zip(lo, hi)), GEAR_GLYPHS[(i - 1) % len(GEAR_GLYPHS)])
+    return {f"g{i}": (tuple(round(a + (b - a) * (i - 1) / steps) for a, b in zip(lo, hi)), GEAR_GLYPHS[(i - 1) % len(GEAR_GLYPHS)],
+                      v2.gear_label(i, gears[i - 1] if i <= len(gears) else {}))
             for i in range(1, count + 1)}
 
 
@@ -71,15 +74,15 @@ def gear_parts(data, policy):
     passed = d.get("preserve", 0) - skill
     parts = [(f"g{i}", gears.get(i, 0)) for i in range(1, count + 1)]
     parts += [(key, n) for key, n in (("Ungeared", ungeared), ("Skill", skill), ("Pass", passed)) if n > 0]
-    return parts, gear_palette(count)
+    return parts, gear_palette(count, policy["gears"])
 
 
-def part_label(key):
-    return PART_LABEL.get(key, key.lower())
+def part_label(key, palette=None):
+    return (palette or {})[key][2] if key in (palette or {}) else PART_LABEL.get(key, key.lower())
 
 
 def _look(key, palette):
-    return (palette or {}).get(key) or (TIER_RGB[key], TIER_GLYPH[key])
+    return palette[key][:2] if key in (palette or {}) else (TIER_RGB[key], TIER_GLYPH[key])
 
 
 def stacked_bar(parts, width, color, palette=None):
@@ -348,12 +351,12 @@ def render(data, period_label, threshold=None, color=False, policy=None):
         psum = sum(n for _, n in parts)
         platforms = [x for x in ("claude", "codex", "gemini") if any(g.get("candidates", {}).get(x) for g in policy["gears"])]
         def mapping(i, gear):
-            return f"      g{i}  " + ("主模型自己做" if gear.get("main") else
+            return f"      {v2.gear_label(i, gear)}  " + ("主模型自己做" if gear.get("main") else
                                      " / ".join(logic.format_candidates(gear["candidates"][x]) if gear.get("candidates", {}).get(x) else "—"
                                                 for x in platforms))
         lines += ["■ 檔位分布（難度分數落在哪一檔；對照 mrh status 的檔位表）",
                   "    " + stacked_bar(parts, 48, color, palette),
-                  *("    " + "   ".join(f"{_swatch(k, color, palette)} {part_label(k)} {n}（{_pct(n, psum)}）" for k, n in row)
+                  *("    " + "   ".join(f"{_swatch(k, color, palette)} {part_label(k, palette)} {n}（{_pct(n, psum)}）" for k, n in row)
                     for row in (parts[i:i + 4] for i in range(0, len(parts), 4))),
                   "    對照（" + " / ".join(PLATFORM.get(x, x) for x in platforms) + "）：",
                   *(mapping(i, g) for i, g in enumerate(policy["gears"], 1))]

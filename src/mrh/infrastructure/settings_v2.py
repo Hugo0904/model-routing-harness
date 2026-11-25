@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 from mrh.infrastructure import owned, settings as legacy
@@ -85,6 +86,7 @@ def rich_input(settings):
 
 TIERS_ORDER = ("Light", "Small", "Mid", "Top")
 MAX_GEARS = 8
+GEAR_NAME_MAX = 12                      # characters; a nickname shown instead of gN
 SCORE_MAX = 3.0          # difficulty score: 0 (certainly Light) .. 3 (certainly Top)
 
 
@@ -95,7 +97,7 @@ def _gears(value):
         _invalid()
     result, previous = [], None
     for gear in value:
-        if type(gear) is not dict or "from" not in gear or set(gear) - {"from", "candidates", "main"} or (
+        if type(gear) is not dict or "from" not in gear or set(gear) - {"from", "candidates", "main", "name"} or (
                 ("candidates" in gear) == ("main" in gear)):
             _invalid()
         start = gear["from"]
@@ -106,10 +108,28 @@ def _gears(value):
         if "main" in gear:
             if gear["main"] is not True:
                 _invalid()
-            result.append({"from": start, "main": True})
+            item = {"from": start, "main": True}
         else:
-            result.append({"from": start, "candidates": _candidates(gear["candidates"])})
+            item = {"from": start, "candidates": _candidates(gear["candidates"])}
+        if "name" in gear:
+            item["name"] = gear_name(gear["name"])
+        result.append(item)
+    names = [g["name"].casefold() for g in result if "name" in g]
+    if len(names) != len(set(names)):
+        _invalid()
     return result
+
+
+def gear_name(value):
+    """An optional nickname: 1-12 printable characters, no surrounding spaces, not a reserved legend word."""
+    if (type(value) is not str or not 1 <= len(value) <= GEAR_NAME_MAX or value != value.strip()
+            or not value.isprintable() or value.casefold() == "skill" or re.fullmatch(r"[gG]\d+", value)):
+        _invalid()
+    return value
+
+
+def gear_label(number, gear):
+    return gear.get("name") or f"g{number}"
 
 
 def difficulty_score(tier, probabilities=None):

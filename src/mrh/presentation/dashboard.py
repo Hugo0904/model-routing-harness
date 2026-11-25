@@ -146,7 +146,8 @@ def _gear_table(settings, inner, p):
 
     widths = [max(cell_width(PLATFORM_TITLE[x]), *(cell_width(cell(g, x)) for g in gears)) + 2 for x in platforms]
     show_price = "claude" in platforms
-    lead, tier_w, price_w = 2, 7, 15
+    labels = [v2.gear_label(n, g) for n, g in enumerate(gears, 1)]
+    lead, tier_w, price_w = 2, max(7, *(cell_width(x) + 2 for x in labels)), 15
     when_w = max(10, inner - (lead + tier_w + sum(widths) + (price_w if show_price else 0)))
     head = pad("", lead) + pad(p("GEAR", "faint"), tier_w) + "".join(pad(p(PLATFORM_TITLE[x], "faint"), w) for x, w in zip(platforms, widths))
     head += (pad(p("$/MTOK IN/OUT", "faint"), price_w) if show_price else "") + p("WHEN", "faint")
@@ -154,7 +155,7 @@ def _gear_table(settings, inner, p):
     for number, gear in enumerate(gears, 1):
         end = gears[number]["from"] if number < len(gears) else v2.SCORE_MAX
         main = bool(gear.get("main"))
-        row = (p("▌ ", "lav") if main else "  ") + pad(p(f"g{number}", "text", True), tier_w)
+        row = (p("▌ ", "lav") if main else "  ") + pad(p(labels[number - 1], "text", True), tier_w)
         for x, w in zip(platforms, widths):
             text = cell(gear, x)
             row += pad(p(text, "lav" if main else "text" if text != "—" else "faint"), w)
@@ -170,7 +171,7 @@ def _legend_lines(parts, width, color, palette=None):
     total = sum(n for _, n in parts) or 1
     rows, row = [], ""
     for tier, count in parts:
-        item = f"{stats_view._swatch(tier, color, palette)} {stats_view.part_label(tier)} {count} ({round(count * 100 / total)}%)"
+        item = f"{stats_view._swatch(tier, color, palette)} {stats_view.part_label(tier, palette)} {count} ({round(count * 100 / total)}%)"
         candidate = f"{row}  {item}" if row else item
         if row and vis(candidate) > width:
             rows.append(row)

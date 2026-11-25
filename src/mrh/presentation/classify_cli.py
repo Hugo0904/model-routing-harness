@@ -51,7 +51,8 @@ def render(result, task_chars):
             lines.append(f"  {tier.lower():<6}{_bar(p)} {p * 100:>3.0f}%")
     first = next(iter(result["recommended"].values()), {})
     if first.get("gear") is not None:
-        lines.append(f"難度分數 {first['score']:.2f} → 第 {first['gear']} 檔（檔位模式）")
+        name = f"「{first['gear_name']}」" if first.get("gear_name") else ""
+        lines.append(f"難度分數 {first['score']:.2f} → 第 {first['gear']} 檔{name}（檔位模式）")
     lines += ["", "各平台的建議（照目前設定）："]
     for platform, rec in result["recommended"].items():
         text = ACTION[rec["action"]](rec) if rec["action"] in ACTION else REASON_TEXT.get(rec["reason"], rec["reason"])

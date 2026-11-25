@@ -32,7 +32,8 @@ def recommend(policy, tier, confidence, platforms, probabilities=None):
     for platform in platforms:
         decision = route(policy, tier, confidence, platform, probabilities)
         result[platform] = {"action": decision.action, "reason": decision.reason, "candidates": [dict(c) for c in decision.candidates],
-                            "gear": decision.gear, "score": None if decision.score is None else round(decision.score, 2)}
+                            "gear": decision.gear, "score": None if decision.score is None else round(decision.score, 2),
+                            "gear_name": policy["gears"][decision.gear - 1].get("name") if decision.gear else None}
     return result
 
 

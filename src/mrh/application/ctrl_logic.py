@@ -116,16 +116,28 @@ def _gear_changes(policy, key, parts, value):
         if number == 1:
             raise CtrlError("第 1 檔的分數下限固定是 0")
         gear["from"] = _number(value, 0, v2.SCORE_MAX, "分數下限")
+    elif field == "name":
+        name = value.strip()
+        if not name or name.lower() in ("off", "none", "-"):
+            gear.pop("name", None)
+        else:
+            try:
+                gear["name"] = v2.gear_name(name)
+            except v2.SettingsError:
+                raise CtrlError(f"暱稱要 1～{v2.GEAR_NAME_MAX} 個字，不能是 skill 或 g 加數字（那是沒設暱稱時的顯示）") from None
+            if any(g.get("name", "").casefold() == name.casefold() for i, g in enumerate(gears, 1) if i != number):
+                raise CtrlError("別的檔已經用了這個暱稱")
     elif field == "main":
-        gears[number - 1] = {"from": gear["from"], "main": True} if parse_bool(value) else {"from": gear["from"], "candidates": {}}
+        kept = {"name": gear["name"]} if "name" in gear else {}
+        gears[number - 1] = {"from": gear["from"], "main": True, **kept} if parse_bool(value) else {"from": gear["from"], "candidates": {}, **kept}
         return {"policy": {**policy, "gears": _checked(gears)}}
     elif field in v2.PLATFORMS:
         candidates = dict(gear.get("candidates", {}))
         candidates[field] = parse_candidates(value)
-        gears[number - 1] = {"from": gear["from"], "candidates": candidates}
+        gears[number - 1] = {"from": gear["from"], "candidates": candidates, **({"name": gear["name"]} if "name" in gear else {})}
         return {"policy": {**policy, "gears": _checked(gears)}}
     else:
-        raise CtrlError("檔位可以設：from（分數下限）、main（交回主模型）、" + "／".join(v2.PLATFORMS) + "（候選模型）")
+        raise CtrlError("檔位可以設：from（分數下限）、name（暱稱，off 清除）、main（交回主模型）、" + "／".join(v2.PLATFORMS) + "（候選模型）")
     gears[number - 1] = gear
     return {"policy": {**policy, "gears": _checked(gears)}}
 
@@ -175,7 +187,7 @@ def changes_for(settings, key, value):
         parts = key.split(".")
         if key in ("gears.default", "gears.add", "gears.remove") or len(parts) == 3:
             return _gear_changes(policy, key, parts, value)
-        raise CtrlError("檔位的設定項目：gears.default／gears.add／gears.remove／gears.<編號>.from／main／claude／codex")
+        raise CtrlError("檔位的設定項目：gears.default／gears.add／gears.remove／gears.<編號>.from／name／main／claude／codex")
     if key == "top_mode":
         mode = str(value).strip().title()
         if mode not in ("Main", "Fixed"):

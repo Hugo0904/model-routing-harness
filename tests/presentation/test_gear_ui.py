@@ -73,6 +73,19 @@ class GearSettingsKeys(unittest.TestCase):
             self.ctrl("gears.add", str(0.1 * (n + 1)))
         code, text = self.ctrl("gears.add", "2.9"); self.assertNotEqual(code, 0); self.assertIn("最多 8 檔", text)
 
+    def test_a_nickname_is_set_kept_through_other_edits_and_cleared(self):
+        self.ctrl("gears.default", "yes")
+        self.assertEqual(self.ctrl("gears.1.name", "low")[0], 0); self.assertEqual(self.gears()[0]["name"], "low")
+        self.assertEqual(self.ctrl("gears.1.claude", "sonnet:high")[0], 0); self.assertEqual(self.gears()[0]["name"], "low")
+        self.assertEqual(self.ctrl("gears.4.main", "off")[0], 0)
+        self.assertEqual(self.ctrl("gears.4.name", "top")[0], 0); self.assertEqual(self.ctrl("gears.4.main", "on")[0], 0)
+        self.assertEqual(self.gears()[3], {"from": 2.25, "main": True, "name": "top"})
+        self.assertEqual(self.ctrl("gears.add", "0.5")[0], 0); self.assertEqual(self.gears()[0]["name"], "low")   # names follow their gear
+        for value, fragment in (("LOW", "已經用了"), ("g3", "g 加數字"), ("skill", "skill"), ("x" * 13, "1～12")):
+            code, text = self.ctrl("gears.2.name", value)
+            self.assertNotEqual(code, 0, value); self.assertIn(fragment, text, value)
+        self.assertEqual(self.ctrl("gears.1.name", "off")[0], 0); self.assertNotIn("name", self.gears()[0])
+
     def test_the_menu_builds_edits_and_switches_the_ladder_with_back_returning_one_step(self):
         def run(*lines):
             out = io.StringIO()
@@ -130,6 +143,18 @@ class GearScreens(unittest.TestCase):
                     for n in range(1, 9):
                         self.assertIn(f"g{n} 5 (8%)", text)
                     self.assertIn("未記檔位 3 (5%)", text)
+
+    def test_nicknames_show_in_the_table_and_the_legend_and_unnamed_gears_stay_gn(self):
+        named = [dict(g, **({"name": n} if n else {})) for g, n in zip(GEARS, ("low", "small", None, "high", "top"))]
+        data = {**DATA, "gears": {1: 10, 3: 30, 4: 3}}
+        for width in (80, 100, 120):
+            with self.subTest(width=width):
+                text = ANSI.sub("", dashboard.render(gear_settings(named), data, "過去 7 天", width, False, today="x"))
+                card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
+                self.assertEqual({cell_width(l) for l in card}, {width}, text)
+                for expected in ("│   low ", "│   g3 ", "│ ▌ high ", "low 10 (15%)", "small 0 (0%)", "g3 30 (46%)", "high 3 (5%)", "top 0 (0%)"):
+                    self.assertIn(expected, text)
+                self.assertNotIn("g1 ", text)
 
     def test_tiers_mode_still_draws_the_original_table(self):
         from tests.presentation.test_dashboard import settings

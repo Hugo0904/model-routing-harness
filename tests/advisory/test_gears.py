@@ -123,12 +123,25 @@ class EngineGearTests(unittest.TestCase):
         parts, palette = stats_view.gear_parts(data, policy)
         self.assertEqual(parts, [("g1", 0), ("g2", 0), ("g3", 1), ("g4", 1), ("g5", 0), ("Ungeared", 1), ("Pass", 2)])
         self.assertEqual(sorted(palette), ["g1", "g2", "g3", "g4", "g5"])
-        self.assertEqual(len({glyph for _, glyph in palette.values()}), 5)                                  # tellable apart without colour
+        self.assertEqual(len({glyph for _, glyph, _ in palette.values()}), 5)                                  # tellable apart without colour
         text = stats_view.render(data, "全部紀錄", 0.65, False, policy)
         for expected in ("■ 檔位分布", "g3 1（20%）", "g4 1（20%）", "原樣放行 2（40%）", "未記檔位 1（20%）",
                          "對照（Claude Code / Codex）：", "g4  主模型自己做", "g5  opus:xhigh / —", "■ 分級結果"):
             self.assertIn(expected, text)
         self.assertNotIn("■ 檔位分布", stats_view.render(data, "全部紀錄", 0.65, False, settings()["policy"]))   # tiers mode: unchanged
+
+    def test_nicknames_replace_gn_wherever_a_gear_is_shown(self):
+        named = [dict(g, **({"name": n} if n else {})) for g, n in zip(GEARS, ("low", "small", None, "high", "top"))]
+        policy = gear_settings(named)["policy"]
+        self.assertEqual([v2.gear_label(i, g) for i, g in enumerate(policy["gears"], 1)], ["low", "small", "g3", "high", "top"])
+        data = {"decisions": {"advise": 2, "preserve": 0}, "gears": {1: 1, 3: 1}, "roles": {}}
+        parts, palette = stats_view.gear_parts(data, policy)
+        self.assertEqual([stats_view.part_label(k, palette) for k, _ in parts], ["low", "small", "g3", "high", "top"])
+        for bad in ("", " low", "g2", "G10", "skill", "x" * 13, "a\tb"):
+            with self.subTest(bad=bad), self.assertRaises(SettingsError):
+                gear_settings([dict(GEARS[0], name=bad), *GEARS[1:]])
+        with self.assertRaises(SettingsError):                                                          # names are unique, any case
+            gear_settings([dict(GEARS[0], name="Mid"), dict(GEARS[1], name="mid"), *GEARS[2:]])
 
     def test_in_gears_mode_the_table_models_are_the_gears(self):
         data = {"children_models": {"claude": {"claude-opus-5-5": 2, "claude-sonnet-5-5": 1, "claude-fable-5-2": 1}}, "children_started": 4}

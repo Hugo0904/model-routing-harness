@@ -464,7 +464,8 @@ class Session:
         for number, gear in enumerate(policy.get("gears", []), 1):
             what = "交回主模型自己做" if gear.get("main") else "；".join(
                 f"{self.GEAR_NAMES.get(p, p)} {logic.format_candidates(c)}" for p, c in gear["candidates"].items() if c) or "（還沒有設定模型）"
-            lines.append(f"    第 {number} 檔  難度分數 {gear['from']:g} 起   {what}")
+            name = f"「{gear['name']}」" if gear.get("name") else ""
+            lines.append(f"    第 {number} 檔{name}  難度分數 {gear['from']:g} 起   {what}")
         return lines or ["    （還沒有檔位）"]
 
     def gears(self):
@@ -488,7 +489,8 @@ class Session:
                 elif action in ("edit", "remove"):
                     if not policy.get("gears"):
                         self.menu.note("還沒有檔位，請先「用目前的難度表產生一組預設檔位」。"); continue
-                    number = self.menu.pick("要選哪一檔", [(f"第 {n} 檔　{gear['from']:g} 起", n) for n, gear in enumerate(policy["gears"], 1)],
+                    number = self.menu.pick("要選哪一檔", [(f"第 {n} 檔{'「' + gear['name'] + '」' if gear.get('name') else ''}　{gear['from']:g} 起", n)
+                                                         for n, gear in enumerate(policy["gears"], 1)],
                                             trail=["檔位"])
                     if action == "remove":
                         self.set_key("gears.remove", str(number), f"刪除第 {number} 檔")
@@ -506,9 +508,12 @@ class Session:
             try:
                 action = self.menu.pick(f"第 {number} 檔（{gear['from']:g} 起）", [
                     ("改難度分數下限", "from"), (("改成交給候選模型" if gear.get("main") else "改成交回主模型"), "main"),
-                    ("編輯 Claude Code 的候選模型", "claude"), ("編輯 Codex 的候選模型", "codex")], trail=trail)
+                    ("編輯 Claude Code 的候選模型", "claude"), ("編輯 Codex 的候選模型", "codex"),
+                    (f"改暱稱（目前：{gear.get('name') or '未設定，顯示 g' + str(number)}）", "name")], trail=trail)
                 if action == "from":
                     self.set_key(f"gears.{number}.from", self.menu.text("分數下限 0～3", trail=trail), f"第 {number} 檔分數下限")
+                elif action == "name":
+                    self.set_key(f"gears.{number}.name", self.menu.text(f"暱稱（1～{v2.GEAR_NAME_MAX} 字；輸入 off 清除）", trail=trail), f"第 {number} 檔暱稱")
                 elif action == "main":
                     self.set_key(f"gears.{number}.main", "off" if gear.get("main") else "on", f"第 {number} 檔 → {'候選模型' if gear.get('main') else '交回主模型'}")
                 else:
