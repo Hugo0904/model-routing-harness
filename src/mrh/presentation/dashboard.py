@@ -166,11 +166,11 @@ def _gear_table(settings, inner, p):
     return lines[:-1]
 
 
-def _legend_lines(parts, width, color):
+def _legend_lines(parts, width, color, palette=None):
     total = sum(n for _, n in parts) or 1
     rows, row = [], ""
     for tier, count in parts:
-        item = f"{stats_view._swatch(tier, color)} {tier.lower()} {count} ({round(count * 100 / total)}%)"
+        item = f"{stats_view._swatch(tier, color, palette)} {stats_view.part_label(tier)} {count} ({round(count * 100 / total)}%)"
         candidate = f"{row}  {item}" if row else item
         if row and vis(candidate) > width:
             rows.append(row)
@@ -191,12 +191,15 @@ def _where(data, policy, inner, p, color, period_label):
                 *[p(clip(note, inner), "faint") for note in stats_view.accounting_notes(data)]], 0
     skill = stats_view.skill_roles(data)
     skill_total = sum(skill.values())
-    parts = [(t, data["tiers"][t]) for t in TIERS if data["tiers"].get(t)] + ([("Skill", skill_total)] if skill_total else [])
+    if stats_view.gears_on(policy):                 # gears mode: the bar follows the gear table above, g1 to gN
+        parts, palette = stats_view.gear_parts(data, policy)
+    else:
+        parts, palette = [(t, data["tiers"][t]) for t in TIERS if data["tiers"].get(t)] + ([("Skill", skill_total)] if skill_total else []), None
     wide = inner >= 96
     left_w = (inner * 11) // 20 if wide else inner
     right_w = inner - left_w - 4 if wide else inner
     bw = left_w
-    left = [stats_view.stacked_bar(parts, bw, color), "", *_legend_lines(parts, left_w, color), "",
+    left = [stats_view.stacked_bar(parts, bw, color, palette), "", *_legend_lines(parts, left_w, color, palette), "",
             p(f"路由器處理  {advised + main} 次", "text"),
              *([p(f"skill 自選  {skill_total} 次", "text")] if skill_total else []),
              p(f"原樣放行    {kept - skill_total} 次", "dim")]

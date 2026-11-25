@@ -6,6 +6,7 @@ from mrh.advisory import advice_text, engine
 from mrh.advisory.store import AdviceStore, payload
 from mrh.infrastructure import settings_v2 as v2
 from mrh.infrastructure.settings_schema import SettingsError
+from mrh.presentation import stats_view
 from mrh.routing.types import Classification
 from tests.advisory.test_engine import Fake, req, settings
 
@@ -108,6 +109,31 @@ class EngineGearTests(unittest.TestCase):
         self.assertEqual(self.decide("d", Classification("Mid", 0.3, probabilities=probs(0.2, 0.2, 0.3, 0.3))).reason, "low_confidence")
         advice = self.decide("e", Classification("Top", 0.9))                                                  # subscription classifier: score 3.0
         self.assertEqual(advice.candidates, ({"model": "opus", "effort": "xhigh"},)); self.assertEqual(payload(self.row("e"))["gear"], 5)
+
+    def test_statistics_count_each_gear_and_the_bar_follows_the_gear_table(self):
+        self.decide("a", Classification("Mid", 0.7, probabilities=probs(0.0, 0.1, 0.7, 0.2)))                  # gear 3, advised
+        self.decide("b", Classification("Mid", 0.7, probabilities=probs(0.0, 0.0, 0.5, 0.5)))                  # gear 4, main
+        self.decide("c", Classification("Light", 0.9, probabilities=probs(0.1, 0.8, 0.1, 0.0)), platform="codex")  # kept: gear 2 has no codex
+        self.decide("d", Classification("Mid", 0.3, probabilities=probs(0.2, 0.2, 0.3, 0.3)))                  # kept: low confidence
+        engine.decide(req("f", task="task f", platform="claude"), settings(tiers={"Light": {"claude": [{"model": "haiku"}]}}),
+                      self.store, lambda: Fake(Classification("Light", 0.9)))                                 # advised before gears: no gear
+        data = self.store.stats(0)
+        self.assertEqual(data["gears"], {3: 1, 4: 1})
+        policy = gear_settings()["policy"]
+        parts, palette = stats_view.gear_parts(data, policy)
+        self.assertEqual(parts, [("g1", 0), ("g2", 0), ("g3", 1), ("g4", 1), ("g5", 0), ("Ungeared", 1), ("Pass", 2)])
+        self.assertEqual(sorted(palette), ["g1", "g2", "g3", "g4", "g5"])
+        self.assertEqual(len({glyph for _, glyph in palette.values()}), 5)                                  # tellable apart without colour
+        text = stats_view.render(data, "全部紀錄", 0.65, False, policy)
+        for expected in ("■ 檔位分布", "g3 1（20%）", "g4 1（20%）", "原樣放行 2（40%）", "未記檔位 1（20%）",
+                         "對照（Claude Code / Codex）：", "g4  主模型自己做", "g5  opus:xhigh / —", "■ 分級結果"):
+            self.assertIn(expected, text)
+        self.assertNotIn("■ 檔位分布", stats_view.render(data, "全部紀錄", 0.65, False, settings()["policy"]))   # tiers mode: unchanged
+
+    def test_in_gears_mode_the_table_models_are_the_gears(self):
+        data = {"children_models": {"claude": {"claude-opus-5-5": 2, "claude-sonnet-5-5": 1, "claude-fable-5-2": 1}}, "children_started": 4}
+        self.assertEqual(stats_view.tier_model_children(data, gear_settings()["policy"]), (3, 4))           # opus is gear 5's model
+        self.assertEqual(stats_view.tier_model_children(data, settings()["policy"]), (0, 4))
 
     def test_tiers_mode_is_untouched_and_records_no_gear(self):
         s = settings(tiers={"Light": {"claude": [{"model": "haiku"}]}})

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 
+from mrh.application import ctrl_logic as logic
 from mrh.presentation.terminal import cell_width
 
 PLATFORM = {"claude": "Claude Code", "codex": "Codex", "gemini": "Gemini"}
@@ -42,28 +43,61 @@ def claude_price(model):
 
 # ---- terminal bars
 TIER_RGB = {"Light": (75, 80, 168), "Small": (100, 105, 201), "Mid": (169, 174, 245), "Top": (232, 234, 252),
-            "Skill": (94, 196, 182)}
-TIER_GLYPH = {"Light": "░", "Small": "▒", "Mid": "▓", "Top": "█", "Skill": "▚"}
+            "Skill": (94, 196, 182), "Ungeared": (128, 131, 158), "Pass": (70, 74, 99)}
+TIER_GLYPH = {"Light": "░", "Small": "▒", "Mid": "▓", "Top": "█", "Skill": "▚", "Ungeared": ":", "Pass": "·"}
+GEAR_GLYPHS = "░▒▓█▞▤▥▦"                     # one distinct glyph per gear (at most 8) for terminals without colour
+PART_LABEL = {"Ungeared": "未記檔位", "Pass": "原樣放行"}
 
 
-def stacked_bar(parts, width, color):
+def gears_on(policy):
+    return bool(policy) and policy.get("mode") == "gears" and bool(policy.get("gears"))
+
+
+def gear_palette(count):
+    """g1 (easiest) to gN take the tier colours' dark-to-light ramp, so the bar reads in the same order as the gear table."""
+    lo, hi, steps = TIER_RGB["Light"], TIER_RGB["Top"], max(count - 1, 1)
+    return {f"g{i}": (tuple(round(a + (b - a) * (i - 1) / steps) for a, b in zip(lo, hi)), GEAR_GLYPHS[(i - 1) % len(GEAR_GLYPHS)])
+            for i in range(1, count + 1)}
+
+
+def gear_parts(data, policy):
+    """Gears mode: every counted delegation by where it went — each gear of the table (zeros kept, so the legend lines up
+    with it), skill picks, and the rest passed through unchanged. Decisions from before gears were on have no gear."""
+    gears = {int(k): n for k, n in (data.get("gears") or {}).items()}
+    count = max([len(policy["gears"]), *gears])
+    d = data["decisions"]
+    skill = sum(skill_roles(data).values())
+    ungeared = d.get("advise", 0) + d.get("continue_main", 0) - sum(gears.values())
+    passed = d.get("preserve", 0) - skill
+    parts = [(f"g{i}", gears.get(i, 0)) for i in range(1, count + 1)]
+    parts += [(key, n) for key, n in (("Ungeared", ungeared), ("Skill", skill), ("Pass", passed)) if n > 0]
+    return parts, gear_palette(count)
+
+
+def part_label(key):
+    return PART_LABEL.get(key, key.lower())
+
+
+def _look(key, palette):
+    return (palette or {}).get(key) or (TIER_RGB[key], TIER_GLYPH[key])
+
+
+def stacked_bar(parts, width, color, palette=None):
     """parts: [(tier, count)]. Each segment's length is proportional; the percentage sits in the caption."""
+    parts = [(t, n) for t, n in parts if n]
     total = sum(n for _, n in parts) or 1
     cells, used = [], 0
     for i, (tier, n) in enumerate(parts):
         size = width - used if i == len(parts) - 1 else max(1 if n else 0, round(n * width / total))
         size = max(0, min(size, width - used)); used += size
-        if color:
-            r, g, b = TIER_RGB[tier]
-            cells.append(f"\x1b[38;2;{r};{g};{b}m" + "█" * size + "\x1b[0m")
-        else:
-            cells.append(TIER_GLYPH[tier] * size)
+        (r, g, b), glyph = _look(tier, palette)
+        cells.append(f"\x1b[38;2;{r};{g};{b}m" + "█" * size + "\x1b[0m" if color else glyph * size)
     return "".join(cells)
 
 
-def _swatch(tier, color):
-    r, g, b = TIER_RGB[tier]
-    return f"\x1b[38;2;{r};{g};{b}m■\x1b[0m" if color else TIER_GLYPH[tier]
+def _swatch(tier, color, palette=None):
+    (r, g, b), glyph = _look(tier, palette)
+    return f"\x1b[38;2;{r};{g};{b}m■\x1b[0m" if color else glyph
 
 
 def progress_bar(percent, width, color):
@@ -219,10 +253,13 @@ def _alias_match(candidate, model):
 
 
 def tier_model_children(data, policy):
-    """How many started subagents ran on a model from your Light/Small/Mid table, and how many reported a model at all."""
+    """How many started subagents ran on a model from your table (Light/Small/Mid, or the gears in gears mode),
+    and how many reported a model at all."""
     matched = 0
     for platform, models in data.get("children_models", {}).items():
-        table = {c["model"] for tier in ("Light", "Small", "Mid") for c in policy["tiers"].get(tier, {}).get(platform, [])}
+        pools = ([g.get("candidates", {}) for g in policy["gears"] if not g.get("main")] if gears_on(policy)
+                 else [policy["tiers"].get(tier, {}) for tier in ("Light", "Small", "Mid")])
+        table = {c["model"] for pool in pools for c in pool.get(platform, [])}
         matched += sum(n for m, n in models.items() if any(_alias_match(c, m) for c in table))
     return matched, data.get("children_started", 0)
 
@@ -306,6 +343,23 @@ def render(data, period_label, threshold=None, color=False, policy=None):
     if advised > followed:
         lines.append("    尚未確認採用的部分：可能自己完成、改派其他模型，或缺少可證明的關聯。")
     lines.append("")
+    if gears_on(policy):
+        parts, palette = gear_parts(data, policy)
+        psum = sum(n for _, n in parts)
+        platforms = [x for x in ("claude", "codex", "gemini") if any(g.get("candidates", {}).get(x) for g in policy["gears"])]
+        def mapping(i, gear):
+            return f"      g{i}  " + ("主模型自己做" if gear.get("main") else
+                                     " / ".join(logic.format_candidates(gear["candidates"][x]) if gear.get("candidates", {}).get(x) else "—"
+                                                for x in platforms))
+        lines += ["■ 檔位分布（難度分數落在哪一檔；對照 mrh status 的檔位表）",
+                  "    " + stacked_bar(parts, 48, color, palette),
+                  *("    " + "   ".join(f"{_swatch(k, color, palette)} {part_label(k)} {n}（{_pct(n, psum)}）" for k, n in row)
+                    for row in (parts[i:i + 4] for i in range(0, len(parts), 4))),
+                  "    對照（" + " / ".join(PLATFORM.get(x, x) for x in platforms) + "）：",
+                  *(mapping(i, g) for i, g in enumerate(policy["gears"], 1))]
+        if any(k == "Ungeared" for k, _ in parts):
+            lines.append("    未記檔位：切到檔位模式之前的決定，沒有記錄檔位。")
+        lines.append("")
     if data["tiers"]:
         order = ("Light", "Small", "Mid", "Top")
         parts = [(t, data["tiers"][t]) for t in order if t in data["tiers"]]

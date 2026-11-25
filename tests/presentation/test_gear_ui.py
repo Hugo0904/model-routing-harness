@@ -106,10 +106,23 @@ class GearScreens(unittest.TestCase):
                         self.assertIn(expected, text)
                     self.assertNotIn("TIER", text)
 
+    def test_the_where_card_counts_delegations_by_gear_so_it_matches_the_table(self):
+        data = {**DATA, "gears": {1: 10, 3: 30, 4: 3}}                       # 40 advised + 3 main; 22 kept
+        for width in (80, 100, 120):
+            for color in (False, True):
+                with self.subTest(width=width, color=color):
+                    text = ANSI.sub("", dashboard.render(gear_settings(), data, "過去 7 天", width, color, today="x"))
+                    card = [l for l in text.splitlines() if l[:1] in "│╭╰" and cell_width(l) > 40]
+                    self.assertEqual({cell_width(l) for l in card}, {width}, text)
+                    for expected in ("g1 10 (15%)", "g2 0 (0%)", "g3 30 (46%)", "g4 3 (5%)", "g5 0 (0%)", "原樣放行 22 (34%)"):
+                        self.assertIn(expected, text)
+                    self.assertNotIn("light 14", text)
+
     def test_tiers_mode_still_draws_the_original_table(self):
         from tests.presentation.test_dashboard import settings
         text = ANSI.sub("", dashboard.render(settings(), DATA, "過去 7 天", 100, False, today="x"))
         self.assertIn("TIER", text); self.assertNotIn("GEAR", text)
+        self.assertIn("light 14", text); self.assertNotIn("原樣放行 22", text)
 
     def test_public_status_json_gains_mode_and_gears_only(self):
         tmp = tempfile.TemporaryDirectory(); self.addCleanup(tmp.cleanup)

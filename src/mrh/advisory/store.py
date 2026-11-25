@@ -586,7 +586,7 @@ class AdviceStore:
         packet_releases = {p['release_request_id'] for p in packets if p['release_request_id']}
         packet_queries = {p['query_request_id'] for p in packets}
         counted = [r for r in recent if r["request_id"] not in links and r['request_id'] not in packet_releases]
-        by_action, per_platform, reasons, tiers, roles, role_reasons = {}, {}, {}, {}, {}, {}
+        by_action, per_platform, reasons, tiers, gears, roles, role_reasons = {}, {}, {}, {}, {}, {}, {}
         role_recorded, explicit_without_role = 0, 0
         def inc(mapping, key):
             mapping[key] = mapping.get(key, 0) + 1
@@ -595,6 +595,9 @@ class AdviceStore:
             if row["action"] == "preserve": inc(reasons, row["reason"])
             if row["tier"] is not None: inc(tiers, row["tier"])
             meta = payload(row)
+            gear = meta.get("gear")                 # only gears-mode decisions record the gear they landed in
+            if row["action"] in ("advise", "continue_main") and isinstance(gear, int) and not isinstance(gear, bool) and gear > 0:
+                inc(gears, gear)
             if "role" in meta:                      # older rows never recorded the role; they stay unknown
                 role_recorded += 1
                 if meta["role"]:
@@ -673,7 +676,7 @@ class AdviceStore:
                 "unverified_followed_children": unverified,
                 "children_following_prior_advice": prior,
                 "decisions": by_action, "per_platform": per_platform, "kept_unchanged": reasons,
-                "tiers": tiers, "classifier_usage": usage,
+                "tiers": tiers, "gears": gears, "classifier_usage": usage,
                 "classifier_latency": latency, "classifier_versions": versions, "manual_classifications": manual,
                 "classifier_change": version_change(answer_log),
                 "redispatch": redispatch([r for r in counted if r["request_id"] not in packet_ids and r["reason"] != "advice_reissue"]),
