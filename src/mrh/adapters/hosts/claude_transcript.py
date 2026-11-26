@@ -59,10 +59,11 @@ def _calls(record):
 
 
 def call_record(lines, call_id):
-    """The one record whose `message.content` holds the `tool_use` block of `call_id`, or None.
+    """The one `assistant` record whose `message.content` holds the `tool_use` block of `call_id`, or None.
 
-    Other records that merely mention the id (attachments, queue operations, results) are skipped, and so is a line that is not
-    valid JSON. Two records holding the same block are ambiguous: None. There is deliberately no fallback to "the last line"."""
+    Other records that mention the id are skipped: attachments, queue operations, results, and `api-request-blob` copies of later
+    requests (they repeat earlier assistant content). So is a line that is not valid JSON. Two assistant records holding the same
+    block are ambiguous: None. There is deliberately no fallback to "the last line"."""
     needle = call_id.encode()
     found = []
     for line in lines:
@@ -72,7 +73,7 @@ def call_record(lines, call_id):
             record = json.loads(line)
         except ValueError:
             continue
-        if call_id in _calls(record):
+        if isinstance(record, dict) and record.get("type") == "assistant" and call_id in _calls(record):
             found.append(record)
     return found[0] if len(found) == 1 else None
 

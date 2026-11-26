@@ -12,6 +12,10 @@ The current minimum ownership points are:
 - `adapters/hosts/advisory_hosts.py`: normalize native request/child events and
   emit that platform's output. Preserve native model/effort/role semantics;
   don't generalize one vendor's parameter names onto another.
+  A host may also offer `main_model(event)`, the main conversation's model and
+  effort at that call, or None; the engine then drops advice that is not below
+  it. Only Claude has one (`claude_transcript.py`, a bounded tail read of the
+  host transcript); a host without it keeps the advice unfiltered.
 - `mrh_setup.py`: an installer adapter with read-only preflight/observation and
   explicit install/readback. New adapters must preserve unrelated configuration,
   expose conflicts and interrupted state, and use supported native interfaces.

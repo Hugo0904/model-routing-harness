@@ -139,6 +139,12 @@ class UnreadableMainModelTests(Base):
         self.assertUnchanged(self.event(self.transcript(*NEIGHBOURS, record()[:-1])))
         self.assertUnchanged(self.event(self.transcript(*NEIGHBOURS, record()[:-40], end="")))   # still being written
 
+    def test_copies_of_the_call_in_later_request_blobs_do_not_count(self):
+        blob = json.loads(record()); blob["type"] = "api-request-blob"; blob = json.dumps(blob)
+        out, _ = self.handle(self.event(self.transcript(*NEIGHBOURS, record(), blob, blob)))
+        self.assertEqual(out["hookSpecificOutput"]["permissionDecisionReason"], advice_text.advise("claude", "Light", 0.9, (SONNET, HAIKU)))
+        self.assertUnchanged(self.event(self.transcript(*NEIGHBOURS, blob)))                # a copy alone is not the call's line
+
     def test_two_lines_holding_the_same_call_are_ambiguous(self):
         self.assertUnchanged(self.event(self.transcript(record(), *NEIGHBOURS, record())))
 
@@ -173,7 +179,7 @@ class UnreadableMainModelTests(Base):
     def test_too_little_hook_time_left_skips_the_read(self):
         event = self.event(self.transcript(record()))
         with patch.object(claude_transcript, "main_model", side_effect=AssertionError("must not read")) as reader:
-            budget = HookBudget(time.monotonic() - 2.0)        # 0.5 s left of the 2.5 s Jev window: enough to save, not to read
+            budget = HookBudget(100.0, clock=lambda: 102.0)    # a fixed 0.5 s left of the 2.5 s Jev window: enough to save, not to read
             out, path = self.handle(event, hook_budget=budget)
         reader.assert_not_called()
         self.assertEqual(out["hookSpecificOutput"]["permissionDecisionReason"], advice_text.advise("claude", "Light", 0.9, tuple(LADDER)))
