@@ -18,7 +18,10 @@ from mrh.routing.core import ClassifierFailure, bounded_call
 from mrh.routing.types import REASONS, TIERS, Classification, safe_model_id
 
 QUIET = {"explicit_model", "explicit_effort", "named_role", "low_confidence",
-         "no_candidates_for_platform", "advice_already_given"}
+         "no_candidates_for_platform", "advice_already_given", "at_or_above_main"}
+# Reading the main model gets a short wait of its own, and only while the hook still has time to save the decision after it.
+MAIN_READ_SECONDS = 0.2
+MAIN_RESERVE_SECONDS = 0.4
 
 
 def _from_row(row):
@@ -57,6 +60,31 @@ def route(policy, tier, confidence, platform, probabilities=None):
     return Route("advise", "advice_given", chosen)
 
 
+def _below_main(decision, main_model, budget):
+    """Drop the candidates that are not smaller than the main model; none left keeps the call as it is.
+
+    Whatever goes wrong here (no transcript, an unexpected record, a slow disk, a bug) returns `decision` unchanged, so a
+    broken reader looks exactly like no reader at all."""
+    try:
+        if budget is not None and budget.remaining() < MAIN_READ_SECONDS + MAIN_RESERVE_SECONDS:
+            return decision
+
+        def kept():
+            main = main_model()
+            if main is None:
+                return None
+            from mrh.advisory.main_cap import below_main
+            return below_main(decision.candidates, main)
+        candidates = bounded_call(kept, MAIN_READ_SECONDS)
+        if not isinstance(candidates, tuple):
+            return decision
+    except Exception:
+        return decision
+    if not candidates:
+        return decision._replace(action="preserve", reason="at_or_above_main", candidates=())
+    return decision._replace(candidates=candidates)
+
+
 def _meta(result):
     """Classifier facts worth keeping next to the decision: the four per-tier probabilities and the model that answered."""
     meta = {}
@@ -70,7 +98,9 @@ def _meta(result):
     return meta
 
 
-def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factory, clock=time.time, *, context_provider=None) -> Advice:
+def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factory, clock=time.time, *, context_provider=None,
+           main_model=None) -> Advice:
+    """`main_model`, when given, is a no-argument callable returning the main conversation's (model, effort) or None."""
     rid = request_id(req.platform, req.session_id, req.turn_id, req.call_id)
     thash = task_hash(req.platform, req.session_id, req.task)
     provider = settings["classifier"]["provider"]
@@ -158,6 +188,8 @@ def decide(req: AdvisoryRequest, settings, store: AdviceStore, classifier_factor
         return finish(keep("malformed_classification"), notice_reason="malformed_classification")
     tier, confidence = result.tier, float(result.confidence)
     decision = route(settings["policy"], tier, confidence, req.platform, getattr(result, "probabilities", None))
+    if decision.action == "advise" and req.platform == "claude" and main_model is not None:
+        decision = _below_main(decision, main_model, budget)
     meta = _meta(result)
     if decision.gear is not None:
         meta = {**meta, "gear": decision.gear, "score": round(decision.score, 2)}

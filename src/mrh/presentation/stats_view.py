@@ -16,6 +16,7 @@ REASON = {
     "advice_already_given": "同一任務 10 分鐘內已建議過（不重複攔）",
     "low_confidence": "分級信心低於門檻",
     "no_candidates_for_platform": "該等級沒有設定這個平台的模型",
+    "at_or_above_main": "建議的模型都不比主模型小（沿用主模型）",
     "classifier_timeout": "分級器逾時",
     "classifier_error": "分級器錯誤",
     "malformed_classification": "分級器回覆格式不對",

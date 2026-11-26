@@ -80,7 +80,9 @@ def _handle(event, platform, settings_path, *, classifier_factory=None, clock=No
             return {}
         factory = classifier_factory or (lambda: build(settings))
         from mrh.advisory import engine
-        advice = engine.decide(pre, settings, store, factory, now)
+        reader = getattr(host, "main_model", None)       # only hosts that can tell which model the main conversation runs
+        advice = engine.decide(pre, settings, store, factory, now,
+                               main_model=(lambda: reader(event)) if reader is not None else None)
         return host.output(advice)
     except SettingsError:
         reason = "settings_unavailable"

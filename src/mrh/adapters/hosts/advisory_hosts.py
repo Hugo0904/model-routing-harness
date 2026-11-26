@@ -117,6 +117,11 @@ class ClaudeHost(_Host):
         return AdvisoryRequest("claude", session, turn, call, task, data.get("model"), effort if safe_id(effort) else None,
                                None if role in (None, "general-purpose") else str(role), event.get("cwd"), _text(data.get("description")))
 
+    def main_model(self, event):
+        """(model, effort) of the main conversation at this call, from its transcript; None when not exactly readable."""
+        from mrh.adapters.hosts.claude_transcript import main_model
+        return main_model(event)
+
     def child(self, event):
         if not self.spawn_event(event, "PostToolUse"):
             return None
